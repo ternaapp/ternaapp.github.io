@@ -8,7 +8,7 @@ window.Terna = (function () {
   const CONFIG = {
     url: 'https://dgkroxrgprpsxrjyfepn.supabase.co',
     clave: 'sb_publishable_Oav7O3oFq_bjUkTmNWWhTQ_gqwKmUk1', // pública: la protección es la RLS de la base
-    smtp: false, // brand.md §6.2: sin SMTP, "Olvidé mi contraseña" muestra el texto para escribirle a Francisco
+    smtp: true, // SMTP de Gmail configurado en Supabase el 29/10/2026 (qa.md §7.1, paso 4); con false, "Olvidé mi contraseña" muestra el texto para escribirle a Francisco (brand.md §6.2)
     zona: 'America/Argentina/Buenos_Aires',
     bucket: 'documentos',
   };
