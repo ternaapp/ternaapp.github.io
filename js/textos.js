@@ -268,6 +268,7 @@ window.T = (function () {
       vaAResponder: 'Lo que Terna va a responder',
       copiarRespuestas: 'Copiar respuestas',
       sinRespuesta: 'Sin respuesta.',
+      revisarRespuesta: 'Terna contestó que no porque tu perfil no lo muestra. Si es que sí, tocá "Postular yo" y respondé vos, o sumalo a Mi perfil.',
       verCaptura: 'Ver captura',
       capturaAlt: (etapa) => 'Captura del intento de postular: ' + etapa,
       vacio: 'Todavía no hay postulaciones. Aparecen cuando Terna arma el primer paquete.',
