@@ -691,6 +691,10 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 .subbloque { display: flex; flex-direction: column; gap: 10px; }
 .subbloque + .subbloque { border-top: 1px solid var(--linea); padding-top: 16px; margin-top: 4px; }
 .subbloque .tarjeta-titulo { font-size: 15px; }
+.campo-ayuda + .subbloque { margin-top: 6px; }
+/* Un campo que depende del radio de arriba (Disponibilidad › En unos días): alineado con el texto de los radios. */
+.anidado { padding-left: 30px; }
+.control-corto { max-width: 160px; }
 @media (min-width: 768px) {
   .cabecera-pagina.cabecera-fija {
     position: sticky; top: 59px; z-index: 15; max-width: 1024px; justify-content: flex-start; column-gap: 16px;

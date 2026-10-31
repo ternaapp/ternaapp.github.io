@@ -1,8 +1,9 @@
 /* Terna · js/preferencias.js
-   Preferencias (diseno.md 0.6 §9.3 y §10.17; brand.md §6.7): las diecinueve columnas de preferencias (con "Qué buscás", 0015), las alertas de
+   Preferencias (diseno.md 0.9 §9.3 y §10.17; brand.md 0.4.6 §6.7; datos.md 0.10, 0016): las diecinueve columnas de preferencias (con "Qué buscás", 0015), las alertas de
    LinkedIn, pausar la cuenta (escribe en el acto) y el texto para borrarla, en cinco bloques: Búsqueda, Paquetes y
-   postulación, Respuestas para formularios, Alertas de LinkedIn y Tu cuenta. Desplegables en celular y carril desde
-   768 px, con Terna.porBloques (comun.js), igual que Mi perfil. "Guardar preferencias" escribe todo. */
+   postulación, Respuestas para formularios (con opciones y defaults desde 0016), Alertas de LinkedIn y Tu cuenta.
+   Desplegables en celular y carril desde 768 px, con Terna.porBloques (comun.js), igual que Mi perfil.
+   "Guardar preferencias" escribe todo. */
 'use strict';
 
 Terna.pagina('preferencias', async (ctx) => {
@@ -17,6 +18,7 @@ Terna.pagina('preferencias', async (ctx) => {
   const JORNADAS = ['completa', 'parcial'];
   const MAX_PUESTOS = 8;
   const MAX_LARGO_PUESTO = 60;
+  const MAX_DIAS = 365;
 
   const parar = Terna.cargando(raiz);
   const lectura = await sb.from('preferencias').select(COLUMNAS).eq('usuario_id', uid).maybeSingle();
@@ -45,16 +47,19 @@ Terna.pagina('preferencias', async (ctx) => {
     s.dataset.titulo = idT;
     return s;
   }
+  // Radios nativos: [valor, texto, ayuda].
+  const radios = (nombre, opciones, valor, alCambiar) => h('div', { class: 'opciones' }, opciones.map(([val, texto, ayuda]) => h('label', { class: 'casilla' },
+    h('input', { type: 'radio', name: nombre, value: String(val), checked: String(valor) === String(val), onchange: () => alCambiar(val) }),
+    h('span', null, texto, ayuda ? h('small', { text: ayuda }) : null))));
   // Un grupo de radios: role="group" con su título, en vez de fieldset (la leyenda pisaría el borde).
   function grupoRadios(titulo, nombre, opciones, valor, alCambiar) {
     const idT = id('g');
-    const ops = h('div', { class: 'opciones' });
-    const fs = h('div', { class: 'subbloque', role: 'group', 'aria-labelledby': idT }, h('h3', { id: idT, class: 'tarjeta-titulo', text: titulo }), ops);
-    for (const [val, texto, ayuda] of opciones) {
-      ops.append(h('label', { class: 'casilla' }, h('input', { type: 'radio', name: nombre, value: String(val), checked: String(valor) === String(val), onchange: () => alCambiar(val) }),
-        h('span', null, texto, ayuda ? h('small', { text: ayuda }) : null)));
-    }
-    return fs;
+    return h('div', { class: 'subbloque', role: 'group', 'aria-labelledby': idT }, h('h3', { id: idT, class: 'tarjeta-titulo', text: titulo }), radios(nombre, opciones, valor, alCambiar));
+  }
+  // Una pregunta dentro de un ítem: role="group" con una etiqueta (no un h3).
+  function pregunta(etiqueta, ...cuerpo) {
+    const idT = id('q');
+    return h('div', { class: 'campo', role: 'group', 'aria-labelledby': idT }, h('span', { id: idT, class: 'campo-etiqueta', text: etiqueta }), cuerpo);
   }
   function interruptor(seccionNodo, valor, alCambiar) {
     const estado = h('span', { 'aria-hidden': 'true', text: valor ? P.si : P.no });
@@ -178,23 +183,75 @@ Terna.pagina('preferencias', async (ctx) => {
   }
   atenuar();
 
-  /* ---------- Respuestas para formularios (el título es el del bloque) ---------- */
-  const idAut = id('aut');
-  const idDisp = id('disp');
-  const aut = h('textarea', { class: 'control', id: idAut, rows: '3', maxlength: '300', 'aria-describedby': idAut + '-ayuda' });
-  aut.value = v.autorizacion_trabajo || '';
-  aut.addEventListener('input', () => { v.autorizacion_trabajo = aut.value; });
-  const disp = h('input', { class: 'control', id: idDisp, type: 'text', maxlength: '120', value: v.disponibilidad || '', 'aria-describedby': idDisp + '-ayuda' });
-  disp.addEventListener('input', () => { v.disponibilidad = disp.value; });
-  const idMud = id('mud');
-  const mudTit = h('span', { id: idMud, class: 'campo-etiqueta', text: P.mudanza });
-  const mud = interruptor({ dataset: { titulo: idMud } }, v.mudanza, (x) => { v.mudanza = x; });
-  const cResp = [
-    h('p', { class: 'campo-ayuda', text: P.respuestasIntro }),
-    h('div', { class: 'campo' }, h('label', { for: idAut, text: P.autorizacion }), aut, h('p', { class: 'campo-ayuda', id: idAut + '-ayuda', text: P.autorizacionAyuda })),
-    h('div', { class: 'campo' }, h('label', { for: idDisp, text: P.disponibilidad }), disp, h('p', { class: 'campo-ayuda', id: idDisp + '-ayuda', text: P.disponibilidadAyuda })),
-    h('div', { class: 'interruptor-fila' }, mudTit, mud),
-  ];
+  /* ---------- Respuestas para formularios (el título es el del bloque; brand.md 0.4.6 §6.7, datos.md §5.6) ----------
+     Las opciones se guardan en los mismos textos que el motor ya lee (pipeline.md §4.12): "Argentina: sí. Italia: sí.
+     Otros países: solo remoto, sin visa." e "inmediata" o "30 días". Lo que no entra en esas opciones va con tus palabras. */
+  const F = P.formato;
+  const PAISES = Object.keys(P.paises);
+  const aut = { argentina: true, otros: 'remoto', paises: [], propias: false, texto: '' };
+  const armarAut = () => [F.pais(P.argentina, aut.argentina)]
+    .concat(PAISES.filter((c) => aut.paises.includes(c)).map((c) => F.pais(P.paises[c], true)), aut.otros === 'visa' ? F.visa : F.remoto).join(' ');
+  // Al entrar: si el texto guardado es exactamente el que armarían unas opciones, se muestran esas opciones;
+  // si es otro (o está vacío, que es "no respondas esa pregunta"), queda con tus palabras, tal cual.
+  (function leerAut(t) {
+    aut.argentina = !t.startsWith(F.pais(P.argentina, false));
+    aut.otros = t.endsWith(F.visa) ? 'visa' : 'remoto';
+    aut.paises = PAISES.filter((c) => t.includes(F.pais(P.paises[c], true)));
+    if (!t || armarAut() !== t) { aut.propias = true; aut.texto = t; }
+  }(String(v.autorizacion_trabajo || '').trim()));
+
+  const vistaAut = h('p', { class: 'campo-ayuda', 'aria-live': 'polite' });
+  const chipsPaises = h('div', { class: 'chips' }, PAISES.map((c) => {
+    const input = h('input', { type: 'checkbox', value: c, checked: aut.paises.includes(c) });
+    input.addEventListener('change', () => { aut.paises = PAISES.filter((y) => (y === c ? input.checked : aut.paises.includes(y))); verAut(); });
+    return h('label', { class: 'chip-opcion chip-opcion-form' }, input, h('span', { class: 'chip-opcion-cara' }, h('span', { class: 'marca' }, icono('i-tilde')), P.paises[c]));
+  }));
+  const idAyudaPaises = id('ayuda');
+  const qPaises = pregunta(P.autPaises, chipsPaises, h('p', { class: 'campo-ayuda', id: idAyudaPaises, text: P.autPaisesAyuda }));
+  qPaises.setAttribute('aria-describedby', idAyudaPaises);
+  const opcionesAut = h('div', { class: 'seccion' },
+    pregunta(P.autArgentina, radios('aut-argentina', [[true, P.si], [false, P.no]], aut.argentina, (x) => { aut.argentina = x; verAut(); })),
+    pregunta(P.autOtros, radios('aut-otros', [['remoto', P.autRemoto, P.autRemotoAyuda], ['visa', P.autVisa]], aut.otros, (x) => { aut.otros = x; verAut(); })),
+    qPaises, vistaAut);
+  const idTexto = id('aut-texto');
+  const textoAut = h('textarea', { class: 'control', id: idTexto, rows: '3', maxlength: '300', 'aria-describedby': idTexto + '-ayuda' });
+  textoAut.value = aut.texto;
+  textoAut.addEventListener('input', () => { aut.texto = textoAut.value; });
+  const campoTexto = h('div', { class: 'campo' }, h('label', { for: idTexto, text: P.autTexto }), textoAut, h('p', { class: 'campo-ayuda', id: idTexto + '-ayuda', text: P.autTextoAyuda }));
+  // Al pasar a tus palabras, el texto arranca con lo que armaban las opciones, para corregirlo en vez de escribirlo de cero.
+  let armadoAlPasar = null;
+  const casPropias = h('input', { type: 'checkbox', checked: aut.propias });
+  casPropias.addEventListener('change', () => {
+    aut.propias = casPropias.checked;
+    if (aut.propias && (!aut.texto.trim() || aut.texto === armadoAlPasar)) { armadoAlPasar = armarAut(); aut.texto = armadoAlPasar; textoAut.value = aut.texto; }
+    verAut();
+  });
+  function verAut() {
+    opcionesAut.hidden = aut.propias;
+    campoTexto.hidden = !aut.propias;
+    vistaAut.textContent = P.autVista(armarAut());
+  }
+  verAut();
+  const sAut = item(P.autorizacion, opcionesAut, h('label', { class: 'casilla' }, casPropias, h('span', { text: P.autPropias })), campoTexto);
+
+  // Disponibilidad: inmediata (default) o en unos días; un texto viejo que no sea ninguno de los dos pide la cantidad.
+  const disp = (function leerDisp(t) {
+    if (!t || t === F.inmediata) return { modo: 'inmediata', dias: null };
+    const m = /^(\d{1,3}) d[ií]as?$/.exec(t);
+    return { modo: 'dias', dias: m ? Number(m[1]) : null };
+  }(String(v.disponibilidad || '').trim().toLowerCase()));
+  const idDias = id('dias');
+  const inDias = h('input', { class: 'control control-corto num', id: idDias, type: 'number', min: '1', max: String(MAX_DIAS), step: '1', inputmode: 'numeric',
+    value: disp.dias === null ? '' : String(disp.dias), 'aria-describedby': idDias + '-ayuda err-disp' });
+  inDias.addEventListener('input', () => { disp.dias = inDias.value === '' ? null : Number(inDias.value); limpiar('err-disp'); });
+  const campoDias = h('div', { class: 'campo anidado', hidden: disp.modo !== 'dias' },
+    h('label', { for: idDias, text: P.dispCantidad }), inDias, h('p', { class: 'campo-ayuda', id: idDias + '-ayuda', text: P.dispCantidadAyuda }));
+  const sDisp = grupoRadios(P.disponibilidad, 'disponibilidad', [['inmediata', P.dispInmediata], ['dias', P.dispDias]], disp.modo,
+    (x) => { disp.modo = x; campoDias.hidden = x !== 'dias'; limpiar('err-disp'); });
+  sDisp.append(campoDias, error('err-disp'));
+
+  const sMud = conInterruptor(P.mudanza, P.mudanzaAyuda, v.mudanza, (x) => { v.mudanza = x; });
+  const cResp = [h('p', { class: 'campo-ayuda', text: P.respuestasIntro }), sAut, sDisp, sMud];
 
   /* ---------- Alertas de LinkedIn (el título es el del bloque) ---------- */
   const direccion = String(config.alertas_mail_patron || '').replace('{codigo}', ctx.usuario.codigo_alertas || '');
@@ -234,7 +291,7 @@ Terna.pagina('preferencias', async (ctx) => {
   }
   bGuardar.addEventListener('click', async () => {
     banda.hidden = true;
-    ['err-umbral', 'err-mod', 'err-sal', 'err-paq', 'err-puestos', 'err-niv', 'err-jor'].forEach((x) => marcar(x, ''));
+    ['err-umbral', 'err-mod', 'err-sal', 'err-paq', 'err-puestos', 'err-niv', 'err-jor', 'err-disp'].forEach((x) => marcar(x, ''));
     let ok = true;
     v.puestos_objetivo = leerPuestos();
     if (v.puestos_objetivo.length > MAX_PUESTOS) { marcar('err-puestos', T.errores.puestosDemasiados(MAX_PUESTOS)); ok = false; }
@@ -246,6 +303,7 @@ Terna.pagina('preferencias', async (ctx) => {
       if (v.salario_min === null || v.salario_max === null || !v.salario_moneda) { marcar('err-sal', T.errores.salarioIncompleto); ok = false; }
       else if (v.salario_min > v.salario_max) { marcar('err-sal', T.errores.minimoMayor); ok = false; }
     }
+    if (disp.modo === 'dias' && !(Number.isInteger(disp.dias) && disp.dias >= 1 && disp.dias <= MAX_DIAS)) { marcar('err-disp', T.errores.dias(1, MAX_DIAS)); ok = false; }
     if (!ok) { mostrarBanda(T.errores.guardarCampos); return; }
     bGuardar.setAttribute('aria-disabled', 'true');
     const fila = {
@@ -256,7 +314,9 @@ Terna.pagina('preferencias', async (ctx) => {
       salario_moneda: v.salario_modo === 'rango' ? v.salario_moneda : null,
       idioma_documentos: v.idioma_documentos, armar_paquetes: v.armar_paquetes, paquetes_por_dia: v.paquetes_por_dia,
       interes_por_defecto: v.interes_por_defecto, postular_sola: v.postular_sola, revisar_antes_de_enviar: v.revisar_antes_de_enviar,
-      autorizacion_trabajo: String(v.autorizacion_trabajo || '').trim() || null, disponibilidad: String(v.disponibilidad || '').trim() || null, mudanza: !!v.mudanza,
+      autorizacion_trabajo: aut.propias ? (aut.texto.trim() || null) : armarAut(),
+      disponibilidad: disp.modo === 'dias' ? F.dias(disp.dias) : F.inmediata,
+      mudanza: !!v.mudanza,
       puestos_objetivo: v.puestos_objetivo, niveles: v.niveles, jornadas: v.jornadas,
     };
     const { error: e } = await sb.from('preferencias').update(fila).eq('usuario_id', uid);
