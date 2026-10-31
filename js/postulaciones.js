@@ -365,8 +365,8 @@ Terna.pagina('postulaciones', async (ctx) => {
     if (et) sec.append(et);
     return sec;
   }
-  // Dónde se destraba (brand.md 0.4.6 §6.5): el motor deja en respuestas.traba qué campo frenó la postulación. Un dato de
-  // Mi perfil lleva a Mi perfil; DNI, CUIL o fecha de nacimiento, a Datos para formularios (desde 0.4.6 Terna los escribe si
+  // Dónde se destraba (brand.md 0.4.8 §6.5): el motor deja en respuestas.traba qué campo frenó la postulación. Un dato de
+  // Mi perfil lleva a Mi perfil; DNI, CUIL o fecha de nacimiento, a Datos para formularios (desde 0.4.8 Terna los escribe si
   // están cargados); lo demás, a las respuestas para formularios de Preferencias, como hasta ahora.
   const CAMPOS_PERFIL = { empresa_actual: 'experiencia', telefono: 'datos', linkedin: 'datos', dni: 'formularios' };
   function campoTraba(a) { return a.respuestas && a.respuestas.traba ? a.respuestas.traba.campo || null : null; }
