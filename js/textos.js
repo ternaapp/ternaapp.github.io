@@ -290,6 +290,7 @@ window.T = (function () {
       telefono: 'Teléfono (opcional)', ciudad: 'Ciudad',
       ciudadAyuda: 'Terna busca en tu ciudad y alrededores; si ponés Buenos Aires, incluye CABA y el Gran Buenos Aires.',
       linkedin: 'LinkedIn (opcional)',
+      portfolio: 'Portfolio o sitio propio (opcional)', portfolioAyuda: 'Un link a tu trabajo. Terna lo usa solo si un formulario lo pide.',
       experiencia: 'Experiencia',
       puesto: 'Puesto', empresa: 'Empresa', desde: 'Desde', hasta: 'Hasta', mes: 'Mes', anio: 'Año', actual: 'Trabajo actual',
       queHiciste: 'Qué hiciste',
@@ -301,6 +302,7 @@ window.T = (function () {
       titulo_: 'Título o curso', institucion: 'Institución', estado: 'Estado', terminado: 'Terminado', enCurso: 'En curso',
       tituloAyuda: 'Con el nivel en el nombre: Licenciatura en…, Tecnicatura en…, Maestría en…, Curso de…. Un curso o una diplomatura no cuentan como título universitario. El secundario no hace falta si tenés otro estudio.',
       anioAyuda: 'El año en que terminaste. Si está en curso, el año en que esperás terminar.',
+      promedio: 'Promedio (opcional)', promedioAyuda: 'Como figura en tu analítico, con la escala: 8,5/10 o 3,4/4. No va en el CV: Terna lo usa solo si un formulario lo pide.',
       agregarEstudio: 'Agregar estudio', sinEstudios: 'Todavía no cargaste estudios.',
       topeEstudios: (x) => 'Hasta ' + x + ' estudios.',
       idiomas: 'Idiomas', idioma: 'Idioma', nivel: 'Nivel', nativo: 'Nativo',
@@ -392,6 +394,7 @@ window.T = (function () {
       dispCantidad: 'Cantidad de días',
       dispCantidadAyuda: 'Por ejemplo, 15 o 30 si tenés que avisar en tu trabajo actual.',
       mudanza: 'Mudanza', mudanzaAyuda: 'Lo que Terna responde si un formulario pregunta si te mudarías por el trabajo.',
+      nacionalidad: 'Nacionalidad (opcional)', nacionalidadAyuda: 'Por ejemplo, argentina. Terna la responde solo si un formulario la pregunta.',
       // Los textos que se guardan y que el motor lee (datos.md §5.6, pipeline.md §4.12): no son textos de pantalla, son el formato.
       formato: {
         pais: (pais, si) => pais + ': ' + (si ? 'sí' : 'no') + '.',

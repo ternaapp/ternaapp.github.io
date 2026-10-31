@@ -22,9 +22,9 @@ Terna.pagina('perfil', async (ctx) => {
 
   const parar = Terna.cargando(raiz);
   const [rP, rE, rS, rI, rC] = await Promise.all([
-    sb.from('perfiles').select('nombre, apellido, telefono, ciudad, linkedin, perfil_estructurado, perfil_estructurado_en, cv_original_leido_en').eq('usuario_id', uid).maybeSingle(),
+    sb.from('perfiles').select('nombre, apellido, telefono, ciudad, linkedin, portfolio, perfil_estructurado, perfil_estructurado_en, cv_original_leido_en').eq('usuario_id', uid).maybeSingle(),
     sb.from('experiencias').select('id, puesto, empresa, desde, hasta, actual, descripcion, orden').eq('usuario_id', uid).order('orden').order('desde', { ascending: false }),
-    sb.from('estudios').select('id, titulo, institucion, anio, estado, orden').eq('usuario_id', uid).order('orden'),
+    sb.from('estudios').select('id, titulo, institucion, anio, estado, promedio, orden').eq('usuario_id', uid).order('orden'),
     sb.from('idiomas').select('id, idioma, nivel').eq('usuario_id', uid).order('creado_en'),
     sb.rpc('cv_original'),
   ]);
@@ -39,10 +39,10 @@ Terna.pagina('perfil', async (ctx) => {
   let clave = 0;
   const nuevaClave = () => 'n' + (clave += 1);
   const perfil = rP.data || {};
-  const datos = { nombre: perfil.nombre || '', apellido: perfil.apellido || '', telefono: perfil.telefono || '', ciudad: perfil.ciudad || '', linkedin: perfil.linkedin || '' };
+  const datos = { nombre: perfil.nombre || '', apellido: perfil.apellido || '', telefono: perfil.telefono || '', ciudad: perfil.ciudad || '', linkedin: perfil.linkedin || '', portfolio: perfil.portfolio || '' };
   const listas = {
     exp: (rE.data || []).map((e) => Object.assign({ clave: nuevaClave() }, e, { descripcion: e.descripcion || '' })),
-    est: (rS.data || []).map((e) => Object.assign({ clave: nuevaClave() }, e)),
+    est: (rS.data || []).map((e) => Object.assign({ clave: nuevaClave() }, e, { promedio: e.promedio || '' })),
     idi: (rI.data || []).map((e) => Object.assign({ clave: nuevaClave() }, e)),
   };
   let originales = foto();
@@ -57,7 +57,7 @@ Terna.pagina('perfil', async (ctx) => {
     return {
       datos: JSON.stringify(datos),
       exp: new Map(listas.exp.filter((e) => e.id).map((e, i) => [e.id, JSON.stringify(limpiar(e, ['puesto', 'empresa', 'desde', 'hasta', 'actual', 'descripcion']).concat(i))])),
-      est: new Map(listas.est.filter((e) => e.id).map((e, i) => [e.id, JSON.stringify(limpiar(e, ['titulo', 'institucion', 'anio', 'estado']).concat(i))])),
+      est: new Map(listas.est.filter((e) => e.id).map((e, i) => [e.id, JSON.stringify(limpiar(e, ['titulo', 'institucion', 'anio', 'estado', 'promedio']).concat(i))])),
       idi: new Map(listas.idi.filter((e) => e.id).map((e) => [e.id, JSON.stringify(limpiar(e, ['idioma', 'nivel']))])),
     };
   }
@@ -141,7 +141,8 @@ Terna.pagina('perfil', async (ctx) => {
       h('div', { class: 'dos' }, c('nombre', P.nombre, { max: 80, autocomplete: 'given-name' }), c('apellido', P.apellido, { max: 80, autocomplete: 'family-name' })),
       campo({ id: 'dato-mail', etiqueta: P.mail, valor: ctx.usuario.mail, ayuda: P.mailAyuda, readonly: true, tipo: 'email', autocomplete: 'email' }),
       c('ciudad', P.ciudad, { max: 80, autocomplete: 'address-level2', ayuda: P.ciudadAyuda }),
-      h('div', { class: 'dos dos-apilable' }, c('telefono', P.telefono, { max: 30, tipo: 'tel', autocomplete: 'tel' }), c('linkedin', P.linkedin, { max: 200, tipo: 'url', autocomplete: 'url', inputmode: 'url' }))]);
+      h('div', { class: 'dos dos-apilable' }, c('telefono', P.telefono, { max: 30, tipo: 'tel', autocomplete: 'tel' }), c('linkedin', P.linkedin, { max: 200, tipo: 'url', autocomplete: 'url', inputmode: 'url' })),
+      c('portfolio', P.portfolio, { max: 300, tipo: 'url', inputmode: 'url', ayuda: P.portfolioAyuda })]);
   }
 
   function enfocar(id) { const el = document.getElementById(id); if (el) el.focus(); }
@@ -197,11 +198,12 @@ Terna.pagina('perfil', async (ctx) => {
           h('div', { class: 'dos' },
             campo({ id: p + '-anio', etiqueta: P.anio, valor: e.anio, tipo: 'number', inputmode: 'numeric', ayuda: P.anioAyuda, alCambiar: (v) => { e.anio = v; } }),
             seleccion({ id: p + '-estado', etiqueta: P.estado, valor: e.estado || 'terminado', opciones: [['terminado', P.terminado], ['en_curso', P.enCurso]], alCambiar: (v) => { e.estado = v; } })),
+          campo({ id: p + '-promedio', etiqueta: P.promedio, valor: e.promedio, max: 20, ayuda: P.promedioAyuda, alCambiar: (v) => { e.promedio = v; } }),
           h('div', { class: 'botones' }, boton(P.quitar, 'i-quitar', () => { listas.est.splice(i, 1); dibujarLista(listas.est[i] ? 'est-' + listas.est[i].clave + '-titulo' : 'agregar-est'); }))));
       });
       if (listas.est.length < MAX.est) {
         cont.append(h('div', null, boton(P.agregarEstudio, 'i-agregar', () => {
-          const e = { clave: nuevaClave(), id: null, titulo: '', institucion: '', anio: null, estado: 'terminado' };
+          const e = { clave: nuevaClave(), id: null, titulo: '', institucion: '', anio: null, estado: 'terminado', promedio: '' };
           listas.est.push(e);
           dibujarLista('est-' + e.clave + '-titulo');
         }, 'btn', { id: 'agregar-est' })));
@@ -438,15 +440,17 @@ Terna.pagina('perfil', async (ctx) => {
       // 1. Datos
       if (JSON.stringify(datos) !== originales.datos) {
         const v = (x) => (String(x || '').trim() || null);
-        const { error } = await sb.from('perfiles').update({ nombre: v(datos.nombre), apellido: v(datos.apellido), telefono: v(datos.telefono), ciudad: v(datos.ciudad), linkedin: v(datos.linkedin) }).eq('usuario_id', uid);
+        // 0020: el portfolio se guarda como link; sin "https://" adelante, se lo agrega (la base pide http o https).
+        const link = (x) => { const s = v(x); return s && !/^https?:\/\//i.test(s) ? 'https://' + s : s; };
+        const { error } = await sb.from('perfiles').update({ nombre: v(datos.nombre), apellido: v(datos.apellido), telefono: v(datos.telefono), ciudad: v(datos.ciudad), linkedin: v(datos.linkedin), portfolio: link(datos.portfolio) }).eq('usuario_id', uid);
         if (error) throw error;
         Terna.actualizarPerfil({ nombre: v(datos.nombre), apellido: v(datos.apellido) });
       }
       // 2. Listas: primero lo que se quitó (por los topes), después lo que cambió y al final lo nuevo.
       await guardarLista('experiencias', listas.exp, originales.exp, (e, i) => ({ puesto: e.puesto.trim(), empresa: e.empresa.trim(), desde: e.desde, hasta: e.actual ? null : e.hasta, actual: !!e.actual, descripcion: (e.descripcion || '').trim() || null, orden: i }),
         (e, i) => JSON.stringify([e.puesto, e.empresa, e.desde, e.actual ? null : e.hasta, !!e.actual, e.descripcion || ''].concat(i)), 'exp');
-      await guardarLista('estudios', listas.est, originales.est, (e, i) => ({ titulo: e.titulo.trim(), institucion: e.institucion.trim(), anio: e.anio === '' || e.anio === null || e.anio === undefined ? null : Number(e.anio), estado: e.estado || 'terminado', orden: i }),
-        (e, i) => JSON.stringify([e.titulo, e.institucion, e.anio === '' || e.anio === undefined ? null : (e.anio === null ? null : Number(e.anio)), e.estado || 'terminado'].concat(i)), 'est');
+      await guardarLista('estudios', listas.est, originales.est, (e, i) => ({ titulo: e.titulo.trim(), institucion: e.institucion.trim(), anio: e.anio === '' || e.anio === null || e.anio === undefined ? null : Number(e.anio), estado: e.estado || 'terminado', promedio: String(e.promedio || '').trim() || null, orden: i }),
+        (e, i) => JSON.stringify([e.titulo, e.institucion, e.anio === '' || e.anio === undefined ? null : (e.anio === null ? null : Number(e.anio)), e.estado || 'terminado', e.promedio || ''].concat(i)), 'est');
       await guardarLista('idiomas', listas.idi, originales.idi, (e) => ({ idioma: e.idioma.trim(), nivel: e.nivel }),
         (e) => JSON.stringify([e.idioma, e.nivel]), 'idi');
       // 3. Datos para formularios, solo si se abrieron y cambiaron.
