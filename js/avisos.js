@@ -187,29 +187,38 @@ Terna.pagina('avisos', async (ctx) => {
         h('button', { type: 'button', onclick: () => { orden = clave; Terna.guardarLocal('avisos.orden', orden); dibujar(); } }, texto, activo ? icono('i-chevron', 'icono-14') : null));
       return th;
     };
+    const publicado = ordenable(C.publicado, 'nuevos');
+    publicado.classList.add('col-publicado');
     const thead = h('thead', null, h('tr', null,
-      h('th', { scope: 'col', text: C.puesto }), h('th', { scope: 'col', text: C.empresa }), h('th', { scope: 'col', text: C.modalidad }),
-      h('th', { scope: 'col', text: C.ubicacion }), ordenable(C.match, 'match'), h('th', { scope: 'col', text: C.paquete }),
-      h('th', { scope: 'col', text: C.postulacion }), h('th', { scope: 'col', text: C.interes }), ordenable(C.publicado, 'nuevos'),
+      h('th', { scope: 'col', text: C.puesto }), h('th', { scope: 'col', class: 'col-empresa', text: C.empresa }), h('th', { scope: 'col', class: 'col-modalidad', text: C.modalidad }),
+      h('th', { scope: 'col', class: 'col-ubicacion', text: C.ubicacion }), ordenable(C.match, 'match'), h('th', { scope: 'col', text: C.paquete }),
+      h('th', { scope: 'col', text: C.postulacion }), h('th', { scope: 'col', class: 'col-interes', text: C.interes }), publicado,
       h('th', { scope: 'col', text: C.aviso })));
     const tbody = h('tbody', null, vis.map(fila));
     return h('div', { class: 'tabla-caja tabla-avisos' }, h('table', { class: 'tabla' }, thead, tbody));
+  }
+  // Lo que dicen las columnas que la tabla esconde cuando no le alcanza el ancho (diseno.md 0.8 §7.6): empresa, lugar y
+  // modalidad debajo del puesto, como en la fila de Postulaciones. Oculta mientras las columnas se ven.
+  function lineaApoyo(a) {
+    return h('div', { class: 'atributos linea-apoyo' },
+      a.empresa ? h('span', { class: 'apoyo-empresa', text: a.empresa + ' · ' }) : null,
+      h('span', { text: Aviso.lugar(a) }), a.modalidad ? h('span', { text: ' · ' + T.avisos.modalidadMin[a.modalidad] }) : null);
   }
   function fila(a) {
     const bajo = a.match !== null && !Aviso.llega(a, umbral);
     const faltan = Aviso.chipFaltan(a);
     const tr = h('tr', { tabindex: '0', dataset: { match: a.match_id, control: 'abrir' } },
-      h('td', null, h('div', { class: 'aviso-puesto', text: a.puesto }), Aviso.etiquetas(a, bajoMinimo(a)), faltan ? h('div', null, faltan) : null),
-      h('td', { text: a.empresa || '' }),
-      h('td', null, a.modalidad ? h('span', { class: 'atributos' }, icono('i-' + a.modalidad, 'icono-16'), T.avisos.modalidadMin[a.modalidad]) : null),
-      h('td', null, h('span', { class: 'atributos' }, icono(a.alcance === 'exterior' ? 'i-exterior' : 'i-local', 'icono-16'), Aviso.lugar(a))),
+      h('td', null, h('div', { class: 'aviso-puesto', text: a.puesto }), lineaApoyo(a), Aviso.etiquetas(a, bajoMinimo(a)), faltan ? h('div', null, faltan) : null),
+      h('td', { class: 'col-empresa', text: a.empresa || '' }),
+      h('td', { class: 'col-modalidad' }, a.modalidad ? h('span', { class: 'atributos' }, icono('i-' + a.modalidad, 'icono-16'), T.avisos.modalidadMin[a.modalidad]) : null),
+      h('td', { class: 'col-ubicacion' }, h('span', { class: 'atributos' }, icono(a.alcance === 'exterior' ? 'i-exterior' : 'i-local', 'icono-16'), Aviso.lugar(a))),
       h('td', { class: 'tabla-match' + (Aviso.llega(a, umbral) || a.match === null ? '' : ' bajo') },
         h('span', { 'aria-hidden': 'true', text: a.match === null ? '—' : String(a.match) }),
         oculto(a.match === null ? T.avisos.sinMatch : T.avisos.matchAccesible(a.match, Aviso.llega(a, umbral)))),
       h('td', null, Aviso.chipPaquete(a), bajo ? h('div', { class: 'chip-texto', text: T.avisos.bajoUmbral }) : null),
       h('td', null, Aviso.chipInteres(a, config), Aviso.chipPostulacion(a)),
-      h('td', null, accionesAviso(a, true)),
-      h('td', null, Aviso.fecha(a)),
+      h('td', { class: 'col-interes' }, accionesAviso(a, true)),
+      h('td', { class: 'col-publicado' }, Aviso.fecha(a)),
       h('td', null, h('a', { class: 'btn btn-texto btn-chico', href: a.url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(a.fuente) }, icono('i-abrir'))));
     tr.addEventListener('click', (e) => { if (!e.target.closest('button, a, input, label, select')) abrirFicha(a, tr); });
     tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target === tr) { e.preventDefault(); abrirFicha(a, tr); } });

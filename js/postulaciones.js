@@ -171,7 +171,7 @@ Terna.pagina('postulaciones', async (ctx) => {
   function tabla(vis) {
     const C = T.postulaciones.columnas;
     return h('div', { class: 'tabla-caja tabla-postulaciones' }, h('table', { class: 'tabla' },
-      h('thead', null, h('tr', null, [C.match, C.puesto, C.empresa, C.recorrido, C.etapa, C.fecha, C.aviso].map((t, i) => h('th', { scope: 'col', class: i === 0 ? 'der' : null, text: t })))),
+      h('thead', null, h('tr', null, [C.match, C.puesto, C.empresa, C.recorrido, C.etapa, C.fecha, C.aviso].map((t, i) => h('th', { scope: 'col', class: [i === 0 ? 'der' : null, i === 2 ? 'col-empresa' : null, i === 5 ? 'col-fecha' : null].filter(Boolean).join(' ') || null, text: t })))),
       h('tbody', null, vis.map(filaTabla))));
   }
   function filaTabla(a) {
@@ -180,12 +180,13 @@ Terna.pagina('postulaciones', async (ctx) => {
     const tr = h('tr', { tabindex: '0', dataset: { match: a.match_id, control: 'abrir' } },
       h('td', { class: 'tabla-match' + (llega || a.match === null ? '' : ' bajo') }, h('span', { 'aria-hidden': 'true', text: a.match === null ? '—' : String(a.match) }),
         oculto(a.match === null ? T.avisos.sinMatch : T.avisos.matchAccesible(a.match, llega))),
-      h('td', null, h('div', { class: 'aviso-puesto', text: a.puesto }), h('div', { class: 'atributos' }, Aviso.lugar(a), a.modalidad ? ' · ' + T.avisos.modalidadMin[a.modalidad] : '')),
-      h('td', { text: a.empresa || '' }),
+      h('td', null, h('div', { class: 'aviso-puesto', text: a.puesto }), h('div', { class: 'atributos' },
+        a.empresa ? h('span', { class: 'apoyo-empresa', text: a.empresa + ' · ' }) : null, Aviso.lugar(a), a.modalidad ? ' · ' + T.avisos.modalidadMin[a.modalidad] : '')),
+      h('td', { class: 'col-empresa', text: a.empresa || '' }),
       h('td', null, Aviso.recorrido(a), oculto(T.postulaciones.recorridoAccesible(etiquetaEtapa(a))),
         h('div', { class: 'etapa-texto ' + Aviso.claseEtapa(a), 'aria-hidden': 'true', text: etiquetaEtapa(a) })),
       h('td', null, linea ? h('div', { class: 'traba', text: linea }) : null),
-      h('td', { class: 'num sin-corte', text: Terna.relativa(fechaEtapa(a)) }),
+      h('td', { class: 'num sin-corte col-fecha', text: Terna.relativa(fechaEtapa(a)) }),
       h('td', null, h('a', { class: 'btn btn-texto btn-chico', href: a.url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(a.fuente) }, icono('i-abrir'))));
     tr.addEventListener('click', (e) => { if (!e.target.closest('a, button')) abrirFicha(a, tr); });
     tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target === tr) { e.preventDefault(); abrirFicha(a, tr); } });
@@ -355,13 +356,26 @@ Terna.pagina('postulaciones', async (ctx) => {
     if (linea) sec.append(h('p', { text: linea }));
     if (a.estado_postulacion === 'a_mano') {
       sec.append(h('p', { text: T.postulaciones.linea.todoListo }));
-      if (a.motivo_a_mano === 'pregunta_sin_respuesta') sec.append(h('p', null, h('a', { href: 'preferencias.html#respuestas', text: T.postulaciones.completarRespuestas })));
+      const link = linkTraba(a);
+      if (link) sec.append(h('p', null, link));
     }
     if (a.estado_postulacion === 'enviada' && a.confirmacion_texto) sec.append(h('blockquote', { class: 'suave', text: a.confirmacion_texto }));
     if (a.captura_path) sec.append(captura(a));
     const et = Aviso.etiquetas(a, bajoMinimo(a), true);
     if (et) sec.append(et);
     return sec;
+  }
+  // Dónde se destraba (brand.md 0.4.4 §6.5): el motor deja en respuestas.traba qué campo frenó la postulación. Un dato de
+  // Mi perfil lleva a Mi perfil; DNI, CUIL o fecha de nacimiento, a Datos para formularios (para copiarlo); lo demás, a las
+  // respuestas para formularios de Preferencias, como hasta ahora.
+  const CAMPOS_PERFIL = { empresa_actual: 'experiencia', telefono: 'datos', linkedin: 'datos' };
+  function campoTraba(a) { return a.respuestas && a.respuestas.traba ? a.respuestas.traba.campo || null : null; }
+  function linkTraba(a) {
+    if (a.motivo_a_mano !== 'pregunta_sin_respuesta') return null;
+    const campo = campoTraba(a);
+    if (campo === 'dni') return h('a', { href: 'perfil.html#formularios', text: T.postulaciones.verDatosPerfil });
+    if (CAMPOS_PERFIL[campo]) return h('a', { href: 'perfil.html#' + CAMPOS_PERFIL[campo], text: T.postulaciones.completarPerfil });
+    return h('a', { href: 'preferencias.html#respuestas', text: T.postulaciones.completarRespuestas });
   }
   function captura(a) {
     const caja = h('div', { class: 'ficha-seccion' });
@@ -408,6 +422,7 @@ Terna.pagina('postulaciones', async (ctx) => {
         if (Aviso.puedeVolverAProbar(a, config)) {
           cont.append(b(B.volverAProbar, 'i-probar', () => volverAProbar(a)));
           if (a.motivo_a_mano === 'requiere_cuenta') notas.push(h('p', { class: 'campo-ayuda', text: T.postulaciones.seVaATrabar }));
+          if (campoTraba(a) === 'dni') notas.push(h('p', { class: 'campo-ayuda', text: T.postulaciones.seVaATrabarDato }));
         }
         cont.append(noInteresa);
         break;

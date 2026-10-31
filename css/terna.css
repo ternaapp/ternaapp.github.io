@@ -273,7 +273,7 @@ dialog::backdrop { background: var(--velo); }
 .dialogo[open] { display: flex; flex-direction: column; gap: 12px; animation: aparecer var(--mov) ease-out; }
 .dialogo h2 { font-family: var(--fuente-titulos); font-weight: 600; font-size: 20px; line-height: 1.2; }
 .dialogo .botones { justify-content: flex-end; }
-/* Hoja, cajón y panel (diseno.md 0.7 §10.7): el <dialog> (o el <aside> del cajón en línea) no se ve; adentro, el marco
+/* Hoja, cajón y panel (diseno.md 0.8 §10.7): el <dialog> (o el <aside> del cajón en línea) no se ve; adentro, el marco
    redondeado (cabecera y cuerpo que bajan juntos, acciones fijas abajo) y, afuera del marco, la cruz, siempre visible.
    Celular: la cruz va arriba de la hoja, sobre el fondo oscurecido; por eso la hoja deja 64 px libres arriba. */
 .hoja {
@@ -429,6 +429,10 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 /* position: relative para que los textos ocultos (absolutos) de las celdas que quedan fuera de vista se recorten con la caja
    y no ensanchen la página (QA 22/10/2026: Avisos a 768 px medía 780). */
 .tabla-caja { position: relative; overflow-x: auto; background: var(--hoja); border: 1px solid var(--linea); border-radius: 10px; }
+/* Las tablas de Avisos y Postulaciones se adaptan a su propio ancho, no al de la ventana (diseno.md 0.8 §7.6 y §8.6): con el
+   cajón abierto o con el carril, lo que no entra pasa a la línea de apoyo debajo del puesto en vez de desplazarse. */
+.tabla-avisos, .tabla-postulaciones { container-type: inline-size; container-name: tabla; }
+.tabla-avisos .linea-apoyo, .tabla-postulaciones .apoyo-empresa { display: none; }
 .tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
 .tabla th {
   text-align: left; font-weight: 500; color: var(--tinta-suave); font-size: 13px; padding: 10px; white-space: nowrap;
@@ -617,7 +621,8 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .tabla-avisos .tabla { font-size: 13px; }
   .tabla-avisos .tabla th, .tabla-avisos .tabla td { padding: 8px 6px; }
   .tabla-avisos .chip-opcion-cara { min-height: 32px; font-size: 12px; padding: 0 6px; }
-  .tabla-avisos .interes { flex-direction: column; align-items: stretch; gap: 4px; }
+  .tabla-avisos .interes { flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 4px; }
+  .tabla-avisos .chip-opcion-cara { white-space: nowrap; }
   .tabla .aviso-puesto { font-size: 14px; font-weight: 700; line-height: 1.35; }
   .lista-postulaciones.solo-celular, .pildoras-caja { display: none; }
   .post-layout { flex-direction: row; align-items: flex-start; gap: 20px; }
@@ -637,8 +642,35 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .formulario-angosto, .cabecera-pagina.angosta { max-width: 640px; }
 }
 
+/* Tablas por el ancho de su caja (contenedor `tabla`), en este orden: Interés apila sus botones; Modalidad y Ubicación pasan a
+   la línea de apoyo; Publicado se oculta (la fecha está en la ficha); por último Empresa también pasa a la línea de apoyo.
+   Medido 31/10/2026: con todo a la vista Avisos necesita 1.046 px con los botones apilados y 1.182 en fila. */
+@container tabla (max-width: 1180px) {
+  .tabla-avisos .interes { flex-direction: column; align-items: stretch; }
+}
+@container tabla (max-width: 1040px) {
+  .tabla-avisos .col-modalidad, .tabla-avisos .col-ubicacion { display: none; }
+  .tabla-avisos .linea-apoyo { display: block; margin-top: 2px; }
+  .tabla-avisos .apoyo-empresa { display: none; }
+}
+@container tabla (max-width: 900px) {
+  .tabla-avisos .col-publicado { display: none; }
+}
+@container tabla (max-width: 760px) {
+  .tabla-avisos .col-empresa { display: none; }
+  .tabla-avisos .apoyo-empresa { display: inline; }
+}
+@container tabla (max-width: 620px) {
+  .tabla-postulaciones .col-empresa, .tabla-postulaciones .col-fecha { display: none; }
+  .tabla-postulaciones .apoyo-empresa { display: inline; }
+}
+
 /* ---------- 8. Escritorio ancho: 1200 px o más ---------- */
 @media (min-width: 1200px) {
+  /* Avisos y Postulaciones usan el ancho de la ventana hasta 1680 px (diseno.md 0.8 §5.2): con el cajón abierto la tabla
+     conserva su ancho en vez de achicarse a 760 px (31/10/2026, a 1.903 px de ventana sobraban 670 px). */
+  .contenido-ancho { max-width: 1680px; }
+  body:has(.contenido-ancho) .pie { max-width: 1680px; }
   .pestanas { gap: 20px; }
   .pestana { font-size: 15px; }
   .con-cajon.abierto { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 20px; align-items: start; }
@@ -648,7 +680,6 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .cajon-linea { display: block; position: sticky; top: 80px; }
   .cajon-linea[hidden] { display: none; }
   .cajon-linea .hoja-marco { max-height: calc(100vh - 96px); border: 1px solid var(--linea); border-radius: 14px; }
-  .con-cajon:not(.abierto) .tabla-avisos .interes { flex-direction: row; flex-wrap: nowrap; align-items: center; }
 }
 
 /* ---------- Página por bloques: Mi perfil y Preferencias (diseno.md 0.6 §10.17) ---------- */

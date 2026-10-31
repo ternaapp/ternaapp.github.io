@@ -218,7 +218,10 @@ window.T = (function () {
         elegido_por_usuario: 'Elegiste postular vos.',
       },
       completarRespuestas: 'Completar respuestas para formularios',
+      completarPerfil: 'Completar Mi perfil',
+      verDatosPerfil: 'Ver tus datos en Mi perfil',
       seVaATrabar: 'Se va a trabar en el mismo lugar: Terna no entra con cuentas.',
+      seVaATrabarDato: 'Se va a trabar en el mismo lugar: Terna nunca escribe tu DNI, tu CUIL ni tu fecha de nacimiento.',
       botones: {
         marcarPostulado: 'Marcar postulado', volverAProbar: 'Volver a probar', noMeInteresa: 'No me interesa',
         enviar: 'Enviar', postularYo: 'Postular yo', cancelarEnvio: 'Cancelar envío',
