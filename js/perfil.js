@@ -181,10 +181,10 @@ Terna.pagina('perfil', async (ctx) => {
       listas.est.forEach((e, i) => {
         const p = 'est-' + e.clave;
         cont.append(h('div', { class: 'bloque-lista' },
-          campo({ id: p + '-titulo', etiqueta: P.titulo_, valor: e.titulo, max: 160, alCambiar: (v) => { e.titulo = v; } }),
+          campo({ id: p + '-titulo', etiqueta: P.titulo_, valor: e.titulo, max: 160, ayuda: P.tituloAyuda, alCambiar: (v) => { e.titulo = v; } }),
           campo({ id: p + '-institucion', etiqueta: P.institucion, valor: e.institucion, max: 160, alCambiar: (v) => { e.institucion = v; } }),
           h('div', { class: 'dos' },
-            campo({ id: p + '-anio', etiqueta: P.anio, valor: e.anio, tipo: 'number', inputmode: 'numeric', alCambiar: (v) => { e.anio = v; } }),
+            campo({ id: p + '-anio', etiqueta: P.anio, valor: e.anio, tipo: 'number', inputmode: 'numeric', ayuda: P.anioAyuda, alCambiar: (v) => { e.anio = v; } }),
             seleccion({ id: p + '-estado', etiqueta: P.estado, valor: e.estado || 'terminado', opciones: [['terminado', P.terminado], ['en_curso', P.enCurso]], alCambiar: (v) => { e.estado = v; } })),
           h('div', { class: 'botones' }, boton(P.quitar, 'i-quitar', () => { listas.est.splice(i, 1); dibujarLista(listas.est[i] ? 'est-' + listas.est[i].clave + '-titulo' : 'agregar-est'); }))));
       });

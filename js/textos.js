@@ -269,6 +269,8 @@ window.T = (function () {
       topeExperiencias: (x) => 'Hasta ' + x + ' experiencias.',
       estudios: 'Estudios y cursos',
       titulo_: 'Título o curso', institucion: 'Institución', estado: 'Estado', terminado: 'Terminado', enCurso: 'En curso',
+      tituloAyuda: 'Con el nivel en el nombre: Licenciatura en…, Tecnicatura en…, Maestría en…, Curso de…. Un curso o una diplomatura no cuentan como título universitario. El secundario no hace falta si tenés otro estudio.',
+      anioAyuda: 'El año en que terminaste. Si está en curso, el año en que esperás terminar.',
       agregarEstudio: 'Agregar estudio', sinEstudios: 'Todavía no cargaste estudios.',
       topeEstudios: (x) => 'Hasta ' + x + ' estudios.',
       idiomas: 'Idiomas', idioma: 'Idioma', nivel: 'Nivel', nativo: 'Nativo',
