@@ -57,7 +57,10 @@ img { max-width: 100%; display: block; }
 .icono-14 { width: 14px; height: 14px; stroke-width: 2; }
 
 /* ---------- 3. Encabezado, pestañas, bandas, pie ---------- */
-#barra { min-height: 114px; }
+/* El encabezado entero es el elemento fijo: un sticky no puede salirse de su contenedor, y #barra mide lo mismo que
+   lo que tiene adentro. En celular sube 56 px (se va el logo) y quedan las pestañas; desde 1024, la barra única entera. */
+#barra { min-height: 114px; position: sticky; top: -56px; z-index: 20; }
+html { scroll-padding-top: 72px; }
 .barra { display: contents; }
 .logo {
   display: inline-flex; align-items: center; gap: 8px; height: 56px; padding: 0 16px;
@@ -546,7 +549,7 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 /* La barra única de escritorio necesita 1024 px: a 768 las siete pestañas no entran (QA 22/10/2026, 916 px con seis).
    Entre 768 y 1023, el encabezado de celular (pestañas con el ícono arriba, que se desplazan) y el contenido de escritorio. */
 @media (min-width: 1024px) {
-  #barra { min-height: 56px; }
+  #barra { min-height: 56px; top: 0; }
   .barra {
     display: flex; align-items: center; gap: 20px; position: sticky; top: 0; z-index: 20; height: 56px; padding: 0 16px 0 0;
     background: var(--hoja); border-bottom: 1px solid var(--linea);
@@ -625,6 +628,34 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .con-cajon:not(.abierto) .tabla-avisos .interes { flex-direction: row; flex-wrap: nowrap; align-items: center; }
   .cajon-linea .hoja-cuerpo { overflow: visible; }
   .cajon-linea .hoja-acciones { position: sticky; bottom: 0; }
+}
+
+/* ---------- Mi perfil: carril, bloque elegido y cabecera fija con Guardar (diseno.md 0.5 §9.2) ---------- */
+/* El modo lo decide perfil.js con el mismo corte (768 px) y lo marca con .modo-carril. */
+.titulo-fijo { display: none; }
+.carril-alerta { color: var(--error); flex: none; }
+@media (min-width: 768px) {
+  .cabecera-pagina.perfil-cabecera {
+    position: sticky; top: 59px; z-index: 15; max-width: 1024px; justify-content: flex-start; column-gap: 16px;
+    margin: -12px 0 -4px; padding: 12px 0; background: var(--papel);
+  }
+  .perfil-cabecera.pegada { box-shadow: 0 1px 0 var(--linea); }
+  .perfil-cabecera .guardar-fijo { margin-left: auto; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; }
+  .perfil-cabecera .btn { min-height: 40px; }
+  .formulario-angosto.modo-carril { max-width: 1024px; }
+  .modo-carril .perfil-cuerpo { display: grid; grid-template-columns: 216px minmax(0, 1fr); gap: 24px; align-items: start; }
+  .modo-carril .carril-perfil { width: auto; }
+  .modo-carril .plegable-boton { display: none; }
+  .modo-carril .titulo-fijo { display: block; }
+  .modo-carril .perfil-bloques > .tarjeta { padding: 16px 20px; }
+}
+/* Entre 768 y 1023 el bloque mide unos 480 px: los pares largos (desde y hasta; teléfono y LinkedIn) van apilados,
+   si no "septiembre" no entra en su selector. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .modo-carril .dos-apilable { grid-template-columns: minmax(0, 1fr); }
+}
+@media (min-width: 1024px) {
+  .cabecera-pagina.perfil-cabecera { top: 56px; }
 }
 
 /* ---------- 9. Preferencias del sistema ---------- */

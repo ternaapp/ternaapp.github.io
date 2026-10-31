@@ -1,7 +1,8 @@
 /* Terna · js/perfil.js
-   Mi perfil (diseno.md 0.4 §9.1 y §9.2; brand.md §6.6): datos, CV original, perfil estructurado, datos para formularios,
-   experiencia, estudios e idiomas, en ese orden también en primer uso. Cada bloque es un desplegable con la flecha:
-   arranca cerrado, salvo los que tienen algo que falta para el perfil completo; un error al guardar abre el suyo.
+   Mi perfil (diseno.md 0.5 §9.1 y §9.2; brand.md §6.6): datos, CV original, perfil estructurado, datos para formularios,
+   experiencia, estudios e idiomas, en ese orden también en primer uso. En celular cada bloque es un desplegable (cerrado,
+   salvo los que tienen algo que falta) y "Guardar" va fijo abajo. Desde 768 px: carril a la izquierda, el bloque elegido
+   a la derecha y "Guardar" arriba a la derecha en la cabecera fija. Un error al guardar muestra su bloque.
    Un "Guardar" para la página; el CV se sube en el acto y el perfil estructurado tiene su propio "Guardar". */
 'use strict';
 
@@ -99,10 +100,11 @@ Terna.pagina('perfil', async (ctx) => {
     const err = document.getElementById(id + '-error');
     if (err) { err.textContent = texto; abrirSeccionDe(err); }
     for (const el of [document.getElementById(id), document.getElementById(id + '-mes'), document.getElementById(id + '-anio')]) if (el) el.setAttribute('aria-invalid', 'true');
+    marcarCarril();
   }
   function limpiarError(id) {
     const err = document.getElementById(id + '-error');
-    if (err) err.textContent = '';
+    if (err && err.textContent) { err.textContent = ''; marcarCarril(); }
     for (const el of [document.getElementById(id), document.getElementById(id + '-mes'), document.getElementById(id + '-anio')]) if (el) el.removeAttribute('aria-invalid');
   }
   function boton(texto, iconoId, fn, clase, extra) {
@@ -117,35 +119,80 @@ Terna.pagina('perfil', async (ctx) => {
       faltantes.length ? P.falta(Terna.listaFaltantes(faltantes)) : P.completo);
   }
 
-  /* ---------- Bloques: cada uno es un desplegable (diseno.md 0.4 §9.2) ---------- */
-  // Arrancan abiertos solo los bloques con algo que falta para el perfil completo (perfil_faltantes).
+  /* ---------- Bloques (diseno.md 0.5 §9.2) ----------
+     Hasta 767 px cada bloque es un desplegable: arrancan cerrados salvo los que tienen algo que falta.
+     Desde 768 px, el carril de la izquierda elige un bloque y a la derecha se ve ese bloque entero (modo carril).
+     El bloque es el mismo en los dos modos: solo cambia qué se oculta. La URL lleva el bloque (#experiencia). */
+  const HASH = { datos: 'datos', cv: 'cv', estr: 'estructurado', form: 'formularios', exp: 'experiencia', est: 'estudios', idi: 'idiomas' };
+  const CUENTA = { exp: () => listas.exp.length, est: () => listas.est.length, idi: () => listas.idi.length };
+  const escritorio = window.matchMedia('(min-width: 768px)');
   const abiertosAlEntrar = new Set();
   if (faltantes.includes('nombre') || faltantes.includes('ciudad')) abiertosAlEntrar.add('datos');
   if (faltantes.includes('experiencia')) { abiertosAlEntrar.add('exp'); abiertosAlEntrar.add('est'); }
   if (faltantes.includes('idioma')) abiertosAlEntrar.add('idi');
   const plegables = {};
-  // Encabezado con el botón adentro (patrón de desplegable): la sección tiene su h2 y el botón dice si está abierta.
-  // alAbrir corre cada vez que se abre (Datos para formularios lo usa para descifrar recién ahí).
+  const orden = [];
+  let modoCarril = false;
+  let elegido = null;
+  const carril = h('nav', { class: 'carril carril-perfil', 'aria-label': T.comun.pestanas.perfil });
+
+  // El h2 lleva el botón del desplegable (celular) y el mismo título sin botón (modo carril); el CSS muestra uno.
+  // alAbrir corre cada vez que el bloque se abre o se elige (Datos para formularios lo usa para descifrar recién ahí).
   function seccion(claveSec, titulo, cuerpo, alAbrir) {
     const id = 'h-' + claveSec;
-    const idPanel = 'panel-' + claveSec;
-    const abierta = abiertosAlEntrar.has(claveSec);
-    const panel = h('div', { class: 'seccion', id: idPanel, hidden: !abierta }, cuerpo);
-    const boton = h('button', { class: 'plegable-boton', type: 'button', 'aria-expanded': String(abierta), 'aria-controls': idPanel },
+    const idPanel = 'panel-' + HASH[claveSec];
+    const p = { abierta: abiertosAlEntrar.has(claveSec), alAbrir };
+    p.panel = h('div', { class: 'seccion', id: idPanel, hidden: !p.abierta }, cuerpo);
+    p.boton = h('button', { class: 'plegable-boton', type: 'button', 'aria-expanded': String(p.abierta), 'aria-controls': idPanel },
       h('span', { class: 'tarjeta-titulo', id, text: titulo }), icono('i-chevron'));
-    const poner = (abrir) => {
-      boton.setAttribute('aria-expanded', String(abrir));
-      panel.hidden = !abrir;
-      if (abrir && alAbrir) alAbrir(panel);
-    };
-    boton.addEventListener('click', () => poner(boton.getAttribute('aria-expanded') !== 'true'));
-    plegables[claveSec] = { abrir: () => { if (panel.hidden) poner(true); } };
-    return h('section', { class: 'tarjeta seccion', 'aria-labelledby': id, dataset: { plegable: claveSec } },
-      h('h2', { class: 'plegable-titulo' }, boton), panel);
+    p.boton.addEventListener('click', () => plegar(claveSec, !p.abierta));
+    p.seccion = h('section', { class: 'tarjeta seccion', 'aria-labelledby': id, dataset: { plegable: claveSec } },
+      h('h2', { class: 'plegable-titulo' }, p.boton, h('span', { class: 'tarjeta-titulo titulo-fijo', text: titulo })), p.panel);
+    p.n = CUENTA[claveSec] ? h('span', { class: 'n' }) : null;
+    p.alerta = icono('i-alerta', 'icono-16 carril-alerta');
+    p.alerta.setAttribute('hidden', ''); // un <svg> no tiene la propiedad hidden: va el atributo
+    p.link = h('a', { href: '#' + HASH[claveSec], onclick: (e) => { e.preventDefault(); elegir(claveSec, true); } },
+      h('span', { text: titulo }), p.alerta, p.n);
+    plegables[claveSec] = p;
+    orden.push(claveSec);
+    return p.seccion;
+  }
+  function plegar(k, abrir) {
+    const p = plegables[k];
+    p.abierta = abrir;
+    if (modoCarril) return;
+    p.boton.setAttribute('aria-expanded', String(abrir));
+    p.panel.hidden = !abrir;
+    if (abrir && p.alAbrir) p.alAbrir();
+  }
+  function elegir(k, desdeCarril) {
+    elegido = k;
+    if (!modoCarril) return;
+    for (const x of orden) {
+      plegables[x].seccion.hidden = x !== k;
+      plegables[x].link.setAttribute('aria-current', x === k ? 'true' : 'false');
+    }
+    if (plegables[k].alAbrir) plegables[k].alAbrir();
+    if (desdeCarril) {
+      history.replaceState(null, '', '#' + HASH[k]);
+      const s = plegables[k].seccion;
+      if (s.getBoundingClientRect().top < parseFloat(document.documentElement.style.scrollPaddingTop || '0')) s.scrollIntoView({ block: 'start' });
+    }
   }
   function abrirSeccionDe(el) {
     const s = el && el.closest('section[data-plegable]');
-    if (s && plegables[s.dataset.plegable]) plegables[s.dataset.plegable].abrir();
+    if (s && plegables[s.dataset.plegable] && !modoCarril) plegar(s.dataset.plegable, true);
+  }
+  const conError = (k) => Array.from(plegables[k].seccion.querySelectorAll('.campo-error')).some((e) => e.textContent);
+  // En modo carril se ve un bloque por vez: el carril marca los que tienen errores y se muestra el primero.
+  function marcarCarril() { for (const k of orden) plegables[k].alerta.toggleAttribute('hidden', !conError(k)); }
+  function irAlPrimerError() {
+    const k = orden.find(conError);
+    if (k && modoCarril && k !== elegido) elegir(k, true);
+  }
+  function actualizarCuentas() {
+    for (const k of orden) if (plegables[k].n) plegables[k].n.textContent = String(CUENTA[k]());
+    marcarCarril();
   }
 
   function bloqueDatos() {
@@ -190,6 +237,7 @@ Terna.pagina('perfil', async (ctx) => {
           dibujarLista('exp-' + e.clave + '-puesto');
         }, 'btn', { id: 'agregar-exp' })));
       } else cont.append(h('p', { class: 'campo-ayuda', text: P.topeExperiencias(MAX.exp) }));
+      actualizarCuentas();
       if (foco) enfocar(foco);
     };
     dibujarLista();
@@ -218,6 +266,7 @@ Terna.pagina('perfil', async (ctx) => {
           dibujarLista('est-' + e.clave + '-titulo');
         }, 'btn', { id: 'agregar-est' })));
       } else cont.append(h('p', { class: 'campo-ayuda', text: P.topeEstudios(MAX.est) }));
+      actualizarCuentas();
       if (foco) enfocar(foco);
     };
     dibujarLista();
@@ -247,6 +296,7 @@ Terna.pagina('perfil', async (ctx) => {
           dibujarLista('idi-' + e.clave + '-idioma');
         }, 'btn', { id: 'agregar-idi' })));
       } else cont.append(h('p', { class: 'campo-ayuda', text: P.topeIdiomas(MAX.idi) }));
+      actualizarCuentas();
       if (foco) enfocar(foco);
     };
     dibujarLista();
@@ -390,7 +440,13 @@ Terna.pagina('perfil', async (ctx) => {
   const banda = h('div', { class: 'banda banda-error', role: 'alert', tabindex: '-1', hidden: true });
   const estadoGuardado = h('p', { class: 'estado-guardado', role: 'status' });
   const bGuardar = h('button', { class: 'btn btn-primario btn-ancho', type: 'button' }, T.comun.guardar);
-  function mostrarBanda(texto) { Terna.vaciar(banda); banda.append(icono('i-alerta'), h('span', { text: texto })); banda.hidden = false; banda.focus(); }
+  function mostrarBanda(texto) {
+    Terna.vaciar(banda);
+    banda.append(icono('i-alerta'), h('span', { text: texto }));
+    banda.hidden = false;
+    irAlPrimerError();
+    banda.focus();
+  }
 
   function validar() {
     let ok = true;
@@ -470,6 +526,7 @@ Terna.pagina('perfil', async (ctx) => {
       return;
     }
     originales = foto();
+    marcarCarril();
     const r = await sb.rpc('perfil_faltantes');
     bGuardar.removeAttribute('aria-disabled');
     if (!r.error) { faltantes = r.data || []; Terna.actualizarFaltantes(faltantes); dibujarIndicador(); }
@@ -506,9 +563,47 @@ Terna.pagina('perfil', async (ctx) => {
   /* ---------- Página ---------- */
   dibujarIndicador();
   Terna.vaciar(raiz);
+  const cabecera = document.getElementById('cabecera');
+  const grupoGuardar = h('div', { class: 'guardar-fijo' }, estadoGuardado, bGuardar);
   const bloques = [bloqueDatos(), bloqueCv(), estructurado ? bloqueEstructurado() : null, bloqueFormularios(),
     bloqueExperiencia(), bloqueEstudios(), bloqueIdiomas()];
-  raiz.append(banda, h('div', { class: 'seccion' }, bloques),
-    h('p', { class: 'campo-ayuda', text: P.privacidad }),
-    h('div', { class: 'guardar-fijo' }, estadoGuardado, bGuardar));
+  carril.append(...orden.map((k) => plegables[k].link));
+  actualizarCuentas();
+  raiz.append(banda,
+    h('div', { class: 'perfil-cuerpo' }, carril,
+      h('div', { class: 'seccion perfil-bloques' }, bloques, h('p', { class: 'campo-ayuda', text: P.privacidad }))),
+    grupoGuardar);
+
+  // Desde 768 px la cabecera queda fija con Guardar a la derecha: el carril y el desplazamiento al foco se corren su alto.
+  const topeCabecera = () => parseFloat(getComputedStyle(cabecera).top) || 0;
+  function medirCabecera() {
+    const raizDoc = document.documentElement.style;
+    if (!modoCarril) { raizDoc.removeProperty('scroll-padding-top'); carril.style.removeProperty('top'); return; }
+    const abajo = topeCabecera() + cabecera.offsetHeight;
+    raizDoc.setProperty('scroll-padding-top', (abajo + 12) + 'px');
+    carril.style.setProperty('top', (abajo + 16) + 'px');
+  }
+  function marcarPegada() { cabecera.classList.toggle('pegada', modoCarril && cabecera.getBoundingClientRect().top <= topeCabecera() + 0.5); }
+  function aplicarModo() {
+    modoCarril = escritorio.matches;
+    raiz.classList.toggle('modo-carril', modoCarril);
+    if (modoCarril) cabecera.append(grupoGuardar); else raiz.append(grupoGuardar);
+    for (const k of orden) {
+      const p = plegables[k];
+      p.seccion.hidden = false;
+      p.panel.hidden = modoCarril ? false : !p.abierta;
+      p.boton.setAttribute('aria-expanded', String(p.abierta));
+    }
+    if (modoCarril) elegir(elegido);
+    medirCabecera();
+    marcarPegada();
+  }
+  // Bloque inicial: el de la URL; si no, el primero con algo que falta; si no, Datos.
+  const desdeUrl = orden.find((k) => HASH[k] === location.hash.slice(1));
+  elegido = desdeUrl || orden.find((k) => abiertosAlEntrar.has(k)) || 'datos';
+  aplicarModo();
+  if (desdeUrl && !modoCarril) { plegar(desdeUrl, true); plegables[desdeUrl].seccion.scrollIntoView({ block: 'start' }); }
+  escritorio.addEventListener('change', aplicarModo);
+  if (window.ResizeObserver) new ResizeObserver(medirCabecera).observe(cabecera);
+  addEventListener('scroll', marcarPegada, { passive: true });
 });
