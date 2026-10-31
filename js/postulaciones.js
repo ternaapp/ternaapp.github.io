@@ -425,10 +425,14 @@ Terna.pagina('postulaciones', async (ctx) => {
   // Mi perfil lleva a Mi perfil; DNI, CUIL o fecha de nacimiento, a Datos para formularios (desde 0.4.8 Terna los escribe si
   // están cargados); lo demás, a las respuestas para formularios de Preferencias, como hasta ahora.
   const CAMPOS_PERFIL = { empresa_actual: 'experiencia', telefono: 'datos', linkedin: 'datos', dni: 'formularios' };
+  // Lo que Terna no tiene en ningún lado (el promedio, un archivo que no es el CV ni la carta): no hay dónde completarlo, así que
+  // no va link (pipeline.md 0.3.19 §4.12).
+  const CAMPOS_SIN_LINK = { promedio: true, archivo: true };
   function campoTraba(a) { return a.respuestas && a.respuestas.traba ? a.respuestas.traba.campo || null : null; }
   function linkTraba(a) {
     if (a.motivo_a_mano !== 'pregunta_sin_respuesta') return null;
     const campo = campoTraba(a);
+    if (CAMPOS_SIN_LINK[campo]) return null;
     if (CAMPOS_PERFIL[campo]) return h('a', { href: 'perfil.html#' + CAMPOS_PERFIL[campo], text: T.postulaciones.completarPerfil });
     return h('a', { href: 'preferencias.html#respuestas', text: T.postulaciones.completarRespuestas });
   }
