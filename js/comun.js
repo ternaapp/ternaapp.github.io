@@ -361,14 +361,19 @@ window.Terna = (function () {
   const anchoEscritorio = window.matchMedia('(min-width: 768px)');
   let fichaAbierta = null;
 
+  // diseno.md 0.7 §10.7: la cruz va afuera del marco, siempre visible (no se va al bajar); la cabecera (el título, o el
+  // puesto, la empresa y el match de una ficha) baja junto con el cuerpo, así queda más lugar; las acciones quedan fijas abajo.
+  // La cruz va primera: es el primer control que toma el foco al abrir la hoja.
   function armarHoja({ titulo, cuerpo, acciones, cabecera, idTitulo }) {
     const id = idTitulo || idUnico('hoja');
-    const cab = h('div', { class: 'hoja-cabecera' },
-      cabecera || h('h2', { id, text: titulo }),
-      h('button', { class: 'hoja-cerrar', type: 'button', 'aria-label': T.comun.cerrar, onclick: () => cerrarHoja(true) }, icono('i-cerrar')));
-    const partes = [h('div', { class: 'hoja-asa', 'aria-hidden': 'true' }), cab, h('div', { class: 'hoja-cuerpo' }, cuerpo)];
-    if (acciones) partes.push(h('div', { class: 'hoja-acciones' }, acciones));
-    return { partes, idTitulo: id };
+    const cerrar = h('button', { class: 'hoja-cerrar', type: 'button', 'aria-label': T.comun.cerrar, onclick: () => cerrarHoja(true) }, icono('i-cerrar'));
+    const marco = h('div', { class: 'hoja-marco' },
+      h('div', { class: 'hoja-asa', 'aria-hidden': 'true' }),
+      h('div', { class: 'hoja-desplazable' },
+        h('div', { class: 'hoja-cabecera' }, cabecera || h('h2', { id, text: titulo })),
+        h('div', { class: 'hoja-cuerpo' }, cuerpo)),
+      acciones ? h('div', { class: 'hoja-acciones' }, acciones) : null);
+    return { partes: [cerrar, marco], idTitulo: id };
   }
 
   // opciones: titulo | cabecera (nodo) + idTitulo, cuerpo, acciones, enLinea (bool), panel (nodo ancla), alCerrar, origen, clave
@@ -396,8 +401,11 @@ window.Terna = (function () {
       document.body.append(el);
       if (opciones.panel && anchoEscritorio.matches) {
         const r = opciones.panel.getBoundingClientRect();
-        el.style.setProperty('top', Math.round(r.bottom + 8) + 'px');
-        el.style.setProperty('left', Math.round(Math.max(16, Math.min(r.left, window.innerWidth - 376))) + 'px');
+        // Alineado a la derecha del botón y 30 px más abajo: la cruz va sobre la esquina y no tiene que tapar el botón.
+        const arriba = Math.round(r.bottom + 30);
+        el.style.setProperty('top', arriba + 'px');
+        el.style.setProperty('max-height', Math.max(240, window.innerHeight - arriba - 16) + 'px');
+        el.style.setProperty('left', Math.round(Math.max(16, Math.min(r.right - 360, window.innerWidth - 384))) + 'px');
       }
       el.showModal();
       document.documentElement.style.setProperty('overflow', 'hidden');
@@ -405,6 +413,7 @@ window.Terna = (function () {
       el.style.setProperty('--alto-acciones', (barra ? barra.offsetHeight : 0) + 'px');
     }
     fichaAbierta = { el, linea: !!linea, origen, alCerrar: opciones.alCerrar, clave: opciones.clave || null };
+    if (linea) ajustarLinea();
     return el;
   }
   // porUsuario: true cuando la cierra la persona (cruz, Esc, fuera); avisa a la página para que limpie el hash.
@@ -427,10 +436,27 @@ window.Terna = (function () {
   function reemplazarCuerpoHoja(cuerpo, acciones) {
     if (!fichaAbierta) return;
     const c = fichaAbierta.el.querySelector('.hoja-cuerpo');
-    if (c) { const scroll = c.scrollTop; vaciar(c); agregar(c, [cuerpo]); c.scrollTop = scroll; }
+    const d = fichaAbierta.el.querySelector('.hoja-desplazable');
+    if (c) { const scroll = d ? d.scrollTop : 0; vaciar(c); agregar(c, [cuerpo]); if (d) d.scrollTop = scroll; }
     const a = fichaAbierta.el.querySelector('.hoja-acciones');
     if (a && acciones) { vaciar(a); agregar(a, [acciones]); }
   }
+  // Cajón en línea: el alto es el que queda de pantalla debajo de donde se pega (80 px), menos lo que la página tiene
+  // después de la lista (el pie). Así entra entero entre la barra y el final de la página: con pocas filas la página no
+  // se alarga por el cajón, y con muchas, al llegar al final, el contenedor no lo empuja hacia arriba ni se lleva la
+  // cruz (diseno.md 0.7 §10.7). Se mide al abrir y al cambiar el tamaño de la ventana.
+  function ajustarLinea() {
+    if (!fichaAbierta || !fichaAbierta.linea) return;
+    const aside = fichaAbierta.el;
+    const marco = aside.querySelector('.hoja-marco');
+    const pie = document.querySelector('.pie');
+    if (!marco || !aside.parentElement) return;
+    const pegado = parseFloat(getComputedStyle(aside).top) || 80;
+    const contAbajo = aside.parentElement.getBoundingClientRect().bottom;
+    const despues = Math.max(16, (pie ? pie.getBoundingClientRect().bottom : contAbajo) - contAbajo);
+    marco.style.setProperty('max-height', Math.max(320, window.innerHeight - pegado - despues) + 'px');
+  }
+  addEventListener('resize', () => requestAnimationFrame(ajustarLinea));
   // Si cambia el ancho con una ficha abierta, la página la vuelve a abrir en el modo que corresponde.
   anchoLinea.addEventListener('change', () => { if (fichaAbierta) document.dispatchEvent(new CustomEvent('terna:cambio-ancho')); });
   anchoEscritorio.addEventListener('change', () => document.dispatchEvent(new CustomEvent('terna:cambio-diseno')));

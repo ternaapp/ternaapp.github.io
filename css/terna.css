@@ -267,28 +267,43 @@ select.control { padding-right: 8px; }
 dialog { color: var(--tinta); }
 dialog::backdrop { background: var(--velo); }
 .dialogo {
-  width: calc(100% - 32px); max-width: 440px; padding: 16px; border: 1px solid var(--linea); border-radius: 10px;
+  width: calc(100% - 32px); max-width: 440px; padding: 16px; border: 1px solid var(--linea); border-radius: 14px;
   background: var(--hoja);
 }
 .dialogo[open] { display: flex; flex-direction: column; gap: 12px; animation: aparecer var(--mov) ease-out; }
 .dialogo h2 { font-family: var(--fuente-titulos); font-weight: 600; font-size: 20px; line-height: 1.2; }
 .dialogo .botones { justify-content: flex-end; }
+/* Hoja, cajón y panel (diseno.md 0.7 §10.7): el <dialog> (o el <aside> del cajón en línea) no se ve; adentro, el marco
+   redondeado (cabecera y cuerpo que bajan juntos, acciones fijas abajo) y, afuera del marco, la cruz, siempre visible.
+   Celular: la cruz va arriba de la hoja, sobre el fondo oscurecido; por eso la hoja deja 64 px libres arriba. */
 .hoja {
-  margin: 0; padding: 0; border: 0; inset: auto 0 0 0; width: 100%; max-width: 100%; max-height: 90vh; max-height: 90dvh;
-  border-radius: 14px 14px 0 0; background: var(--hoja); overflow: hidden;
+  margin: 0; padding: 0; border: 0; inset: auto 0 0 0; width: 100%; max-width: 100%;
+  max-height: calc(100vh - 64px); max-height: calc(100dvh - 64px); background: transparent; overflow: visible;
 }
 .hoja[open] { display: flex; flex-direction: column; animation: subir var(--mov) ease-out; }
-.hoja-asa { width: 36px; height: 4px; border-radius: 2px; background: var(--linea); margin: 8px auto 0; flex: none; }
-.hoja-cabecera { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 6px 16px 8px; flex: none; }
-.hoja-cabecera h2 { font-family: var(--fuente-titulos); font-weight: 600; font-size: 22px; line-height: 1.2; padding-top: 4px; }
-.hoja-cerrar {
-  flex: none; width: 44px; height: 44px; margin: 0 -10px 0 0; border: 0; border-radius: 6px;
-  background: transparent; color: var(--tinta-suave); display: inline-flex; align-items: center; justify-content: center;
+.hoja-marco {
+  flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column;
+  background: var(--hoja); border-radius: 14px 14px 0 0; overflow: hidden;
 }
-.hoja-cuerpo { flex: 1; overflow-y: auto; padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 16px; overscroll-behavior: contain; }
+.hoja-asa { width: 36px; height: 4px; border-radius: 2px; background: var(--linea); margin: 8px auto 0; flex: none; }
+.hoja-desplazable {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: var(--borde-control) transparent;
+}
+.hoja-cabecera { padding: 10px 16px 8px; }
+.hoja-cabecera h2 { font-family: var(--fuente-titulos); font-weight: 600; font-size: 22px; line-height: 1.2; }
+.hoja-cerrar {
+  position: absolute; z-index: 2; top: -52px; right: 12px; width: 44px; height: 44px; padding: 0;
+  border: 1px solid var(--linea); border-radius: 50%; background: var(--hoja); color: var(--tinta);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.hoja-cerrar:hover { background: var(--seleccion); }
+.hoja-cuerpo { padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 16px; }
 .hoja-acciones { flex: none; padding: 12px 16px 16px; border-top: 1px solid var(--linea); background: var(--hoja); display: flex; flex-direction: column; gap: 8px; }
 .hoja-acciones .botones { justify-content: center; }
 .cajon-linea { display: none; }
+/* Las cajas que se desplazan a lo ancho, con la barra fina (la gruesa con flechas cuadraba las esquinas redondeadas). */
+.tabla-caja { scrollbar-width: thin; scrollbar-color: var(--borde-control) transparent; }
 
 /* Etiquetas del aviso (no son chips) */
 .etiqueta { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--tinta-suave); line-height: 1.3; }
@@ -570,14 +585,21 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .cabecera-pagina > .herramientas { flex: 0 1 auto; justify-content: flex-end; }
   .post-principal > .herramientas { justify-content: flex-end; }
   .btn-barra { min-height: 40px; }
-  .hoja {
-    inset: 0 0 0 auto; width: 400px; max-width: 100%; height: 100%; max-height: 100%; border-radius: 0;
-    border-left: 1px solid var(--linea);
-  }
+  /* Cajón superpuesto: redondeado del lado del contenido; la cruz afuera, a su izquierda, sobre el fondo oscurecido. */
+  .hoja { inset: 0 0 0 auto; width: 400px; max-width: calc(100% - 64px); height: 100%; max-height: 100%; }
   .hoja[open] { animation: entrar-derecha var(--mov) ease-out; }
+  .hoja-marco { flex: 1 1 auto; border-radius: 14px 0 0 14px; border-left: 1px solid var(--linea); }
+  .hoja-cerrar { top: 12px; right: auto; left: -56px; }
   .hoja-asa { display: none; }
   .hoja-cabecera { padding-top: 16px; }
-  .hoja.panel { inset: auto; width: 360px; height: auto; max-height: calc(100vh - 96px); border: 1px solid var(--linea); border-radius: 10px; }
+  /* Panel de filtros: redondeado entero, alineado a la derecha del botón "Filtrar" y 30 px más abajo (comun.js), para que
+     la cruz, centrada sobre su esquina de arriba a la derecha, quede debajo del botón y no encima. */
+  .hoja.panel { inset: auto; width: 360px; max-width: 360px; height: auto; max-height: calc(100vh - 120px); }
+  .hoja.panel .hoja-marco { flex: 0 1 auto; border: 1px solid var(--linea); border-radius: 14px; }
+  .hoja.panel .hoja-cerrar, .cajon-linea .hoja-cerrar { top: -22px; right: -22px; left: auto; }
+  .hoja.panel .hoja-cabecera, .cajon-linea .hoja-cabecera { padding: 20px 20px 8px; }
+  .hoja.panel .hoja-cuerpo, .cajon-linea .hoja-cuerpo { padding: 4px 20px 16px; }
+  .hoja.panel .hoja-acciones, .cajon-linea .hoja-acciones { padding: 12px 20px 16px; }
   .hoja.panel[open] { animation: aparecer var(--mov) ease-out; }
   .hoja.panel::backdrop { background: rgb(31 37 34 / 0.12); }
   .dialogo .botones { flex-wrap: nowrap; }
@@ -620,14 +642,13 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .pestanas { gap: 20px; }
   .pestana { font-size: 15px; }
   .con-cajon.abierto { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 20px; align-items: start; }
-  .cajon-linea {
-    display: block; position: sticky; top: 72px; max-height: calc(100vh - 88px); overflow-y: auto;
-    background: var(--hoja); border: 1px solid var(--linea); border-radius: 10px;
-  }
+  /* Cajón en línea: el <aside> solo se queda fijo; el marco redondeado se desplaza por dentro y la cruz va centrada
+     sobre su esquina de arriba a la derecha (reglas junto al panel, en el corte de 768), así no se va al bajar.
+     Se pega a 80 px (no 72) para que la cruz no quede debajo de la barra. */
+  .cajon-linea { display: block; position: sticky; top: 80px; }
   .cajon-linea[hidden] { display: none; }
+  .cajon-linea .hoja-marco { max-height: calc(100vh - 96px); border: 1px solid var(--linea); border-radius: 14px; }
   .con-cajon:not(.abierto) .tabla-avisos .interes { flex-direction: row; flex-wrap: nowrap; align-items: center; }
-  .cajon-linea .hoja-cuerpo { overflow: visible; }
-  .cajon-linea .hoja-acciones { position: sticky; bottom: 0; }
 }
 
 /* ---------- Página por bloques: Mi perfil y Preferencias (diseno.md 0.6 §10.17) ---------- */
