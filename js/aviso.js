@@ -103,7 +103,7 @@ window.Aviso = (function () {
   }
   // Lo que no entra, en palabras ("híbrido", "pasantía"), para la etiqueta "Fuera de tus preferencias". Solo cuenta para un
   // aviso que Terna decidiría solo: con la postulación pendiente y sin un pedido de la persona (pedido_en); lo pedido, lo
-  // que está en marcha y lo hecho siguen su curso (pipeline.md 0.3.14 §4.9 y §4.12).
+  // que está en marcha y lo hecho siguen su curso (pipeline.md 0.3.15 §4.9 y §4.12).
   function motivosFuera(a, b) {
     if (a.pedido_en || (a.estado_postulacion && a.estado_postulacion !== 'pendiente')) return [];
     const m = [];

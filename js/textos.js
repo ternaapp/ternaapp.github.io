@@ -113,7 +113,7 @@ window.T = (function () {
         aplicar: 'Aplicar filtros', limpiar: 'Limpiar', limpiarFiltros: 'Limpiar filtros',
         quitar: (x) => 'Quitar el filtro ' + x,
         todos: 'Todos', todas: 'Todas',
-        // La barra de filtros de Avisos (brand.md 0.4.9 §6.4): un botón por filtro, que arranca en las preferencias.
+        // La barra de filtros de Avisos (brand.md 0.4.10 §6.4): un botón por filtro, que arranca en las preferencias.
         barra: 'Filtros',
         nombres: { modalidad: 'Modalidad', alcance: 'Alcance', nivel: 'Nivel', jornada: 'Jornada', match: 'Match', interes: 'Interés', paquete: 'Paquete', postulacion: 'Postulación' },
         boton: (nombre, valor) => nombre + ': ' + valor,

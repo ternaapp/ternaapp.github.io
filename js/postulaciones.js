@@ -39,7 +39,7 @@ Terna.pagina('postulaciones', async (ctx) => {
   const bajoMinimo = (a) => prefs.salario_modo === 'rango' && !!a.paquete_id && conMinimo.has(a.match_id);
   const maxIntentos = config.max_reintentos_postulacion || 3;
   // Lo que quedó fuera de las preferencias de búsqueda del momento no se esconde acá (es lo que la persona ya tiene), pero
-  // la ficha lo dice: Terna no lo postula por su cuenta (diseno.md 0.11 §8.5; pipeline.md 0.3.14 §4.12).
+  // la ficha lo dice: Terna no lo postula por su cuenta (diseno.md 0.11 §8.5; pipeline.md 0.3.15 §4.12).
   const busquedaPrefs = Aviso.busquedaDe(prefs);
 
   /* ---------- Etapas (§8.2) ---------- */
