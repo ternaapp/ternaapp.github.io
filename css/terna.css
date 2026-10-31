@@ -474,6 +474,35 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .inicio-cols { display: flex; flex-direction: column; gap: 14px; }
 .asi-funciona { display: none; }
 
+/* Avisos: barra de filtros (diseno.md 0.11 §7.2). Un botón por filtro con su valor; el que la persona cambió
+   respecto de sus preferencias, en acción tinte con un punto adelante (no solo color). En celular, una fila que se desplaza
+   a lo ancho, como las píldoras; desde 768 px, los botones bajan de línea. */
+.filtros { display: flex; flex-direction: column; gap: 2px; margin-top: -4px; }
+.filtros-caja { position: relative; margin: 0 -16px; }
+.filtros-caja::after {
+  content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 24px; pointer-events: none;
+  background: linear-gradient(to right, rgb(245 246 243 / 0), var(--papel));
+}
+.filtros-barra { position: relative; display: flex; gap: 8px; overflow-x: auto; padding: 2px 16px 6px; scrollbar-width: none; }
+.filtros-barra::-webkit-scrollbar { display: none; }
+.filtro-boton {
+  position: relative; flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 0 8px 0 12px;
+  border: 1px solid var(--borde-control); border-radius: 6px; background: var(--hoja); color: var(--tinta);
+  font-size: 14px; white-space: nowrap; cursor: pointer;
+}
+.filtro-boton:hover { background: var(--seleccion); }
+.filtro-nombre { color: var(--tinta-suave); }
+.filtro-valor { font-weight: 500; }
+.filtro-boton .icono { color: var(--tinta-suave); }
+.filtro-boton.cambiado { background: var(--accion-tinte); border-color: var(--accion); color: var(--accion-oscura); }
+.filtro-boton.cambiado .filtro-nombre, .filtro-boton.cambiado .icono { color: var(--accion-oscura); }
+.filtro-boton.cambiado::before { content: ""; flex: none; width: 6px; height: 6px; margin-right: 2px; border-radius: 50%; background: currentColor; }
+.filtros-estado { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-height: 32px; font-size: 13px; color: var(--tinta-suave); }
+.filtros-estado .btn { margin-left: -8px; }
+.filtro-cuerpo { display: flex; flex-direction: column; gap: 10px; }
+.filtro-prefs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
+.filtro-prefs .btn { margin-left: -8px; }
+
 /* Avisos: barra de herramientas y tarjetas */
 .herramientas { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .cabecera-pagina > .herramientas { flex: 1 1 300px; }
@@ -590,6 +619,9 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .cabecera-pagina > .herramientas { flex: 0 1 auto; justify-content: flex-end; }
   .post-principal > .herramientas { justify-content: flex-end; }
   .btn-barra { min-height: 40px; }
+  .filtros-caja { margin: 0; }
+  .filtros-caja::after { display: none; }
+  .filtros-barra { flex-wrap: wrap; overflow: visible; padding: 2px 0 0; }
   /* Cajón superpuesto: redondeado del lado del contenido; la cruz afuera, a su izquierda, sobre el fondo oscurecido. */
   .hoja { inset: 0 0 0 auto; width: 400px; max-width: calc(100% - 64px); height: 100%; max-height: 100%; }
   .hoja[open] { animation: entrar-derecha var(--mov) ease-out; }

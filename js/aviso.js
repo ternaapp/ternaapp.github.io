@@ -57,11 +57,16 @@ window.Aviso = (function () {
     return h('span', { class: 'fecha-aviso' }, Terna.relativa(a.publicado_en || a.visto_en),
       a.nuevo ? [' · ', h('b', { text: T.avisos.nuevo })] : null);
   }
-  // Las dos etiquetas del aviso (brand.md §6.10): en la lista, cortas con tooltip; en la ficha, con su explicación.
-  function etiquetas(a, bajoMinimo, explicadas) {
+  // Las etiquetas del aviso (brand.md §6.10): en la lista, cortas con tooltip; en la ficha, con su explicación. `fuera` es
+  // la lista de lo que no entra en las preferencias de búsqueda (motivosFuera), o null.
+  function etiquetas(a, bajoMinimo, explicadas, fuera) {
     const lista = [];
     if (a.dudoso) lista.push(['i-viejo', T.avisos.viejo, T.avisos.viejoExplicacion, T.avisos.viejoAccesible]);
     if (bajoMinimo) lista.push(['i-bajo-minimo', T.avisos.bajoMinimo, T.avisos.bajoMinimoExplicacion, null]);
+    if (fuera && fuera.length) {
+      const m = fuera.join(', ');
+      lista.push(['i-filtrar', T.avisos.fuera, T.avisos.fueraExplicacion(m), T.avisos.fueraAccesible(m)]);
+    }
     if (!lista.length) return null;
     if (explicadas) {
       return h('div', { class: 'etiquetas' }, lista.map(([ic, tx, ex]) =>
@@ -69,6 +74,44 @@ window.Aviso = (function () {
     }
     return h('span', { class: 'etiquetas' }, lista.map(([ic, tx, ex, acc]) =>
       h('span', { class: 'etiqueta', title: ex }, icono(ic), h('span', { 'aria-hidden': acc ? 'true' : null, text: tx }), acc ? oculto(acc) : null)));
+  }
+
+  /* ---------- Preferencias de búsqueda (diseno.md 0.11 §7.2; datos.md 0.12, 0018) ----------
+     Lo mismo que el motor (filtros.pasa_preferencias), con las preferencias del momento: un aviso sin modalidad, nivel o
+     jornada pasa siempre; uno sin alcance cuenta como local. El área de la ciudad no se mira acá: lo local ya entró a la
+     lista por estar en el área de la persona. */
+  const MODALIDADES = ['remoto', 'hibrido', 'presencial'];
+  const ALCANCES = ['local', 'exterior'];
+  const NIVELES = ['pasantia', 'junior', 'semi_senior', 'senior', 'lider', 'director'];
+  const JORNADAS = ['completa', 'parcial'];
+  const TODOS_BUSQUEDA = { modalidad: MODALIDADES, alcance: ALCANCES, nivel: NIVELES, jornada: JORNADAS };
+  // Lo que dejan pasar las preferencias, por dimensión. Una lista vacía o rara vale "todo" (la base no deja guardarla).
+  function busquedaDe(prefs) {
+    const p = prefs || {};
+    const lista = (v, todos) => { const l = Array.isArray(v) ? todos.filter((x) => v.includes(x)) : []; return l.length ? l : todos.slice(); };
+    return {
+      modalidad: lista(p.modalidades, MODALIDADES),
+      alcance: p.alcance === 'local' || p.alcance === 'exterior' ? [p.alcance] : ALCANCES.slice(),
+      nivel: lista(p.niveles, NIVELES),
+      jornada: lista(p.jornadas, JORNADAS),
+    };
+  }
+  const alcanceDe = (a) => (a.alcance === 'exterior' ? 'exterior' : 'local');
+  function pasaBusqueda(a, b) {
+    return (!a.modalidad || b.modalidad.includes(a.modalidad)) && b.alcance.includes(alcanceDe(a))
+      && (!a.nivel || b.nivel.includes(a.nivel)) && (!a.jornada || b.jornada.includes(a.jornada));
+  }
+  // Lo que no entra, en palabras ("híbrido", "pasantía"), para la etiqueta "Fuera de tus preferencias". Solo cuenta para un
+  // aviso que Terna decidiría solo: con la postulación pendiente y sin un pedido de la persona (pedido_en); lo pedido, lo
+  // que está en marcha y lo hecho siguen su curso (pipeline.md 0.3.14 §4.9 y §4.12).
+  function motivosFuera(a, b) {
+    if (a.pedido_en || (a.estado_postulacion && a.estado_postulacion !== 'pendiente')) return [];
+    const m = [];
+    if (a.modalidad && !b.modalidad.includes(a.modalidad)) m.push(T.avisos.modalidadMin[a.modalidad]);
+    if (!b.alcance.includes(alcanceDe(a))) m.push(T.avisos.alcanceMin[alcanceDe(a)]);
+    if (a.nivel && !b.nivel.includes(a.nivel)) m.push(T.avisos.nivelMin[a.nivel]);
+    if (a.jornada && !b.jornada.includes(a.jornada)) m.push(T.avisos.jornadaMin[a.jornada]);
+    return m;
   }
 
   /* ---------- Atributos, match ---------- */
@@ -286,6 +329,7 @@ window.Aviso = (function () {
 
   return {
     estadoPaquete, llega, chip, chipPaquete, chipPostulacion, chipInteres, chipFaltan, fecha, etiquetas,
+    MODALIDADES, ALCANCES, NIVELES, JORNADAS, TODOS_BUSQUEDA, busquedaDe, pasaBusqueda, motivosFuera,
     lugar, atributos, bloqueMatch, controlInteres, fichasPaquete, parsearNotas, textoSalario,
     recorrido, recorridoGrande, traba, lineaEtapa, claseEtapa, puedeVolverAProbar, seccionPostulacion, razones, abrirAviso,
     ESTILO_POSTULACION,

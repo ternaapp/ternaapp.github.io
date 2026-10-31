@@ -18,12 +18,12 @@ Terna.pagina('postulaciones', async (ctx) => {
   const cuenta = document.getElementById('cuenta');
   const etapasCelular = document.getElementById('etapas-celular');
   const carril = document.getElementById('carril');
-  const COLUMNAS = 'match_id, aviso_id, puesto, empresa, ubicacion, pais, modalidad, alcance, url, url_postulacion, fuente, postulacion, dudoso, publicado_en, visto_en, tiene_texto, texto_origen, match, razones, requisitos_faltantes, interes, estado_paquete, pedido_en, creado_en, nuevo, paquete_id, paquete_idioma, armado_en, cv_path, carta_path, salario_monto, salario_moneda, salario_periodo, salario_motivo, notas, estado_postulacion, motivo_a_mano, traba_detalle, intentos, en_cola_en, enviada_en, postulado_en, entrevista_en, respuestas, captura_path, captura_en, confirmacion_texto';
+  const COLUMNAS = 'match_id, aviso_id, puesto, empresa, ubicacion, pais, modalidad, alcance, url, url_postulacion, fuente, postulacion, dudoso, publicado_en, visto_en, tiene_texto, texto_origen, match, razones, requisitos_faltantes, interes, estado_paquete, pedido_en, creado_en, nuevo, paquete_id, paquete_idioma, armado_en, cv_path, carta_path, salario_monto, salario_moneda, salario_periodo, salario_motivo, notas, estado_postulacion, motivo_a_mano, traba_detalle, intentos, en_cola_en, enviada_en, postulado_en, entrevista_en, respuestas, captura_path, captura_en, confirmacion_texto, nivel, jornada';
 
   const parar = Terna.cargando(lista);
   const [rA, rP, rB] = await Promise.all([
     sb.from('mis_avisos').select(COLUMNAS).or('paquete_id.not.is.null,estado_postulacion.neq.pendiente').neq('interes', 'no_me_interesa'),
-    sb.from('preferencias').select('umbral, salario_modo').eq('usuario_id', uid).maybeSingle(),
+    sb.from('preferencias').select('umbral, salario_modo, modalidades, alcance, niveles, jornadas').eq('usuario_id', uid).maybeSingle(),
     sb.from('paquetes').select('match_id, bajo_minimo:contenido->render->bajo_minimo'),
   ]);
   parar();
@@ -38,6 +38,9 @@ Terna.pagina('postulaciones', async (ctx) => {
   const conMinimo = new Set((rB.data || []).filter((p) => p.bajo_minimo === true).map((p) => p.match_id));
   const bajoMinimo = (a) => prefs.salario_modo === 'rango' && !!a.paquete_id && conMinimo.has(a.match_id);
   const maxIntentos = config.max_reintentos_postulacion || 3;
+  // Lo que quedó fuera de las preferencias de búsqueda del momento no se esconde acá (es lo que la persona ya tiene), pero
+  // la ficha lo dice: Terna no lo postula por su cuenta (diseno.md 0.11 §8.5; pipeline.md 0.3.14 §4.12).
+  const busquedaPrefs = Aviso.busquedaDe(prefs);
 
   /* ---------- Etapas (§8.2) ---------- */
   const ETAPAS = ['todas', 'a_mano', 'para_revisar', 'en_cola', 'enviada', 'postulado', 'entrevista'];
@@ -361,7 +364,7 @@ Terna.pagina('postulaciones', async (ctx) => {
     }
     if (a.estado_postulacion === 'enviada' && a.confirmacion_texto) sec.append(h('blockquote', { class: 'suave', text: a.confirmacion_texto }));
     if (a.captura_path) sec.append(captura(a));
-    const et = Aviso.etiquetas(a, bajoMinimo(a), true);
+    const et = Aviso.etiquetas(a, bajoMinimo(a), true, Aviso.motivosFuera(a, busquedaPrefs));
     if (et) sec.append(et);
     return sec;
   }
