@@ -687,11 +687,30 @@ window.Terna = (function () {
     bandas();
     return { sb, usuario: estado.usuario, perfil: estado.perfil, faltantes: estado.faltantes, config: estado.config };
   }
+  // Una página que se rompe al armarse suele ser una mezcla de archivos de dos publicaciones: GitHub Pages deja que el
+  // navegador guarde cada uno 10 minutos (31/10/2026, Preferencias nueva con textos.js viejo). Se recarga sola, como mucho
+  // una vez cada dos minutos: el HTML se vuelve a pedir y, con los sellos ?v= de sus archivos (herramientas/sellar.py),
+  // trae la versión publicada de cada uno. Si vuelve a fallar, queda el error de siempre (qa.md 0.5.14, observación 59).
+  function recargarUnaVez() {
+    try {
+      const ultima = Number(sessionStorage.getItem('terna.recarga')) || 0;
+      if (Date.now() - ultima < 120000) return false;
+      sessionStorage.setItem('terna.recarga', String(Date.now()));
+    } catch (e) {
+      return false;
+    }
+    location.reload();
+    return true;
+  }
   function pagina(nombre, fn, opciones) {
     const correr = async () => {
       const ctx = await iniciar(nombre, opciones);
       if (ctx) {
-        try { await fn(ctx); } catch (e) { errorDeCarga(document.getElementById('contenido'), e); }
+        try {
+          await fn(ctx);
+        } catch (e) {
+          if (!recargarUnaVez()) errorDeCarga(document.getElementById('contenido'), e);
+        }
       }
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', correr); else correr();

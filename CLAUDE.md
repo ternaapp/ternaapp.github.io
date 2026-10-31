@@ -32,4 +32,6 @@ El navegador habla con una pasarela local que imita PostgREST, GoTrue y Storage 
 
 ## Publicar
 
-`git push` a `main`: GitHub Pages publica la raíz en un par de minutos. Antes: las pruebas en verde y las once páginas abiertas en el sitio publicado sin errores de consola ni de CSP.
+**Antes de cada commit que toque `css/` o `js/`: `python3 herramientas/sellar.py`.** Pone en cada `.html` la huella del contenido de cada archivo (`js/textos.js?v=1a2b3c4d5e`). GitHub Pages deja que el navegador guarde cada archivo 10 minutos; sin el sello, quien entra justo después de publicar puede recibir un archivo nuevo con otro viejo y la página se rompe (le pasó a Preferencias el 31/10/2026; qa.md 0.5.14, observación 59). No es un build: los archivos se sirven tal cual. El banco lo controla (`archivos_sellados`), y si igual una página se rompe al armarse, `comun.js` la recarga sola una vez.
+
+`git push` a `main`: GitHub Pages publica la raíz en un par de minutos. Antes: los sellos al día, las pruebas en verde y las once páginas abiertas en el sitio publicado sin errores de consola ni de CSP.
