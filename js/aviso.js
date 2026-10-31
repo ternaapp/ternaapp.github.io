@@ -115,12 +115,15 @@ window.Aviso = (function () {
   }
 
   /* ---------- Atributos, match ---------- */
+  // Los portales que entran por alertas reenviadas (arquitectura.md §7.8): su nombre va en los atributos, porque el aviso
+  // se abre y se postula ahí, con la cuenta de la persona.
+  const DE_ALERTAS = new Set(['LinkedIn', 'Indeed', 'Bumeran', 'Zonajobs', 'Computrabajo']);
   function lugar(a) { return a.alcance === 'exterior' ? T.avisos.alcanceMin.exterior : (a.ubicacion || T.avisos.alcanceMin.local); }
   function atributos(a, opciones) {
     opciones = opciones || {};
     const partes = [[a.alcance === 'exterior' ? 'i-exterior' : 'i-local', lugar(a)]];
     if (a.modalidad) partes.push(['i-' + a.modalidad, T.avisos.modalidadMin[a.modalidad]]);
-    if (opciones.fuente || a.fuente === 'LinkedIn') partes.push([null, a.fuente]);
+    if (opciones.fuente || DE_ALERTAS.has(a.fuente)) partes.push([null, a.fuente]);
     const nodo = h(opciones.tag || 'span', { class: 'atributos' });
     partes.forEach(([ic, tx], i) => {
       if (i) nodo.append(h('span', { 'aria-hidden': 'true', text: '·' }), oculto(', '));

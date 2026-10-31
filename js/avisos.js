@@ -396,7 +396,7 @@ Terna.pagina('avisos', async (ctx) => {
     area.addEventListener('input', () => { contador.textContent = T.avisos.contador(area.value.length, max); });
     const bGuardar = h('button', { class: 'btn btn-primario', type: 'button' }, T.avisos.guardarTexto);
     const bCancelar = h('button', { class: 'btn', type: 'button' }, T.comun.cancelar);
-    const dlg = Terna.dialogo({ titulo: T.avisos.pegarTitulo, cuerpo: [h('p', { class: 'campo-ayuda', id: idAyuda, text: T.avisos.pegarAyuda }), area, contador, err], botones: [bCancelar, bGuardar] });
+    const dlg = Terna.dialogo({ titulo: T.avisos.pegarTitulo, cuerpo: [h('p', { class: 'campo-ayuda', id: idAyuda, text: T.avisos.pegarAyuda(a.fuente) }), area, contador, err], botones: [bCancelar, bGuardar] });
     area.setAttribute('aria-labelledby', dlg.getAttribute('aria-labelledby'));
     bCancelar.addEventListener('click', () => dlg.close());
     bGuardar.addEventListener('click', async () => {

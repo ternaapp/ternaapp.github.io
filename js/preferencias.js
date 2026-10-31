@@ -1,7 +1,8 @@
 /* Terna · js/preferencias.js
-   Preferencias (diseno.md 0.9 §9.3 y §10.17; brand.md 0.4.6 §6.7; datos.md 0.10, 0016): las diecinueve columnas de preferencias (con "Qué buscás", 0015), las alertas de
-   LinkedIn, pausar la cuenta (escribe en el acto) y el texto para borrarla, en cinco bloques: Búsqueda, Paquetes y
-   postulación, Respuestas para formularios (con opciones y defaults desde 0016), Alertas de LinkedIn y Tu cuenta.
+   Preferencias (diseno.md 0.12 §9.3 y §10.17; brand.md 0.4.11 §6.7; datos.md 0.13, 0016 y 0019): las diecinueve columnas de preferencias (con "Qué buscás", 0015), las
+   alertas por mail (la dirección, cada portal con su última alerta y el link a su guía en alertas.html), pausar la cuenta
+   (escribe en el acto) y el texto para borrarla, en cinco bloques: Búsqueda, Paquetes y postulación, Respuestas para
+   formularios (con opciones y defaults desde 0016), Alertas por mail y Tu cuenta.
    Desplegables en celular y carril desde 768 px, con Terna.porBloques (comun.js), igual que Mi perfil.
    "Guardar preferencias" escribe todo. */
 'use strict';
@@ -21,8 +22,13 @@ Terna.pagina('preferencias', async (ctx) => {
   const MAX_DIAS = 365;
 
   const parar = Terna.cargando(raiz);
-  const lectura = await sb.from('preferencias').select(COLUMNAS).eq('usuario_id', uid).maybeSingle();
+  const [lectura, lecturaAlertas] = await Promise.all([
+    sb.from('preferencias').select(COLUMNAS).eq('usuario_id', uid).maybeSingle(),
+    sb.from('alertas_mail').select('portal, recibido_en, procesado_en, avisos_detectados').eq('usuario_id', uid).order('procesado_en', { ascending: false }).limit(200),
+  ]);
   parar();
+  // Las alertas que llegaron (0019; la retención las borra a los 7 días). Si no se pueden leer, los portales van sin estado.
+  const alertas = lecturaAlertas.error ? null : (lecturaAlertas.data || []);
   const data = lectura.data;
   if (lectura.error || !data) { Terna.errorDeCarga(raiz, lectura.error); return; }
   const v = Object.assign({}, data, {
@@ -323,13 +329,32 @@ Terna.pagina('preferencias', async (ctx) => {
   const sMud = conInterruptor(P.mudanza, P.mudanzaAyuda, v.mudanza, (x) => { v.mudanza = x; });
   const cResp = [h('p', { class: 'campo-ayuda', text: P.respuestasIntro }), sAut, sDisp, sMud];
 
-  /* ---------- Alertas de LinkedIn (el título es el del bloque) ---------- */
+  /* ---------- Alertas por mail (el título es el del bloque; diseno.md 0.12 §9.3) ---------- */
   const direccion = String(config.alertas_mail_patron || '').replace('{codigo}', ctx.usuario.codigo_alertas || '');
   const code = h('code', { text: direccion });
+  // Por portal: la última alerta con avisos; si solo llegaron mails sin avisos, que la persona le avise a Francisco.
+  function estadoPortal(clave) {
+    if (!alertas) return null;
+    const propias = alertas.filter((a) => a.portal === clave);
+    const conAvisos = propias.find((a) => a.avisos_detectados > 0);
+    if (conAvisos) return { texto: P.alertaUltima(Terna.fechaCorta(conAvisos.recibido_en || conAvisos.procesado_en), conAvisos.avisos_detectados), revisar: false };
+    if (propias.length) return { texto: P.alertaSinAvisos, revisar: true };
+    return { texto: P.alertaNinguna, revisar: false };
+  }
+  const filaPortal = ([clave, nombre, guia]) => {
+    const e = estadoPortal(clave);
+    return h('li', null, h('a', { class: 'portal', href: 'alertas.html#' + guia },
+      h('span', { class: 'portal-nombre', text: nombre }),
+      e ? h('span', { class: 'portal-estado' + (e.revisar ? ' revisar' : ''), text: e.texto }) : null,
+      h('span', { class: 'portal-ir' }, h('span', { text: P.comoCrearla }), icono('i-adelante', 'icono-16'))));
+  };
+  const linkGuia = ([texto, guia]) => h('a', { class: 'btn', href: 'alertas.html#' + guia }, h('span', { text: texto }), icono('i-adelante', 'icono-16'));
   const cAlertas = [
     h('p', { text: P.alertasIntro }),
     h('div', { class: 'direccion' }, code, h('button', { class: 'btn', type: 'button', onclick: () => Terna.copiar(direccion, code) }, icono('i-pegar'), P.copiarDireccion)),
     h('ol', { class: 'pasos' }, P.alertasPasos.map((x) => h('li', { text: x }))),
+    item(P.portalesTitulo, h('ul', { class: 'portales' }, P.portales.map(filaPortal)), alertas ? h('p', { class: 'campo-ayuda', text: P.portalesAyuda }) : null),
+    item(P.reenvioTitulo, h('p', { class: 'campo-ayuda', text: P.reenvioAyuda }), h('div', { class: 'guias-correo' }, P.guiasCorreo.map(linkGuia))),
     h('p', { class: 'campo-ayuda', text: P.alertasNota }),
   ];
 

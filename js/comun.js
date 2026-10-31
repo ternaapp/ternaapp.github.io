@@ -14,8 +14,10 @@ window.Terna = (function () {
   };
   const PAGINAS = {
     inicio: 'index.html', avisos: 'avisos.html', postulaciones: 'postulaciones.html', perfil: 'perfil.html',
-    preferencias: 'preferencias.html', invitaciones: 'invitaciones.html', admin: 'admin.html',
+    preferencias: 'preferencias.html', invitaciones: 'invitaciones.html', admin: 'admin.html', alertas: 'alertas.html',
   };
+  // Páginas sin pestaña propia: marcan la de la sección a la que pertenecen (las guías de alertas son de Preferencias).
+  const PESTANA_DE = { alertas: 'preferencias' };
   const ICONOS_PESTANAS = {
     inicio: 'i-inicio', avisos: 'i-avisos', postulaciones: 'i-postulaciones', perfil: 'i-perfil',
     preferencias: 'i-preferencias', invitaciones: 'i-sobre', admin: 'i-admin',
@@ -159,7 +161,7 @@ window.Terna = (function () {
   }
   // Solo deja volver a una página propia, con un hash simple.
   function volverValido(valor) {
-    return /^(index|avisos|postulaciones|perfil|preferencias|invitaciones|admin)\.html(#[a-z0-9-]+)?$/i.test(valor || '') ? valor : 'index.html';
+    return /^(index|avisos|postulaciones|perfil|preferencias|invitaciones|admin|alertas)\.html(#[a-z0-9-]+)?$/i.test(valor || '') ? valor : 'index.html';
   }
   async function salir() {
     estado.saliendo = true;
@@ -190,11 +192,12 @@ window.Terna = (function () {
     centrarPestana(nav);
   }
   function pestana(clave, pagina) {
-    return h('a', { class: 'pestana', href: PAGINAS[clave], 'aria-current': clave === pagina ? 'page' : null, dataset: { pestana: clave } },
+    const actual = clave === pagina ? 'page' : (clave === PESTANA_DE[pagina] ? 'true' : null);
+    return h('a', { class: 'pestana', href: PAGINAS[clave], 'aria-current': actual, dataset: { pestana: clave } },
       icono(ICONOS_PESTANAS[clave]), h('span', { text: T.comun.pestanas[clave] }));
   }
   function centrarPestana(nav) {
-    const activa = nav.querySelector('[aria-current="page"]');
+    const activa = nav.querySelector('[aria-current]');
     if (!activa || nav.scrollWidth <= nav.clientWidth) return;
     nav.scrollLeft = Math.max(0, activa.offsetLeft - (nav.clientWidth - activa.offsetWidth) / 2);
   }

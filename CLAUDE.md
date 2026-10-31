@@ -4,14 +4,14 @@ La web de Terna: HTML, CSS y JS planos, sin build, publicados con GitHub Pages d
 
 ## Qué hay
 
-- Diez páginas: `index.html` (Inicio), `avisos.html`, `postulaciones.html`, `perfil.html`, `preferencias.html`, `invitaciones.html`, `admin.html`, y sin sesión `entrar.html`, `crear-cuenta.html`, `contrasena.html`. Cada una trae su esqueleto y carga los scripts con `defer`.
+- Once páginas: `index.html` (Inicio), `avisos.html`, `postulaciones.html`, `perfil.html`, `preferencias.html`, `invitaciones.html`, `admin.html`, `alertas.html` (las guías de alertas por mail, sin pestaña propia: marca Preferencias), y sin sesión `entrar.html`, `crear-cuenta.html`, `contrasena.html`. Cada una trae su esqueleto y carga los scripts con `defer`.
 - `css/terna.css`: tokens de diseno.md §12, componentes, y los cortes 768 (contenido de escritorio), 1024 (barra única) y 1200 (cajón en línea).
 - `js/textos.js`: todos los textos (copiados de brand.md) y el mapa de claves de error de datos.md §11. El código no escribe textos propios.
 - `js/iconos.js`: el sprite de diseno.md §11.2. `js/comun.js`: cliente de Supabase, sesión, barra, bandas, avisos breves, hojas, diálogos, links firmados. `js/aviso.js`: piezas comunes de Avisos y Postulaciones. Un `js/{pagina}.js` por página.
 
 ## Reglas que no se negocian
 
-1. **Sin build y sin dependencias nuevas.** supabase-js va por CDN con versión fija y SRI (`@supabase/supabase-js@2.118.0`); cambiar de versión es cambiar la URL y el `integrity` en las diez páginas y volver a probar.
+1. **Sin build y sin dependencias nuevas.** supabase-js va por CDN con versión fija y SRI (`@supabase/supabase-js@2.118.0`); cambiar de versión es cambiar la URL y el `integrity` en las once páginas y volver a probar.
 2. **CSP en cada página** (meta): scripts solo propios y de jsdelivr; conexiones solo al proyecto; sin `style` en línea (estilos por CSSOM) y sin `innerHTML` con datos: todo dato se escribe con `textContent` (`Terna.h`). La única excepción es el sprite de íconos, que es constante.
 3. **Cada usuario ve solo lo suyo y eso lo garantiza RLS en la base**, no este código. La web usa la clave publishable (pública) y la sesión de la persona; nunca una clave de servicio.
 4. **Ningún dato de una persona real** en el repo, en ejemplos ni en capturas: las pruebas usan las cuentas y los fixtures sintéticos de `terna-motor` (`@terna.invalid`, "Empresa de Prueba", "(PRUEBA)").
@@ -32,4 +32,4 @@ El navegador habla con una pasarela local que imita PostgREST, GoTrue y Storage 
 
 ## Publicar
 
-`git push` a `main`: GitHub Pages publica la raíz en un par de minutos. Antes: las pruebas en verde y las diez páginas abiertas en el sitio publicado sin errores de consola ni de CSP.
+`git push` a `main`: GitHub Pages publica la raíz en un par de minutos. Antes: las pruebas en verde y las once páginas abiertas en el sitio publicado sin errores de consola ni de CSP.

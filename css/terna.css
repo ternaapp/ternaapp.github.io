@@ -84,7 +84,7 @@ html { scroll-padding-top: 72px; }
   text-decoration: none; border-bottom: 2px solid transparent;
 }
 .pestana:hover { color: var(--tinta); }
-.pestana[aria-current="page"] { color: var(--tinta); border-bottom-color: var(--accion); }
+.pestana[aria-current="page"], .pestana[aria-current="true"] { color: var(--tinta); border-bottom-color: var(--accion); }
 
 #bandas:empty { display: none; }
 .banda {
@@ -573,6 +573,41 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 .direccion { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .direccion code { flex: 1 1 220px; min-width: 0; padding: 10px 12px; border: 1px solid var(--linea); border-radius: 6px; background: var(--papel); font-size: 14px; overflow-wrap: anywhere; }
 .pasos { display: flex; flex-direction: column; gap: 4px; font-size: 15px; }
+/* Alertas por mail (Preferencias): un renglón por portal con su estado, que lleva a su guía (diseno.md 0.12 §9.3). */
+.portales { list-style: none; margin: 0; padding: 0; border: 1px solid var(--linea); border-radius: 10px; background: var(--hoja); }
+.portales li + li { border-top: 1px solid var(--linea); }
+.portal {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 12px;
+  min-height: 56px; padding: 8px 12px; color: var(--tinta); text-decoration: none;
+}
+.portales li:first-child .portal { border-radius: 9px 9px 0 0; }
+.portales li:last-child .portal { border-radius: 0 0 9px 9px; }
+.portal:hover { background: var(--seleccion); color: var(--tinta); }
+.portal-nombre { font-weight: 700; font-size: 15px; }
+.portal-estado { grid-column: 1; font-size: 14px; color: var(--tinta-suave); line-height: 1.35; }
+.portal-estado.revisar { color: var(--espera-oscuro); }
+.portal-ir { grid-column: 2; grid-row: 1 / span 2; display: inline-flex; align-items: center; gap: 4px; font-size: 14px; color: var(--accion); white-space: nowrap; }
+.guias-correo { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Guías de alertas (alertas.html): pasos numerados, avisos de cuidado y los puestos de la persona como sugerencia. */
+.guia { display: flex; flex-direction: column; gap: 12px; font-size: 15px; }
+.guia-pasos { padding-left: 1.5em; gap: 8px; line-height: 1.5; }
+.guia-pasos li::marker { font-weight: 700; color: var(--tinta-suave); }
+.guia-lista { gap: 6px; line-height: 1.5; }
+.guia strong { font-weight: 700; }
+.guia-subtitulo { font-size: 15px; margin-top: 6px; }
+.guia-cuidado { display: flex; gap: 8px; padding: 10px 12px; border-radius: 10px; background: var(--espera-tinte); color: var(--espera-oscuro); }
+.guia-cuidado .icono { flex: none; width: 18px; height: 18px; margin-top: 2px; }
+.guia-cuidado p { color: var(--espera-oscuro); }
+.guia-ir { display: inline-flex; align-items: center; gap: 4px; font-weight: 500; min-height: 32px; }
+.guia-puestos { display: flex; flex-direction: column; gap: 8px; }
+.chips-puestos { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.chips-puestos .chip { height: auto; min-height: 24px; padding: 3px 8px; white-space: normal; line-height: 1.3; }
+.guia-volver { margin-left: auto; }
+.guia-indice { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.guia-indice li + li { border-top: 1px solid var(--linea); }
+.guia-indice .guia-ir { min-height: 44px; }
+.remitentes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.remitentes code { font-size: 13px; padding: 8px 10px; }
 
 /* Invitaciones */
 .mensaje-invitacion { padding: 12px; border: 1px solid var(--linea); border-radius: 10px; background: var(--papel); font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
