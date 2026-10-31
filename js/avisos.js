@@ -60,11 +60,14 @@ Terna.pagina('avisos', async (ctx) => {
     r.interes = deLista(f.interes, INTERESES) || r.interes;
     if (PAQUETES.includes(f.paquete)) r.paquete = f.paquete;
     if (POSTULACIONES.includes(f.postulacion)) r.postulacion = f.postulacion;
-    if (f.v === 2 && f.huella === huella) {
-      for (const k of BUSQUEDA) r[k] = propio(k, deLista(f[k], TODOS[k]));
+    // Los filtros guardados antes de la barra (sin `v`) conservan el match: significaba lo mismo. Modalidad y Alcance
+    // vacíos querían decir "todo"; ahora arrancan en las preferencias.
+    const legado = f.v !== 2;
+    if (legado || f.huella === huella) {
       r.matchMin = Number.isInteger(f.matchMin) ? f.matchMin : null;
       r.bajoUmbral = f.bajoUmbral === true;
     }
+    if (!legado && f.huella === huella) for (const k of BUSQUEDA) r[k] = propio(k, deLista(f[k], TODOS[k]));
     return r;
   }
   const guardados = Terna.leerLocal('avisos.filtros', null);
