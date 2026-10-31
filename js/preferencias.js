@@ -116,14 +116,84 @@ Terna.pagina('preferencias', async (ctx) => {
   }
   sMod.append(chipsMod, h('p', { class: 'campo-ayuda', id: 'ayuda-mod', text: P.alMenosUna }), error('err-mod'));
 
-  /* ---------- Qué buscás: puestos (uno por línea), nivel y jornada (0015) ---------- */
+  /* ---------- Qué buscás: puestos (0015), nivel y jornada ----------
+     Puestos (diseno.md 0.10 §9.3): una lista numerada con una casilla por puesto. Se ven los cargados y una casilla
+     vacía al final para el siguiente, hasta 8; los que tienen texto son los que Terna busca. Enter pasa a la casilla
+     siguiente; Borrar en una casilla vacía vuelve a la anterior; una casilla vacía en el medio se va al salir de ella. */
   const idPue = id('puestos');
-  const puestos = h('textarea', { class: 'control', id: idPue, rows: '4', 'aria-describedby': 'ayuda-puestos err-puestos' });
-  puestos.value = v.puestos_objetivo.join('\n');
-  const leerPuestos = () => Array.from(new Set(puestos.value.split('\n').map((x) => x.trim()).filter(Boolean)));
-  puestos.addEventListener('input', () => { v.puestos_objetivo = leerPuestos(); limpiar('err-puestos'); });
-  const sPue = h('div', { class: 'subbloque' }, h('label', { class: 'tarjeta-titulo', for: idPue, text: P.puestos }), puestos,
-    h('p', { class: 'campo-ayuda', id: 'ayuda-puestos', text: P.puestosAyuda }), error('err-puestos'));
+  const listaPue = h('ol', { class: 'puestos' });
+  const cuentaPue = h('span', { class: 'puestos-cuenta num' });
+  const filasPue = () => Array.from(listaPue.children);
+  const inputDe = (li) => li.querySelector('input');
+  // Igual que validar_preferencias (0015): sin espacios de más, sin vacíos y sin repetidos (sin mirar mayúsculas), en orden.
+  function leerPuestos() {
+    const vistos = new Set();
+    return filasPue().map((li) => inputDe(li).value.trim()).filter((x) => {
+      const k = x.toLowerCase();
+      if (!x || vistos.has(k)) return false;
+      vistos.add(k);
+      return true;
+    });
+  }
+  function filaPuesto(valor) {
+    const input = h('input', { class: 'control', type: 'text', maxlength: String(MAX_LARGO_PUESTO), autocomplete: 'off', spellcheck: 'false',
+      value: valor || '', 'aria-describedby': 'ayuda-puestos err-puestos' });
+    const quitar = h('button', { type: 'button' }, icono('i-cerrar'));
+    const numero = h('span', { class: 'puesto-numero num', 'aria-hidden': 'true' });
+    const li = h('li', { class: 'puesto' }, numero, h('div', { class: 'control-con-boton' }, input, quitar));
+    input.addEventListener('input', () => { ordenarPuestos(); limpiar('err-puestos'); });
+    input.addEventListener('keydown', (e) => {
+      const filas = filasPue();
+      const i = filas.indexOf(li);
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (filas[i + 1]) inputDe(filas[i + 1]).focus();
+      } else if (e.key === 'Backspace' && !input.value && i > 0) {
+        e.preventDefault();
+        const anterior = inputDe(filas[i - 1]);
+        if (i < filas.length - 1) { li.remove(); ordenarPuestos(); }
+        anterior.focus();
+        anterior.setSelectionRange(anterior.value.length, anterior.value.length);
+      }
+    });
+    input.addEventListener('blur', () => {
+      if (!input.value.trim() && li.nextElementSibling && li.isConnected) { input.value = ''; li.remove(); ordenarPuestos(); }
+    });
+    quitar.addEventListener('click', () => {
+      const siguiente = li.nextElementSibling || li.previousElementSibling;
+      li.remove();
+      ordenarPuestos();
+      inputDe(siguiente && siguiente.isConnected ? siguiente : filasPue()[filasPue().length - 1]).focus();
+      limpiar('err-puestos');
+    });
+    return li;
+  }
+  // Numera, deja una sola casilla vacía al final (si hay lugar), muestra "Quitar" solo donde hay texto y cuenta.
+  function ordenarPuestos() {
+    let filas = filasPue();
+    const ultima = filas[filas.length - 1];
+    if (filas.length < MAX_PUESTOS && (!ultima || inputDe(ultima).value.trim())) listaPue.append(filaPuesto(''));
+    filas = filasPue();
+    filas.forEach((li, i) => {
+      const input = inputDe(li);
+      const texto = input.value.trim();
+      const vacia = !texto && i === filas.length - 1;
+      li.querySelector('.puesto-numero').textContent = (i + 1) + '.';
+      li.classList.toggle('puesto-nuevo', vacia);
+      input.setAttribute('aria-label', P.puesto(i + 1));
+      input.placeholder = vacia ? (i === 0 ? P.puestoPrimero : P.puestoOtro) : '';
+      const quitar = li.querySelector('button');
+      quitar.hidden = !texto;
+      quitar.setAttribute('aria-label', P.quitarPuesto(texto || P.puesto(i + 1)));
+    });
+    v.puestos_objetivo = leerPuestos();
+    cuentaPue.textContent = P.puestosCuenta(v.puestos_objetivo.length, MAX_PUESTOS);
+  }
+  v.puestos_objetivo.slice(0, MAX_PUESTOS).forEach((x) => listaPue.append(filaPuesto(x)));
+  ordenarPuestos();
+  const sPue = h('div', { class: 'subbloque', role: 'group', 'aria-labelledby': idPue },
+    h('div', { class: 'interruptor-fila' }, h('h3', { id: idPue, class: 'tarjeta-titulo', text: P.puestos }), cuentaPue),
+    listaPue, h('p', { class: 'campo-ayuda', id: 'ayuda-puestos', text: P.puestosAyuda }), error('err-puestos'));
   // Un grupo de casillas en chips, como Modalidades: al menos una.
   function grupoChips(titulo, clave, valores, etiquetas, ayuda, idErr) {
     const idT = id('t');

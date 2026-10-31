@@ -237,6 +237,7 @@ select.control { padding-right: 8px; }
 .control[aria-invalid="true"] { border-color: var(--error); border-width: 2px; }
 .control-con-boton { position: relative; display: flex; }
 .control-con-boton .control { padding-right: 48px; }
+.control-con-boton button[hidden] { display: none; }
 .control-con-boton button {
   position: absolute; right: 4px; top: 4px; width: 36px; height: 36px; border: 0; border-radius: 6px;
   background: transparent; color: var(--tinta-suave); display: inline-flex; align-items: center; justify-content: center;
@@ -695,6 +696,12 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 /* Un campo que depende del radio de arriba (Disponibilidad › En unos días): alineado con el texto de los radios. */
 .anidado { padding-left: 30px; }
 .control-corto { max-width: 160px; }
+/* Puestos que buscás (Preferencias › Búsqueda): una casilla por puesto, numeradas; la última, vacía y punteada, es para el siguiente. */
+.puestos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; max-width: 520px; }
+.puesto { display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: center; gap: 8px; }
+.puesto-numero { font-size: 15px; color: var(--tinta-suave); text-align: right; }
+.puesto-nuevo .control { border-style: dashed; }
+.puestos-cuenta { font-size: 13px; color: var(--tinta-suave); }
 @media (min-width: 768px) {
   .cabecera-pagina.cabecera-fija {
     position: sticky; top: 59px; z-index: 15; max-width: 1024px; justify-content: flex-start; column-gap: 16px;

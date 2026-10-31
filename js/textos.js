@@ -316,7 +316,13 @@ window.T = (function () {
       modalidades: 'Modalidades', alMenosUna: 'Al menos una.',
       // Qué buscás (brand.md 0.4.5 §6.7; datos.md 0.9, 0015)
       puestos: 'Puestos que buscás',
-      puestosAyuda: 'Uno por línea, hasta 8. Ejemplo: Sales Operations. Terna pone primero los avisos de estos puestos y de puestos parecidos. Aunque lo dejes vacío, también busca los que se parecen a tu título y a tus experiencias.',
+      // Una casilla por puesto, numeradas (brand.md 0.4.7 §6.7; diseno.md 0.10 §9.3)
+      puestosAyuda: 'Uno por casilla, hasta 8. Terna pone primero los avisos de estos puestos y de puestos parecidos. Aunque no cargues ninguno, también busca los que se parecen a tu título y a tus experiencias.',
+      puestosCuenta: (n, max) => n + ' de ' + max,
+      puesto: (n) => 'Puesto ' + n,
+      puestoPrimero: 'Por ejemplo, Sales Operations',
+      puestoOtro: 'Agregar otro puesto',
+      quitarPuesto: (x) => 'Quitar ' + x,
       niveles: 'Nivel de los puestos',
       nivel: { pasantia: 'Pasantía', junior: 'Junior', semi_senior: 'Semi Senior', senior: 'Senior', lider: 'Líder o gerente', director: 'Director' },
       nivelesAyuda: 'Destildá los que no quieras. Si un aviso no dice el nivel, igual te aparece.',
