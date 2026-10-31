@@ -306,6 +306,8 @@ window.T = (function () {
     preferencias: {
       titulo: 'Preferencias',
       intro: 'Lo que Terna usa para filtrar, armar y postular. Se aplica desde la próxima corrida.',
+      // Los bloques de la página (brand.md 0.4.3 §6.7); Respuestas para formularios y Alertas de LinkedIn usan su propio título.
+      grupos: { busqueda: 'Búsqueda', paquetes: 'Paquetes y postulación', cuenta: 'Tu cuenta' },
       umbral: 'Umbral de match',
       umbralAyuda: (min) => 'Terna arma paquetes y postula solo en avisos que lleguen a este número. Los que quedan entre ' + min + ' y tu umbral igual aparecen en la lista, sin paquete, y podés pedirlo.',
       modalidades: 'Modalidades', alMenosUna: 'Al menos una.',

@@ -630,32 +630,37 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .cajon-linea .hoja-acciones { position: sticky; bottom: 0; }
 }
 
-/* ---------- Mi perfil: carril, bloque elegido y cabecera fija con Guardar (diseno.md 0.5 §9.2) ---------- */
-/* El modo lo decide perfil.js con el mismo corte (768 px) y lo marca con .modo-carril. */
+/* ---------- Página por bloques: Mi perfil y Preferencias (diseno.md 0.6 §10.17) ---------- */
+/* Desplegables en celular; desde 768 px, carril + bloque elegido y cabecera fija con Guardar. El modo lo decide
+   Terna.porBloques (comun.js) con el mismo corte y lo marca con .modo-carril. */
 .titulo-fijo { display: none; }
 .carril-alerta { color: var(--error); flex: none; }
+/* Ítems dentro de un bloque (Preferencias): separados por una línea, con el título un paso más chico que el del bloque. */
+.subbloque { display: flex; flex-direction: column; gap: 10px; }
+.subbloque + .subbloque { border-top: 1px solid var(--linea); padding-top: 16px; margin-top: 4px; }
+.subbloque .tarjeta-titulo { font-size: 15px; }
 @media (min-width: 768px) {
-  .cabecera-pagina.perfil-cabecera {
+  .cabecera-pagina.cabecera-fija {
     position: sticky; top: 59px; z-index: 15; max-width: 1024px; justify-content: flex-start; column-gap: 16px;
     margin: -12px 0 -4px; padding: 12px 0; background: var(--papel);
   }
-  .perfil-cabecera.pegada { box-shadow: 0 1px 0 var(--linea); }
-  .perfil-cabecera .guardar-fijo { margin-left: auto; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; }
-  .perfil-cabecera .btn { min-height: 40px; }
-  .formulario-angosto.modo-carril { max-width: 1024px; }
-  .modo-carril .perfil-cuerpo { display: grid; grid-template-columns: 216px minmax(0, 1fr); gap: 24px; align-items: start; }
-  .modo-carril .carril-perfil { width: auto; }
+  .cabecera-fija.pegada { box-shadow: 0 1px 0 var(--linea); }
+  .cabecera-fija .guardar-fijo { margin-left: auto; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; }
+  .cabecera-fija .btn { min-height: 40px; }
+  .modo-carril { max-width: 1024px; }
+  .modo-carril .bloques-cuerpo { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 24px; align-items: start; }
+  .modo-carril .carril-bloques { width: auto; }
   .modo-carril .plegable-boton { display: none; }
   .modo-carril .titulo-fijo { display: block; }
-  .modo-carril .perfil-bloques > .tarjeta { padding: 16px 20px; }
+  .modo-carril .bloques-lista > .tarjeta { padding: 16px 20px; }
 }
-/* Entre 768 y 1023 el bloque mide unos 480 px: los pares largos (desde y hasta; teléfono y LinkedIn) van apilados,
+/* Entre 768 y 1023 el bloque mide unos 460 px: los pares largos (desde y hasta; teléfono y LinkedIn) van apilados,
    si no "septiembre" no entra en su selector. */
 @media (min-width: 768px) and (max-width: 1023px) {
   .modo-carril .dos-apilable { grid-template-columns: minmax(0, 1fr); }
 }
 @media (min-width: 1024px) {
-  .cabecera-pagina.perfil-cabecera { top: 56px; }
+  .cabecera-pagina.cabecera-fija { top: 56px; }
 }
 
 /* ---------- 9. Preferencias del sistema ---------- */

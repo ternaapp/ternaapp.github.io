@@ -1,5 +1,5 @@
 /* Terna · js/perfil.js
-   Mi perfil (diseno.md 0.5 §9.1 y §9.2; brand.md §6.6): datos, CV original, perfil estructurado, datos para formularios,
+   Mi perfil (diseno.md 0.6 §9.1, §9.2 y §10.17; brand.md §6.6): datos, CV original, perfil estructurado, datos para formularios,
    experiencia, estudios e idiomas, en ese orden también en primer uso. En celular cada bloque es un desplegable (cerrado,
    salvo los que tienen algo que falta) y "Guardar" va fijo abajo. Desde 768 px: carril a la izquierda, el bloque elegido
    a la derecha y "Guardar" arriba a la derecha en la cabecera fija. Un error al guardar muestra su bloque.
@@ -119,81 +119,21 @@ Terna.pagina('perfil', async (ctx) => {
       faltantes.length ? P.falta(Terna.listaFaltantes(faltantes)) : P.completo);
   }
 
-  /* ---------- Bloques (diseno.md 0.5 §9.2) ----------
-     Hasta 767 px cada bloque es un desplegable: arrancan cerrados salvo los que tienen algo que falta.
-     Desde 768 px, el carril de la izquierda elige un bloque y a la derecha se ve ese bloque entero (modo carril).
-     El bloque es el mismo en los dos modos: solo cambia qué se oculta. La URL lleva el bloque (#experiencia). */
-  const HASH = { datos: 'datos', cv: 'cv', estr: 'estructurado', form: 'formularios', exp: 'experiencia', est: 'estudios', idi: 'idiomas' };
-  const CUENTA = { exp: () => listas.exp.length, est: () => listas.est.length, idi: () => listas.idi.length };
-  const escritorio = window.matchMedia('(min-width: 768px)');
+  /* ---------- Bloques (diseno.md 0.6 §9.2 y §10.17) ----------
+     Desplegables en celular, carril desde 768 px: lo hace Terna.porBloques (comun.js), igual que en Preferencias.
+     Arrancan abiertos (o elegido el primero) los bloques con algo que falta para el perfil completo. */
   const abiertosAlEntrar = new Set();
   if (faltantes.includes('nombre') || faltantes.includes('ciudad')) abiertosAlEntrar.add('datos');
   if (faltantes.includes('experiencia')) { abiertosAlEntrar.add('exp'); abiertosAlEntrar.add('est'); }
   if (faltantes.includes('idioma')) abiertosAlEntrar.add('idi');
-  const plegables = {};
-  const orden = [];
-  let modoCarril = false;
-  let elegido = null;
-  const carril = h('nav', { class: 'carril carril-perfil', 'aria-label': T.comun.pestanas.perfil });
-
-  // El h2 lleva el botón del desplegable (celular) y el mismo título sin botón (modo carril); el CSS muestra uno.
-  // alAbrir corre cada vez que el bloque se abre o se elige (Datos para formularios lo usa para descifrar recién ahí).
-  function seccion(claveSec, titulo, cuerpo, alAbrir) {
-    const id = 'h-' + claveSec;
-    const idPanel = 'panel-' + HASH[claveSec];
-    const p = { abierta: abiertosAlEntrar.has(claveSec), alAbrir };
-    p.panel = h('div', { class: 'seccion', id: idPanel, hidden: !p.abierta }, cuerpo);
-    p.boton = h('button', { class: 'plegable-boton', type: 'button', 'aria-expanded': String(p.abierta), 'aria-controls': idPanel },
-      h('span', { class: 'tarjeta-titulo', id, text: titulo }), icono('i-chevron'));
-    p.boton.addEventListener('click', () => plegar(claveSec, !p.abierta));
-    p.seccion = h('section', { class: 'tarjeta seccion', 'aria-labelledby': id, dataset: { plegable: claveSec } },
-      h('h2', { class: 'plegable-titulo' }, p.boton, h('span', { class: 'tarjeta-titulo titulo-fijo', text: titulo })), p.panel);
-    p.n = CUENTA[claveSec] ? h('span', { class: 'n' }) : null;
-    p.alerta = icono('i-alerta', 'icono-16 carril-alerta');
-    p.alerta.setAttribute('hidden', ''); // un <svg> no tiene la propiedad hidden: va el atributo
-    p.link = h('a', { href: '#' + HASH[claveSec], onclick: (e) => { e.preventDefault(); elegir(claveSec, true); } },
-      h('span', { text: titulo }), p.alerta, p.n);
-    plegables[claveSec] = p;
-    orden.push(claveSec);
-    return p.seccion;
-  }
-  function plegar(k, abrir) {
-    const p = plegables[k];
-    p.abierta = abrir;
-    if (modoCarril) return;
-    p.boton.setAttribute('aria-expanded', String(abrir));
-    p.panel.hidden = !abrir;
-    if (abrir && p.alAbrir) p.alAbrir();
-  }
-  function elegir(k, desdeCarril) {
-    elegido = k;
-    if (!modoCarril) return;
-    for (const x of orden) {
-      plegables[x].seccion.hidden = x !== k;
-      plegables[x].link.setAttribute('aria-current', x === k ? 'true' : 'false');
-    }
-    if (plegables[k].alAbrir) plegables[k].alAbrir();
-    if (desdeCarril) {
-      history.replaceState(null, '', '#' + HASH[k]);
-      const s = plegables[k].seccion;
-      if (s.getBoundingClientRect().top < parseFloat(document.documentElement.style.scrollPaddingTop || '0')) s.scrollIntoView({ block: 'start' });
-    }
-  }
-  function abrirSeccionDe(el) {
-    const s = el && el.closest('section[data-plegable]');
-    if (s && plegables[s.dataset.plegable] && !modoCarril) plegar(s.dataset.plegable, true);
-  }
-  const conError = (k) => Array.from(plegables[k].seccion.querySelectorAll('.campo-error')).some((e) => e.textContent);
-  // En modo carril se ve un bloque por vez: el carril marca los que tienen errores y se muestra el primero.
-  function marcarCarril() { for (const k of orden) plegables[k].alerta.toggleAttribute('hidden', !conError(k)); }
-  function irAlPrimerError() {
-    const k = orden.find(conError);
-    if (k && modoCarril && k !== elegido) elegir(k, true);
-  }
-  function actualizarCuentas() {
-    for (const k of orden) if (plegables[k].n) plegables[k].n.textContent = String(CUENTA[k]());
-    marcarCarril();
-  }
+  const bloques = Terna.porBloques({ raiz, cabecera: document.getElementById('cabecera'), nombre: T.comun.pestanas.perfil, abiertos: abiertosAlEntrar });
+  const HASH = { datos: 'datos', cv: 'cv', estr: 'estructurado', form: 'formularios', exp: 'experiencia', est: 'estudios', idi: 'idiomas' };
+  const CUENTA = { exp: () => listas.exp.length, est: () => listas.est.length, idi: () => listas.idi.length };
+  const seccion = (clave, titulo, cuerpo, alAbrir) => bloques.bloque(clave, titulo, cuerpo, { hash: HASH[clave], alAbrir, cuenta: CUENTA[clave] });
+  const abrirSeccionDe = (el) => bloques.abrirDe(el);
+  const marcarCarril = () => bloques.marcarErrores();
+  const irAlPrimerError = () => bloques.irAlPrimerError();
+  const actualizarCuentas = () => bloques.actualizarCuentas();
 
   function bloqueDatos() {
     const c = (k, etiqueta, extra) => campo(Object.assign({ id: 'dato-' + k, etiqueta, valor: datos[k], alCambiar: (v) => { datos[k] = v; } }, extra));
@@ -563,47 +503,8 @@ Terna.pagina('perfil', async (ctx) => {
   /* ---------- Página ---------- */
   dibujarIndicador();
   Terna.vaciar(raiz);
-  const cabecera = document.getElementById('cabecera');
-  const grupoGuardar = h('div', { class: 'guardar-fijo' }, estadoGuardado, bGuardar);
-  const bloques = [bloqueDatos(), bloqueCv(), estructurado ? bloqueEstructurado() : null, bloqueFormularios(),
-    bloqueExperiencia(), bloqueEstudios(), bloqueIdiomas()];
-  carril.append(...orden.map((k) => plegables[k].link));
-  actualizarCuentas();
-  raiz.append(banda,
-    h('div', { class: 'perfil-cuerpo' }, carril,
-      h('div', { class: 'seccion perfil-bloques' }, bloques, h('p', { class: 'campo-ayuda', text: P.privacidad }))),
-    grupoGuardar);
-
-  // Desde 768 px la cabecera queda fija con Guardar a la derecha: el carril y el desplazamiento al foco se corren su alto.
-  const topeCabecera = () => parseFloat(getComputedStyle(cabecera).top) || 0;
-  function medirCabecera() {
-    const raizDoc = document.documentElement.style;
-    if (!modoCarril) { raizDoc.removeProperty('scroll-padding-top'); carril.style.removeProperty('top'); return; }
-    const abajo = topeCabecera() + cabecera.offsetHeight;
-    raizDoc.setProperty('scroll-padding-top', (abajo + 12) + 'px');
-    carril.style.setProperty('top', (abajo + 16) + 'px');
-  }
-  function marcarPegada() { cabecera.classList.toggle('pegada', modoCarril && cabecera.getBoundingClientRect().top <= topeCabecera() + 0.5); }
-  function aplicarModo() {
-    modoCarril = escritorio.matches;
-    raiz.classList.toggle('modo-carril', modoCarril);
-    if (modoCarril) cabecera.append(grupoGuardar); else raiz.append(grupoGuardar);
-    for (const k of orden) {
-      const p = plegables[k];
-      p.seccion.hidden = false;
-      p.panel.hidden = modoCarril ? false : !p.abierta;
-      p.boton.setAttribute('aria-expanded', String(p.abierta));
-    }
-    if (modoCarril) elegir(elegido);
-    medirCabecera();
-    marcarPegada();
-  }
-  // Bloque inicial: el de la URL; si no, el primero con algo que falta; si no, Datos.
-  const desdeUrl = orden.find((k) => HASH[k] === location.hash.slice(1));
-  elegido = desdeUrl || orden.find((k) => abiertosAlEntrar.has(k)) || 'datos';
-  aplicarModo();
-  if (desdeUrl && !modoCarril) { plegar(desdeUrl, true); plegables[desdeUrl].seccion.scrollIntoView({ block: 'start' }); }
-  escritorio.addEventListener('change', aplicarModo);
-  if (window.ResizeObserver) new ResizeObserver(medirCabecera).observe(cabecera);
-  addEventListener('scroll', marcarPegada, { passive: true });
+  bloqueDatos(); bloqueCv(); if (estructurado) bloqueEstructurado(); bloqueFormularios();
+  bloqueExperiencia(); bloqueEstudios(); bloqueIdiomas();
+  bloques.montar({ arriba: [banda], debajo: h('p', { class: 'campo-ayuda', text: P.privacidad }),
+    guardar: h('div', { class: 'guardar-fijo' }, estadoGuardado, bGuardar) });
 });

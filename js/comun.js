@@ -496,6 +496,124 @@ window.Terna = (function () {
     return estado.config;
   }
 
+  /* ---------- Página por bloques: Mi perfil y Preferencias (diseno.md 0.6 §10.17) ----------
+     Hasta 767 px cada bloque es un desplegable, cerrado salvo los de `abiertos`. Desde 768 px (modo carril), un carril a
+     la izquierda elige el bloque y a la derecha se ve ese bloque entero. El bloque abierto o elegido va en la URL.
+     El grupo de "Guardar" va al final del formulario, fijo abajo, en celular, y a la derecha de la cabecera fija desde
+     768. Cada bloque se arma una sola vez: el modo solo cambia qué se oculta, así lo escrito nunca se pierde. */
+  function porBloques({ raiz, cabecera, nombre, abiertos }) {
+    const escritorio = window.matchMedia('(min-width: 768px)');
+    const B = {};
+    const orden = [];
+    const abiertosAlEntrar = abiertos || new Set();
+    let modoCarril = false;
+    let elegido = null;
+    let grupoGuardar = null;
+    const carril = h('nav', { class: 'carril carril-bloques', 'aria-label': nombre });
+
+    // El h2 lleva el botón del desplegable (celular) y el mismo título sin botón (modo carril); el CSS muestra uno.
+    // alAbrir corre cada vez que el bloque se abre o se elige; cuenta, si está, pone la cantidad en el carril.
+    function bloque(clave, titulo, cuerpo, opciones) {
+      const o = opciones || {};
+      const idT = 'h-' + clave;
+      const idPanel = 'panel-' + (o.hash || clave);
+      const p = { hash: o.hash || clave, abierta: abiertosAlEntrar.has(clave), alAbrir: o.alAbrir, cuenta: o.cuenta };
+      p.panel = h('div', { class: 'seccion', id: idPanel, hidden: !p.abierta }, cuerpo);
+      p.boton = h('button', { class: 'plegable-boton', type: 'button', 'aria-expanded': String(p.abierta), 'aria-controls': idPanel },
+        h('span', { class: 'tarjeta-titulo', id: idT, text: titulo }), icono('i-chevron'));
+      p.boton.addEventListener('click', () => plegar(clave, !p.abierta));
+      p.seccion = h('section', { class: 'tarjeta seccion', 'aria-labelledby': idT, dataset: { plegable: clave } },
+        h('h2', { class: 'plegable-titulo' }, p.boton, h('span', { class: 'tarjeta-titulo titulo-fijo', text: titulo })), p.panel);
+      p.n = p.cuenta ? h('span', { class: 'n' }) : null;
+      p.alerta = icono('i-alerta', 'icono-16 carril-alerta');
+      p.alerta.setAttribute('hidden', ''); // un <svg> no tiene la propiedad hidden: va el atributo
+      p.link = h('a', { href: '#' + p.hash, onclick: (e) => { e.preventDefault(); elegir(clave, true); } }, h('span', { text: titulo }), p.alerta, p.n);
+      B[clave] = p;
+      orden.push(clave);
+      return p.seccion;
+    }
+    function plegar(k, abrir) {
+      const p = B[k];
+      p.abierta = abrir;
+      if (modoCarril) return;
+      p.boton.setAttribute('aria-expanded', String(abrir));
+      p.panel.hidden = !abrir;
+      if (abrir && p.alAbrir) p.alAbrir();
+    }
+    function elegir(k, desdeCarril) {
+      elegido = k;
+      if (!modoCarril) return;
+      for (const x of orden) {
+        B[x].seccion.hidden = x !== k;
+        B[x].link.setAttribute('aria-current', x === k ? 'true' : 'false');
+      }
+      if (B[k].alAbrir) B[k].alAbrir();
+      if (desdeCarril) {
+        history.replaceState(null, '', '#' + B[k].hash);
+        const s = B[k].seccion;
+        if (s.getBoundingClientRect().top < parseFloat(document.documentElement.style.scrollPaddingTop || '0')) s.scrollIntoView({ block: 'start' });
+      }
+    }
+    // Un campo con error: en celular abre su bloque; en modo carril lo marca, e irAlPrimerError muestra el primero.
+    function abrirDe(el) {
+      const s = el && el.closest('section[data-plegable]');
+      if (s && B[s.dataset.plegable] && !modoCarril) plegar(s.dataset.plegable, true);
+    }
+    const conError = (k) => Array.from(B[k].seccion.querySelectorAll('.campo-error')).some((e) => e.textContent);
+    function marcarErrores() { for (const k of orden) B[k].alerta.toggleAttribute('hidden', !conError(k)); }
+    function irAlPrimerError() {
+      const k = orden.find(conError);
+      if (k && modoCarril && k !== elegido) elegir(k, true);
+    }
+    function actualizarCuentas() {
+      for (const k of orden) if (B[k].n) B[k].n.textContent = String(B[k].cuenta());
+      marcarErrores();
+    }
+
+    // Desde 768 px la cabecera queda fija: el carril y el desplazamiento al foco se corren su alto (por CSSOM, que la CSP permite).
+    const topeCabecera = () => parseFloat(getComputedStyle(cabecera).top) || 0;
+    function medirCabecera() {
+      const doc = document.documentElement.style;
+      if (!modoCarril) { doc.removeProperty('scroll-padding-top'); carril.style.removeProperty('top'); return; }
+      const abajo = topeCabecera() + cabecera.offsetHeight;
+      doc.setProperty('scroll-padding-top', (abajo + 12) + 'px');
+      carril.style.setProperty('top', (abajo + 16) + 'px');
+    }
+    function marcarPegada() { cabecera.classList.toggle('pegada', modoCarril && cabecera.getBoundingClientRect().top <= topeCabecera() + 0.5); }
+    function aplicarModo() {
+      modoCarril = escritorio.matches;
+      raiz.classList.toggle('modo-carril', modoCarril);
+      if (grupoGuardar) { if (modoCarril) cabecera.append(grupoGuardar); else raiz.append(grupoGuardar); }
+      for (const k of orden) {
+        const p = B[k];
+        p.seccion.hidden = false;
+        p.panel.hidden = modoCarril ? false : !p.abierta;
+        p.boton.setAttribute('aria-expanded', String(p.abierta));
+      }
+      if (modoCarril && elegido) elegir(elegido);
+      medirCabecera();
+      marcarPegada();
+    }
+    // Arma la página: lo de arriba (la banda), el carril y los bloques (más lo que va debajo), y el grupo de Guardar.
+    // Bloque inicial: el de la URL; si no, el primero de `abiertos`; si no, el primero.
+    function montar({ arriba, debajo, guardar }) {
+      grupoGuardar = guardar || null;
+      carril.append(...orden.map((k) => B[k].link));
+      actualizarCuentas();
+      raiz.append(...(arriba || []),
+        h('div', { class: 'bloques-cuerpo' }, carril, h('div', { class: 'seccion bloques-lista' }, orden.map((k) => B[k].seccion), debajo || null)));
+      if (grupoGuardar) raiz.append(grupoGuardar);
+      const desdeUrl = orden.find((k) => B[k].hash === location.hash.slice(1));
+      elegido = desdeUrl || orden.find((k) => abiertosAlEntrar.has(k)) || orden[0];
+      aplicarModo();
+      if (desdeUrl && !modoCarril) { plegar(desdeUrl, true); B[desdeUrl].seccion.scrollIntoView({ block: 'start' }); }
+      escritorio.addEventListener('change', aplicarModo);
+      if (window.ResizeObserver) new ResizeObserver(medirCabecera).observe(cabecera);
+      addEventListener('scroll', marcarPegada, { passive: true });
+    }
+    return { bloque, montar, abrirDe, marcarErrores, irAlPrimerError, actualizarCuentas };
+  }
+
   /* ---------- Arranque de una página con sesión ---------- */
   async function iniciar(pagina, opciones) {
     opciones = opciones || {};
@@ -557,6 +675,6 @@ window.Terna = (function () {
     irAEntrar, volverValido, salir, token, dibujarPie, listaFaltantes, cambiarEstadoCuenta, bandas,
     avisoBreve, cerrarBreve, cargando, errorDeCarga, dialogo, confirmar, devolverFoco,
     abrirHoja, cerrarHoja, hojaAbierta, reemplazarCuerpoHoja, anchoLinea, anchoEscritorio,
-    copiar, nombreDescarga, urlFirmada, linkFirmado, leerConfig, pagina, actualizarFaltantes, actualizarPerfil,
+    copiar, nombreDescarga, urlFirmada, linkFirmado, leerConfig, pagina, actualizarFaltantes, actualizarPerfil, porBloques,
   };
 })();
