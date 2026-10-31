@@ -84,8 +84,11 @@ Terna.pagina('postulaciones', async (ctx) => {
   }
   const filtradas = () => postulaciones.filter(pasaFiltros);
   function enEtapa(lista, e) { return e === 'todas' ? lista : lista.filter((a) => a.estado_postulacion === e); }
+  // diseno.md 0.3.1 §8: por match de mayor a menor (sin match, al final); a igual match, por urgencia y las más nuevas primero.
+  const matchDe = (a) => (a.match === null || a.match === undefined ? -1 : Number(a.match));
   function ordenar(lista) {
-    return lista.slice().sort((a, b) => (URGENCIA[a.estado_postulacion] - URGENCIA[b.estado_postulacion])
+    return lista.slice().sort((a, b) => (matchDe(b) - matchDe(a))
+      || (URGENCIA[a.estado_postulacion] - URGENCIA[b.estado_postulacion])
       || String(fechaEtapa(b) || '').localeCompare(String(fechaEtapa(a) || '')));
   }
 
