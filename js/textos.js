@@ -311,7 +311,7 @@ window.T = (function () {
       umbral: 'Umbral de match',
       umbralAyuda: (min) => 'Terna arma paquetes y postula solo en avisos que lleguen a este número. Los que quedan entre ' + min + ' y tu umbral igual aparecen en la lista, sin paquete, y podés pedirlo.',
       modalidades: 'Modalidades', alMenosUna: 'Al menos una.',
-      // Qué buscás (brand.md 0.4.4 §6.7; datos.md 0.9, 0015)
+      // Qué buscás (brand.md 0.4.5 §6.7; datos.md 0.9, 0015)
       puestos: 'Puestos que buscás',
       puestosAyuda: 'Uno por línea, hasta 8. Ejemplo: Sales Operations. Terna pone primero los avisos de estos puestos y de puestos parecidos. Aunque lo dejes vacío, también busca los que se parecen a tu título y a tus experiencias.',
       niveles: 'Nivel de los puestos',
