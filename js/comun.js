@@ -404,11 +404,13 @@ window.Terna = (function () {
       document.body.append(el);
       if (opciones.panel && anchoEscritorio.matches) {
         const r = opciones.panel.getBoundingClientRect();
-        // Alineado a la derecha del botón y 30 px más abajo: la cruz va sobre la esquina y no tiene que tapar el botón.
+        // 30 px más abajo que su botón: la cruz va sobre la esquina y no tiene que tapar el botón. Alineado con el borde
+        // izquierdo del botón si entra (los de una barra de filtros, diseno.md 0.13 §10.7); si no, con el derecho.
         const arriba = Math.round(r.bottom + 30);
         el.style.setProperty('top', arriba + 'px');
         el.style.setProperty('max-height', Math.max(240, window.innerHeight - arriba - 16) + 'px');
-        el.style.setProperty('left', Math.round(Math.max(16, Math.min(r.right - 360, window.innerWidth - 384))) + 'px');
+        const izquierda = r.left + 360 <= window.innerWidth - 24 ? r.left : r.right - 360;
+        el.style.setProperty('left', Math.round(Math.max(16, Math.min(izquierda, window.innerWidth - 384))) + 'px');
       }
       el.showModal();
       document.documentElement.style.setProperty('overflow', 'hidden');
