@@ -1,7 +1,8 @@
 /* Terna · js/perfil.js
-   Mi perfil (diseno.md §9.1 y §9.2; brand.md §6.6): datos, experiencia, estudios, idiomas, CV original, perfil
-   estructurado y datos para formularios. Un "Guardar" para la página; el CV se sube en el acto y el perfil estructurado
-   tiene su propio "Guardar". En primer uso (?bienvenida=1, después de crear la cuenta) cambia el orden de los bloques. */
+   Mi perfil (diseno.md 0.4 §9.1 y §9.2; brand.md §6.6): datos, CV original, perfil estructurado, datos para formularios,
+   experiencia, estudios e idiomas, en ese orden también en primer uso. Cada bloque es un desplegable con la flecha:
+   arranca cerrado, salvo los que tienen algo que falta para el perfil completo; un error al guardar abre el suyo.
+   Un "Guardar" para la página; el CV se sube en el acto y el perfil estructurado tiene su propio "Guardar". */
 'use strict';
 
 Terna.pagina('perfil', async (ctx) => {
@@ -96,7 +97,7 @@ Terna.pagina('perfil', async (ctx) => {
   }
   function marcarError(id, texto) {
     const err = document.getElementById(id + '-error');
-    if (err) err.textContent = texto;
+    if (err) { err.textContent = texto; abrirSeccionDe(err); }
     for (const el of [document.getElementById(id), document.getElementById(id + '-mes'), document.getElementById(id + '-anio')]) if (el) el.setAttribute('aria-invalid', 'true');
   }
   function limpiarError(id) {
@@ -116,22 +117,44 @@ Terna.pagina('perfil', async (ctx) => {
       faltantes.length ? P.falta(Terna.listaFaltantes(faltantes)) : P.completo);
   }
 
-  /* ---------- Bloques ---------- */
-  const secciones = {};
-  function seccion(claveSec, titulo, ...cuerpo) {
+  /* ---------- Bloques: cada uno es un desplegable (diseno.md 0.4 §9.2) ---------- */
+  // Arrancan abiertos solo los bloques con algo que falta para el perfil completo (perfil_faltantes).
+  const abiertosAlEntrar = new Set();
+  if (faltantes.includes('nombre') || faltantes.includes('ciudad')) abiertosAlEntrar.add('datos');
+  if (faltantes.includes('experiencia')) { abiertosAlEntrar.add('exp'); abiertosAlEntrar.add('est'); }
+  if (faltantes.includes('idioma')) abiertosAlEntrar.add('idi');
+  const plegables = {};
+  // Encabezado con el botón adentro (patrón de desplegable): la sección tiene su h2 y el botón dice si está abierta.
+  // alAbrir corre cada vez que se abre (Datos para formularios lo usa para descifrar recién ahí).
+  function seccion(claveSec, titulo, cuerpo, alAbrir) {
     const id = 'h-' + claveSec;
-    const s = h('section', { class: 'tarjeta seccion', 'aria-labelledby': id }, h('h2', { id, class: 'tarjeta-titulo', text: titulo }), cuerpo);
-    secciones[claveSec] = s;
-    return s;
+    const idPanel = 'panel-' + claveSec;
+    const abierta = abiertosAlEntrar.has(claveSec);
+    const panel = h('div', { class: 'seccion', id: idPanel, hidden: !abierta }, cuerpo);
+    const boton = h('button', { class: 'plegable-boton', type: 'button', 'aria-expanded': String(abierta), 'aria-controls': idPanel },
+      h('span', { class: 'tarjeta-titulo', id, text: titulo }), icono('i-chevron'));
+    const poner = (abrir) => {
+      boton.setAttribute('aria-expanded', String(abrir));
+      panel.hidden = !abrir;
+      if (abrir && alAbrir) alAbrir(panel);
+    };
+    boton.addEventListener('click', () => poner(boton.getAttribute('aria-expanded') !== 'true'));
+    plegables[claveSec] = { abrir: () => { if (panel.hidden) poner(true); } };
+    return h('section', { class: 'tarjeta seccion', 'aria-labelledby': id, dataset: { plegable: claveSec } },
+      h('h2', { class: 'plegable-titulo' }, boton), panel);
+  }
+  function abrirSeccionDe(el) {
+    const s = el && el.closest('section[data-plegable]');
+    if (s && plegables[s.dataset.plegable]) plegables[s.dataset.plegable].abrir();
   }
 
   function bloqueDatos() {
     const c = (k, etiqueta, extra) => campo(Object.assign({ id: 'dato-' + k, etiqueta, valor: datos[k], alCambiar: (v) => { datos[k] = v; } }, extra));
-    return seccion('datos', P.datos,
+    return seccion('datos', P.datos, [
       h('div', { class: 'dos' }, c('nombre', P.nombre, { max: 80, autocomplete: 'given-name' }), c('apellido', P.apellido, { max: 80, autocomplete: 'family-name' })),
       campo({ id: 'dato-mail', etiqueta: P.mail, valor: ctx.usuario.mail, ayuda: P.mailAyuda, readonly: true, tipo: 'email', autocomplete: 'email' }),
       c('ciudad', P.ciudad, { max: 80, autocomplete: 'address-level2', ayuda: P.ciudadAyuda }),
-      h('div', { class: 'dos dos-apilable' }, c('telefono', P.telefono, { max: 30, tipo: 'tel', autocomplete: 'tel' }), c('linkedin', P.linkedin, { max: 200, tipo: 'url', autocomplete: 'url', inputmode: 'url' })));
+      h('div', { class: 'dos dos-apilable' }, c('telefono', P.telefono, { max: 30, tipo: 'tel', autocomplete: 'tel' }), c('linkedin', P.linkedin, { max: 200, tipo: 'url', autocomplete: 'url', inputmode: 'url' }))]);
   }
 
   function enfocar(id) { const el = document.getElementById(id); if (el) el.focus(); }
@@ -340,33 +363,27 @@ Terna.pagina('perfil', async (ctx) => {
 
   /* ---------- Datos para formularios (se descifran solo al abrir el bloque) ---------- */
   function bloqueFormularios() {
-    const idPanel = 'panel-formularios';
-    const panel = h('div', { class: 'seccion', id: idPanel, hidden: true });
-    const botonAbrir = h('button', { class: 'plegable-boton', type: 'button', 'aria-expanded': 'false', 'aria-controls': idPanel },
-      h('span', { class: 'tarjeta-titulo', id: 'h-form', text: P.formularios }), icono('i-chevron'));
-    botonAbrir.addEventListener('click', async () => {
-      const abrir = botonAbrir.getAttribute('aria-expanded') !== 'true';
-      botonAbrir.setAttribute('aria-expanded', String(abrir));
-      panel.hidden = !abrir;
-      if (abrir && !formularios.cargado) {
-        const parar2 = Terna.cargando(panel);
-        const { data, error } = await sb.rpc('leer_datos_formularios');
-        parar2();
-        if (error) { Terna.errorDeCarga(panel, error); return; }
-        const fila = (Array.isArray(data) ? data[0] : data) || {};
-        Object.assign(formularios, { cargado: true, dni: fila.dni || '', cuil: fila.cuil || '', fecha: fila.fecha_nacimiento || '' });
-        formularios.original = JSON.stringify([formularios.dni, formularios.cuil, formularios.fecha]);
-        Terna.vaciar(panel);
-        panel.append(
-          h('div', { class: 'dos' },
-            campo({ id: 'form-dni', etiqueta: P.dni, valor: formularios.dni, max: 10, inputmode: 'numeric', autocomplete: 'off', alCambiar: (x) => { formularios.dni = x; } }),
-            campo({ id: 'form-cuil', etiqueta: P.cuil, valor: formularios.cuil, max: 13, inputmode: 'numeric', autocomplete: 'off', alCambiar: (x) => { formularios.cuil = x; } })),
-          campo({ id: 'form-fecha', etiqueta: P.nacimiento, valor: formularios.fecha, tipo: 'date', autocomplete: 'bday', alCambiar: (x) => { formularios.fecha = x; } }));
-      }
-    });
-    // Encabezado con el botón adentro (patrón de desplegable): la sección tiene su h2 y el botón dice si está abierta.
-    return h('section', { class: 'tarjeta seccion', 'aria-labelledby': 'h-form' }, h('h2', { class: 'plegable-titulo' }, botonAbrir),
-      h('p', { class: 'campo-ayuda', text: P.formulariosAyuda }), panel);
+    const campos = h('div', { class: 'seccion' });
+    let pidiendo = false;
+    const cargar = async () => {
+      if (formularios.cargado || pidiendo) return;
+      pidiendo = true;
+      const parar2 = Terna.cargando(campos);
+      const { data, error } = await sb.rpc('leer_datos_formularios');
+      parar2();
+      pidiendo = false;
+      if (error) { Terna.errorDeCarga(campos, error); return; }
+      const fila = (Array.isArray(data) ? data[0] : data) || {};
+      Object.assign(formularios, { cargado: true, dni: fila.dni || '', cuil: fila.cuil || '', fecha: fila.fecha_nacimiento || '' });
+      formularios.original = JSON.stringify([formularios.dni, formularios.cuil, formularios.fecha]);
+      Terna.vaciar(campos);
+      campos.append(
+        h('div', { class: 'dos' },
+          campo({ id: 'form-dni', etiqueta: P.dni, valor: formularios.dni, max: 10, inputmode: 'numeric', autocomplete: 'off', alCambiar: (x) => { formularios.dni = x; } }),
+          campo({ id: 'form-cuil', etiqueta: P.cuil, valor: formularios.cuil, max: 13, inputmode: 'numeric', autocomplete: 'off', alCambiar: (x) => { formularios.cuil = x; } })),
+        campo({ id: 'form-fecha', etiqueta: P.nacimiento, valor: formularios.fecha, tipo: 'date', autocomplete: 'bday', alCambiar: (x) => { formularios.fecha = x; } }));
+    };
+    return seccion('form', P.formularios, [h('p', { class: 'campo-ayuda', text: P.formulariosAyuda }), campos], cargar);
   }
 
   /* ---------- Guardar ---------- */
@@ -489,10 +506,8 @@ Terna.pagina('perfil', async (ctx) => {
   /* ---------- Página ---------- */
   dibujarIndicador();
   Terna.vaciar(raiz);
-  const bloques = primerUso
-    ? [bloqueDatos(), bloqueCv(), bloqueIdiomas(), bloqueExperiencia(), bloqueEstudios(), bloqueFormularios()]
-    : [bloqueDatos(), bloqueExperiencia(), bloqueEstudios(), bloqueIdiomas(), bloqueCv(), estructurado ? bloqueEstructurado() : null, bloqueFormularios()];
-  if (primerUso && estructurado) bloques.push(bloqueEstructurado());
+  const bloques = [bloqueDatos(), bloqueCv(), estructurado ? bloqueEstructurado() : null, bloqueFormularios(),
+    bloqueExperiencia(), bloqueEstudios(), bloqueIdiomas()];
   raiz.append(banda, h('div', { class: 'seccion' }, bloques),
     h('p', { class: 'campo-ayuda', text: P.privacidad }),
     h('div', { class: 'guardar-fijo' }, estadoGuardado, bGuardar));
