@@ -17,16 +17,18 @@ Terna.pagina('perfil', async (ctx) => {
   const primerUso = new URLSearchParams(location.search).get('bienvenida') === '1';
   const MAX = { exp: config.max_experiencias || 15, est: config.max_estudios || 15, idi: config.max_idiomas || 10, cvMb: config.cv_max_mb || 5 };
   const RUTA_CV = uid + '/cv-original.pdf';
+  const RUTA_ANALITICO = uid + '/analitico.pdf';  // 0021
   const anioHoy = Number(Terna.hoy().slice(0, 4));
   const mesHoy = Terna.hoy().slice(0, 7);
 
   const parar = Terna.cargando(raiz);
-  const [rP, rE, rS, rI, rC] = await Promise.all([
+  const [rP, rE, rS, rI, rC, rA] = await Promise.all([
     sb.from('perfiles').select('nombre, apellido, telefono, ciudad, linkedin, portfolio, perfil_estructurado, perfil_estructurado_en, cv_original_leido_en').eq('usuario_id', uid).maybeSingle(),
     sb.from('experiencias').select('id, puesto, empresa, desde, hasta, actual, descripcion, orden').eq('usuario_id', uid).order('orden').order('desde', { ascending: false }),
     sb.from('estudios').select('id, titulo, institucion, anio, estado, promedio, orden').eq('usuario_id', uid).order('orden'),
     sb.from('idiomas').select('id, idioma, nivel').eq('usuario_id', uid).order('creado_en'),
     sb.rpc('cv_original'),
+    sb.rpc('analitico'),
   ]);
   parar();
   const errorCarga = rP.error || rE.error || rS.error || rI.error || rC.error;
@@ -48,6 +50,8 @@ Terna.pagina('perfil', async (ctx) => {
   let originales = foto();
   let estructurado = perfil.perfil_estructurado || null;
   let cv = (Array.isArray(rC.data) ? rC.data[0] : rC.data) || null;
+  // El analítico (0021): si no se puede leer, el bloque sigue sin él (no es parte del perfil).
+  let analitico = rA.error ? undefined : ((Array.isArray(rA.data) ? rA.data[0] : rA.data) || null);
   let leidoEn = perfil.cv_original_leido_en || null;
   let faltantes = ctx.faltantes.slice();
   const formularios = { cargado: false, dni: '', cuil: '', fecha: '', original: null };
@@ -292,7 +296,57 @@ Terna.pagina('perfil', async (ctx) => {
       cont.append(h('p', { class: 'campo-ayuda', text: P.cvAyuda }), estado, error, archivo);
     };
     dibujar();
-    return seccion('cv', P.cv, cont);
+    return seccion('cv', P.cv, [cont, partesAnalitico()]);
+  }
+
+  /* ---------- Analítico (0021; brand.md 0.4.14): un PDF que Terna adjunta solo si un formulario lo pide ---------- */
+  function partesAnalitico() {
+    const cont = h('div', { class: 'seccion' });
+    if (analitico === undefined) return cont;
+    const estado = h('p', { class: 'campo-ayuda', role: 'status' });
+    const error = h('p', { class: 'campo-error', role: 'alert' });
+    const archivo = h('input', { type: 'file', accept: 'application/pdf,.pdf', class: 'oculto-visual', tabindex: '-1', 'aria-hidden': 'true' });
+    const elegir = () => { error.textContent = ''; archivo.click(); };
+    archivo.addEventListener('change', async () => {
+      const f = archivo.files && archivo.files[0];
+      archivo.value = '';
+      if (!f) return;
+      const esPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
+      if (!esPdf || f.size > MAX.cvMb * 1048576) { error.textContent = T.errores.cvArchivo(MAX.cvMb); return; }
+      estado.textContent = P.subiendo;
+      const { error: e } = await sb.storage.from(Terna.CONFIG.bucket).upload(RUTA_ANALITICO, f, { upsert: true, contentType: 'application/pdf', cacheControl: '0' });
+      estado.textContent = '';
+      if (e) { if (!Terna.siSesionVencida(e)) error.textContent = T.errores.analiticoSubir; return; }
+      const r = await sb.rpc('analitico');
+      analitico = (Array.isArray(r.data) ? r.data[0] : r.data) || { subido_en: new Date().toISOString() };
+      dibujar();
+      Terna.avisoBreve(T.comun.guardado);
+      enfocar('analitico-ver');
+    });
+    const dibujar = () => {
+      Terna.vaciar(cont);
+      cont.append(h('h3', { class: 'tarjeta-titulo', text: P.analitico }));
+      if (analitico) {
+        cont.append(h('p', { text: P.analiticoCargado(Terna.fechaLarga(analitico.subido_en)) }),
+          h('div', { class: 'botones' },
+            Terna.linkFirmado(RUTA_ANALITICO, null, h('a', { class: 'btn btn-texto', id: 'analitico-ver' }, icono('i-revisar'), P.ver)),
+            boton(P.reemplazar, 'i-subir', elegir, 'btn btn-texto'),
+            boton(P.quitar, 'i-quitar', async () => {
+              const { error: e } = await sb.storage.from(Terna.CONFIG.bucket).remove([RUTA_ANALITICO]);
+              if (e) { if (!Terna.siSesionVencida(e)) Terna.avisoBreve(T.errores.guardar, { error: true }); return; }
+              analitico = null;
+              dibujar();
+              Terna.avisoBreve(T.comun.guardado);
+              enfocar('analitico-subir');
+            }, 'btn btn-texto')));
+      } else {
+        cont.append(h('p', { class: 'suave', text: P.sinAnalitico }),
+          boton(P.subirAnalitico(MAX.cvMb), 'i-subir', elegir, 'btn btn-ancho', { id: 'analitico-subir' }));
+      }
+      cont.append(h('p', { class: 'campo-ayuda', text: P.analiticoAyuda }), estado, error, archivo);
+    };
+    dibujar();
+    return cont;
   }
 
   /* ---------- Perfil estructurado: lo que Terna lee (cuatro partes editables) ---------- */

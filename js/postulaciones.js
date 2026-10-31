@@ -424,7 +424,9 @@ Terna.pagina('postulaciones', async (ctx) => {
   // Dónde se destraba (brand.md 0.4.8 §6.5): el motor deja en respuestas.traba qué campo frenó la postulación. Un dato de
   // Mi perfil lleva a Mi perfil; DNI, CUIL o fecha de nacimiento, a Datos para formularios (desde 0.4.8 Terna los escribe si
   // están cargados); lo demás, a las respuestas para formularios de Preferencias, como hasta ahora.
-  const CAMPOS_PERFIL = { empresa_actual: 'experiencia', telefono: 'datos', linkedin: 'datos', sitio: 'datos', promedio: 'estudios', dni: 'formularios' };
+  // 0021: el analítico se sube en el bloque del CV original; un promedio que no tiene opción en la escala del formulario, en Estudios.
+  const CAMPOS_PERFIL = { empresa_actual: 'experiencia', telefono: 'datos', linkedin: 'datos', sitio: 'datos', promedio: 'estudios', promedio_sin_opcion: 'estudios',
+    analitico: 'cv', dni: 'formularios' };
   // Lo que Terna no tiene en ningún lado (un archivo que no es el CV ni la carta): no hay dónde completarlo, así que no va link
   // (pipeline.md 0.3.19 §4.12). Desde 0020 el promedio y el portfolio se cargan en Mi perfil, y la nacionalidad en Preferencias.
   const CAMPOS_SIN_LINK = { archivo: true };

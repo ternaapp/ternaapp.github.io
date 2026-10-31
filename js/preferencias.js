@@ -14,7 +14,7 @@ Terna.pagina('preferencias', async (ctx) => {
   const uid = ctx.usuario.id;
   const P = T.preferencias;
   const raiz = document.getElementById('preferencias');
-  const COLUMNAS = 'umbral, modalidades, alcance, salario_modo, salario_min, salario_max, salario_moneda, idioma_documentos, armar_paquetes, paquetes_por_dia, interes_por_defecto, postular_sola, revisar_antes_de_enviar, autorizacion_trabajo, disponibilidad, mudanza, nacionalidad, puestos_objetivo, niveles, jornadas';
+  const COLUMNAS = 'umbral, modalidades, alcance, salario_modo, salario_min, salario_max, salario_moneda, idioma_documentos, armar_paquetes, paquetes_por_dia, interes_por_defecto, postular_sola, revisar_antes_de_enviar, autorizacion_trabajo, disponibilidad, mudanza, nacionalidad, aceptar_consentimientos, puestos_objetivo, niveles, jornadas';
   const NIVELES = ['pasantia', 'junior', 'semi_senior', 'senior', 'lider', 'director'];
   const JORNADAS = ['completa', 'parcial'];
   const MAX_PUESTOS = 8;
@@ -334,7 +334,9 @@ Terna.pagina('preferencias', async (ctx) => {
   inNac.addEventListener('input', () => { v.nacionalidad = inNac.value; });
   const sNac = h('div', { class: 'campo' }, h('label', { for: 'pref-nacionalidad', text: P.nacionalidad }), inNac,
     h('p', { class: 'campo-ayuda', id: 'pref-nacionalidad-ayuda', text: P.nacionalidadAyuda }));
-  const cResp = [h('p', { class: 'campo-ayuda', text: P.respuestasIntro }), sAut, sDisp, sMud, sNac];
+  // 0021: las casillas de consentimiento obligatorias (Sí por defecto, como hacía el motor desde pipeline.md 0.3.8).
+  const sCons = conInterruptor(P.consentimientos, P.consentimientosAyuda, v.aceptar_consentimientos !== false, (x) => { v.aceptar_consentimientos = x; });
+  const cResp = [h('p', { class: 'campo-ayuda', text: P.respuestasIntro }), sAut, sDisp, sMud, sNac, sCons];
 
   /* ---------- Alertas por mail (el título es el del bloque; diseno.md 0.12 §9.3) ---------- */
   const direccion = String(config.alertas_mail_patron || '').replace('{codigo}', ctx.usuario.codigo_alertas || '');
@@ -420,6 +422,7 @@ Terna.pagina('preferencias', async (ctx) => {
       disponibilidad: disp.modo === 'dias' ? F.dias(disp.dias) : F.inmediata,
       mudanza: !!v.mudanza,
       nacionalidad: (String(v.nacionalidad || '').trim().slice(0, 60)) || null,
+      aceptar_consentimientos: v.aceptar_consentimientos !== false,
       puestos_objetivo: v.puestos_objetivo, niveles: v.niveles, jornadas: v.jornadas,
     };
     const { error: e } = await sb.from('preferencias').update(fila).eq('usuario_id', uid);

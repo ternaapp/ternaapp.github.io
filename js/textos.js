@@ -302,7 +302,7 @@ window.T = (function () {
       titulo_: 'Título o curso', institucion: 'Institución', estado: 'Estado', terminado: 'Terminado', enCurso: 'En curso',
       tituloAyuda: 'Con el nivel en el nombre: Licenciatura en…, Tecnicatura en…, Maestría en…, Curso de…. Un curso o una diplomatura no cuentan como título universitario. El secundario no hace falta si tenés otro estudio.',
       anioAyuda: 'El año en que terminaste. Si está en curso, el año en que esperás terminar.',
-      promedio: 'Promedio (opcional)', promedioAyuda: 'Como figura en tu analítico, con la escala: 8,5/10 o 3,4/4. No va en el CV: Terna lo usa solo si un formulario lo pide.',
+      promedio: 'Promedio (opcional)', promedioAyuda: 'Solo de una carrera, como figura en tu analítico y con la escala: 8,5/10 o 3,4/4. En un curso dejalo vacío. No va en el CV: Terna lo usa solo si un formulario lo pide.',
       agregarEstudio: 'Agregar estudio', sinEstudios: 'Todavía no cargaste estudios.',
       topeEstudios: (x) => 'Hasta ' + x + ' estudios.',
       idiomas: 'Idiomas', idioma: 'Idioma', nivel: 'Nivel', nativo: 'Nativo',
@@ -316,6 +316,12 @@ window.T = (function () {
       cvPendiente: 'Terna lo lee en la próxima corrida y arma tu perfil estructurado.',
       subiendo: 'Subiendo…',
       sinCv: 'Todavía no subiste tu CV.',
+      // 0021 (brand.md 0.4.14): el analítico, que pidió obligatorio un formulario real.
+      analitico: 'Analítico (opcional)',
+      analiticoAyuda: 'El certificado con las materias y notas de tu carrera, en PDF. Terna lo adjunta solo si un formulario lo pide; no lo lee ni lo manda a nadie más.',
+      analiticoCargado: (f) => 'Analítico cargado el ' + f + '.',
+      sinAnalitico: 'Todavía no subiste tu analítico.',
+      subirAnalitico: (mb) => 'Subir analítico (PDF, hasta ' + mb + ' MB)',
       estructurado: 'Perfil estructurado',
       estructuradoIntro: 'Esto es lo que Terna lee. Se arma solo desde tu CV y tus datos; podés corregirlo.',
       estructuradoAyuda: 'Si subís un CV nuevo, Terna lo vuelve a armar y pisa tus correcciones.',
@@ -395,6 +401,9 @@ window.T = (function () {
       dispCantidadAyuda: 'Por ejemplo, 15 o 30 si tenés que avisar en tu trabajo actual.',
       mudanza: 'Mudanza', mudanzaAyuda: 'Lo que Terna responde si un formulario pregunta si te mudarías por el trabajo.',
       nacionalidad: 'Nacionalidad (opcional)', nacionalidadAyuda: 'Por ejemplo, argentina. Terna la responde solo si un formulario la pregunta.',
+      // 0021 (brand.md 0.4.14)
+      consentimientos: 'Aceptar los consentimientos',
+      consentimientosAyuda: 'Cuando un formulario pide marcar una casilla obligatoria de consentimiento (la política de privacidad del empleador, o que use tus respuestas demográficas), Terna la marca. Si lo apagás, esas postulaciones te quedan a mano.',
       // Los textos que se guardan y que el motor lee (datos.md §5.6, pipeline.md §4.12): no son textos de pantalla, son el formato.
       formato: {
         pais: (pais, si) => pais + ': ' + (si ? 'sí' : 'no') + '.',
@@ -708,6 +717,7 @@ window.T = (function () {
       cerradas: 'Las invitaciones están cerradas por ahora.',
       cvArchivo: (mb) => 'El CV tiene que ser un PDF de hasta ' + mb + ' MB.',
       cvSubir: 'No se pudo subir el CV. Probá de nuevo.',
+      analiticoSubir: 'No se pudo subir el analítico. Probá de nuevo.',
       archivo: 'No se pudo abrir el archivo. Probá de nuevo en un rato.',
       textoCorto: 'El texto es muy corto para ser un aviso.',
       textoLargo: (max) => 'El texto es demasiado largo (hasta ' + n(max) + ' caracteres).',
