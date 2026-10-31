@@ -365,15 +365,14 @@ Terna.pagina('postulaciones', async (ctx) => {
     if (et) sec.append(et);
     return sec;
   }
-  // Dónde se destraba (brand.md 0.4.4 §6.5): el motor deja en respuestas.traba qué campo frenó la postulación. Un dato de
-  // Mi perfil lleva a Mi perfil; DNI, CUIL o fecha de nacimiento, a Datos para formularios (para copiarlo); lo demás, a las
-  // respuestas para formularios de Preferencias, como hasta ahora.
-  const CAMPOS_PERFIL = { empresa_actual: 'experiencia', telefono: 'datos', linkedin: 'datos' };
+  // Dónde se destraba (brand.md 0.4.6 §6.5): el motor deja en respuestas.traba qué campo frenó la postulación. Un dato de
+  // Mi perfil lleva a Mi perfil; DNI, CUIL o fecha de nacimiento, a Datos para formularios (desde 0.4.6 Terna los escribe si
+  // están cargados); lo demás, a las respuestas para formularios de Preferencias, como hasta ahora.
+  const CAMPOS_PERFIL = { empresa_actual: 'experiencia', telefono: 'datos', linkedin: 'datos', dni: 'formularios' };
   function campoTraba(a) { return a.respuestas && a.respuestas.traba ? a.respuestas.traba.campo || null : null; }
   function linkTraba(a) {
     if (a.motivo_a_mano !== 'pregunta_sin_respuesta') return null;
     const campo = campoTraba(a);
-    if (campo === 'dni') return h('a', { href: 'perfil.html#formularios', text: T.postulaciones.verDatosPerfil });
     if (CAMPOS_PERFIL[campo]) return h('a', { href: 'perfil.html#' + CAMPOS_PERFIL[campo], text: T.postulaciones.completarPerfil });
     return h('a', { href: 'preferencias.html#respuestas', text: T.postulaciones.completarRespuestas });
   }
@@ -422,7 +421,6 @@ Terna.pagina('postulaciones', async (ctx) => {
         if (Aviso.puedeVolverAProbar(a, config)) {
           cont.append(b(B.volverAProbar, 'i-probar', () => volverAProbar(a)));
           if (a.motivo_a_mano === 'requiere_cuenta') notas.push(h('p', { class: 'campo-ayuda', text: T.postulaciones.seVaATrabar }));
-          if (campoTraba(a) === 'dni') notas.push(h('p', { class: 'campo-ayuda', text: T.postulaciones.seVaATrabarDato }));
         }
         cont.append(noInteresa);
         break;

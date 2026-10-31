@@ -219,9 +219,7 @@ window.T = (function () {
       },
       completarRespuestas: 'Completar respuestas para formularios',
       completarPerfil: 'Completar Mi perfil',
-      verDatosPerfil: 'Ver tus datos en Mi perfil',
       seVaATrabar: 'Se va a trabar en el mismo lugar: Terna no entra con cuentas.',
-      seVaATrabarDato: 'Se va a trabar en el mismo lugar: Terna nunca escribe tu DNI, tu CUIL ni tu fecha de nacimiento.',
       botones: {
         marcarPostulado: 'Marcar postulado', volverAProbar: 'Volver a probar', noMeInteresa: 'No me interesa',
         enviar: 'Enviar', postularYo: 'Postular yo', cancelarEnvio: 'Cancelar envío',
@@ -297,7 +295,7 @@ window.T = (function () {
       topeCertificaciones: (x) => 'Hasta ' + x + ' certificaciones.',
       formularios: 'Datos para formularios',
       dni: 'DNI', cuil: 'CUIL', nacimiento: 'Fecha de nacimiento',
-      formulariosAyuda: 'Opcionales. No van en ningún CV ni Terna los escribe en ningún formulario. Se guardan cifrados y solo sirven para que los copies en formularios que los pidan.',
+      formulariosAyuda: 'Opcionales. Nunca van en el CV. Si un formulario los pide, Terna los escribe; si no los cargaste, esa postulación queda para hacer a mano. Se guardan cifrados.',
       privacidad: 'Tus datos y tus documentos los ves vos sola o solo. Francisco administra Terna y ve la lista de cuentas y el uso, no tu perfil, tus documentos ni tus postulaciones desde la web; como operador del servicio tiene acceso técnico a la base, como cualquier administrador de un sistema. Para puntuar, armar y responder, Terna manda tu perfil y el texto del aviso a un proveedor externo que, según sus términos, no usa esos datos para entrenar.',
       guardadoBusca: 'Guardado. Terna empieza a buscar en la próxima corrida.',
       revisarPrefs: 'Revisar preferencias (opcional)',
