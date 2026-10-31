@@ -1,5 +1,5 @@
 /* Terna · js/preferencias.js
-   Preferencias (diseno.md 0.6 §9.3 y §10.17; brand.md §6.7): las dieciséis columnas de preferencias, las alertas de
+   Preferencias (diseno.md 0.6 §9.3 y §10.17; brand.md §6.7): las diecinueve columnas de preferencias (con "Qué buscás", 0015), las alertas de
    LinkedIn, pausar la cuenta (escribe en el acto) y el texto para borrarla, en cinco bloques: Búsqueda, Paquetes y
    postulación, Respuestas para formularios, Alertas de LinkedIn y Tu cuenta. Desplegables en celular y carril desde
    768 px, con Terna.porBloques (comun.js), igual que Mi perfil. "Guardar preferencias" escribe todo. */
@@ -12,14 +12,23 @@ Terna.pagina('preferencias', async (ctx) => {
   const uid = ctx.usuario.id;
   const P = T.preferencias;
   const raiz = document.getElementById('preferencias');
-  const COLUMNAS = 'umbral, modalidades, alcance, salario_modo, salario_min, salario_max, salario_moneda, idioma_documentos, armar_paquetes, paquetes_por_dia, interes_por_defecto, postular_sola, revisar_antes_de_enviar, autorizacion_trabajo, disponibilidad, mudanza';
+  const COLUMNAS = 'umbral, modalidades, alcance, salario_modo, salario_min, salario_max, salario_moneda, idioma_documentos, armar_paquetes, paquetes_por_dia, interes_por_defecto, postular_sola, revisar_antes_de_enviar, autorizacion_trabajo, disponibilidad, mudanza, puestos_objetivo, niveles, jornadas';
+  const NIVELES = ['pasantia', 'junior', 'semi_senior', 'senior', 'lider', 'director'];
+  const JORNADAS = ['completa', 'parcial'];
+  const MAX_PUESTOS = 8;
+  const MAX_LARGO_PUESTO = 60;
 
   const parar = Terna.cargando(raiz);
   const lectura = await sb.from('preferencias').select(COLUMNAS).eq('usuario_id', uid).maybeSingle();
   parar();
   const data = lectura.data;
   if (lectura.error || !data) { Terna.errorDeCarga(raiz, lectura.error); return; }
-  const v = Object.assign({}, data, { modalidades: (data.modalidades || []).slice() });
+  const v = Object.assign({}, data, {
+    modalidades: (data.modalidades || []).slice(),
+    niveles: (data.niveles || NIVELES).slice(),
+    jornadas: (data.jornadas || JORNADAS).slice(),
+    puestos_objetivo: (data.puestos_objetivo || []).slice(),
+  });
   const umbralMin = config.umbral_min || 50;
   const umbralMax = config.umbral_max || 95;
   const opcionesPaquetes = config.paquetes_por_dia_opciones || [3, 5];
@@ -101,6 +110,35 @@ Terna.pagina('preferencias', async (ctx) => {
       h('span', { class: 'chip-opcion-cara' }, h('span', { class: 'marca' }, icono('i-tilde')), icono('i-' + m), T.avisos.modalidad[m])));
   }
   sMod.append(chipsMod, h('p', { class: 'campo-ayuda', id: 'ayuda-mod', text: P.alMenosUna }), error('err-mod'));
+
+  /* ---------- Qué buscás: puestos (uno por línea), nivel y jornada (0015) ---------- */
+  const idPue = id('puestos');
+  const puestos = h('textarea', { class: 'control', id: idPue, rows: '4', 'aria-describedby': 'ayuda-puestos err-puestos' });
+  puestos.value = v.puestos_objetivo.join('\n');
+  const leerPuestos = () => Array.from(new Set(puestos.value.split('\n').map((x) => x.trim()).filter(Boolean)));
+  puestos.addEventListener('input', () => { v.puestos_objetivo = leerPuestos(); limpiar('err-puestos'); });
+  const sPue = h('div', { class: 'subbloque' }, h('label', { class: 'tarjeta-titulo', for: idPue, text: P.puestos }), puestos,
+    h('p', { class: 'campo-ayuda', id: 'ayuda-puestos', text: P.puestosAyuda }), error('err-puestos'));
+  // Un grupo de casillas en chips, como Modalidades: al menos una.
+  function grupoChips(titulo, clave, valores, etiquetas, ayuda, idErr) {
+    const idT = id('t');
+    const idAyuda = id('ayuda');
+    const s = h('div', { class: 'subbloque', role: 'group', 'aria-labelledby': idT, 'aria-describedby': idAyuda + ' ' + idErr }, h('h3', { id: idT, class: 'tarjeta-titulo', text: titulo }));
+    const chips = h('div', { class: 'chips' });
+    for (const x of valores) {
+      const input = h('input', { type: 'checkbox', value: x, checked: v[clave].includes(x) });
+      input.addEventListener('change', () => {
+        v[clave] = input.checked ? valores.filter((y) => y === x || v[clave].includes(y)) : v[clave].filter((y) => y !== x);
+        limpiar(idErr);
+      });
+      chips.append(h('label', { class: 'chip-opcion chip-opcion-form' }, input,
+        h('span', { class: 'chip-opcion-cara' }, h('span', { class: 'marca' }, icono('i-tilde')), etiquetas[x])));
+    }
+    s.append(chips, h('p', { class: 'campo-ayuda', id: idAyuda, text: ayuda }), error(idErr));
+    return s;
+  }
+  const sNiv = grupoChips(P.niveles, 'niveles', NIVELES, P.nivel, P.nivelesAyuda, 'err-niv');
+  const sJor = grupoChips(P.jornadas, 'jornadas', JORNADAS, P.jornada, P.jornadasAyuda, 'err-jor');
 
   const sAlc = grupoRadios(P.alcance, 'alcance', [['local', P.local, P.localAyuda], ['exterior', P.exterior, P.exteriorAyuda], ['ambos', P.ambos]], v.alcance, (x) => { v.alcance = x; });
 
@@ -196,8 +234,13 @@ Terna.pagina('preferencias', async (ctx) => {
   }
   bGuardar.addEventListener('click', async () => {
     banda.hidden = true;
-    ['err-umbral', 'err-mod', 'err-sal', 'err-paq'].forEach((x) => marcar(x, ''));
+    ['err-umbral', 'err-mod', 'err-sal', 'err-paq', 'err-puestos', 'err-niv', 'err-jor'].forEach((x) => marcar(x, ''));
     let ok = true;
+    v.puestos_objetivo = leerPuestos();
+    if (v.puestos_objetivo.length > MAX_PUESTOS) { marcar('err-puestos', T.errores.puestosDemasiados(MAX_PUESTOS)); ok = false; }
+    else if (v.puestos_objetivo.some((x) => x.length > MAX_LARGO_PUESTO)) { marcar('err-puestos', T.errores.puestoLargo(MAX_LARGO_PUESTO)); ok = false; }
+    if (!v.niveles.length) { marcar('err-niv', T.errores.niveles); ok = false; }
+    if (!v.jornadas.length) { marcar('err-jor', T.errores.jornadas); ok = false; }
     if (!v.modalidades.length) { marcar('err-mod', T.errores.modalidades); ok = false; }
     if (v.salario_modo === 'rango') {
       if (v.salario_min === null || v.salario_max === null || !v.salario_moneda) { marcar('err-sal', T.errores.salarioIncompleto); ok = false; }
@@ -214,13 +257,15 @@ Terna.pagina('preferencias', async (ctx) => {
       idioma_documentos: v.idioma_documentos, armar_paquetes: v.armar_paquetes, paquetes_por_dia: v.paquetes_por_dia,
       interes_por_defecto: v.interes_por_defecto, postular_sola: v.postular_sola, revisar_antes_de_enviar: v.revisar_antes_de_enviar,
       autorizacion_trabajo: String(v.autorizacion_trabajo || '').trim() || null, disponibilidad: String(v.disponibilidad || '').trim() || null, mudanza: !!v.mudanza,
+      puestos_objetivo: v.puestos_objetivo, niveles: v.niveles, jornadas: v.jornadas,
     };
     const { error: e } = await sb.from('preferencias').update(fila).eq('usuario_id', uid);
     bGuardar.removeAttribute('aria-disabled');
     if (e) {
       if (Terna.siSesionVencida(e)) return;
       const clave = String(e.message || '').trim();
-      const destino = { umbral_fuera_de_rango: 'err-umbral', modalidades_vacias: 'err-mod', salario_incompleto: 'err-sal', salario_rango_invalido: 'err-sal', paquetes_por_dia_invalido: 'err-paq' }[clave];
+      const destino = { umbral_fuera_de_rango: 'err-umbral', modalidades_vacias: 'err-mod', salario_incompleto: 'err-sal', salario_rango_invalido: 'err-sal', paquetes_por_dia_invalido: 'err-paq',
+        niveles_vacios: 'err-niv', jornadas_vacias: 'err-jor', puestos_demasiados: 'err-puestos', puesto_largo: 'err-puestos' }[clave];
       if (destino) { marcar(destino, Terna.textoError(e)); mostrarBanda(T.errores.guardarCampos); } else mostrarBanda(T.errores.guardar);
       return;
     }
@@ -229,7 +274,7 @@ Terna.pagina('preferencias', async (ctx) => {
 
   /* ---------- Página ---------- */
   Terna.vaciar(raiz);
-  bloques.bloque('busqueda', P.grupos.busqueda, [sUmbral, sMod, sAlc, sSal]);
+  bloques.bloque('busqueda', P.grupos.busqueda, [sPue, sNiv, sJor, sMod, sAlc, sUmbral, sSal]);
   bloques.bloque('paquetes', P.grupos.paquetes, [sInt, sArm, sPaq, sIdi, sPos, sRev]);
   bloques.bloque('respuestas', P.respuestas, cResp);
   bloques.bloque('alertas', P.alertas, cAlertas);
