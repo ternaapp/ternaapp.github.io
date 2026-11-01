@@ -300,9 +300,13 @@ window.T = (function () {
       topeExperiencias: (x) => 'Hasta ' + x + ' experiencias.',
       estudios: 'Estudios y cursos',
       titulo_: 'Título o curso', institucion: 'Institución', estado: 'Estado', terminado: 'Terminado', enCurso: 'En curso',
-      tituloAyuda: 'Con el nivel en el nombre: Licenciatura en…, Tecnicatura en…, Maestría en…, Curso de…. Un curso o una diplomatura no cuentan como título universitario. El secundario no hace falta si tenés otro estudio.',
+      tituloAyuda: 'El nombre completo, como figura en el título o el certificado: Licenciatura en…, Maestría en…, Curso de…. El secundario no hace falta si tenés otro estudio.',
+      // 0022 (brand.md 0.4.15): el tipo de cada estudio; el promedio es solo de una carrera.
+      nivel: 'Tipo',
+      nivelAyuda: 'Un curso o una certificación no cuentan como título universitario ni llevan promedio.',
+      niveles: { grado: 'Carrera de grado (licenciatura, ingeniería…)', posgrado: 'Posgrado (maestría, MBA, especialización, doctorado)', terciario: 'Terciario (tecnicatura, profesorado)', curso: 'Curso o certificación', secundario: 'Secundario' },
       anioAyuda: 'El año en que terminaste. Si está en curso, el año en que esperás terminar.',
-      promedio: 'Promedio (opcional)', promedioAyuda: 'Solo de una carrera, como figura en tu analítico y con la escala: 8,5/10 o 3,4/4. En un curso dejalo vacío. No va en el CV: Terna lo usa solo si un formulario lo pide.',
+      promedio: 'Promedio (opcional)', promedioAyuda: 'Como figura en tu analítico, con la escala: 8,5/10 o 3,4/4. No va en el CV: Terna lo usa solo si un formulario lo pide.',
       agregarEstudio: 'Agregar estudio', sinEstudios: 'Todavía no cargaste estudios.',
       topeEstudios: (x) => 'Hasta ' + x + ' estudios.',
       idiomas: 'Idiomas', idioma: 'Idioma', nivel: 'Nivel', nativo: 'Nativo',
@@ -403,7 +407,7 @@ window.T = (function () {
       nacionalidad: 'Nacionalidad (opcional)', nacionalidadAyuda: 'Por ejemplo, argentina. Terna la responde solo si un formulario la pregunta.',
       // 0021 (brand.md 0.4.14)
       consentimientos: 'Aceptar los consentimientos',
-      consentimientosAyuda: 'Cuando un formulario pide marcar una casilla obligatoria de consentimiento (la política de privacidad del empleador, o que use tus respuestas demográficas), Terna la marca. Si lo apagás, esas postulaciones te quedan a mano.',
+      consentimientosAyuda: 'Terna marca que sí en las casillas de consentimiento de los formularios: la política de privacidad del empleador, que use tus respuestas demográficas, que te contacte por otras búsquedas, por SMS o WhatsApp, y sus novedades. Si lo apagás, no marca ninguna, y las postulaciones que piden una obligatoria te quedan a mano.',
       // Los textos que se guardan y que el motor lee (datos.md §5.6, pipeline.md §4.12): no son textos de pantalla, son el formato.
       formato: {
         pais: (pais, si) => pais + ': ' + (si ? 'sí' : 'no') + '.',

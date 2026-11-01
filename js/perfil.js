@@ -18,6 +18,19 @@ Terna.pagina('perfil', async (ctx) => {
   const MAX = { exp: config.max_experiencias || 15, est: config.max_estudios || 15, idi: config.max_idiomas || 10, cvMb: config.cv_max_mb || 5 };
   const RUTA_CV = uid + '/cv-original.pdf';
   const RUTA_ANALITICO = uid + '/analitico.pdf';  // 0021
+  // 0022: el tipo de cada estudio. Sin elegir, el que dice el nombre, con las mismas palabras que usa el motor (datos/titulos.json,
+  // datos/secundario.json) y las de posgrado y terciario.
+  const NIVELES_ESTUDIO = ['grado', 'posgrado', 'terciario', 'curso', 'secundario'];
+  const NIVELES_CARRERA = ['grado', 'posgrado', 'terciario'];
+  const sinTildes = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  function nivelDelNombre(titulo, institucion) {
+    const t = sinTildes(titulo);
+    if (/\b(curso|taller|bootcamp|workshop|seminario|capacitacion|certificado|certificacion|webinar|diplomatura|diploma|clases de|nanodegree|specialization|course)\b/.test(t)) return 'curso';
+    if (/\b(maestria|master|magister|mba|doctorado|phd|especializacion|posgrado|postgrado)\b/.test(t)) return 'posgrado';
+    if (/\b(tecnicatura|tecnico superior|profesorado|terciario)\b/.test(t)) return 'terciario';
+    if (/(secundari|bachiller|polimodal|high ?school|liceo|nivel medio|educacion media|secondary school)/.test(t + ' ' + sinTildes(institucion))) return 'secundario';
+    return 'grado';
+  }
   const anioHoy = Number(Terna.hoy().slice(0, 4));
   const mesHoy = Terna.hoy().slice(0, 7);
 
@@ -25,7 +38,7 @@ Terna.pagina('perfil', async (ctx) => {
   const [rP, rE, rS, rI, rC, rA] = await Promise.all([
     sb.from('perfiles').select('nombre, apellido, telefono, ciudad, linkedin, portfolio, perfil_estructurado, perfil_estructurado_en, cv_original_leido_en').eq('usuario_id', uid).maybeSingle(),
     sb.from('experiencias').select('id, puesto, empresa, desde, hasta, actual, descripcion, orden').eq('usuario_id', uid).order('orden').order('desde', { ascending: false }),
-    sb.from('estudios').select('id, titulo, institucion, anio, estado, promedio, orden').eq('usuario_id', uid).order('orden'),
+    sb.from('estudios').select('id, titulo, institucion, anio, estado, promedio, nivel, orden').eq('usuario_id', uid).order('orden'),
     sb.from('idiomas').select('id, idioma, nivel').eq('usuario_id', uid).order('creado_en'),
     sb.rpc('cv_original'),
     sb.rpc('analitico'),
@@ -44,7 +57,8 @@ Terna.pagina('perfil', async (ctx) => {
   const datos = { nombre: perfil.nombre || '', apellido: perfil.apellido || '', telefono: perfil.telefono || '', ciudad: perfil.ciudad || '', linkedin: perfil.linkedin || '', portfolio: perfil.portfolio || '' };
   const listas = {
     exp: (rE.data || []).map((e) => Object.assign({ clave: nuevaClave() }, e, { descripcion: e.descripcion || '' })),
-    est: (rS.data || []).map((e) => Object.assign({ clave: nuevaClave() }, e, { promedio: e.promedio || '' })),
+    // 0022: sin tipo elegido, se propone el que dice el nombre (como lo deduce el motor); se guarda cuando la persona guarda.
+    est: (rS.data || []).map((e) => Object.assign({ clave: nuevaClave() }, e, { promedio: e.promedio || '', nivel: e.nivel || nivelDelNombre(e.titulo, e.institucion) })),
     idi: (rI.data || []).map((e) => Object.assign({ clave: nuevaClave() }, e)),
   };
   let originales = foto();
@@ -61,7 +75,7 @@ Terna.pagina('perfil', async (ctx) => {
     return {
       datos: JSON.stringify(datos),
       exp: new Map(listas.exp.filter((e) => e.id).map((e, i) => [e.id, JSON.stringify(limpiar(e, ['puesto', 'empresa', 'desde', 'hasta', 'actual', 'descripcion']).concat(i))])),
-      est: new Map(listas.est.filter((e) => e.id).map((e, i) => [e.id, JSON.stringify(limpiar(e, ['titulo', 'institucion', 'anio', 'estado', 'promedio']).concat(i))])),
+      est: new Map(listas.est.filter((e) => e.id).map((e, i) => [e.id, JSON.stringify(limpiar(e, ['titulo', 'institucion', 'anio', 'estado', 'promedio', 'nivel']).concat(i))])),
       idi: new Map(listas.idi.filter((e) => e.id).map((e) => [e.id, JSON.stringify(limpiar(e, ['idioma', 'nivel']))])),
     };
   }
@@ -196,20 +210,27 @@ Terna.pagina('perfil', async (ctx) => {
       if (!listas.est.length) cont.append(h('p', { class: 'suave', text: P.sinEstudios }));
       listas.est.forEach((e, i) => {
         const p = 'est-' + e.clave;
+        // El promedio es de una carrera (0022): para un curso o el secundario no se muestra y no se guarda.
+        const promedio = campo({ id: p + '-promedio', etiqueta: P.promedio, valor: e.promedio, max: 20, ayuda: P.promedioAyuda, alCambiar: (v) => { e.promedio = v; } });
+        const mostrarPromedio = () => { promedio.hidden = !NIVELES_CARRERA.includes(e.nivel); };
+        mostrarPromedio();
         cont.append(h('div', { class: 'bloque-lista' },
+          seleccion({ id: p + '-nivel', etiqueta: P.nivel, valor: e.nivel, opciones: NIVELES_ESTUDIO.map((n) => [n, P.niveles[n]]),
+            alCambiar: (v) => { e.nivel = v; mostrarPromedio(); } }),
+          h('p', { class: 'campo-ayuda', text: P.nivelAyuda }),
           campo({ id: p + '-titulo', etiqueta: P.titulo_, valor: e.titulo, max: 160, ayuda: P.tituloAyuda, alCambiar: (v) => { e.titulo = v; } }),
           campo({ id: p + '-institucion', etiqueta: P.institucion, valor: e.institucion, max: 160, alCambiar: (v) => { e.institucion = v; } }),
           h('div', { class: 'dos' },
             campo({ id: p + '-anio', etiqueta: P.anio, valor: e.anio, tipo: 'number', inputmode: 'numeric', ayuda: P.anioAyuda, alCambiar: (v) => { e.anio = v; } }),
             seleccion({ id: p + '-estado', etiqueta: P.estado, valor: e.estado || 'terminado', opciones: [['terminado', P.terminado], ['en_curso', P.enCurso]], alCambiar: (v) => { e.estado = v; } })),
-          campo({ id: p + '-promedio', etiqueta: P.promedio, valor: e.promedio, max: 20, ayuda: P.promedioAyuda, alCambiar: (v) => { e.promedio = v; } }),
+          promedio,
           h('div', { class: 'botones' }, boton(P.quitar, 'i-quitar', () => { listas.est.splice(i, 1); dibujarLista(listas.est[i] ? 'est-' + listas.est[i].clave + '-titulo' : 'agregar-est'); }))));
       });
       if (listas.est.length < MAX.est) {
         cont.append(h('div', null, boton(P.agregarEstudio, 'i-agregar', () => {
-          const e = { clave: nuevaClave(), id: null, titulo: '', institucion: '', anio: null, estado: 'terminado', promedio: '' };
+          const e = { clave: nuevaClave(), id: null, titulo: '', institucion: '', anio: null, estado: 'terminado', promedio: '', nivel: 'grado' };
           listas.est.push(e);
-          dibujarLista('est-' + e.clave + '-titulo');
+          dibujarLista('est-' + e.clave + '-nivel');
         }, 'btn', { id: 'agregar-est' })));
       } else cont.append(h('p', { class: 'campo-ayuda', text: P.topeEstudios(MAX.est) }));
       actualizarCuentas();
@@ -503,8 +524,9 @@ Terna.pagina('perfil', async (ctx) => {
       // 2. Listas: primero lo que se quitó (por los topes), después lo que cambió y al final lo nuevo.
       await guardarLista('experiencias', listas.exp, originales.exp, (e, i) => ({ puesto: e.puesto.trim(), empresa: e.empresa.trim(), desde: e.desde, hasta: e.actual ? null : e.hasta, actual: !!e.actual, descripcion: (e.descripcion || '').trim() || null, orden: i }),
         (e, i) => JSON.stringify([e.puesto, e.empresa, e.desde, e.actual ? null : e.hasta, !!e.actual, e.descripcion || ''].concat(i)), 'exp');
-      await guardarLista('estudios', listas.est, originales.est, (e, i) => ({ titulo: e.titulo.trim(), institucion: e.institucion.trim(), anio: e.anio === '' || e.anio === null || e.anio === undefined ? null : Number(e.anio), estado: e.estado || 'terminado', promedio: String(e.promedio || '').trim() || null, orden: i }),
-        (e, i) => JSON.stringify([e.titulo, e.institucion, e.anio === '' || e.anio === undefined ? null : (e.anio === null ? null : Number(e.anio)), e.estado || 'terminado', e.promedio || ''].concat(i)), 'est');
+      await guardarLista('estudios', listas.est, originales.est, (e, i) => ({ titulo: e.titulo.trim(), institucion: e.institucion.trim(), anio: e.anio === '' || e.anio === null || e.anio === undefined ? null : Number(e.anio), estado: e.estado || 'terminado',
+        promedio: NIVELES_CARRERA.includes(e.nivel) ? (String(e.promedio || '').trim() || null) : null, nivel: e.nivel || null, orden: i }),
+        (e, i) => JSON.stringify([e.titulo, e.institucion, e.anio === '' || e.anio === undefined ? null : (e.anio === null ? null : Number(e.anio)), e.estado || 'terminado', e.promedio || '', e.nivel || null].concat(i)), 'est');
       await guardarLista('idiomas', listas.idi, originales.idi, (e) => ({ idioma: e.idioma.trim(), nivel: e.nivel }),
         (e) => JSON.stringify([e.idioma, e.nivel]), 'idi');
       // 3. Datos para formularios, solo si se abrieron y cambiaron.
