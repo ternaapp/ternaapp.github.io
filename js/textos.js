@@ -302,9 +302,10 @@ window.T = (function () {
       titulo_: 'Título o curso', institucion: 'Institución', estado: 'Estado', terminado: 'Terminado', enCurso: 'En curso',
       tituloAyuda: 'El nombre completo, como figura en el título o el certificado: Licenciatura en…, Maestría en…, Curso de…. El secundario no hace falta si tenés otro estudio.',
       // 0022 (brand.md 0.4.15): el tipo de cada estudio; el promedio es solo de una carrera.
-      nivel: 'Tipo',
-      nivelAyuda: 'Un curso o una certificación no cuentan como título universitario ni llevan promedio.',
-      niveles: { grado: 'Carrera de grado (licenciatura, ingeniería…)', posgrado: 'Posgrado (maestría, MBA, especialización, doctorado)', terciario: 'Terciario (tecnicatura, profesorado)', curso: 'Curso o certificación', secundario: 'Secundario' },
+      // Claves propias (tipoEstudio…): "nivel" y "niveles" son las de Idiomas, más abajo; con el mismo nombre, Idiomas las pisaba.
+      tipoEstudio: 'Tipo',
+      tipoEstudioAyuda: 'Un curso o una certificación no cuentan como título universitario ni llevan promedio.',
+      tiposEstudio: { grado:'Carrera de grado (licenciatura, ingeniería…)', posgrado: 'Posgrado (maestría, MBA, especialización, doctorado)', terciario: 'Terciario (tecnicatura, profesorado)', curso: 'Curso o certificación', secundario: 'Secundario' },
       anioAyuda: 'El año en que terminaste. Si está en curso, el año en que esperás terminar.',
       promedio: 'Promedio (opcional)', promedioAyuda: 'Como figura en tu analítico, con la escala: 8,5/10 o 3,4/4. No va en el CV: Terna lo usa solo si un formulario lo pide.',
       agregarEstudio: 'Agregar estudio', sinEstudios: 'Todavía no cargaste estudios.',

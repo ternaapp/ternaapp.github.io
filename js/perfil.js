@@ -215,9 +215,9 @@ Terna.pagina('perfil', async (ctx) => {
         const mostrarPromedio = () => { promedio.hidden = !NIVELES_CARRERA.includes(e.nivel); };
         mostrarPromedio();
         cont.append(h('div', { class: 'bloque-lista' },
-          seleccion({ id: p + '-nivel', etiqueta: P.nivel, valor: e.nivel, opciones: NIVELES_ESTUDIO.map((n) => [n, P.niveles[n]]),
+          seleccion({ id: p + '-nivel', etiqueta: P.tipoEstudio, valor: e.nivel, opciones: NIVELES_ESTUDIO.map((n) => [n, P.tiposEstudio[n]]),
             alCambiar: (v) => { e.nivel = v; mostrarPromedio(); } }),
-          h('p', { class: 'campo-ayuda', text: P.nivelAyuda }),
+          h('p', { class: 'campo-ayuda', text: P.tipoEstudioAyuda }),
           campo({ id: p + '-titulo', etiqueta: P.titulo_, valor: e.titulo, max: 160, ayuda: P.tituloAyuda, alCambiar: (v) => { e.titulo = v; } }),
           campo({ id: p + '-institucion', etiqueta: P.institucion, valor: e.institucion, max: 160, alCambiar: (v) => { e.institucion = v; } }),
           h('div', { class: 'dos' },
