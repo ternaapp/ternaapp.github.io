@@ -1,9 +1,12 @@
 /* Terna · js/alertas.js
-   Guías de alertas (brand.md 0.4.11 §6.7.1; diseno.md 0.12 §9.4): cómo crear alertas de empleo en cada portal y cómo hacer
+   Guías de alertas (brand.md 0.4.17 §6.7.1; diseno.md 0.12 §9.4): cómo crear alertas de empleo en cada portal y cómo hacer
    que el correo se las reenvíe solo a Terna. Página por bloques como Preferencias (desplegables en celular, carril desde
    768 px; Terna.porBloques): cada guía es un bloque con su hash (#linkedin, #gmail…), así Preferencias lleva directo a la
    que hace falta. Solo lee: la dirección (encabezado) y preferencias.puestos_objetivo, para sugerir qué buscar.
-   Los textos son T.guias: "*así*" marca en negrita el nombre de un botón o un menú tal como se ve en pantalla. */
+   Los textos son T.guias: "*así*" marca en negrita el nombre de un botón o un menú tal como se ve en pantalla.
+   Una pieza puede llevar un tercer elemento, 'resto' o 'dueno': se muestra solo a quien no es o a quien es la dueña del
+   buzón de Terna (Terna.alertasMail; brand.md 0.4.17 §6.7.1). La dueña no reenvía (Gmail no deja reenviarse a uno mismo):
+   etiqueta sus alertas con Terna/Alertas en su propio Gmail. */
 'use strict';
 
 Terna.pagina('alertas', async (ctx) => {
@@ -11,7 +14,8 @@ Terna.pagina('alertas', async (ctx) => {
   const G = T.guias;
   const raiz = document.getElementById('guias');
   const cabecera = document.getElementById('cabecera');
-  const direccion = String(ctx.config.alertas_mail_patron || '').replace('{codigo}', ctx.usuario.codigo_alertas || '');
+  const { direccion, dueno } = Terna.alertasMail(ctx.config, ctx.usuario);
+  const quien = dueno ? 'dueno' : 'resto';
 
   const { data: prefs, error } = await ctx.sb.from('preferencias').select('puestos_objetivo').eq('usuario_id', ctx.usuario.id).maybeSingle();
   if (error) {
@@ -58,7 +62,8 @@ Terna.pagina('alertas', async (ctx) => {
   cabecera.append(h('a', { class: 'btn btn-texto guia-volver', href: 'preferencias.html#alertas' }, icono('i-volver'), G.volver));
   const bloques = Terna.porBloques({ raiz, cabecera, nombre: G.carril, abiertos: new Set(['como-funciona']) });
   for (const s of G.secciones) {
-    bloques.bloque(s.clave, s.titulo, h('div', { class: 'guia' }, s.piezas.map(([tipo, valor]) => PIEZAS[tipo](valor))));
+    const piezas = s.piezas.filter((p) => !p[2] || p[2] === quien);
+    bloques.bloque(s.clave, s.titulo, h('div', { class: 'guia' }, piezas.map(([tipo, valor]) => PIEZAS[tipo](valor))));
   }
   bloques.montar({});
 

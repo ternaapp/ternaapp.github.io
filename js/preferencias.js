@@ -339,7 +339,8 @@ Terna.pagina('preferencias', async (ctx) => {
   const cResp = [h('p', { class: 'campo-ayuda', text: P.respuestasIntro }), sAut, sDisp, sMud, sNac, sCons];
 
   /* ---------- Alertas por mail (el título es el del bloque; diseno.md 0.12 §9.3) ---------- */
-  const direccion = String(config.alertas_mail_patron || '').replace('{codigo}', ctx.usuario.codigo_alertas || '');
+  // La dueña del buzón no tiene a quién reenviar (Gmail no deja reenviarse a uno mismo): sin dirección, con su filtro.
+  const { direccion, dueno } = Terna.alertasMail(config, ctx.usuario);
   const code = h('code', { text: direccion });
   // Por portal: la última alerta con avisos; si solo llegaron mails sin avisos, que la persona le avise a Francisco.
   function estadoPortal(clave) {
@@ -360,12 +361,13 @@ Terna.pagina('preferencias', async (ctx) => {
   const linkGuia = ([texto, guia]) => h('a', { class: 'btn', href: 'alertas.html#' + guia }, h('span', { text: texto }), icono('i-adelante', 'icono-16'));
   const cAlertas = [
     h('p', { text: P.alertasIntro }),
-    h('div', { class: 'direccion' }, code, h('button', { class: 'btn', type: 'button', onclick: () => Terna.copiar(direccion, code) }, icono('i-pegar'), P.copiarDireccion)),
-    h('ol', { class: 'pasos' }, P.alertasPasos.map((x) => h('li', { text: x }))),
+    dueno ? null : h('div', { class: 'direccion' }, code, h('button', { class: 'btn', type: 'button', onclick: () => Terna.copiar(direccion, code) }, icono('i-pegar'), P.copiarDireccion)),
+    h('ol', { class: 'pasos' }, (dueno ? P.alertasPasosDueno : P.alertasPasos).map((x) => h('li', { text: x }))),
     item(P.portalesTitulo, h('ul', { class: 'portales' }, P.portales.map(filaPortal)), alertas ? h('p', { class: 'campo-ayuda', text: P.portalesAyuda }) : null),
-    item(P.reenvioTitulo, h('p', { class: 'campo-ayuda', text: P.reenvioAyuda }), h('div', { class: 'guias-correo' }, P.guiasCorreo.map(linkGuia))),
-    h('p', { class: 'campo-ayuda', text: P.alertasNota }),
-  ];
+    item(dueno ? P.reenvioTituloDueno : P.reenvioTitulo, h('p', { class: 'campo-ayuda', text: dueno ? P.reenvioAyudaDueno : P.reenvioAyuda }),
+      h('div', { class: 'guias-correo' }, (dueno ? P.guiasCorreoDueno : P.guiasCorreo).map(linkGuia))),
+    h('p', { class: 'campo-ayuda', text: dueno ? P.alertasNotaDueno : P.alertasNota }),
+  ].filter(Boolean);
 
   /* ---------- Tu cuenta: pausar (escribe en el acto) y borrar ---------- */
   const bPausa = h('button', { class: 'btn', type: 'button' });

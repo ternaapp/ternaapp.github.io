@@ -715,6 +715,17 @@ window.Terna = (function () {
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', correr); else correr();
   }
+  // La dirección de Terna de la persona (config.alertas_mail_patron con su codigo_alertas) y si es la dueña del buzón: su
+  // mail es el del patrón sin el alias (franciscoperezrusso+terna-{codigo}@gmail.com → franciscoperezrusso@gmail.com). Es la
+  // misma regla del motor (fuentes/alertas_mail.py: usuarios.mail == TERNA_IMAP_USUARIO). Gmail no deja reenviarse a uno
+  // mismo, así que la dueña no reenvía: etiqueta sus alertas en su Gmail (arquitectura.md §7.8; brand.md 0.4.17 §6.7.1).
+  function alertasMail(config, usuario) {
+    const patron = String((config && config.alertas_mail_patron) || '');
+    const direccion = patron.replace('{codigo}', (usuario && usuario.codigo_alertas) || '');
+    const buzon = patron.includes('+') ? patron.replace(/\+[^@]*@/, '@').trim().toLowerCase() : '';
+    const mail = String((usuario && usuario.mail) || '').trim().toLowerCase();
+    return { direccion, dueno: Boolean(buzon) && mail === buzon };
+  }
   function actualizarFaltantes(lista) { estado.faltantes = lista || []; bandas(); }
   function actualizarPerfil(datos) { Object.assign(estado.perfil, datos); completarBarra(); }
 
@@ -726,5 +737,6 @@ window.Terna = (function () {
     avisoBreve, cerrarBreve, cargando, errorDeCarga, dialogo, confirmar, devolverFoco,
     abrirHoja, cerrarHoja, hojaAbierta, reemplazarCuerpoHoja, anchoLinea, anchoEscritorio,
     copiar, nombreDescarga, urlFirmada, linkFirmado, leerConfig, pagina, actualizarFaltantes, actualizarPerfil, porBloques,
+    alertasMail,
   };
 })();
