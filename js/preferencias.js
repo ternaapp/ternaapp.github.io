@@ -1,5 +1,5 @@
 /* Terna · js/preferencias.js
-   Preferencias (diseno.md 0.12 §9.3 y §10.17; brand.md 0.5 §6.7; datos.md 0.21, 0016, 0019 y 0026): las columnas de preferencias (con "Qué buscás", 0015, y las palabras clave, 0026), las
+   Preferencias (diseno.md 0.15 §9.3 y §10.17; brand.md 0.5.1 §6.7; datos.md 0.21.2, 0016, 0019 y 0026): las columnas de preferencias (con "Qué buscás", 0015, y las palabras clave, 0026), la guía del umbral (con los avisos propios de mis_avisos), las
    alertas por mail (la dirección, cada portal con su última alerta y el link a su guía en alertas.html), pausar la cuenta
    (escribe en el acto) y el texto para borrarla, en cinco bloques: Búsqueda, Paquetes y postulación, Respuestas para
    formularios (con opciones y defaults desde 0016), Alertas por mail y Tu cuenta.
@@ -24,15 +24,22 @@ Terna.pagina('preferencias', async (ctx) => {
   const MAX_LARGO_CLAVE = 40;
 
   const parar = Terna.cargando(raiz);
-  const [lectura, lecturaAlertas] = await Promise.all([
+  const [lectura, lecturaAlertas, lecturaAvisos] = await Promise.all([
     // La fila entera (la persona puede leer todas sus columnas): desde 0026 trae también las palabras clave, y sin la migración
     // no falla ni deja un error en la consola; la página anda igual, sin ese ítem (datos.md 0.21 §14).
     sb.from('preferencias').select('*').eq('usuario_id', uid).maybeSingle(),
     sb.from('alertas_mail').select('portal, recibido_en, procesado_en, avisos_detectados').eq('usuario_id', uid).order('procesado_en', { ascending: false }).limit(200),
+    // La guía del umbral (diseno.md 0.15 §9.3; datos.md 0.21.2 §14): el match de los avisos propios; la vista trae solo los
+    // visibles y RLS, solo los de la persona. Se cuenta en el navegador. Si la lectura falla, la guía va sin cuentas.
+    sb.from('mis_avisos').select('match, interes, creado_en').limit(1000),
   ]);
   parar();
   // Las alertas que llegaron (0019; la retención las borra a los 7 días). Si no se pueden leer, los portales van sin estado.
   const alertas = lecturaAlertas.error ? null : (lecturaAlertas.data || []);
+  // Los avisos que cuentan para la guía: con match y sin "No me interesa" (los que se ven en Avisos con un número).
+  const avisosGuia = lecturaAvisos.error ? null
+    : (lecturaAvisos.data || []).filter((a) => a.match !== null && a.match !== undefined && a.interes !== 'no_me_interesa')
+      .map((a) => ({ match: Number(a.match), creado: Date.parse(a.creado_en) || 0 }));
   const data = lectura.data;
   if (lectura.error || !data) { Terna.errorDeCarga(raiz, lectura.error); return; }
   const conClaves = Object.prototype.hasOwnProperty.call(data, 'palabras_clave');
@@ -108,14 +115,98 @@ Terna.pagina('preferencias', async (ctx) => {
   }
   const limpiar = (idE) => { const e = document.getElementById(idE); if (e && e.textContent) marcar(idE, ''); };
 
-  /* ---------- Búsqueda: umbral, modalidades, alcance y salario ---------- */
+  /* ---------- Búsqueda: umbral (con su guía), modalidades, alcance y salario ---------- */
+  /* La guía del umbral (diseno.md 0.15 §9.3; brand.md 0.5.1 §6.7). Arriba del deslizador, el cuadro de cinco franjas con lo que
+     suele haber en cada una según match.v2 y cuántos avisos de la lista caen ahí, y la línea del umbral; debajo, la cuenta de lo
+     que llega con el número elegido, que es la descripción del deslizador. Cambia con el deslizador, con los botones de las
+     franjas (ponen su número y llevan el foco al deslizador) y con Armar paquetes, Paquetes por día y Terna postula por vos. */
+  function guiaUmbral(fijar) {
+    const G = P.guiaUmbral;
+    const piso = config.piso_match || 50;
+    // Las franjas de match.v2 (datos/match.json del motor): la vecina topa en 79, un requisito que no cumplís en 69, el nivel
+    // muy lejos en 55 y dos requisitos en 54; debajo del piso no se muestra nada. De arriba abajo, como se leen.
+    const franjas = [90, 80, 70, 60, 50].map((desde, i, todas) => ({ desde, hasta: i === 0 ? 100 : todas[i - 1] - 1 }));
+    const lista = avisosGuia ? avisosGuia.filter((a) => a.match >= piso) : null;
+    const conCuenta = !!(lista && lista.length);
+    const hace14 = Date.now() - 14 * 24 * 3600 * 1000;
+    const filas = franjas.map((f) => {
+      const t = G.franjas[f.desde];
+      const usar = Math.max(umbralMin, Math.min(umbralMax, f.desde));
+      const boton = h('button', { type: 'button', class: 'franja-boton', onclick: () => fijar(usar) },
+        t.nombre, h('span', { class: 'oculto-visual', text: G.usar(usar) }));
+      const estado = h('span', { class: 'franja-estado' });
+      const total = conCuenta ? lista.filter((a) => a.match >= f.desde && a.match <= f.hasta).length : 0;
+      const numero = h('span', { class: 'franja-numero num', 'aria-hidden': 'true' });
+      const accesible = h('span', { class: 'oculto-visual' });
+      const relleno = h('span');
+      const tr = h('tr', null, h('th', { scope: 'row' }, boton, estado), h('td', { class: 'franja-que', text: t.que }),
+        conCuenta ? h('td', { class: 'franja-lista' }, numero, accesible, h('span', { class: 'franja-barra', 'aria-hidden': 'true' }, relleno)) : null);
+      return { f, total, tr, estado, numero, accesible, relleno };
+    });
+    const mayor = Math.max(1, ...filas.map((x) => x.total));
+    // La barra, como la del match (--cuenta por CSSOM: la CSP no deja estilos en línea): la franja contra la que tiene más avisos.
+    filas.forEach((x) => x.relleno.style.setProperty('--cuenta', String(Math.round((100 * x.total) / mayor))));
+    const pastilla = h('span', { class: 'umbral-pastilla num' });
+    const marcaTexto = h('span');
+    const marca = h('tr', { class: 'umbral-marca' }, h('td', { colspan: conCuenta ? '3' : '2' }, h('div', { class: 'umbral-linea' }, pastilla, marcaTexto)));
+    const tabla = h('table', { class: 'umbral-tabla' + (conCuenta ? '' : ' sin-cuenta') },
+      h('caption', { text: G.titulo }),
+      h('thead', null, h('tr', null,
+        h('th', { scope: 'col', text: G.columnas.franja }), h('th', { scope: 'col', text: G.columnas.que }),
+        conCuenta ? h('th', { scope: 'col', class: 'der', text: G.columnas.lista }) : null)),
+      h('tbody', null, filas.map((x) => x.tr)));
+    const arriba = h('div', { class: 'umbral-guia' },
+      h('p', { class: 'umbral-intro', text: G.intro(config.umbral_default || 70) }), tabla, h('p', { class: 'campo-ayuda', text: G.nota(piso) }));
+    const resumen = h('p', { class: 'umbral-resumen', id: id('umbral-resumen') });
+    function actualizar() {
+      const u = Number(v.umbral);
+      let ultima = null;
+      for (const x of filas) {
+        const entra = x.f.desde >= u;
+        const parcial = !entra && x.f.hasta >= u;
+        x.tr.classList.toggle('fuera', !entra && !parcial);
+        // Para el lector de pantalla, cada franja dice si entra; la del umbral lo dice a la vista: "desde 75".
+        x.estado.classList.toggle('oculto-visual', !parcial);
+        x.estado.textContent = parcial ? G.desde(u) : (entra ? G.entran : G.noEntran);
+        if (conCuenta) {
+          const k = parcial ? lista.filter((a) => a.match >= u && a.match <= x.f.hasta).length : x.total;
+          x.numero.textContent = parcial ? G.cuentaParcial(k, x.total) : G.cuenta(x.total);
+          x.accesible.textContent = parcial ? G.cuentaParcialAccesible(k, x.total, u) : G.cuentaAccesible(x.total);
+        }
+        if (entra || parcial) ultima = x.tr;
+      }
+      // La línea va debajo de la última franja que entra (el umbral va de 50 a 95: siempre entra alguna).
+      if (ultima && ultima.nextElementSibling !== marca) ultima.after(marca);
+      pastilla.textContent = G.marca(u);
+      marcaTexto.textContent = !v.armar_paquetes ? '' : (v.postular_sola === false ? G.marcaArma : G.marcaArmaPostula);
+      resumen.hidden = !lista;
+      if (!lista) { resumen.textContent = ''; return; }
+      if (!lista.length) { resumen.textContent = G.sinLista; return; }
+      const llegan = lista.filter((a) => a.match >= u);
+      const partes = [G.llegan(u, llegan.length, lista.length)];
+      if (llegan.length) partes.push(v.armar_paquetes ? G.arma(v.paquetes_por_dia || defectoPaquetes) : T.inicio.resultado.armar_no);
+      partes.push(G.semanas(llegan.filter((a) => a.creado >= hace14).length, u));
+      resumen.textContent = partes.join(' ');
+    }
+    return { arriba, resumen, actualizar };
+  }
+
   const idUmbral = id('umbral');
   const valorUmbral = h('output', { class: 'umbral-valor', for: idUmbral, text: String(v.umbral) });
   const rango = h('input', { type: 'range', id: idUmbral, min: String(umbralMin), max: String(umbralMax), step: '1', value: String(v.umbral) });
-  rango.addEventListener('input', () => { v.umbral = Number(rango.value); valorUmbral.textContent = rango.value; limpiar('err-umbral'); });
+  const guia = guiaUmbral((u) => {
+    rango.value = String(u);
+    v.umbral = u;
+    valorUmbral.textContent = String(u);
+    guia.actualizar();
+    limpiar('err-umbral');
+    rango.focus();
+  });
+  rango.setAttribute('aria-describedby', guia.resumen.id);
+  rango.addEventListener('input', () => { v.umbral = Number(rango.value); valorUmbral.textContent = rango.value; guia.actualizar(); limpiar('err-umbral'); });
   const sUmbral = h('div', { class: 'subbloque' },
     h('div', { class: 'interruptor-fila' }, h('label', { class: 'tarjeta-titulo', for: idUmbral, text: P.umbral }), valorUmbral),
-    rango, h('p', { class: 'campo-ayuda', text: P.umbralAyuda(config.piso_match || 50) }), error('err-umbral'));
+    guia.arriba, rango, guia.resumen, h('p', { class: 'campo-ayuda', text: P.umbralAyuda(config.piso_match || 50) }), error('err-umbral'));
 
   const idMod = id('mod');
   const sMod = h('div', { class: 'subbloque', role: 'group', 'aria-labelledby': idMod, 'aria-describedby': 'ayuda-mod err-mod' }, h('h3', { id: idMod, class: 'tarjeta-titulo', text: P.modalidades }));
@@ -251,7 +342,7 @@ Terna.pagina('preferencias', async (ctx) => {
   /* ---------- Paquetes y postulación: interés, armar, paquetes, idioma, postular, revisar ---------- */
   const sInt = conInterruptor(P.interesDefecto, P.interesDefectoAyuda, v.interes_por_defecto, (x) => { v.interes_por_defecto = x; });
   const sArm = conInterruptor(P.armar, P.armarAyuda, v.armar_paquetes, (x) => { v.armar_paquetes = x; atenuar(); });
-  const sPaq = grupoRadios(P.paquetesDia, 'paquetes', opcionesPaquetes.map((x) => [x, x === defectoPaquetes ? P.recomendado(x) : String(x)]), v.paquetes_por_dia, (x) => { v.paquetes_por_dia = Number(x); limpiar('err-paq'); });
+  const sPaq = grupoRadios(P.paquetesDia, 'paquetes', opcionesPaquetes.map((x) => [x, x === defectoPaquetes ? P.recomendado(x) : String(x)]), v.paquetes_por_dia, (x) => { v.paquetes_por_dia = Number(x); limpiar('err-paq'); guia.actualizar(); });
   sPaq.append(h('p', { class: 'campo-ayuda', text: P.paquetesAyuda }), error('err-paq'));
   const sIdi = grupoRadios(P.idiomaDocs, 'idioma', [['aviso', P.idiomaAviso], ['espanol', P.idiomaEspanol]], v.idioma_documentos, (x) => { v.idioma_documentos = x; });
   /* Palabras clave a la vista (brand.md 0.5 §6.7; datos.md 0.21, 0026): el botón, en No por defecto, y la lista, una casilla por
@@ -340,6 +431,8 @@ Terna.pagina('preferencias', async (ctx) => {
     poner(sPaq, !v.armar_paquetes);
     poner(sPos, !v.armar_paquetes);
     poner(sRev, !v.postular_sola || !v.armar_paquetes);
+    // La línea y la cuenta de la guía del umbral dicen qué hace Terna para arriba (diseno.md 0.15 §9.3).
+    guia.actualizar();
   }
   atenuar();
 

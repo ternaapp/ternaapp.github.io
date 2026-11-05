@@ -583,6 +583,44 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .atenuado .casilla, .interruptor:disabled { cursor: not-allowed; }
 .umbral-valor { font-family: var(--fuente-titulos); font-weight: 700; font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; }
 input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion); margin: 0; }
+/* La guía del umbral (Preferencias › Búsqueda; diseno.md 0.15 §9.3): el cuadro de franjas arriba del deslizador y la cuenta
+   debajo. Lo que llega al umbral va en tinta y lo que no, en tinta suave, como el match (brand.md §5.1); la línea del umbral va
+   en tinta y no en verde, porque no se toca. Las franjas sí: son botones, en acción. */
+.umbral-guia { display: flex; flex-direction: column; gap: 10px; }
+.umbral-intro { font-size: 15px; }
+.umbral-tabla { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.4; }
+.umbral-tabla caption { text-align: left; font-size: 13px; font-weight: 700; color: var(--tinta-suave); padding-bottom: 6px; }
+.umbral-tabla thead th {
+  text-align: left; font-size: 13px; font-weight: 500; color: var(--tinta-suave); white-space: nowrap;
+  padding: 0 6px 6px; border-bottom: 1px solid var(--borde-control);
+}
+.umbral-tabla th:first-child { padding-left: 0; }
+.umbral-tabla .der, .umbral-tabla .franja-lista { text-align: right; padding-right: 0; }
+.umbral-tabla tbody th, .umbral-tabla tbody td { text-align: left; font-weight: 400; vertical-align: top; padding: 8px 6px; border-bottom: 1px solid var(--linea); }
+.umbral-tabla tbody th { padding-left: 0; white-space: nowrap; }
+.umbral-tabla tbody .franja-lista { text-align: right; white-space: nowrap; }
+.umbral-tabla tbody tr:last-child > *, .umbral-tabla tbody tr:has(+ .umbral-marca) > * { border-bottom: 0; }
+.franja-boton {
+  display: inline-flex; align-items: flex-start; min-height: 24px; padding: 0; border: 0; background: none;
+  color: var(--accion); font-size: 15px; font-weight: 700; line-height: 1.4; text-align: left; text-underline-offset: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.franja-boton:hover { color: var(--accion-oscura); text-decoration: underline; }
+.franja-estado { display: block; font-size: 12px; color: var(--tinta-suave); }
+.franja-numero { display: block; font-size: 15px; font-weight: 700; }
+.franja-barra { display: block; width: 44px; height: 3px; margin: 4px 0 0 auto; border-radius: 2px; background: var(--linea); overflow: hidden; }
+.franja-barra > span { display: block; height: 100%; width: calc(var(--cuenta, 0) * 1%); background: var(--tinta); }
+.umbral-tabla .fuera .franja-que, .umbral-tabla .fuera .franja-numero { color: var(--tinta-suave); }
+.umbral-tabla .fuera .franja-barra > span { background: var(--tinta-suave); }
+.umbral-tabla .umbral-marca td { padding: 0; }
+.umbral-linea {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 6px 0;
+  border-top: 2px solid var(--tinta); border-bottom: 1px solid var(--linea); font-size: 13px;
+}
+.umbral-tabla tbody tr.umbral-marca:last-child .umbral-linea { border-bottom: 0; }
+.umbral-pastilla { padding: 2px 8px; border-radius: 6px; background: var(--tinta); color: var(--hoja); font-weight: 700; }
+.umbral-resumen { font-size: 14px; }
+.umbral-resumen:empty { display: none; }
 .direccion { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .direccion code { flex: 1 1 220px; min-width: 0; padding: 10px 12px; border: 1px solid var(--linea); border-radius: 6px; background: var(--papel); font-size: 14px; overflow-wrap: anywhere; }
 .pasos { display: flex; flex-direction: column; gap: 4px; font-size: 15px; }

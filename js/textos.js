@@ -429,6 +429,40 @@ window.T = (function () {
       grupos: { busqueda: 'Búsqueda', paquetes: 'Paquetes y postulación', cuenta: 'Tu cuenta' },
       umbral: 'Umbral de match',
       umbralAyuda: (min) => 'Terna arma paquetes y postula solo en avisos que lleguen a este número. Los que quedan entre ' + min + ' y tu umbral igual aparecen en la lista, sin paquete, y podés pedirlo.',
+      // La guía del umbral (brand.md 0.5.1 §6.7; diseno.md 0.15 §9.3): las franjas siguen la rúbrica de match.v2.
+      guiaUmbral: {
+        intro: (defecto) => 'Cuanto más alto, menos avisos y más parecidos a tu trabajo. Si dudás, ' + defecto + '.',
+        titulo: 'Qué suele haber en cada franja',
+        columnas: { franja: 'Match', que: 'Qué suele ser', lista: 'En tu lista' },
+        franjas: {
+          90: { nombre: '90 o más', que: 'Tu mismo trabajo, de tu nivel, y cumplís casi todo lo que piden.' },
+          80: { nombre: '80 a 89', que: 'Tu mismo trabajo, con algo que tu perfil no menciona.' },
+          70: { nombre: '70 a 79', que: 'Un trabajo parecido al tuyo en el que cumplís casi todo.' },
+          60: { nombre: '60 a 69', que: 'Parecido al tuyo pero con huecos, o el tuyo con un requisito que no cumplís.' },
+          50: { nombre: '50 a 59', que: 'Algo importante queda lejos: el nivel, o dos requisitos que no cumplís.' },
+        },
+        usar: (u) => ', usar ' + u,
+        entran: ', entran', noEntran: ', no entran',
+        desde: (u) => 'desde ' + u,
+        cuenta: (x) => n(x),
+        cuentaParcial: (k, total) => n(k) + ' de ' + n(total),
+        cuentaAccesible: (x) => (x === 0 ? 'Ningún aviso de tu lista' : x === 1 ? '1 aviso de tu lista' : n(x) + ' avisos de tu lista'),
+        cuentaParcialAccesible: (k, total, u) => n(k) + ' de ' + n(total) + ' avisos de tu lista llegan a ' + u,
+        marca: (u) => 'Tu umbral: ' + u,
+        marcaArmaPostula: 'Para arriba, Terna arma y postula.',
+        marcaArma: 'Para arriba, Terna arma el paquete.',
+        nota: (piso) => 'Tu trabajo: el de tu experiencia reciente o el de un puesto que buscás. Parecido: la misma área con otro foco. Debajo de ' + piso + ' Terna no los muestra: casi siempre son de otro oficio. Tocá una franja para usar su número.',
+        llegan: (u, k, total) => {
+          if (total === 1) return 'Con ' + u + ', tu único aviso ' + (k ? 'llega.' : 'no llega.');
+          if (k === 0) return 'Con ' + u + ', no llega ninguno de tus ' + n(total) + ' avisos.';
+          return 'Con ' + u + ', ' + plural(k, 'llega 1', 'llegan ' + n(k)) + ' de tus ' + n(total) + ' avisos.';
+        },
+        arma: (p) => 'Terna arma hasta ' + p + ' por día entre los que todavía no tienen paquete.',
+        semanas: (k, u) => (k === 0 ? 'En las últimas dos semanas no llegó ninguno nuevo con ' + u + ' o más.'
+          : k === 1 ? 'En las últimas dos semanas llegó 1 nuevo con ' + u + ' o más.'
+            : 'En las últimas dos semanas llegaron ' + n(k) + ' nuevos con ' + u + ' o más.'),
+        sinLista: 'Cuando Terna corra para vos, acá vas a ver cuántos de tus avisos llegan a cada número.',
+      },
       modalidades: 'Modalidades', alMenosUna: 'Al menos una.',
       // Qué buscás (brand.md 0.4.5 §6.7; datos.md 0.9, 0015)
       puestos: 'Puestos que buscás',
