@@ -1,7 +1,8 @@
 /* Terna · js/postulaciones.js
    Postulaciones (diseno.md §8): todo lo que tiene paquete, por etapa; el recorrido; la ficha con la traba, la captura,
    el paquete y lo que Terna respondió; y los botones de cada etapa (brand.md §6.5).
-   Escribe con un upsert de { match_id, usuario_id, estado } (el disparador valida la transición) y marcar_interes.
+   Escribe con un upsert de { match_id, usuario_id, estado } (el disparador valida la transición) y marcar_interes; desde 0026,
+   la ficha suma una palabra que falta con sumar_palabra_clave (lee la fila entera de preferencias; datos.md 0.21 §14).
    Deshacer: la base no deja volver de postulado a a mano ni de en cola a para revisar o a mano (datos.md §5.13), así
    que las cuatro acciones con "Deshacer" se escriben cuando el aviso breve se va (6 s); si la página se cierra antes,
    se mandan igual con fetch keepalive. */
@@ -22,8 +23,9 @@ Terna.pagina('postulaciones', async (ctx) => {
   const parar = Terna.cargando(lista);
   const [rA, rP, rB] = await Promise.all([
     Aviso.leerConEvaluacion((cols) => sb.from('mis_avisos').select(cols).or('paquete_id.not.is.null,estado_postulacion.neq.pendiente').neq('interes', 'no_me_interesa'), COLUMNAS),
-    sb.from('preferencias').select('umbral, salario_modo, modalidades, alcance, niveles, jornadas').eq('usuario_id', uid).maybeSingle(),
-    sb.from('paquetes').select('match_id, bajo_minimo:contenido->render->bajo_minimo'),
+    // La fila entera: desde 0026 trae también las palabras clave, y sin la migración no falla (datos.md 0.21 §14).
+    sb.from('preferencias').select('*').eq('usuario_id', uid).maybeSingle(),
+    sb.from('paquetes').select('match_id, bajo_minimo:contenido->render->bajo_minimo, terminos_faltantes:contenido->render->terminos_faltantes'),
   ]);
   parar();
   const errorCarga = rA.error || rP.error || rB.error;
@@ -36,6 +38,30 @@ Terna.pagina('postulaciones', async (ctx) => {
   const umbral = prefs.umbral;
   const piso = config.piso_match || 50;
   const conMinimo = new Set((rB.data || []).filter((p) => p.bajo_minimo === true).map((p) => p.match_id));
+  // Palabras del aviso que el CV no tiene (cv-ats.md 0.4 §3.13): el motor las guarda en el paquete desde paquete.v3.
+  const faltanPor = new Map((rB.data || []).filter((p) => Array.isArray(p.terminos_faltantes)).map((p) => [p.match_id, p.terminos_faltantes]));
+  // Sumar una de esas palabras a las de Preferencias (0026): la persona declara que la sabe hacer. Una a la vez y en la base
+  // (sumar_palabra_clave agrega a la lista que hay en ese momento y prende el botón): dos toques seguidos o una pestaña de
+  // Preferencias abierta no se pisan. Sin 0026 la fila no trae la columna y las palabras se listan sin botón.
+  const conClaves = !!rP.data && Object.prototype.hasOwnProperty.call(rP.data, 'palabras_clave');
+  let colaClaves = Promise.resolve();
+  function sumarPalabra(termino) {
+    const F = T.avisos.ficha;
+    const tarea = colaClaves.then(async () => {
+      const { data, error: e } = await sb.rpc('sumar_palabra_clave', { p_palabra: termino });
+      if (e) {
+        if (Terna.siSesionVencida(e)) return false;
+        const llena = String(e.message || '').trim() === 'palabras_clave_demasiadas';
+        Terna.avisoBreve(llena ? F.palabrasLlenas(15) : Terna.textoError(e), { error: true });
+        return false;
+      }
+      Terna.avisoBreve(data && data.prendida ? F.sumadaAvisoPrendida : F.sumadaAviso);
+      return true;
+    });
+    colaClaves = tarea.catch(() => false);
+    return tarea;
+  }
+  const opcionesPaquete = conClaves ? { alSumarPalabra: sumarPalabra } : {};
   const bajoMinimo = (a) => prefs.salario_modo === 'rango' && !!a.paquete_id && conMinimo.has(a.match_id);
   const maxIntentos = config.max_reintentos_postulacion || 3;
   // Lo que quedó fuera de las preferencias de búsqueda del momento no se esconde acá (es lo que la persona ya tiene), pero
@@ -453,7 +479,7 @@ Terna.pagina('postulaciones', async (ctx) => {
   }
   function seccionPaquete(a) {
     const sec = h('section', { class: 'ficha-seccion' }, h('h3', { text: T.avisos.ficha.paquete }));
-    if (a.paquete_id) sec.append(Aviso.fichasPaquete(a));
+    if (a.paquete_id) sec.append(Aviso.fichasPaquete(Object.assign({}, a, { terminos_faltantes: faltanPor.get(a.match_id) || [] }), opcionesPaquete));
     else sec.append(h('p', { text: a.estado_paquete === 'pedido' ? T.avisos.ficha.loArma : a.estado_paquete === 'no_se_pudo_armar' ? T.avisos.ficha.noSePudo : T.avisos.ficha.sinDocs }));
     return sec;
   }

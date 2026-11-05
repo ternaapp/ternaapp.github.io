@@ -1,10 +1,11 @@
 /* Terna · js/preferencias.js
-   Preferencias (diseno.md 0.12 §9.3 y §10.17; brand.md 0.4.11 §6.7; datos.md 0.13, 0016 y 0019): las diecinueve columnas de preferencias (con "Qué buscás", 0015), las
+   Preferencias (diseno.md 0.12 §9.3 y §10.17; brand.md 0.5 §6.7; datos.md 0.21, 0016, 0019 y 0026): las columnas de preferencias (con "Qué buscás", 0015, y las palabras clave, 0026), las
    alertas por mail (la dirección, cada portal con su última alerta y el link a su guía en alertas.html), pausar la cuenta
    (escribe en el acto) y el texto para borrarla, en cinco bloques: Búsqueda, Paquetes y postulación, Respuestas para
    formularios (con opciones y defaults desde 0016), Alertas por mail y Tu cuenta.
    Desplegables en celular y carril desde 768 px, con Terna.porBloques (comun.js), igual que Mi perfil.
-   "Guardar preferencias" escribe todo. */
+   "Guardar preferencias" escribe todo; las palabras clave, solo si cambiaron en la página (desde un aviso se suman con
+   sumar_palabra_clave, y una pestaña abierta antes no las pisa). */
 'use strict';
 
 Terna.pagina('preferencias', async (ctx) => {
@@ -14,16 +15,19 @@ Terna.pagina('preferencias', async (ctx) => {
   const uid = ctx.usuario.id;
   const P = T.preferencias;
   const raiz = document.getElementById('preferencias');
-  const COLUMNAS = 'umbral, modalidades, alcance, salario_modo, salario_min, salario_max, salario_moneda, idioma_documentos, armar_paquetes, paquetes_por_dia, interes_por_defecto, postular_sola, revisar_antes_de_enviar, autorizacion_trabajo, disponibilidad, mudanza, nacionalidad, aceptar_consentimientos, puestos_objetivo, niveles, jornadas';
   const NIVELES = ['pasantia', 'junior', 'semi_senior', 'senior', 'lider', 'director'];
   const JORNADAS = ['completa', 'parcial'];
   const MAX_PUESTOS = 8;
   const MAX_LARGO_PUESTO = 60;
   const MAX_DIAS = 365;
+  const MAX_CLAVES = 15;
+  const MAX_LARGO_CLAVE = 40;
 
   const parar = Terna.cargando(raiz);
   const [lectura, lecturaAlertas] = await Promise.all([
-    sb.from('preferencias').select(COLUMNAS).eq('usuario_id', uid).maybeSingle(),
+    // La fila entera (la persona puede leer todas sus columnas): desde 0026 trae también las palabras clave, y sin la migración
+    // no falla ni deja un error en la consola; la página anda igual, sin ese ítem (datos.md 0.21 §14).
+    sb.from('preferencias').select('*').eq('usuario_id', uid).maybeSingle(),
     sb.from('alertas_mail').select('portal, recibido_en, procesado_en, avisos_detectados').eq('usuario_id', uid).order('procesado_en', { ascending: false }).limit(200),
   ]);
   parar();
@@ -31,12 +35,17 @@ Terna.pagina('preferencias', async (ctx) => {
   const alertas = lecturaAlertas.error ? null : (lecturaAlertas.data || []);
   const data = lectura.data;
   if (lectura.error || !data) { Terna.errorDeCarga(raiz, lectura.error); return; }
+  const conClaves = Object.prototype.hasOwnProperty.call(data, 'palabras_clave');
   const v = Object.assign({}, data, {
     modalidades: (data.modalidades || []).slice(),
     niveles: (data.niveles || NIVELES).slice(),
     jornadas: (data.jornadas || JORNADAS).slice(),
     puestos_objetivo: (data.puestos_objetivo || []).slice(),
+    palabras_clave: conClaves ? (data.palabras_clave || []).slice() : [],
+    usar_palabras_clave: conClaves ? !!data.usar_palabras_clave : false,
   });
+  const huellaClaves = () => JSON.stringify([v.palabras_clave, !!v.usar_palabras_clave]);
+  let clavesGuardadas = huellaClaves();
   const umbralMin = config.umbral_min || 50;
   const umbralMax = config.umbral_max || 95;
   const opcionesPaquetes = config.paquetes_por_dia_opciones || [3, 5];
@@ -245,6 +254,81 @@ Terna.pagina('preferencias', async (ctx) => {
   const sPaq = grupoRadios(P.paquetesDia, 'paquetes', opcionesPaquetes.map((x) => [x, x === defectoPaquetes ? P.recomendado(x) : String(x)]), v.paquetes_por_dia, (x) => { v.paquetes_por_dia = Number(x); limpiar('err-paq'); });
   sPaq.append(h('p', { class: 'campo-ayuda', text: P.paquetesAyuda }), error('err-paq'));
   const sIdi = grupoRadios(P.idiomaDocs, 'idioma', [['aviso', P.idiomaAviso], ['espanol', P.idiomaEspanol]], v.idioma_documentos, (x) => { v.idioma_documentos = x; });
+  /* Palabras clave a la vista (brand.md 0.5 §6.7; datos.md 0.21, 0026): el botón, en No por defecto, y la lista, una casilla por
+     palabra como "Puestos que buscás": numeradas, hasta 15, con una casilla vacía al final para la siguiente. */
+  const listaCla = h('ol', { class: 'puestos claves' });
+  const cuentaCla = h('span', { class: 'puestos-cuenta num' });
+  const filasCla = () => Array.from(listaCla.children);
+  function leerClaves() {
+    const vistos = new Set();
+    return filasCla().map((li) => inputDe(li).value.trim().replace(/\s+/g, ' ')).filter((x) => {
+      const k = x.toLowerCase();
+      if (!x || vistos.has(k)) return false;
+      vistos.add(k);
+      return true;
+    });
+  }
+  function filaClave(valor) {
+    const input = h('input', { class: 'control', type: 'text', maxlength: String(MAX_LARGO_CLAVE), autocomplete: 'off', spellcheck: 'false',
+      value: valor || '', 'aria-describedby': 'ayuda-claves err-claves' });
+    const quitar = h('button', { type: 'button' }, icono('i-cerrar'));
+    const numero = h('span', { class: 'puesto-numero num', 'aria-hidden': 'true' });
+    const li = h('li', { class: 'puesto' }, numero, h('div', { class: 'control-con-boton' }, input, quitar));
+    input.addEventListener('input', () => { ordenarClaves(); limpiar('err-claves'); });
+    input.addEventListener('keydown', (e) => {
+      const filas = filasCla();
+      const i = filas.indexOf(li);
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (filas[i + 1]) inputDe(filas[i + 1]).focus();
+      } else if (e.key === 'Backspace' && !input.value && i > 0) {
+        e.preventDefault();
+        const anterior = inputDe(filas[i - 1]);
+        if (i < filas.length - 1) { li.remove(); ordenarClaves(); }
+        anterior.focus();
+        anterior.setSelectionRange(anterior.value.length, anterior.value.length);
+      }
+    });
+    input.addEventListener('blur', () => {
+      if (!input.value.trim() && li.nextElementSibling && li.isConnected) { input.value = ''; li.remove(); ordenarClaves(); }
+    });
+    quitar.addEventListener('click', () => {
+      const siguiente = li.nextElementSibling || li.previousElementSibling;
+      li.remove();
+      ordenarClaves();
+      inputDe(siguiente && siguiente.isConnected ? siguiente : filasCla()[filasCla().length - 1]).focus();
+      limpiar('err-claves');
+    });
+    return li;
+  }
+  function ordenarClaves() {
+    let filas = filasCla();
+    const ultima = filas[filas.length - 1];
+    if (filas.length < MAX_CLAVES && (!ultima || inputDe(ultima).value.trim())) listaCla.append(filaClave(''));
+    filas = filasCla();
+    filas.forEach((li, i) => {
+      const input = inputDe(li);
+      const texto = input.value.trim();
+      const vacia = !texto && i === filas.length - 1;
+      li.querySelector('.puesto-numero').textContent = (i + 1) + '.';
+      li.classList.toggle('puesto-nuevo', vacia);
+      input.setAttribute('aria-label', P.palabraClave(i + 1));
+      input.placeholder = vacia ? (i === 0 ? P.palabraClavePrimera : P.palabraClaveOtra) : '';
+      const quitar = li.querySelector('button');
+      quitar.hidden = !texto;
+      quitar.setAttribute('aria-label', P.quitarPalabraClave(texto || P.palabraClave(i + 1)));
+    });
+    v.palabras_clave = leerClaves();
+    cuentaCla.textContent = P.puestosCuenta(v.palabras_clave.length, MAX_CLAVES);
+  }
+  v.palabras_clave.slice(0, MAX_CLAVES).forEach((x) => listaCla.append(filaClave(x)));
+  ordenarClaves();
+  const idCla = id('claves');
+  const subCla = h('div', { class: 'seccion', role: 'group', 'aria-labelledby': idCla },
+    h('div', { class: 'interruptor-fila' }, h('span', { id: idCla, class: 'campo-etiqueta', text: P.palabrasClaveLista }), cuentaCla),
+    listaCla, h('p', { class: 'campo-ayuda', id: 'ayuda-claves', text: P.palabrasClaveListaAyuda }), error('err-claves'));
+  const sCla = conClaves ? conInterruptor(P.palabrasClave, P.palabrasClaveAyuda, v.usar_palabras_clave, (x) => { v.usar_palabras_clave = x; }) : null;
+  if (sCla) sCla.append(subCla);
   const sPos = conInterruptor(P.postularSola, P.postularSolaAyuda, v.postular_sola, (x) => { v.postular_sola = x; atenuar(); });
   const sRev = conInterruptor(P.revisar, P.revisarAyuda, v.revisar_antes_de_enviar, (x) => { v.revisar_antes_de_enviar = x; });
   // Atenuar (diseno.md §9.3): el ítem sigue visible y legible; sus controles quedan inactivos hasta que vuelva a aplicar.
@@ -397,11 +481,16 @@ Terna.pagina('preferencias', async (ctx) => {
   }
   bGuardar.addEventListener('click', async () => {
     banda.hidden = true;
-    ['err-umbral', 'err-mod', 'err-sal', 'err-paq', 'err-puestos', 'err-niv', 'err-jor', 'err-disp'].forEach((x) => marcar(x, ''));
+    ['err-umbral', 'err-mod', 'err-sal', 'err-paq', 'err-puestos', 'err-niv', 'err-jor', 'err-disp', 'err-claves'].forEach((x) => marcar(x, ''));
     let ok = true;
     v.puestos_objetivo = leerPuestos();
     if (v.puestos_objetivo.length > MAX_PUESTOS) { marcar('err-puestos', T.errores.puestosDemasiados(MAX_PUESTOS)); ok = false; }
     else if (v.puestos_objetivo.some((x) => x.length > MAX_LARGO_PUESTO)) { marcar('err-puestos', T.errores.puestoLargo(MAX_LARGO_PUESTO)); ok = false; }
+    if (conClaves) {
+      v.palabras_clave = leerClaves();
+      if (v.palabras_clave.length > MAX_CLAVES) { marcar('err-claves', T.errores.palabrasClaveDemasiadas(MAX_CLAVES)); ok = false; }
+      else if (v.palabras_clave.some((x) => x.length > MAX_LARGO_CLAVE)) { marcar('err-claves', T.errores.palabraClaveLarga(MAX_LARGO_CLAVE)); ok = false; }
+    }
     if (!v.niveles.length) { marcar('err-niv', T.errores.niveles); ok = false; }
     if (!v.jornadas.length) { marcar('err-jor', T.errores.jornadas); ok = false; }
     if (!v.modalidades.length) { marcar('err-mod', T.errores.modalidades); ok = false; }
@@ -427,23 +516,27 @@ Terna.pagina('preferencias', async (ctx) => {
       aceptar_consentimientos: v.aceptar_consentimientos !== false,
       puestos_objetivo: v.puestos_objetivo, niveles: v.niveles, jornadas: v.jornadas,
     };
+    const clavesCambiaron = conClaves && huellaClaves() !== clavesGuardadas;
+    if (clavesCambiaron) { fila.palabras_clave = v.palabras_clave; fila.usar_palabras_clave = !!v.usar_palabras_clave; }
     const { error: e } = await sb.from('preferencias').update(fila).eq('usuario_id', uid);
     bGuardar.removeAttribute('aria-disabled');
     if (e) {
       if (Terna.siSesionVencida(e)) return;
       const clave = String(e.message || '').trim();
       const destino = { umbral_fuera_de_rango: 'err-umbral', modalidades_vacias: 'err-mod', salario_incompleto: 'err-sal', salario_rango_invalido: 'err-sal', paquetes_por_dia_invalido: 'err-paq',
-        niveles_vacios: 'err-niv', jornadas_vacias: 'err-jor', puestos_demasiados: 'err-puestos', puesto_largo: 'err-puestos' }[clave];
+        niveles_vacios: 'err-niv', jornadas_vacias: 'err-jor', puestos_demasiados: 'err-puestos', puesto_largo: 'err-puestos',
+        palabras_clave_demasiadas: 'err-claves', palabra_clave_larga: 'err-claves' }[clave];
       if (destino) { marcar(destino, Terna.textoError(e)); mostrarBanda(T.errores.guardarCampos); } else mostrarBanda(T.errores.guardar);
       return;
     }
+    if (clavesCambiaron) clavesGuardadas = huellaClaves();
     Terna.avisoBreve(P.guardado);
   });
 
   /* ---------- Página ---------- */
   Terna.vaciar(raiz);
   bloques.bloque('busqueda', P.grupos.busqueda, [sPue, sNiv, sJor, sMod, sAlc, sUmbral, sSal]);
-  bloques.bloque('paquetes', P.grupos.paquetes, [sInt, sArm, sPaq, sIdi, sPos, sRev]);
+  bloques.bloque('paquetes', P.grupos.paquetes, [sInt, sArm, sPaq, sIdi, sCla, sPos, sRev].filter(Boolean));
   bloques.bloque('respuestas', P.respuestas, cResp);
   bloques.bloque('alertas', P.alertas, cAlertas);
   bloques.bloque('cuenta', P.grupos.cuenta, [sPausa, sBorrar]);
