@@ -1,6 +1,7 @@
 /* Terna · js/postulaciones.js
-   Postulaciones (diseno.md §8): todo lo que tiene paquete, por etapa; el recorrido; la ficha con la traba, la captura,
-   el paquete y lo que Terna respondió; y los botones de cada etapa (brand.md §6.5).
+   Postulaciones (diseno.md §8): todo lo que tiene paquete, por etapa; el recorrido; desde diseno.md 0.16, el veredicto de
+   requisitos en la fila y en su columna de la tabla; la ficha con la traba, la captura, el paquete y lo que Terna respondió;
+   y los botones de cada etapa (brand.md §6.5).
    Escribe con un upsert de { match_id, usuario_id, estado } (el disparador valida la transición) y marcar_interes; desde 0026,
    la ficha suma una palabra que falta con sumar_palabra_clave (lee la fila entera de preferencias; datos.md 0.21 §14).
    Deshacer: la base no deja volver de postulado a a mano ni de en cola a para revisar o a mano (datos.md §5.13), así
@@ -232,27 +233,38 @@ Terna.pagina('postulaciones', async (ctx) => {
         h('span', { class: 'aviso-puesto', text: a.puesto }),
         h('span', { class: 'atributos' }, a.empresa ? [h('span', { text: a.empresa }), h('span', { 'aria-hidden': 'true', text: '·' }), oculto(', ')] : null,
           h('span', { text: Aviso.lugar(a) }), a.modalidad ? [h('span', { 'aria-hidden': 'true', text: '·' }), oculto(', '), h('span', { text: T.avisos.modalidadMin[a.modalidad] })] : null),
+        lineaCalificacion(a),
         h('span', { class: 'linea-etapa' }, Aviso.recorrido(a), oculto(T.postulaciones.recorridoAccesible(etiquetaEtapa(a)) + '. '),
           h('span', { class: 'etapa-texto ' + Aviso.claseEtapa(a), text: lineaCorta(a) })),
         a.estado_postulacion === 'a_mano' ? h('span', { class: 'traba', text: Aviso.traba(a, config) }) : null),
       icono('i-adelante', 'i-adelante'));
     return boton;
   }
+  // El veredicto de requisitos (diseno.md 0.16 §8.3 y §8.6; brand.md 0.5.2 §6.5): en la fila de celular, una línea debajo de los
+  // atributos; en la tabla, su columna, que cuando la caja no alcanza pasa debajo del puesto (.apoyo-requisitos).
+  function lineaCalificacion(a) {
+    const chip = Aviso.chipCalificacion(a, false);
+    return chip ? h('span', { class: 'linea-calificacion' }, chip) : null;
+  }
   function tabla(vis) {
     const C = T.postulaciones.columnas;
+    const columnas = [[C.match, 'der'], [C.puesto], [C.empresa, 'col-empresa'], [C.requisitos, 'col-requisitos'], [C.recorrido], [C.etapa], [C.fecha, 'col-fecha'], [C.aviso]];
     return h('div', { class: 'tabla-caja tabla-postulaciones' }, h('table', { class: 'tabla' },
-      h('thead', null, h('tr', null, [C.match, C.puesto, C.empresa, C.recorrido, C.etapa, C.fecha, C.aviso].map((t, i) => h('th', { scope: 'col', class: [i === 0 ? 'der' : null, i === 2 ? 'col-empresa' : null, i === 5 ? 'col-fecha' : null].filter(Boolean).join(' ') || null, text: t })))),
+      h('thead', null, h('tr', null, columnas.map(([texto, clase]) => h('th', { scope: 'col', class: clase || null, text: texto })))),
       h('tbody', null, vis.map(filaTabla))));
   }
   function filaTabla(a) {
     const llega = Aviso.llega(a, umbral);
     const linea = Aviso.lineaEtapa(a, config);
+    const calificacion = Aviso.chipCalificacion(a);
     const tr = h('tr', { tabindex: '0', dataset: { match: a.match_id, control: 'abrir' } },
       h('td', { class: 'tabla-match' + (llega || a.match === null ? '' : ' bajo') }, h('span', { 'aria-hidden': 'true', text: a.match === null ? '—' : String(a.match) }),
         oculto(a.match === null ? T.avisos.sinMatch : T.avisos.matchAccesible(a.match, llega))),
       h('td', null, h('div', { class: 'aviso-puesto', text: a.puesto }), h('div', { class: 'atributos' },
-        a.empresa ? h('span', { class: 'apoyo-empresa', text: a.empresa + ' · ' }) : null, Aviso.lugar(a), a.modalidad ? ' · ' + T.avisos.modalidadMin[a.modalidad] : '')),
+        a.empresa ? h('span', { class: 'apoyo-empresa', text: a.empresa + ' · ' }) : null, Aviso.lugar(a), a.modalidad ? ' · ' + T.avisos.modalidadMin[a.modalidad] : ''),
+        calificacion ? h('div', { class: 'apoyo-requisitos' }, Aviso.chipCalificacion(a)) : null),
       h('td', { class: 'col-empresa', text: a.empresa || '' }),
+      h('td', { class: 'col-requisitos' }, calificacion),
       h('td', null, Aviso.recorrido(a), oculto(T.postulaciones.recorridoAccesible(etiquetaEtapa(a))),
         h('div', { class: 'etapa-texto ' + Aviso.claseEtapa(a), 'aria-hidden': 'true', text: etiquetaEtapa(a) })),
       h('td', null, linea ? h('div', { class: 'traba', text: linea }) : null),

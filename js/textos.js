@@ -353,7 +353,7 @@ window.T = (function () {
         a_mano: 'Nada para postular a mano.', para_revisar: 'Nada para revisar.', en_cola: 'Nada en cola.',
         enviada: 'Terna todavía no envió ninguna.', postulado: 'Todavía no marcaste ninguna como postulada.', entrevista: 'Todavía no marcaste ninguna entrevista.',
       },
-      columnas: { match: 'Match', puesto: 'Puesto', empresa: 'Empresa', recorrido: 'Recorrido', etapa: 'Etapa', fecha: 'Fecha', aviso: 'Aviso' },
+      columnas: { match: 'Match', puesto: 'Puesto', empresa: 'Empresa', requisitos: 'Requisitos', recorrido: 'Recorrido', etapa: 'Etapa', fecha: 'Fecha', aviso: 'Aviso' },
     },
 
     perfil: {

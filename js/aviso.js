@@ -70,13 +70,14 @@ window.Aviso = (function () {
     return C[ev.calificacion];
   }
   // En la tarjeta, la fila y la ficha, al lado de los chips: texto con su ícono, sin fondo (brand.md §5.1: un requisito que
-  // falta no lleva color). "Cumplís los requisitos" va en tinta suave; lo demás, en tinta.
-  function chipCalificacion(a) {
+  // falta no lleva color). "Cumplís los requisitos" va en tinta suave; lo demás, en tinta. Con `conExplicacion` en false va
+  // sin la explicación oculta: la fila de Postulaciones en celular es un botón y todo su texto es su nombre (diseno.md 0.16 §8.3).
+  function chipCalificacion(a, conExplicacion = true) {
     const ev = evaluacion(a);
     if (!ev) return chipFaltan(a);
     const explicacion = T.chips[ev.calificacion];
     return h('span', { class: 'chip-texto calificacion' + (ev.calificacion === 'cumple' ? '' : ' tinta'), title: explicacion, dataset: { calificacion: ev.calificacion } },
-      icono(ICONO_CALIFICACION[ev.calificacion], 'icono-14'), h('span', { text: textoCalificacion(ev) }), oculto(': ' + explicacion));
+      icono(ICONO_CALIFICACION[ev.calificacion], 'icono-14'), h('span', { text: textoCalificacion(ev) }), conExplicacion ? oculto(': ' + explicacion) : null);
   }
   function fecha(a) {
     return h('span', { class: 'fecha-aviso' }, Terna.relativa(a.publicado_en || a.visto_en),
