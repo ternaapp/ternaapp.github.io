@@ -322,6 +322,19 @@ dialog::backdrop { background: var(--velo); }
 .lista-iconos li { display: flex; gap: 8px; font-size: 15px; line-height: 1.4; }
 .lista-iconos .icono { width: 18px; height: 18px; margin-top: 2px; }
 .lista-iconos .i-tilde { color: var(--accion); }
+/* match.v2 (diseno.md 0.14 §7.5): el veredicto en palabras, los requisitos por estado y "Cómo se calcula". */
+.ficha-seccion-cuerpo { display: flex; flex-direction: column; gap: 8px; }
+.veredicto { display: flex; gap: 8px; font-size: 15px; line-height: 1.4; }
+.veredicto .icono { flex: none; margin-top: 2px; }
+.requisitos-grupo { display: flex; flex-direction: column; gap: 6px; }
+.requisitos-grupo h4 { font-size: 14px; font-weight: 700; }
+.requisitos-grupo .suave { font-size: 14px; line-height: 1.4; }
+.calculo { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.calculo > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: baseline; font-size: 14px; line-height: 1.4; }
+.calculo dd { margin: 0; font-weight: 700; white-space: nowrap; }
+.calculo-cuerpo > p { font-size: 14px; line-height: 1.4; }
+.motivo-linea { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 15px; }
+.dialogo-motivo .opciones { margin: 0; }
 
 /* Fichas del paquete */
 .fichas-paquete { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }

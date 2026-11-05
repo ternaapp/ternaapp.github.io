@@ -21,7 +21,7 @@ Terna.pagina('postulaciones', async (ctx) => {
 
   const parar = Terna.cargando(lista);
   const [rA, rP, rB] = await Promise.all([
-    sb.from('mis_avisos').select(COLUMNAS).or('paquete_id.not.is.null,estado_postulacion.neq.pendiente').neq('interes', 'no_me_interesa'),
+    Aviso.leerConEvaluacion((cols) => sb.from('mis_avisos').select(cols).or('paquete_id.not.is.null,estado_postulacion.neq.pendiente').neq('interes', 'no_me_interesa'), COLUMNAS),
     sb.from('preferencias').select('umbral, salario_modo, modalidades, alcance, niveles, jornadas').eq('usuario_id', uid).maybeSingle(),
     sb.from('paquetes').select('match_id, bajo_minimo:contenido->render->bajo_minimo'),
   ]);
@@ -30,6 +30,7 @@ Terna.pagina('postulaciones', async (ctx) => {
   if (errorCarga) { Terna.errorDeCarga(lista, errorCarga); return; }
 
   let postulaciones = rA.data || [];
+  const conMotivo = rA.conEvaluacion;  // 0025 aplicada: el veredicto, "Cómo se calcula" y "Decir por qué"
   const porId = new Map(postulaciones.map((a) => [a.match_id, a]));
   const prefs = rP.data || { umbral: 70, salario_modo: 'sugerir' };
   const umbral = prefs.umbral;
@@ -375,12 +376,14 @@ Terna.pagina('postulaciones', async (ctx) => {
     const { error } = await sb.rpc('marcar_interes', { p_match_id: a.match_id, p_interes: valor });
     if (error) { avisarError(error); return; }
     a.interes = valor;
+    if (valor !== 'no_me_interesa') a.motivo_no_interesa = null;
     if (valor === 'no_me_interesa') {
       if (a.estado_postulacion === 'en_cola' || a.estado_postulacion === 'para_revisar') a.estado_postulacion = 'pendiente';
       postulaciones = postulaciones.filter((x) => x !== a);
       Terna.cerrarHoja(true);
       dibujar();
-      Terna.avisoBreve(T.postulaciones.hecho.noInteresa, { icono: 'i-no-interesa', deshacer: () => noMeInteresa(a, true) });
+      Terna.avisoBreve(T.postulaciones.hecho.noInteresa, { icono: 'i-no-interesa', deshacer: () => noMeInteresa(a, true),
+        accion: conMotivo ? { texto: T.avisos.motivo.decir, alHacer: () => Aviso.pedirMotivo(a) } : null });
     } else {
       if (!postulaciones.includes(a)) postulaciones.push(a);
       dibujar();

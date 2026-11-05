@@ -59,6 +59,9 @@
     'i-preguntar': '<circle cx="12" cy="12" r="9"/>' + P('M9.5 9a2.5 2.5 0 0 1 5 0c0 1.7-2.5 2.2-2.5 4M12 17h.01'),
     'i-viejo': P('M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2'),
     'i-bajo-minimo': P('M3 7l6 6 4-4 8 8M21 11v6h-6'),
+    // El nivel del puesto comparado con el tuyo (diseno.md 0.14 §11.2): una escalera que baja o que sube.
+    'i-nivel-bajo': P('M3 6h5v5h5v5h5v3'),
+    'i-nivel-alto': P('M3 18h5v-5h5V8h5V5'),
     'i-sin-conexion': P('M2 8.5a16 16 0 0 1 20 0M5 12a11 11 0 0 1 14 0M8.5 15.5a6 6 0 0 1 7 0M12 19h.01M3 3l18 18'),
   };
   const marca = '<path d="M3 6h18M3 12h12M3 18h7"/>';

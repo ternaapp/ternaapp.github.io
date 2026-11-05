@@ -53,6 +53,31 @@ window.Aviso = (function () {
     if (!n) return null;
     return h('span', { class: 'chip-texto tinta' }, icono('i-alerta', 'icono-14'), n === 1 ? T.avisos.faltaUno : T.avisos.faltan(n));
   }
+
+  /* ---------- El veredicto de requisitos (match.v2; brand.md 0.4.19 §6.4 y §6.10; datos.md 0.20, 0025) ----------
+     `evaluacion` es cómo calculó Terna el match: la función, el nivel, las habilidades, cada requisito con su estado, los
+     puntos, el tope y el veredicto. Un match de match.v1 (o una base sin 0025) no la tiene y se muestra como antes. */
+  function evaluacion(a) {
+    const ev = a && a.evaluacion;
+    return ev && typeof ev === 'object' && ev.version === 'match.v2' && T.avisos.calificacion[ev.calificacion] ? ev : null;
+  }
+  const ICONO_CALIFICACION = { cumple: 'i-tilde', a_confirmar: 'i-preguntar', falta: 'i-alerta', sobra_nivel: 'i-nivel-bajo', falta_nivel: 'i-nivel-alto' };
+  function textoCalificacion(ev) {
+    const C = T.avisos.calificacion;
+    const conteo = ev.conteo || {};
+    if (ev.calificacion === 'falta') return C.falta(Math.max(1, Number(conteo.no_cumple) || 0));
+    if (ev.calificacion === 'a_confirmar') return C.a_confirmar(Math.max(1, Number(conteo.no_figura) || 0));
+    return C[ev.calificacion];
+  }
+  // En la tarjeta, la fila y la ficha, al lado de los chips: texto con su ícono, sin fondo (brand.md §5.1: un requisito que
+  // falta no lleva color). "Cumplís los requisitos" va en tinta suave; lo demás, en tinta.
+  function chipCalificacion(a) {
+    const ev = evaluacion(a);
+    if (!ev) return chipFaltan(a);
+    const explicacion = T.chips[ev.calificacion];
+    return h('span', { class: 'chip-texto calificacion' + (ev.calificacion === 'cumple' ? '' : ' tinta'), title: explicacion, dataset: { calificacion: ev.calificacion } },
+      icono(ICONO_CALIFICACION[ev.calificacion], 'icono-14'), h('span', { text: textoCalificacion(ev) }), oculto(': ' + explicacion));
+  }
   function fecha(a) {
     return h('span', { class: 'fecha-aviso' }, Terna.relativa(a.publicado_en || a.visto_en),
       a.nuevo ? [' · ', h('b', { text: T.avisos.nuevo })] : null);
@@ -302,10 +327,19 @@ window.Aviso = (function () {
     sec.append(h('p', null, h('a', { href: 'postulaciones.html#postulacion-' + a.match_id, text: T.avisos.ficha.verEnPostulaciones })));
     return sec;
   }
+  // "Por qué ajusta" y lo que falta. Con match.v2, "Requisitos del aviso" (cada requisito con su estado, y el veredicto en
+  // palabras) y "Cómo se calcula", plegado; con match.v1, "No cumplís" o "No cumplís o no figura", como hasta 0.4.18.
   function razones(a, plegadas) {
     const lista = [];
     if ((a.razones || []).length) {
       lista.push(seccionLista(T.avisos.ficha.porQue, a.razones, 'i-tilde', plegadas));
+    }
+    const ev = evaluacion(a);
+    if (ev) {
+      lista.push(seccionRequisitos(ev, plegadas));
+      const calculo = seccionCalculo(a, ev);
+      if (calculo) lista.push(calculo);
+      return lista;
     }
     const faltan = a.requisitos_faltantes || [];
     if (faltan.length) {
@@ -314,24 +348,148 @@ window.Aviso = (function () {
     }
     return lista;
   }
-  function seccionLista(titulo, items, iconoId, plegada) {
-    const ul = h('ul', { class: 'lista-iconos' }, items.map((t) => h('li', null, icono(iconoId, iconoId === 'i-tilde' ? 'i-tilde' : ''), h('span', { text: t }))));
-    if (!plegada) return h('section', { class: 'ficha-seccion' }, h('h3', { text: titulo }), ul);
+  // Una sección de la ficha, abierta (con su título) o plegable (el título es el botón).
+  function seccion(titulo, contenido, plegada, clase) {
+    const cuerpo = h('div', { class: 'ficha-seccion-cuerpo' + (clase ? ' ' + clase : '') }, contenido);
+    if (!plegada) return h('section', { class: 'ficha-seccion' }, h('h3', { text: titulo }), cuerpo);
     const id = Terna.idUnico('pleg');
-    ul.id = id;
-    ul.hidden = true;
+    cuerpo.id = id;
+    cuerpo.hidden = true;
     const boton = h('button', { class: 'plegable-boton', type: 'button', 'aria-expanded': 'false', 'aria-controls': id,
-      onclick: () => { const abrir = boton.getAttribute('aria-expanded') !== 'true'; boton.setAttribute('aria-expanded', String(abrir)); ul.hidden = !abrir; } },
+      onclick: () => { const abrir = boton.getAttribute('aria-expanded') !== 'true'; boton.setAttribute('aria-expanded', String(abrir)); cuerpo.hidden = !abrir; } },
     h('span', { text: titulo }), icono('i-chevron'));
-    return h('section', { class: 'ficha-seccion' }, boton, ul);
+    return h('section', { class: 'ficha-seccion' }, boton, cuerpo);
+  }
+  function listaIconos(items, iconoId) {
+    return h('ul', { class: 'lista-iconos' }, items.map((t) => h('li', null, icono(iconoId, iconoId === 'i-tilde' ? 'i-tilde' : ''), h('span', { text: t }))));
+  }
+  function seccionLista(titulo, items, iconoId, plegada) {
+    return seccion(titulo, listaIconos(items, iconoId), plegada);
+  }
+  function seccionRequisitos(ev, plegada) {
+    const F = T.avisos.ficha;
+    const reqs = (Array.isArray(ev.requisitos) ? ev.requisitos : []).filter((r) => r && r.texto);
+    const de = (estado) => reqs.filter((r) => r.estado === estado).map((r) => String(r.texto));
+    const conteo = ev.conteo || {};
+    const V = F.veredicto;
+    let frase;
+    if (ev.calificacion === 'falta') frase = V.falta(Math.max(1, Number(conteo.no_cumple) || 0));
+    else if (ev.calificacion === 'a_confirmar') frase = V.a_confirmar(Math.max(1, Number(conteo.no_figura) || 0));
+    else if (ev.calificacion === 'cumple') frase = reqs.length ? V.cumple : V.cumpleSinRequisitos;
+    else frase = V[ev.calificacion];
+    const partes = [h('p', { class: 'veredicto' }, icono(ICONO_CALIFICACION[ev.calificacion], 'icono-16'), h('span', { text: frase }))];
+    const grupo = (titulo, items, iconoId, extra) => (items.length
+      ? h('div', { class: 'requisitos-grupo' }, h('h4', { text: titulo }), listaIconos(items, iconoId), extra || null) : null);
+    partes.push(
+      grupo(F.reqNoCumplis, de('no_cumple'), 'i-alerta'),
+      grupo(F.reqNoFigura, de('no_figura'), 'i-preguntar',
+        h('p', { class: 'suave' }, F.reqNoFiguraAyuda + ' ', h('a', { href: 'perfil.html', text: F.completarPerfil }))),
+      grupo(F.reqCumplis, de('cumple'), 'i-tilde'));
+    return seccion(F.requisitos, partes, plegada, 'requisitos');
+  }
+  // "Cómo se calcula" (siempre plegado): las cuatro partes con sus puntos, la suma, el tope si lo hubo y qué es el match.
+  // Los máximos los trae la evaluación (matches.evaluacion.maximos): la web no copia la rúbrica del motor.
+  function seccionCalculo(a, ev) {
+    const F = T.avisos.ficha;
+    const p = ev.puntos || {};
+    const max = ev.maximos || {};
+    if (a.match === null || a.match === undefined) return null;
+    const hab = ev.habilidades || {};
+    const filas = [
+      ['funcion', F.calculoFuncion[ev.funcion]],
+      ['nivel', F.calculoNivel[ev.nivel]],
+      ['habilidades', F.calculoHabilidades(Number(hab.tiene) || 0, Number(hab.pedidas) || 0)],
+      ['requisitos', F.calculoRequisitos(ev.conteo || {})],
+    ].filter(([, texto]) => texto);
+    const dl = h('dl', { class: 'calculo' }, filas.map(([k, texto]) => {
+      const tiene = Number.isFinite(Number(p[k]));
+      const conMax = tiene && Number.isFinite(Number(max[k]));
+      return h('div', null, h('dt', { text: texto }),
+        h('dd', { class: 'num' }, tiene ? h('span', { 'aria-hidden': 'true', text: conMax ? F.puntosDe(p[k], max[k]) : String(p[k]) }) : null,
+          tiene ? oculto(conMax ? F.puntosAccesible(p[k], max[k]) : String(p[k])) : null));
+    }));
+    const contenido = [dl];
+    if (Number.isFinite(Number(ev.suma))) contenido.push(h('p', { class: 'num', text: F.calculoSuma(ev.suma) }));
+    if (ev.tope && F.topes[ev.tope.motivo] && Number.isFinite(Number(ev.tope.valor))) contenido.push(h('p', { class: 'num', text: F.calculoTope(ev.tope.valor, F.topes[ev.tope.motivo]) }));
+    contenido.push(h('p', { class: 'suave', text: F.calculoMatch(a.match) }));
+    return seccion(F.calculo, contenido, true, 'calculo-cuerpo');
+  }
+
+  /* ---------- Por qué no te interesa (brand.md 0.4.19 §6.4; datos.md 0.20, marcar_motivo_no_interesa) ----------
+     Opcional, después de "No me interesa": un diálogo con los siete motivos. Lo cuenta `python -m terna calibracion`, sin
+     datos de nadie, para medir si el match acierta. `alGuardar(motivo)` corre después de guardar. */
+  const MOTIVOS = ['otra_funcion', 'sobra_nivel', 'falta_nivel', 'requisitos', 'condiciones', 'empresa', 'otro'];
+  function pedirMotivo(a, alGuardar) {
+    const M = T.avisos.motivo;
+    const origen = document.activeElement;
+    const nombre = Terna.idUnico('motivo');
+    const idAyuda = Terna.idUnico('ayuda');
+    const err = h('p', { class: 'campo-error', role: 'alert' });
+    const opciones = h('div', { class: 'opciones' }, MOTIVOS.map((m) => h('label', { class: 'casilla' },
+      h('input', { type: 'radio', name: nombre, value: m, checked: a.motivo_no_interesa === m }), h('span', { text: M.opciones[m] }))));
+    const bGuardar = h('button', { class: 'btn btn-primario', type: 'button' }, T.comun.guardar);
+    const bCancelar = h('button', { class: 'btn', type: 'button' }, T.comun.cancelar);
+    const grupo = h('fieldset', { class: 'campo', 'aria-describedby': idAyuda }, opciones);
+    const dlg = Terna.dialogo({ titulo: M.titulo, cuerpo: [h('p', { class: 'campo-ayuda', id: idAyuda, text: M.ayuda }), grupo, err], botones: [bCancelar, bGuardar], clase: 'dialogo-motivo' });
+    grupo.setAttribute('aria-labelledby', dlg.getAttribute('aria-labelledby'));
+    let guardado = null;
+    bCancelar.addEventListener('click', () => dlg.close());
+    bGuardar.addEventListener('click', async () => {
+      const elegido = opciones.querySelector('input:checked');
+      if (!elegido) { err.textContent = M.elegi; opciones.querySelector('input').focus(); return; }
+      bGuardar.setAttribute('aria-disabled', 'true');
+      const { error } = await Terna.sb.rpc('marcar_motivo_no_interesa', { p_match_id: a.match_id, p_motivo: elegido.value });
+      bGuardar.removeAttribute('aria-disabled');
+      if (error) { if (!Terna.siSesionVencida(error)) err.textContent = Terna.textoError(error); return; }
+      a.motivo_no_interesa = elegido.value;
+      guardado = elegido.value;
+      dlg.close();
+    });
+    dlg.addEventListener('close', () => {
+      if (guardado && alGuardar) alGuardar(guardado);
+      // El foco vuelve a lo que abrió el diálogo; si ya no está (la ficha se rehízo, o era el aviso breve), al motivo de la
+      // ficha abierta, o al contenido.
+      const destino = origen && origen !== document.body && origen.isConnected ? origen : document.querySelector('[data-control="motivo"]');
+      Terna.devolverFoco(destino);
+      if (guardado) Terna.avisoBreve(T.comun.guardado);
+    });
+    dlg.showModal();
+    (opciones.querySelector('input:checked') || opciones.querySelector('input')).focus();
+  }
+  // En la ficha de un aviso que no te interesa: el motivo, con "Cambiar", o "Decir por qué no te interesa".
+  function lineaMotivo(a, alGuardar) {
+    const M = T.avisos.motivo;
+    const abrir = () => pedirMotivo(a, alGuardar);
+    if (a.motivo_no_interesa && M.opciones[a.motivo_no_interesa]) {
+      return h('p', { class: 'motivo-linea' }, h('span', { text: M.linea(M.opciones[a.motivo_no_interesa]) + ' ' }),
+        h('button', { class: 'btn btn-texto btn-chico', type: 'button', dataset: { control: 'motivo' }, onclick: abrir }, M.cambiar));
+    }
+    return h('p', { class: 'motivo-linea' }, h('button', { class: 'btn btn-texto btn-chico', type: 'button', dataset: { control: 'motivo' }, onclick: abrir }, M.decirLargo));
   }
   function abrirAviso(a, clase) {
     return h('a', { class: clase || 'btn btn-primario btn-ancho', href: a.url, target: '_blank', rel: 'noopener noreferrer',
       'aria-label': T.avisos.abrirEnAccesible(a.fuente) }, T.avisos.abrirEn(a.fuente), icono('i-abrir'));
   }
 
+  /* ---------- Leer mis_avisos con las columnas de 0025, o sin ellas ----------
+     Mientras el proyecto no tenga 0025, pedir `evaluacion` o `motivo_no_interesa` da 42703 (la columna no existe): se vuelve a
+     pedir sin ellas y la página anda como hasta 0.4.18, sin veredicto ni motivo. `armar(columnas)` devuelve la consulta. */
+  const COLUMNAS_0025 = 'evaluacion, motivo_no_interesa';
+  function faltaColumna(error) {
+    const texto = String((error && (error.message || '')) || '') + ' ' + String((error && error.details) || '');
+    return Boolean(error) && (error.code === '42703' || error.code === 'PGRST204' || /does not exist|Could not find/i.test(texto));
+  }
+  async function leerConEvaluacion(armar, columnas) {
+    const r = await armar(columnas + ', ' + COLUMNAS_0025);
+    if (!r.error) return { data: r.data, error: null, conEvaluacion: true };
+    if (!faltaColumna(r.error)) return { data: null, error: r.error, conEvaluacion: false };
+    const r2 = await armar(columnas);
+    return { data: r2.data, error: r2.error, conEvaluacion: false };
+  }
+
   return {
     estadoPaquete, llega, chip, chipPaquete, chipPostulacion, chipInteres, chipFaltan, fecha, etiquetas,
+    evaluacion, chipCalificacion, pedirMotivo, lineaMotivo, MOTIVOS, leerConEvaluacion,
     MODALIDADES, ALCANCES, NIVELES, JORNADAS, TODOS_BUSQUEDA, busquedaDe, pasaBusqueda, motivosFuera,
     lugar, atributos, bloqueMatch, controlInteres, fichasPaquete, parsearNotas, textoSalario,
     recorrido, recorridoGrande, traba, lineaEtapa, claseEtapa, puedeVolverAProbar, seccionPostulacion, razones, abrirAviso,

@@ -279,15 +279,19 @@ window.Terna = (function () {
     const cont = contenedorBreves();
     const caja = h('div', { class: 'aviso-breve' + (opciones.error ? ' aviso-breve-error' : '') },
       opciones.icono ? icono(opciones.icono) : null, h('span', { text: texto }));
-    const actual = { caja, opciones, timer: null, restante: opciones.deshacer ? 6000 : (opciones.error ? 6000 : 3000), inicio: 0 };
-    if (opciones.deshacer) {
-      caja.append(h('button', { type: 'button', onclick: () => {
-        clearTimeout(actual.timer);
-        breve = null;
-        caja.remove();
-        opciones.deshacer();
-      } }, icono('i-deshacer', 'icono-16'), T.comun.deshacer));
-    }
+    // Con una segunda acción (`accion: { texto, alHacer }`, el "Decir por qué" de "No me interesa"; diseno.md 0.14 §10.9)
+    // dura 8 segundos: hay dos cosas para elegir.
+    const actual = { caja, opciones, timer: null, restante: opciones.accion ? 8000 : (opciones.deshacer || opciones.error ? 6000 : 3000), inicio: 0 };
+    // "Deshacer" no deja que corra alVencer (lo que el aviso iba a escribir al irse); la segunda acción sí, porque no deshace.
+    const boton = (contenido, fn, vence) => h('button', { type: 'button', onclick: () => {
+      clearTimeout(actual.timer);
+      breve = null;
+      caja.remove();
+      if (vence && opciones.alVencer) opciones.alVencer();
+      fn();
+    } }, contenido);
+    if (opciones.accion) caja.append(boton([opciones.accion.texto], opciones.accion.alHacer, true));
+    if (opciones.deshacer) caja.append(boton([icono('i-deshacer', 'icono-16'), T.comun.deshacer], opciones.deshacer, false));
     const arrancar = () => { actual.inicio = Date.now(); actual.timer = setTimeout(() => { if (breve === actual) cerrarBreve(true); }, actual.restante); };
     const pausar = () => { clearTimeout(actual.timer); actual.restante = Math.max(1500, actual.restante - (Date.now() - actual.inicio)); };
     caja.addEventListener('mouseenter', pausar);

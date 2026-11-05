@@ -151,6 +151,34 @@ window.T = (function () {
       fueraExplicacion: (m) => 'No entra en tus preferencias de búsqueda (' + m + '). Terna no lo arma ni lo postula por su cuenta; si pedís el paquete, sí.',
       faltaUno: 'Falta un requisito',
       faltan: (x) => 'Faltan ' + x + ' requisitos',
+      // El veredicto de requisitos al lado del match (brand.md 0.4.19 §6.4 y §6.10; match.v2, datos.md 0.20, 0025). Hasta
+      // match.v1 iba "Falta un requisito" / "Faltan {n} requisitos" con todo lo de requisitos_faltantes.
+      calificacion: {
+        cumple: 'Cumplís los requisitos',
+        a_confirmar: (x) => (x === 1 ? 'Un requisito a confirmar' : x + ' requisitos a confirmar'),
+        falta: (x) => (x === 1 ? 'Falta un requisito' : 'Faltan ' + x + ' requisitos'),
+        sobra_nivel: 'Nivel más bajo que el tuyo',
+        falta_nivel: 'Nivel más alto que el tuyo',
+      },
+      // "No me interesa" con motivo (brand.md 0.4.19 §6.4): opcional, después de marcarlo.
+      motivo: {
+        decir: 'Decir por qué',
+        decirLargo: 'Decir por qué no te interesa',
+        cambiar: 'Cambiar',
+        titulo: '¿Por qué no te interesa?',
+        ayuda: 'Es opcional. Terna lo usa para medir si el match acierta; no cambia nada de este aviso.',
+        opciones: {
+          otra_funcion: 'No es mi trabajo',
+          sobra_nivel: 'Es de un nivel más bajo que el mío',
+          falta_nivel: 'Es de un nivel más alto que el mío',
+          requisitos: 'Piden algo que no tengo',
+          condiciones: 'Ubicación, modalidad, horario o sueldo',
+          empresa: 'La empresa o el rubro',
+          otro: 'Otro motivo',
+        },
+        elegi: 'Elegí un motivo.',
+        linea: (m) => 'Por qué no te interesa: ' + m + '.',
+      },
       hoy: 'hoy', ayer: 'ayer', haceDias: (x) => 'hace ' + x + ' días',
       nuevo: 'nuevo',
       matchAccesible: (m, llega) => 'Match ' + m + ' de 100, ' + (llega ? 'llega a tu umbral' : 'no llega a tu umbral'),
@@ -174,6 +202,45 @@ window.T = (function () {
         porQue: 'Por qué ajusta',
         noCumplis: 'No cumplís',
         noCumplisONoFigura: 'No cumplís o no figura',
+        // match.v2 (brand.md 0.4.19 §6.4): los requisitos con su estado y "Cómo se calcula".
+        requisitos: 'Requisitos del aviso',
+        veredicto: {
+          cumple: 'Tu perfil muestra lo que el aviso pide como excluyente.',
+          cumpleSinRequisitos: 'El aviso no pide requisitos excluyentes.',
+          a_confirmar: (x) => (x === 1 ? 'Tu perfil no menciona uno de los requisitos excluyentes.' : 'Tu perfil no menciona ' + x + ' de los requisitos excluyentes.'),
+          falta: (x) => (x === 1 ? 'Según tu perfil, no cumplís un requisito excluyente.' : 'Según tu perfil, no cumplís ' + x + ' requisitos excluyentes.'),
+          sobra_nivel: 'El puesto es de un nivel bastante más bajo que el tuyo.',
+          falta_nivel: 'El puesto es de un nivel bastante más alto que el tuyo.',
+        },
+        reqCumplis: 'Cumplís',
+        reqNoCumplis: 'No cumplís',
+        reqNoFigura: 'Tu perfil no lo menciona',
+        reqNoFiguraAyuda: 'Terna no dice que no lo tengas: tu perfil no lo menciona. Si lo tenés, sumalo a Mi perfil.',
+        completarPerfil: 'Completar Mi perfil',
+        calculo: 'Cómo se calcula',
+        calculoFuncion: { misma: 'Función: la tuya', vecina: 'Función: parecida a la tuya', otra: 'Función: otra' },
+        calculoNivel: {
+          acorde: 'Nivel: el tuyo', por_encima: 'Nivel: un poco más bajo que el tuyo', muy_por_encima: 'Nivel: bastante más bajo que el tuyo',
+          por_debajo: 'Nivel: un poco más alto que el tuyo', muy_por_debajo: 'Nivel: bastante más alto que el tuyo',
+        },
+        calculoHabilidades: (tiene, pedidas) => (pedidas ? 'Habilidades del oficio: tenés ' + tiene + ' de ' + pedidas : 'Habilidades del oficio: el aviso no nombra ninguna'),
+        calculoRequisitos: (c) => {
+          const p = [];
+          if (c.cumple) p.push('cumplís ' + c.cumple);
+          if (c.no_cumple) p.push('no cumplís ' + c.no_cumple);
+          if (c.no_figura) p.push(c.no_figura + ' a confirmar');
+          return 'Requisitos excluyentes: ' + (p.length ? p.join(', ') : 'el aviso no pide');
+        },
+        puntosDe: (p, max) => p + ' de ' + max,
+        puntosAccesible: (p, max) => p + ' puntos de ' + max,
+        calculoSuma: (s) => 'Suma: ' + s + '.',
+        calculoTope: (v, motivo) => 'Tope: ' + v + ', porque ' + motivo + '.',
+        topes: {
+          funcion_otra: 'es de otra función', funcion_vecina: 'la función es parecida a la tuya, no la misma',
+          nivel_extremo: 'el nivel del puesto está muy lejos del tuyo', falta_uno: 'no cumplís un requisito excluyente',
+          faltan_dos: 'no cumplís dos requisitos excluyentes o más', idioma_ausente: 'pide un idioma que tu perfil no tiene',
+        },
+        calculoMatch: (m) => 'Match ' + m + ': el ajuste entre tu perfil y el aviso, de 0 a 100. No es la probabilidad de que te llamen.',
         paquete: 'Paquete',
         cv: 'CV', cvPdf: 'CV (PDF)', carta: 'Carta', cartaPdf: 'Carta (PDF)',
         notas: 'Notas', notasLargo: 'Notas para la entrevista', notasSub: 'para la entrevista',
@@ -748,6 +815,12 @@ window.T = (function () {
       a_mano: 'Terna no pudo o no corresponde. Todo está listo para que postules vos.',
       postulado: 'Marcaste que postulaste.',
       entrevista: 'Marcaste que conseguiste entrevista.',
+      // El veredicto de requisitos (brand.md 0.4.19 §6.10).
+      cumple: 'Tu perfil muestra lo que el aviso pide como excluyente, y el nivel del puesto es cercano al tuyo.',
+      a_confirmar: 'El aviso pide algo que tu perfil no menciona. Si lo tenés, sumalo a Mi perfil.',
+      falta: 'El aviso pide algo que, según tu perfil, no tenés.',
+      sobra_nivel: 'El puesto es de un nivel bastante más bajo que el tuyo: te sobra experiencia para lo que pide.',
+      falta_nivel: 'El puesto es de un nivel bastante más alto que el tuyo: pide más experiencia que la que tenés.',
     },
 
     errores: {
@@ -797,6 +870,7 @@ window.T = (function () {
       guardar: 'No se pudo guardar. Probá de nuevo.',
       guardarCampos: 'No se pudo guardar. Revisá los campos marcados.',
       marcar: 'No se pudo marcar. Probá de nuevo.',
+      motivoSinNoInteresa: 'Primero marcá No me interesa.',
       general: 'Algo falló del lado de Terna. Probá de nuevo; si sigue, avisale a Francisco.',
       borrarUsuario: 'No se pudo borrar el usuario. Probá de nuevo.',
       limiteExperiencias: (x) => 'Hasta ' + x + ' experiencias.',
@@ -827,7 +901,7 @@ window.T = (function () {
         aviso_con_texto: e.conTexto, aviso_sin_texto: e.sinTexto,
         paquete_ya_armado: e.yaArmado, paquete_ya_pedido: e.yaPedido, armar_desactivado: e.armarNo,
         dni_invalido: e.dni, cuil_invalido: e.cuil, fecha_nacimiento_invalida: e.nacimiento,
-        interes_invalido: e.marcar, transicion_invalida: e.marcar,
+        interes_invalido: e.marcar, transicion_invalida: e.marcar, motivo_sin_no_interesa: e.motivoSinNoInteresa,
         postulacion_enviada: e.enviada, no_postulable: e.noPostulable,
         intentos_agotados: e.agotados(c.max_reintentos_postulacion || 3),
         no_se_puede_borrar_admin: e.borrarUsuario, usuario_no_existe: e.borrarUsuario,

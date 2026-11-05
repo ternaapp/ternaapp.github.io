@@ -2,7 +2,9 @@
    Avisos (diseno.md §7): la lista por match, la barra de filtros (que arranca en las preferencias de búsqueda del momento,
    diseno.md 0.11 §7.2), el interés en el lugar, la ficha y el texto pegado.
    Lee mis_avisos, preferencias, paquetes (solo contenido→render→bajo_minimo), corridas_usuarios (si Terna ya corrió)
-   y config; escribe con marcar_interes, pedir_paquete, cancelar_pedido y pegar_texto_aviso (datos.md 0.12 §14). */
+   y config; escribe con marcar_interes, pedir_paquete, cancelar_pedido, pegar_texto_aviso y, desde 0025,
+   marcar_motivo_no_interesa (datos.md 0.20 §14). Con 0025 lee además `evaluacion` (el veredicto y "Cómo se calcula") y
+   `motivo_no_interesa`; sin ella, la página anda como antes (Aviso.leerConEvaluacion). */
 'use strict';
 
 Terna.pagina('avisos', async (ctx) => {
@@ -17,7 +19,7 @@ Terna.pagina('avisos', async (ctx) => {
 
   const parar = Terna.cargando(lista);
   const [rA, rP, rB, rC] = await Promise.all([
-    sb.from('mis_avisos').select(COLUMNAS),
+    Aviso.leerConEvaluacion((cols) => sb.from('mis_avisos').select(cols), COLUMNAS),
     sb.from('preferencias').select('umbral, interes_por_defecto, armar_paquetes, paquetes_por_dia, salario_modo, modalidades, alcance, niveles, jornadas').eq('usuario_id', ctx.usuario.id).maybeSingle(),
     sb.from('paquetes').select('match_id, bajo_minimo:contenido->render->bajo_minimo'),
     sb.from('corridas_usuarios').select('fecha').eq('usuario_id', ctx.usuario.id).limit(1),
@@ -27,6 +29,7 @@ Terna.pagina('avisos', async (ctx) => {
   if (errorCarga) { Terna.errorDeCarga(lista, errorCarga); return; }
 
   const avisos = rA.data || [];
+  const conMotivo = rA.conEvaluacion;  // 0025 aplicada: se puede decir por qué no interesa
   const porId = new Map(avisos.map((a) => [a.match_id, a]));
   const prefs = rP.data || { umbral: 70, interes_por_defecto: true, armar_paquetes: true, paquetes_por_dia: 3, salario_modo: 'sugerir' };
   const umbral = prefs.umbral;
@@ -250,7 +253,7 @@ Terna.pagina('avisos', async (ctx) => {
       Aviso.bloqueMatch(a, umbral));
     const bajo = a.match !== null && !Aviso.llega(a, umbral);
     Terna.agregar(art, [boton,
-      h('div', { class: 'chips' }, Aviso.chipInteres(a, config), Aviso.chipPaquete(a), Aviso.chipPostulacion(a), Aviso.chipFaltan(a),
+      h('div', { class: 'chips' }, Aviso.chipInteres(a, config), Aviso.chipPaquete(a), Aviso.chipPostulacion(a), Aviso.chipCalificacion(a),
         bajo ? h('span', { class: 'chip-texto', text: T.avisos.bajoUmbral }) : null, Aviso.fecha(a)),
       accionesAviso(a, false)]);
     return art;
@@ -283,7 +286,7 @@ Terna.pagina('avisos', async (ctx) => {
   }
   function fila(a) {
     const bajo = a.match !== null && !Aviso.llega(a, umbral);
-    const faltan = Aviso.chipFaltan(a);
+    const faltan = Aviso.chipCalificacion(a);
     const tr = h('tr', { tabindex: '0', dataset: { match: a.match_id, control: 'abrir' } },
       h('td', null, h('div', { class: 'aviso-puesto', text: a.puesto }), lineaApoyo(a), Aviso.etiquetas(a, bajoMinimo(a), false, fuera(a)), faltan ? h('div', null, faltan) : null),
       h('td', { class: 'col-empresa', text: a.empresa || '' }),
@@ -351,6 +354,7 @@ Terna.pagina('avisos', async (ctx) => {
     const { error } = await sb.rpc('marcar_interes', { p_match_id: a.match_id, p_interes: valor });
     if (error) { avisarError(error); refrescar(a); return; }
     a.interes = valor;
+    if (valor !== 'no_me_interesa') a.motivo_no_interesa = null;  // la base lo borra igual (0025, disparador)
     if (valor === 'no_me_interesa') {
       if (a.estado_paquete === 'pedido') a.estado_paquete = 'sin_armar';
       if (a.estado_postulacion === 'en_cola' || a.estado_postulacion === 'para_revisar') a.estado_postulacion = 'pendiente';
@@ -364,8 +368,10 @@ Terna.pagina('avisos', async (ctx) => {
       const n = nodoDe(a);
       if (n) (n.tagName === 'TR' ? n : n.querySelector('[data-control="abrir"]')).focus();
     } else {
+      // Después de "No me interesa", "Decir por qué" (brand.md 0.4.19 §6.4), solo si la base ya tiene 0025.
+      const accion = valor === 'no_me_interesa' && conMotivo ? { texto: T.avisos.motivo.decir, alHacer: () => Aviso.pedirMotivo(a, () => refrescar(a)) } : null;
       Terna.avisoBreve(valor === 'no_me_interesa' ? T.avisos.noTeInteresa : T.avisos.teInteresa,
-        { icono: valor === 'no_me_interesa' ? 'i-no-interesa' : 'i-tilde', deshacer: () => cambiarInteres(a, anterior, true) });
+        { icono: valor === 'no_me_interesa' ? 'i-no-interesa' : 'i-tilde', deshacer: () => cambiarInteres(a, anterior, true), accion });
     }
   }
   async function pedir(a) {
@@ -527,12 +533,13 @@ Terna.pagina('avisos', async (ctx) => {
   }
   function cuerpoFicha(a) {
     const partes = [
-      h('div', { class: 'chips' }, Aviso.chipInteres(a, config), Aviso.chipPaquete(a), Aviso.chipFaltan(a), Aviso.fecha(a)),
+      h('div', { class: 'chips' }, Aviso.chipInteres(a, config), Aviso.chipPaquete(a), Aviso.chipCalificacion(a), Aviso.fecha(a)),
       Aviso.etiquetas(a, bajoMinimo(a), true, fuera(a)),
     ];
     if (a.match !== null && a.tiene_texto) {
       partes.push(decideSola(a) ? Aviso.controlInteres(a, 'if-' + a.match_id, (v) => cambiarInteres(a, v)) : accionesBajo(a, false));
     }
+    if (conMotivo && a.interes === 'no_me_interesa') partes.push(Aviso.lineaMotivo(a, () => refrescar(a)));
     partes.push(...Aviso.razones(a, false), seccionPaquete(a), Aviso.seccionPostulacion(a, config));
     return partes;
   }
