@@ -597,11 +597,13 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 .umbral-tabla th:first-child { padding-left: 0; }
 .umbral-tabla .der, .umbral-tabla .franja-lista { text-align: right; padding-right: 0; }
 .umbral-tabla tbody th, .umbral-tabla tbody td { text-align: left; font-weight: 400; vertical-align: top; padding: 8px 6px; border-bottom: 1px solid var(--linea); }
-.umbral-tabla tbody th { padding-left: 0; white-space: nowrap; }
+.umbral-tabla tbody th { padding-top: 3px; padding-left: 0; white-space: nowrap; }
 .umbral-tabla tbody .franja-lista { text-align: right; white-space: nowrap; }
 .umbral-tabla tbody tr:last-child > *, .umbral-tabla tbody tr:has(+ .umbral-marca) > * { border-bottom: 0; }
+/* El botón mide 32 px, como los otros objetivos chicos de la web, con el texto centrado: el th sube 5 px para que la franja
+   quede a la altura de la primera línea de su descripción. */
 .franja-boton {
-  display: inline-flex; align-items: flex-start; min-height: 24px; padding: 0; border: 0; background: none;
+  display: inline-flex; align-items: center; min-height: 32px; padding: 0; border: 0; background: none;
   color: var(--accion); font-size: 15px; font-weight: 700; line-height: 1.4; text-align: left; text-underline-offset: 2px;
   font-variant-numeric: tabular-nums;
 }
