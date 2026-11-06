@@ -343,21 +343,23 @@ window.Terna = (function () {
     document.body.append(dlg);
     return dlg;
   }
-  // Confirmación: devuelve true o false. El foco arranca en el botón que no hace nada (Cancelar).
-  function confirmar({ titulo, texto, si, no, destructivo }) {
+  // Confirmación: devuelve true o false. El foco arranca en el botón que no hace nada (Cancelar). `cuerpo` (nodos) en lugar de
+  // `texto` para una confirmación con más de un párrafo o con algo para elegir (Pedir paquete y No me interesa, diseno.md 0.21 §10.8).
+  function confirmar({ titulo, texto, cuerpo, si, no, destructivo, clase }) {
     return new Promise((resolver) => {
       const origen = document.activeElement;
       let respuesta = false;
       const bNo = h('button', { class: 'btn', type: 'button', autofocus: true, onclick: () => dlg.close() }, no || T.comun.cancelar);
       const bSi = h('button', { class: 'btn ' + (destructivo ? 'btn-destructivo' : 'btn-primario'), type: 'button', onclick: () => { respuesta = true; dlg.close(); } }, si);
-      const dlg = dialogo({ titulo, cuerpo: h('p', { text: texto }), botones: [bNo, bSi] });
+      const dlg = dialogo({ titulo, cuerpo: cuerpo || h('p', { text: texto }), botones: [bNo, bSi], clase });
       dlg.addEventListener('close', () => { devolverFoco(origen); resolver(respuesta); });
       dlg.showModal();
       bNo.focus();
     });
   }
+  // Un control oculto (display: none) no toma el foco: entonces va al contenido.
   function devolverFoco(el) {
-    if (el && el.isConnected && typeof el.focus === 'function') el.focus();
+    if (el && el.isConnected && typeof el.focus === 'function' && (el.getClientRects().length || el === document.activeElement)) el.focus();
     else { const m = document.getElementById('contenido'); if (m) m.focus(); }
   }
 
@@ -383,7 +385,9 @@ window.Terna = (function () {
     return { partes: [cerrar, marco], idTitulo: id };
   }
 
-  // opciones: titulo | cabecera (nodo) + idTitulo, cuerpo, acciones, enLinea (bool), panel (nodo ancla), alCerrar, origen, clave
+  // opciones: titulo | cabecera (nodo) + idTitulo, cuerpo, acciones, enLinea (bool), panel (nodo ancla), alCerrar, origen, clave.
+  // `origen` puede ser una función: se pregunta al cerrar adónde vuelve el foco (un filtro que redibuja la tabla mientras está
+  // abierto cambia el botón de su encabezado por otro igual; diseno.md 0.21 §10.18).
   function abrirHoja(opciones) {
     cerrarHoja(false);
     const origen = opciones.origen || document.activeElement;
@@ -410,9 +414,20 @@ window.Terna = (function () {
         const r = opciones.panel.getBoundingClientRect();
         // 30 px más abajo que su botón: la cruz va sobre la esquina y no tiene que tapar el botón. Alineado con el borde
         // izquierdo del botón si entra (los de una barra de filtros, diseno.md 0.13 §10.7); si no, con el derecho.
-        const arriba = Math.round(r.bottom + 30);
-        el.style.setProperty('top', arriba + 'px');
-        el.style.setProperty('max-height', Math.max(240, window.innerHeight - arriba - 16) + 'px');
+        // Desde diseno.md 0.21, un botón bajo en la pantalla (el encabezado de una tabla, con los próximos paquetes arriba)
+        // abre el panel hacia arriba si abajo no le quedan 400 px y arriba tiene más lugar.
+        const abajo = window.innerHeight - r.bottom - 30 - 16;
+        const encima = r.top - 12 - 16 - 30;
+        if (abajo < 400 && encima > abajo) {
+          el.style.setProperty('top', 'auto');
+          el.style.setProperty('bottom', Math.round(window.innerHeight - r.top + 12) + 'px');
+          el.style.setProperty('max-height', Math.max(240, encima) + 'px');
+          el.classList.add('arriba');
+        } else {
+          const arriba = Math.round(r.bottom + 30);
+          el.style.setProperty('top', arriba + 'px');
+          el.style.setProperty('max-height', Math.max(240, window.innerHeight - arriba - 16) + 'px');
+        }
         const izquierda = r.left + 360 <= window.innerWidth - 24 ? r.left : r.right - 360;
         el.style.setProperty('left', Math.round(Math.max(16, Math.min(izquierda, window.innerWidth - 384))) + 'px');
       }
@@ -439,7 +454,7 @@ window.Terna = (function () {
       document.documentElement.style.removeProperty('overflow');
     }
     if (f.alCerrar) f.alCerrar(porUsuario);
-    if (porUsuario) devolverFoco(f.origen);
+    if (porUsuario) devolverFoco(typeof f.origen === 'function' ? f.origen() : f.origen);
   }
   function hojaAbierta() { return fichaAbierta; }
   function reemplazarCuerpoHoja(cuerpo, acciones) {

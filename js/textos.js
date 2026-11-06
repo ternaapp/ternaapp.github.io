@@ -1,5 +1,5 @@
 /* Terna · js/textos.js
-   Los textos de la web, copiados de brand.md (0.7) y el mapa de claves de error de datos.md §11.
+   Los textos de la web, copiados de brand.md (0.8) y el mapa de claves de error de datos.md §11.
    El código los usa tal cual; si un texto cambia, cambia en brand.md primero y después acá. */
 'use strict';
 
@@ -144,6 +144,36 @@ window.T = (function () {
           jornada: 'Si un aviso no dice la jornada, aparece igual.',
         },
         listo: 'Listo',
+        // Filtros por columna (brand.md 0.8 §6.4 y §6.5; diseno.md 0.21 §10.18): cada encabezado de la tabla abre el suyo.
+        columnas: {
+          puesto: 'Puesto', empresa: 'Empresa', ubicacion: 'Ubicación', publicado: 'Publicado',
+          requisitos: 'Requisitos', recorrido: 'Recorrido', etapa: 'Etapa', fecha: 'Fecha',
+        },
+        todosColumna: { puesto: 'Todos', empresa: 'Todas', ubicacion: 'Todas', publicado: 'Todos', requisitos: 'Todos', recorrido: 'Todas', etapa: 'Todas', fecha: 'Todas', paquete: 'Todos', postulacion: 'Todas' },
+        filtradoAccesible: ', filtrado',
+        texto: {
+          etiqueta: 'Contiene',
+          ayuda: 'Sin importar mayúsculas ni tildes. Con varias palabras, muestra los que tienen todas.',
+          valor: (x) => '"' + x + '"',
+        },
+        valores: {
+          cantidad: (x) => '(' + x + ')',
+          buscar: 'Buscar',
+          ninguno: 'Ninguno coincide.',
+        },
+        fecha: {
+          comparar: 'Comparar',
+          op: { desde: 'Desde', hasta: 'Hasta', el: 'El día' },
+          etiqueta: 'Fecha',
+          ayuda: 'Desde y Hasta incluyen el día que elegís.',
+          borrar: 'Borrar la fecha',
+          resumen: { desde: (f) => 'desde el ' + f, hasta: (f) => 'hasta el ' + f, el: (f) => 'el ' + f },
+        },
+        requisitos: {
+          cumple: 'Cumplís los requisitos', a_confirmar: 'Requisitos a confirmar', falta: 'Faltan requisitos',
+          sobra_nivel: 'Nivel más bajo que el tuyo', falta_nivel: 'Nivel más alto que el tuyo', sin_dato: 'Sin veredicto',
+        },
+        ordenar: { match: 'Ordenar por match', nuevos: 'Ordenar por más nuevos' },
       },
       interes: { me_interesa: 'Me interesa', por_decidir: 'Por decidir', no_me_interesa: 'No me interesa' },
       interesGrupo: (puesto) => 'Interés en ' + puesto,
@@ -205,7 +235,57 @@ window.T = (function () {
       noTeInteresa: 'No te interesa. Terna no arma ni postula este aviso.',
       teInteresa: 'Te interesa. Terna lo toma en la próxima corrida.',
       pedirPaquete: 'Pedir paquete',
-      pedido: (x) => 'Pedido. Terna lo arma en la próxima corrida y usa uno de tus ' + x + ' paquetes del día.',
+      // Desde brand.md 0.8 "Pedir" va en la columna Paquete, debajo de "Sin armar", y pide confirmación (Francisco, 06/11/2026).
+      pedir: 'Pedir',
+      pedirAccesible: (puesto) => 'Pedir el paquete de ' + puesto,
+      pegarCorto: 'Pegar texto',
+      pegarAccesible: (puesto) => 'Pegar el texto del aviso de ' + puesto,
+      noMeInteresaAccesible: (puesto) => 'No me interesa ' + puesto,
+      // Hasta brand.md 0.7 decía "Pedido. Terna lo arma en la próxima corrida y usa uno de tus {3} paquetes del día."
+      pedido: (lugar, corridas) => (corridas <= 1 ? 'Pedido. Terna lo arma en la próxima corrida.'
+        : 'Pedido. Va ' + lugar + '.º: Terna lo arma dentro de ' + corridas + ' corridas.'),
+      pedidoLugar: (lugar, corridas) => lugar + '.º · ' + (corridas <= 1 ? 'próxima corrida' : 'en ' + corridas + ' corridas'),
+      pedidoLugarAccesible: (lugar, corridas) => 'Lugar ' + lugar + ' de tus próximos paquetes: ' + (corridas <= 1 ? 'Terna lo arma en la próxima corrida' : 'Terna lo arma dentro de ' + corridas + ' corridas'),
+      cancelarPedido: 'Cancelar pedido',
+      pedidoCancelado: 'Pedido cancelado.',
+      confirmarPedir: {
+        titulo: 'Pedir el paquete',
+        si: 'Pedir paquete',
+        lugar: (lugar, corridas, cupo) => (corridas <= 1
+          ? (lugar === 1 ? 'Va primero en tus próximos paquetes: Terna lo arma en la próxima corrida.' : 'Va ' + lugar + '.º en tus próximos paquetes: Terna lo arma en la próxima corrida.')
+          : 'Va ' + lugar + '.º en tus próximos paquetes. Terna arma ' + cupo + ' por día, así que lo arma dentro de ' + corridas + ' corridas.'),
+        regla: (cupo) => 'Lo que pedís va antes que lo que Terna elige sola, en el orden en que lo pediste, y usa uno de los ' + cupo + ' paquetes de ese día.',
+        postula: 'Después, si el formulario lo permite, Terna postula por vos.',
+        revisa: 'Después, si el formulario lo permite, Terna lo llena y te lo deja para revisar antes de enviar.',
+      },
+      confirmarNoInteresa: {
+        titulo: 'No me interesa',
+        si: 'No me interesa',
+        texto: (dias) => 'Terna no arma ni postula este aviso y lo saca de tu lista. Durante ' + dias + ' días lo ves en Avisos, con el filtro Interés, y podés volver atrás; después se borra.',
+        conDocs: (dias) => 'Terna no arma ni postula este aviso y lo saca de tu lista. Durante ' + dias + ' días lo ves en Avisos, con el filtro Interés, y podés volver atrás; después se borra, con sus documentos y lo que Terna respondió.',
+        pedido: 'También se cancela el pedido de su paquete.',
+        en_cola: 'También se cancela el envío que estaba en cola.',
+        para_revisar: 'También se cancela la postulación que esperaba tu revisión.',
+        enviada: 'Lo que ya se envió queda en el empleador.',
+        motivo: 'Por qué (opcional)',
+      },
+      // Próximos paquetes (brand.md 0.8 §6.4; diseno.md 0.21 §7.8; datos.md 0.25, 0029): la cola de lo que la persona pidió.
+      proximos: {
+        titulo: 'Próximos paquetes',
+        intro: (cupo) => 'Terna arma ' + cupo + ' por día y empieza por lo que pediste, en este orden.',
+        cuando: (corridas) => (corridas <= 1 ? 'Próxima corrida' : 'En ' + corridas + ' corridas'),
+        subir: (puesto) => 'Subir ' + puesto,
+        bajar: (puesto) => 'Bajar ' + puesto,
+        cancelar: (puesto) => 'Cancelar el pedido de ' + puesto,
+        movido: (puesto, lugar, total) => puesto + ': lugar ' + lugar + ' de ' + total + '.',
+        resto: (n) => (n === 0 ? 'Si queda lugar, Terna no tiene otro aviso para armar: ninguno más de los que te interesan llega a tu umbral.'
+          : n === 1 ? 'Si queda lugar, Terna sigue sola con el otro aviso que te interesa y llega a tu umbral.'
+            : 'Si queda lugar, Terna sigue sola con los ' + n + ' avisos que te interesan y llegan a tu umbral, del mayor match para abajo.'),
+        lleno: (pedidos, corridas) => (corridas <= 1 ? 'Con ' + pedidos + ' pedidos, la próxima corrida arma solo lo que pediste.'
+          : 'Con ' + pedidos + ' pedidos, las próximas ' + corridas + ' corridas arman solo lo que pediste.'),
+        armarNo: 'Armar paquetes está en No: Terna no arma nada, tampoco lo que pediste.',
+        cambiarlo: 'Cambiarlo',
+      },
       ficha: {
         match: (m) => 'Match ' + m,
         porQue: 'Por qué ajusta',
@@ -267,7 +347,7 @@ window.T = (function () {
         faltanAyuda: 'Tu perfil no las menciona, así que Terna no las puso. Si sabés usar alguna, sumala a tus palabras clave personalizadas: desde ahí va sola en tus próximos CV.',
         faltanLink: 'Ir a mis palabras clave',
         sinDocs: 'Todavía no hay documentos para este aviso.',
-        loArma: 'Terna lo arma en la próxima corrida.',
+        loArma: 'Lo pediste. Terna lo arma antes que los que elige sola, en el orden de tus próximos paquetes.',
         noSePudo: 'No se pudo armar el paquete. Terna lo reintenta mañana.',
         armarNo: 'Armar paquetes está en No.',
         postulacion: 'Postulación',
@@ -912,7 +992,8 @@ window.T = (function () {
       por_decidir: 'Todavía no dijiste si te interesa. Terna espera.',
       no_me_interesa: (dias) => 'Lo marcaste. Terna no arma ni postula; se borra a los ' + dias + ' días.',
       sin_armar: 'Todavía no hay documentos para este aviso.',
-      pedido: 'Terna lo arma en la próxima corrida.',
+      // Hasta brand.md 0.7, "Terna lo arma en la próxima corrida.": desde 0.8 hay una cola y puede ir más atrás.
+      pedido: 'Lo pediste. Terna lo arma antes que los que elige sola, en el orden de tus próximos paquetes.',
       armado: 'CV, carta, salario y notas listos.',
       no_se_pudo_armar: 'Falló al armarlo. Terna lo reintenta mañana.',
       sin_texto: 'Terna no tiene el texto de este aviso. Pegalo para que lo puntúe.',
@@ -983,6 +1064,7 @@ window.T = (function () {
       guardarCampos: 'No se pudo guardar. Revisá los campos marcados.',
       marcar: 'No se pudo marcar. Probá de nuevo.',
       motivoSinNoInteresa: 'Primero marcá No me interesa.',
+      pedidosCambiaron: 'Tus próximos paquetes cambiaron mientras tanto. Ya ves cómo están ahora.',
       general: 'Algo falló del lado de Terna. Probá de nuevo; si sigue, avisale a Francisco.',
       borrarUsuario: 'No se pudo borrar el usuario. Probá de nuevo.',
       limiteExperiencias: (x) => 'Hasta ' + x + ' trabajos.',
@@ -1015,6 +1097,7 @@ window.T = (function () {
         paquete_ya_armado: e.yaArmado, paquete_ya_pedido: e.yaPedido, armar_desactivado: e.armarNo,
         dni_invalido: e.dni, cuil_invalido: e.cuil, fecha_nacimiento_invalida: e.nacimiento,
         interes_invalido: e.marcar, transicion_invalida: e.marcar, motivo_sin_no_interesa: e.motivoSinNoInteresa,
+        pedidos_cambiaron: e.pedidosCambiaron,
         postulacion_enviada: e.enviada, no_postulable: e.noPostulable,
         intentos_agotados: e.agotados(c.max_reintentos_postulacion || 3),
         no_se_puede_borrar_admin: e.borrarUsuario, usuario_no_existe: e.borrarUsuario,

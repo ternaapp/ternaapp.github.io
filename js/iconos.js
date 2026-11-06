@@ -63,6 +63,9 @@
     'i-nivel-bajo': P('M3 6h5v5h5v5h5v3'),
     'i-nivel-alto': P('M3 18h5v-5h5V8h5V5'),
     'i-sin-conexion': P('M2 8.5a16 16 0 0 1 20 0M5 12a11 11 0 0 1 14 0M8.5 15.5a6 6 0 0 1 7 0M12 19h.01M3 3l18 18'),
+    // Subir y bajar un pedido en Próximos paquetes (diseno.md 0.21 §11.2).
+    'i-arriba': P('M12 19V5M6 11l6-6 6 6'),
+    'i-abajo': P('M12 5v14M6 13l6 6 6-6'),
   };
   const marca = '<path d="M3 6h18M3 12h12M3 18h7"/>';
 

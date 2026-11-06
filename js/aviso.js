@@ -483,6 +483,58 @@ window.Aviso = (function () {
     }
     return h('p', { class: 'motivo-linea' }, h('button', { class: 'btn btn-texto btn-chico', type: 'button', dataset: { control: 'motivo' }, onclick: abrir }, M.decirLargo));
   }
+  /* ---------- Confirmaciones (brand.md 0.8 §6.4 y §8; diseno.md 0.21 §10.8) ----------
+     Francisco, 06/11/2026: "es importante que cuando apretás cualquiera de esos te pida confirmación" (Pedir paquete y No me
+     interesa). Cada diálogo nombra el aviso y dice qué va a pasar; el foco arranca en Cancelar. Después sigue el aviso breve con
+     Deshacer, como siempre. */
+  const ATS_POSTULABLES = ['greenhouse', 'lever', 'ashby', 'workable'];
+  // Terna puede postular sola en este aviso: formulario abierto de uno de los cuatro ATS (la misma regla que seleccion.postulable).
+  function postulable(a) { return a.postulacion === 'formulario' && ATS_POSTULABLES.includes(a.ats_formulario); }
+  const lineaAviso = (a) => h('p', { class: 'dialogo-aviso', text: a.puesto + (a.empresa ? ' · ' + a.empresa : '') });
+
+  // Pedir paquete: en qué lugar de los próximos paquetes queda y cuándo se arma; si después Terna postula, también. true o false.
+  function confirmarPedir(a, { lugar, corridas, cupo, prefs }) {
+    const C = T.avisos.confirmarPedir;
+    const sola = !prefs || prefs.postular_sola !== false;
+    const postula = sola && postulable(a) ? (prefs && prefs.revisar_antes_de_enviar ? C.revisa : C.postula) : null;
+    return Terna.confirmar({ titulo: C.titulo, si: C.si, clase: 'dialogo-confirmar',
+      cuerpo: [lineaAviso(a), h('p', { text: C.lugar(lugar, corridas, cupo) }), h('p', { class: 'suave', text: C.regla(cupo) }), postula ? h('p', { text: postula }) : null] });
+  }
+
+  // No me interesa: qué deja de hacer Terna, qué se cancela y cuándo se borra; con 0025, el motivo opcional en el mismo diálogo
+  // (hasta brand.md 0.7 se pedía después, con "Decir por qué" en el aviso breve). Devuelve { si, motivo }.
+  async function confirmarNoInteresa(a, { config, conMotivo }) {
+    const C = T.avisos.confirmarNoInteresa;
+    const M = T.avisos.motivo;
+    const dias = (config && config.retencion_no_interesa_dias) || 30;
+    const e = a.estado_postulacion;
+    const conDocs = !!a.paquete_id || (!!e && e !== 'pendiente');
+    const cuerpo = [lineaAviso(a), h('p', { text: conDocs ? C.conDocs(dias) : C.texto(dias) })];
+    if (a.estado_paquete === 'pedido') cuerpo.push(h('p', { text: C.pedido }));
+    if (e === 'en_cola' || e === 'para_revisar') cuerpo.push(h('p', { text: C[e] }));
+    if (e === 'enviada' || e === 'postulado' || e === 'entrevista') cuerpo.push(h('p', { text: C.enviada }));
+    let opciones = null;
+    if (conMotivo) {
+      const nombre = Terna.idUnico('motivo');
+      opciones = h('div', { class: 'opciones' }, MOTIVOS.map((m) => h('label', { class: 'casilla' },
+        h('input', { type: 'radio', name: nombre, value: m, checked: a.motivo_no_interesa === m }), h('span', { text: M.opciones[m] }))));
+      cuerpo.push(h('fieldset', { class: 'campo motivo-opcional' }, h('legend', { class: 'campo-etiqueta', text: C.motivo }), opciones));
+    }
+    const si = await Terna.confirmar({ titulo: C.titulo, si: C.si, cuerpo, clase: 'dialogo-confirmar' });
+    const elegido = si && opciones ? opciones.querySelector('input:checked') : null;
+    return { si, motivo: elegido ? elegido.value : null };
+  }
+  // Marca No me interesa y, si se eligió, el motivo (la base pide primero el interés: motivo_sin_no_interesa). Devuelve el error.
+  async function marcarNoInteresa(a, motivo) {
+    const r = await Terna.sb.rpc('marcar_interes', { p_match_id: a.match_id, p_interes: 'no_me_interesa' });
+    if (r.error) return r.error;
+    if (motivo) {
+      const r2 = await Terna.sb.rpc('marcar_motivo_no_interesa', { p_match_id: a.match_id, p_motivo: motivo });
+      if (!r2.error) a.motivo_no_interesa = motivo;
+    }
+    return null;
+  }
+
   function abrirAviso(a, clase) {
     return h('a', { class: clase || 'btn btn-primario btn-ancho', href: a.url, target: '_blank', rel: 'noopener noreferrer',
       'aria-label': T.avisos.abrirEnAccesible(a.fuente) }, T.avisos.abrirEn(a.fuente), icono('i-abrir'));
@@ -510,6 +562,6 @@ window.Aviso = (function () {
     MODALIDADES, ALCANCES, NIVELES, JORNADAS, TODOS_BUSQUEDA, busquedaDe, pasaBusqueda, motivosFuera,
     lugar, atributos, bloqueMatch, controlInteres, fichasPaquete, parsearNotas, textoSalario,
     recorrido, recorridoGrande, traba, lineaEtapa, claseEtapa, puedeVolverAProbar, seccionPostulacion, razones, abrirAviso,
-    ESTILO_POSTULACION,
+    ESTILO_POSTULACION, postulable, confirmarPedir, confirmarNoInteresa, marcarNoInteresa,
   };
 })();

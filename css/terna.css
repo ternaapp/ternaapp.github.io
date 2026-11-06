@@ -168,6 +168,16 @@ html { scroll-padding-top: 72px; }
 .btn-chico { min-height: 36px; font-size: 14px; }
 .btn[aria-disabled="true"], .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .botones { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+/* Botón de una fila o una tarjeta (diseno.md 0.21 §10.1): Pedir, Pegar texto, No me interesa, Cancelar pedido. Con borde, como
+   los chips de opción que tiene al lado, y al pasar el mouse en verde: el fondo de selección de la fila lo tapaba
+   (Francisco, 06/11/2026: "que cambie de color… algo que indique que estás por apretar un botón"). */
+.btn-fila { min-height: 32px; padding: 0 10px; gap: 4px; font-size: 13px; white-space: nowrap; cursor: pointer; }
+.btn-fila .icono { width: 16px; height: 16px; stroke-width: 2; }
+.btn-fila:hover, .btn-fila[aria-pressed="true"] { background: var(--accion-tinte); border-color: var(--accion); color: var(--accion-oscura); }
+.btn-fila:active { border-color: var(--accion-oscura); }
+.btn-fila[aria-disabled="true"]:hover { background: var(--hoja); border-color: var(--borde-control); color: var(--tinta); }
+/* Un botón de solo ícono (Subir, Bajar, Cancelar pedido): 44 px en celular, 36 desde 768. Su nombre va en aria-label y title. */
+.btn-icono { width: 44px; min-height: 44px; padding: 0; justify-content: center; }
 
 /* Carril de etapas (escritorio) */
 .carril { display: none; }
@@ -207,6 +217,9 @@ html { scroll-padding-top: 72px; }
 .chip-opcion input:checked + .chip-opcion-cara .marca { display: inline-block; }
 .chip-opcion input:focus-visible + .chip-opcion-cara { outline: 2px solid var(--accion); outline-offset: 2px; }
 .chip-opcion-no input:checked + .chip-opcion-cara { background: var(--chip-neutro); border-color: var(--borde-control); color: var(--tinta-suave); }
+/* Al pasar el mouse, el borde y el texto en acción (diseno.md 0.21 §10.2): el chip elegido, en acción oscura. */
+.chip-opcion-cara:hover { border-color: var(--accion); color: var(--accion-oscura); }
+.chip-opcion input:checked + .chip-opcion-cara:hover { border-color: var(--accion-oscura); }
 .chip-opcion-form .chip-opcion-cara { min-height: 36px; font-size: 14px; }
 /* La cuenta de una palabra clave recomendada ("14 avisos"; brand.md 0.6 §6.7): en tinta suave, y como el chip cuando se marca. */
 .chip-opcion-cuenta { font-weight: 400; color: var(--tinta-suave); }
@@ -341,6 +354,12 @@ dialog::backdrop { background: var(--velo); }
 .calculo-cuerpo > p { font-size: 14px; line-height: 1.4; }
 .motivo-linea { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 15px; }
 .dialogo-motivo .opciones { margin: 0; }
+/* Confirmar Pedir paquete y No me interesa (diseno.md 0.21 §10.8): el aviso en negrita y lo que va a pasar; el motivo, opcional. */
+.dialogo-confirmar p { font-size: 15px; line-height: 1.45; }
+.dialogo-confirmar .dialogo-aviso { font-weight: 700; }
+.dialogo-confirmar .suave { color: var(--tinta-suave); font-size: 14px; }
+.motivo-opcional { margin-top: 2px; }
+.motivo-opcional .opciones { margin: 0; }
 
 /* Fichas del paquete */
 .fichas-paquete { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
@@ -466,6 +485,17 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .tabla tbody tr[tabindex]:hover td, .tabla tbody tr.elegida td { background: var(--seleccion); }
 .tabla tbody tr[tabindex]:focus-visible { outline: 2px solid var(--accion); outline-offset: -2px; }
 .tabla th button { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: inherit; font: inherit; }
+/* El encabezado de una columna abre su filtro (diseno.md 0.21 §10.18): con un filtro puesto, como un botón cambiado de la barra. */
+.tabla th .th-filtro { gap: 2px; margin: -6px -6px; padding: 6px; border-radius: 6px; white-space: nowrap; cursor: pointer; }
+.tabla th .th-filtro .icono { color: var(--tinta-suave); }
+.tabla th .th-filtro:hover { background: var(--seleccion); color: var(--tinta); }
+.tabla th .th-filtro.cambiado { background: var(--accion-tinte); color: var(--accion-oscura); }
+.tabla th .th-filtro.cambiado .icono { color: var(--accion-oscura); }
+.tabla th .th-filtro.cambiado::before { content: ""; flex: none; width: 6px; height: 6px; margin-right: 3px; border-radius: 50%; background: currentColor; }
+.tabla .btn-texto:hover { background: var(--accion-tinte); }
+/* La columna Paquete: el chip y, debajo, lo que se hace con el paquete (Pedir, Pegar texto) o el lugar de un pedido. */
+.celda-paquete { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.pedido-lugar { font-size: 12px; line-height: 1.3; color: var(--espera-oscuro); }
 .tabla tfoot td { font-weight: 700; border-top: 1px solid var(--borde-control); }
 .tabla-match { font-family: var(--fuente-titulos); font-weight: 700; font-size: 18px; text-align: right; }
 .tabla-match.bajo { color: var(--tinta-suave); }
@@ -519,6 +549,9 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .filtros-estado { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-height: 32px; font-size: 13px; color: var(--tinta-suave); }
 .filtros-estado .btn { margin-left: -8px; }
 .filtro-cuerpo { display: flex; flex-direction: column; gap: 10px; }
+/* El orden, arriba del filtro de Match y de Publicado cuando lo abre su encabezado. */
+.filtro-orden { padding-bottom: 12px; border-bottom: 1px solid var(--linea); }
+.control-fecha { max-width: 200px; }
 .filtro-prefs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
 .filtro-prefs .btn { margin-left: -8px; }
 
@@ -547,6 +580,19 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .interes { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; border: 0; margin: 0; padding: 0; min-width: 0; }
 .interes legend { padding: 0; }
 .acciones-tarjeta { display: flex; flex-wrap: wrap; gap: 4px 8px; justify-content: flex-end; align-items: center; }
+/* Próximos paquetes (diseno.md 0.21 §7.8): lo que la persona pidió, en orden, con cuándo se arma y Subir, Bajar y Cancelar. */
+.proximos { display: flex; flex-direction: column; gap: 6px; }
+.proximos .tarjeta-titulo .cuenta-avisos { margin-left: 4px; font-size: 14px; font-weight: 400; color: var(--tinta-suave); }
+.proximos-lista { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; }
+.proximo { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; padding: 6px 0; border-top: 1px solid var(--linea); }
+.proximo-lugar { font-size: 15px; font-weight: 700; color: var(--tinta-suave); text-align: right; }
+.proximo-datos { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.proximo-abrir { padding: 4px 0; border: 0; background: none; text-align: left; font-size: 15px; font-weight: 500; line-height: 1.3; color: var(--tinta); cursor: pointer; }
+.proximo-abrir:hover { text-decoration: underline; text-underline-offset: 2px; }
+.proximo-detalle { font-size: 13px; color: var(--tinta-suave); line-height: 1.35; }
+.proximo-cuando { color: var(--espera-oscuro); }
+.proximo-acciones { display: flex; gap: 4px; }
+.proximos-pie { font-size: 13px; color: var(--tinta-suave); line-height: 1.4; padding-top: 6px; border-top: 1px solid var(--linea); }
 .tabla-avisos { display: none; }
 
 /* Postulaciones */
@@ -751,9 +797,17 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .asi-funciona p { font-size: 15px; }
   .lista-tarjetas.solo-celular { display: none; }
   .tabla-avisos, .tabla-postulaciones { display: block; }
+  /* Próximos paquetes: una lista corta, que no se estira a lo ancho de la página. */
+  .proximos { max-width: 760px; }
+  /* En escritorio los encabezados abren los filtros de columna: en la barra van solo los que están puestos (diseno.md 0.21 §10.18). */
+  .filtro-boton.de-columna:not(.cambiado) { display: none; }
+  .btn-icono { width: 36px; min-height: 36px; }
   .tabla-avisos .tabla { font-size: 13px; }
   .tabla-avisos .tabla th, .tabla-avisos .tabla td { padding: 8px 6px; }
   .tabla-avisos .chip-opcion-cara { min-height: 32px; font-size: 12px; padding: 0 6px; }
+  /* Los botones de la fila (Pedir, Pegar texto, No me interesa), del mismo tamaño que las opciones de Interés: con 13 px y 10 de
+     relleno "No me interesa" ensanchaba la columna y la tabla no entraba a 1280 px con el cajón abierto (06/11/2026). */
+  .tabla-avisos .btn-fila { font-size: 12px; padding: 0 6px; }
   .tabla-avisos .interes { flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 4px; }
   .tabla-avisos .chip-opcion-cara { white-space: nowrap; }
   .tabla .aviso-puesto { font-size: 14px; font-weight: 700; line-height: 1.35; }
@@ -777,7 +831,9 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 
 /* Tablas por el ancho de su caja (contenedor `tabla`), en este orden: Interés apila sus botones; Modalidad y Ubicación pasan a
    la línea de apoyo; Publicado se oculta (la fecha está en la ficha); por último Empresa también pasa a la línea de apoyo.
-   Medido 31/10/2026: con todo a la vista Avisos necesita 1.046 px con los botones apilados y 1.182 en fila. */
+   Medido 31/10/2026: con todo a la vista Avisos necesita 1.046 px con los botones apilados y 1.182 en fila; 06/11/2026, con
+   las flechas de los encabezados y "Pedir" en Paquete, a 1280 px con el cajón (caja de 810) necesita 822 con 6 px de relleno y
+   los botones de la fila en 13 px, y menos de 790 con 4 px y en 12. */
 @container tabla (max-width: 1180px) {
   .tabla-avisos .interes { flex-direction: column; align-items: stretch; }
 }
@@ -788,6 +844,10 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 }
 @container tabla (max-width: 900px) {
   .tabla-avisos .col-publicado { display: none; }
+  /* Como en Postulaciones: las celdas pierden 2 px de relleno a cada lado (06/11/2026: con las flechas de los encabezados, a
+     1280 px con el cajón la tabla necesitaba 822 px y la caja medía 810). */
+  .tabla-avisos .tabla th, .tabla-avisos .tabla td { padding-left: 4px; padding-right: 4px; }
+  .tabla-avisos .tabla th .th-filtro { margin: -6px -4px; padding: 6px 4px; }
 }
 @container tabla (max-width: 760px) {
   .tabla-avisos .col-empresa { display: none; }
@@ -811,6 +871,10 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 @container tabla (max-width: 650px) {
   .tabla-postulaciones .col-requisitos .chip-texto { white-space: normal; align-items: flex-start; }
   .tabla-postulaciones td.col-fecha { white-space: normal; }
+  /* Desde 0.21 los encabezados llevan la flecha de su filtro: 4 px de relleno a los lados, como Avisos hasta 900 (a 768 px la
+     tabla necesitaba 516 y la caja medía 498; con esto, 492). */
+  .tabla-postulaciones .tabla th, .tabla-postulaciones .tabla td { padding-left: 4px; padding-right: 4px; }
+  .tabla-postulaciones .tabla th .th-filtro { margin: -6px -4px; padding: 6px 4px; }
 }
 
 /* ---------- 8. Escritorio ancho: 1200 px o más ---------- */
