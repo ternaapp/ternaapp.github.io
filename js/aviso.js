@@ -222,38 +222,24 @@ window.Aviso = (function () {
     if (a.salario_monto === null || a.salario_monto === undefined) return T.avisos.ficha.salarioSinDatos;
     return T.avisos.ficha.salario(Terna.numero(Number(a.salario_monto)), a.salario_moneda, a.salario_periodo);
   }
-  /* Palabras del aviso que el CV no tiene (brand.md 0.5 §6.4; cv-ats.md 0.4 §3.13): las que el motor guardó en
-     contenido.render.terminos_faltantes porque el perfil no las respalda. Con `alSumarPalabra`, cada una es un botón que la suma a
-     las palabras clave de Preferencias (la persona declara que la sabe hacer); sin él, solo se listan. */
-  function palabrasFaltantes(a, opciones) {
+  /* Palabras del aviso que el CV no tiene (brand.md 0.6 §6.4; cv-ats.md 0.5 §3.13): las que el motor guardó en
+     contenido.render.terminos_faltantes porque el perfil no las respalda. Se listan, sin botón: Terna no suma sola una palabra que
+     la persona no confirmó, y desde 0.6 tampoco hay "Sumar" (Francisco, 05/11/2026). La que sabe usar, la suma en Preferencias ›
+     Palabras clave personalizadas, donde están además las recomendadas; desde ahí va sola en los próximos CV. */
+  function palabrasFaltantes(a) {
     const lista = (a.terminos_faltantes || []).filter((x) => typeof x === 'string' && x.trim()).slice(0, 8);
     if (!lista.length) return null;
     const F = T.avisos.ficha;
-    const sumar = opciones && opciones.alSumarPalabra;
     const idT = Terna.idUnico('faltan');
-    const chips = h('div', { class: 'chips' }, lista.map((termino) => {
-      if (!sumar) return h('span', { class: 'chip chip-suave', text: termino });
-      const b = h('button', { class: 'btn btn-chico', type: 'button', 'aria-label': F.sumarPalabraLargo(termino) }, icono('i-agregar'), h('span', { text: F.sumarPalabra(termino) }));
-      b.addEventListener('click', async () => {
-        if (b.getAttribute('aria-disabled') === 'true') return;
-        b.setAttribute('aria-disabled', 'true');
-        const ok = await sumar(termino);
-        if (ok) {
-          Terna.vaciar(b);
-          b.append(icono('i-tilde'), h('span', { text: F.sumada }));
-          b.setAttribute('aria-label', F.sumada + ': ' + termino);
-        } else b.removeAttribute('aria-disabled');
-      });
-      return b;
-    }));
     return h('div', { class: 'seccion', role: 'group', 'aria-labelledby': idT },
       h('p', { class: 'campo-etiqueta', id: idT, text: F.faltanTitulo }),
-      h('p', { class: 'campo-ayuda', text: F.faltanAyuda }), chips);
+      h('div', { class: 'chips' }, lista.map((termino) => h('span', { class: 'chip chip-suave', text: termino }))),
+      h('p', { class: 'campo-ayuda' }, F.faltanAyuda + ' ', h('a', { href: 'preferencias.html#paquetes', text: F.faltanLink })));
   }
 
   // Las cuatro fichas: CV y Carta son links firmados (se descargan con el nombre de cv-ats.md §3.12);
   // Notas y Salario despliegan su texto debajo, uno a la vez, y arrancan cerrados (decisión 9 del chat 8).
-  function fichasPaquete(a, opciones) {
+  function fichasPaquete(a) {
     const idioma = a.paquete_idioma === 'en' ? 'en' : 'es';
     const idiomaTxt = T.avisos.ficha.idiomas[idioma];
     const idNotas = Terna.idUnico('notas');
@@ -285,7 +271,7 @@ window.Aviso = (function () {
       h('div', { class: 'fichas-paquete' }, cv, carta, a.notas ? bNotas : null, bSalario),
       pNotas, pSalario,
       h('p', { class: 'suave', text: T.avisos.ficha.idiomaDocs(idiomaTxt) }),
-      palabrasFaltantes(a, opciones));
+      palabrasFaltantes(a));
   }
 
   /* ---------- Recorrido (§10.13) ---------- */

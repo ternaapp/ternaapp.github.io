@@ -205,6 +205,9 @@ html { scroll-padding-top: 72px; }
 .chip-opcion input:focus-visible + .chip-opcion-cara { outline: 2px solid var(--accion); outline-offset: 2px; }
 .chip-opcion-no input:checked + .chip-opcion-cara { background: var(--chip-neutro); border-color: var(--borde-control); color: var(--tinta-suave); }
 .chip-opcion-form .chip-opcion-cara { min-height: 36px; font-size: 14px; }
+/* La cuenta de una palabra clave recomendada ("14 avisos"; brand.md 0.6 §6.7): en tinta suave, y como el chip cuando se marca. */
+.chip-opcion-cuenta { font-weight: 400; color: var(--tinta-suave); }
+.chip-opcion input:checked + .chip-opcion-cara .chip-opcion-cuenta { color: inherit; }
 .chip-filtro { padding-right: 2px; }
 .chip-filtro button {
   display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; margin: -3px 0;

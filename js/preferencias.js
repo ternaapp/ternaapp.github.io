@@ -4,8 +4,8 @@
    (escribe en el acto) y el texto para borrarla, en cinco bloques: Búsqueda, Paquetes y postulación, Respuestas para
    formularios (con opciones y defaults desde 0016), Alertas por mail y Tu cuenta.
    Desplegables en celular y carril desde 768 px, con Terna.porBloques (comun.js), igual que Mi perfil.
-   "Guardar preferencias" escribe todo; las palabras clave, solo si cambiaron en la página (desde un aviso se suman con
-   sumar_palabra_clave, y una pestaña abierta antes no las pisa). Desde 0027 (datos.md 0.22; brand.md 0.5.4 §6.7; diseno.md 0.18
+   "Guardar preferencias" escribe todo; las palabras clave (0026; datos.md 0.23; brand.md 0.6 §6.7), solo si cambiaron en la
+   página, así una pestaña abierta antes no las pisa. Desde 0027 (datos.md 0.22; brand.md 0.5.4 §6.7; diseno.md 0.18
    §9.3), "Priorizar mis puestos" va debajo de "Puestos que buscás" y solo con algún puesto escrito; sin la columna no se muestra
    y vale Sí, como en el motor. La regla de qué aviso es de tus puestos está en js/puestos.js. */
 'use strict';
@@ -45,6 +45,7 @@ Terna.pagina('preferencias', async (ctx) => {
   const data = lectura.data;
   if (lectura.error || !data) { Terna.errorDeCarga(raiz, lectura.error); return; }
   const conClaves = Object.prototype.hasOwnProperty.call(data, 'palabras_clave');
+  const conAviso = Object.prototype.hasOwnProperty.call(data, 'palabras_clave_aviso');
   // 0027: "Priorizar mis puestos". Sin la columna, el interruptor no aparece y la guía cuenta como con Sí (el default del motor).
   const conPriorizar = Object.prototype.hasOwnProperty.call(data, 'priorizar_puestos');
   const v = Object.assign({}, data, {
@@ -54,9 +55,10 @@ Terna.pagina('preferencias', async (ctx) => {
     puestos_objetivo: (data.puestos_objetivo || []).slice(),
     palabras_clave: conClaves ? (data.palabras_clave || []).slice() : [],
     usar_palabras_clave: conClaves ? !!data.usar_palabras_clave : false,
+    palabras_clave_aviso: conAviso ? data.palabras_clave_aviso !== false : true,
     priorizar_puestos: conPriorizar ? data.priorizar_puestos !== false : true,
   });
-  const huellaClaves = () => JSON.stringify([v.palabras_clave, !!v.usar_palabras_clave]);
+  const huellaClaves = () => JSON.stringify([v.palabras_clave, !!v.usar_palabras_clave, !!v.palabras_clave_aviso]);
   let clavesGuardadas = huellaClaves();
   const umbralMin = config.umbral_min || 50;
   const umbralMax = config.umbral_max || 95;
@@ -386,8 +388,17 @@ Terna.pagina('preferencias', async (ctx) => {
   const sPaq = grupoRadios(P.paquetesDia, 'paquetes', opcionesPaquetes.map((x) => [x, x === defectoPaquetes ? P.recomendado(x) : String(x)]), v.paquetes_por_dia, (x) => { v.paquetes_por_dia = Number(x); limpiar('err-paq'); guia.actualizar(); });
   sPaq.append(h('p', { class: 'campo-ayuda', text: P.paquetesAyuda }), error('err-paq'));
   const sIdi = grupoRadios(P.idiomaDocs, 'idioma', [['aviso', P.idiomaAviso], ['espanol', P.idiomaEspanol]], v.idioma_documentos, (x) => { v.idioma_documentos = x; });
-  /* Palabras clave a la vista (brand.md 0.5 §6.7; datos.md 0.21, 0026): el botón, en No por defecto, y la lista, una casilla por
-     palabra como "Puestos que buscás": numeradas, hasta 15, con una casilla vacía al final para la siguiente. */
+  /* Palabras clave, a la vista (brand.md 0.6 §6.7; datos.md 0.23, 0026; cv-ats.md 0.5 §3.7). Dos interruptores:
+     - "Palabras clave del aviso", en Sí por defecto: en cada CV, Terna pone en Habilidades las del aviso que el perfil respalda.
+     - "Palabras clave personalizadas (recomendado)", en No por defecto. En No, una línea que invita a ponerlo en Sí; en Sí, las
+       recomendadas (las que el motor calcula cada mañana, preferencias.palabras_clave_sugeridas: la persona marca las que sabe
+       usar y pasan a su lista) y la lista, una casilla por palabra como "Puestos que buscás", numeradas y hasta 15, con una
+       casilla vacía al final. Marcar una recomendada la suma a la lista y quitarla de la lista la desmarca.
+     Sin botón "Sumar" en la ficha del paquete (Francisco, 05/11/2026): lo que la persona sabe se marca acá una vez y va solo. */
+  const clave = (x) => String(x || '').trim().replace(/\s+/g, ' ').toLowerCase();
+  const sugeridas = conClaves && data.palabras_clave_sugeridas && typeof data.palabras_clave_sugeridas === 'object' ? data.palabras_clave_sugeridas : {};
+  const recomendadas = (Array.isArray(sugeridas.palabras) ? sugeridas.palabras : [])
+    .filter((x) => x && typeof x.texto === 'string' && x.texto.trim()).slice(0, MAX_CLAVES);
   const listaCla = h('ol', { class: 'puestos claves' });
   const cuentaCla = h('span', { class: 'puestos-cuenta num' });
   const filasCla = () => Array.from(listaCla.children);
@@ -452,15 +463,62 @@ Terna.pagina('preferencias', async (ctx) => {
     });
     v.palabras_clave = leerClaves();
     cuentaCla.textContent = P.puestosCuenta(v.palabras_clave.length, MAX_CLAVES);
+    marcarRecomendadas();
   }
+  // Las recomendadas: un chip de opción por palabra, con cuántos avisos la piden; marcado si ya está en la lista.
+  const casillasRec = [];
+  function marcarRecomendadas() {
+    const enLista = new Set(v.palabras_clave.map(clave));
+    casillasRec.forEach((c) => { c.checked = enLista.has(clave(c.value)); });
+  }
+  function agregarClave(texto) {
+    const filas = filasCla();
+    const ultima = filas[filas.length - 1];
+    const fila = filaClave(texto);
+    if (ultima && !inputDe(ultima).value.trim()) listaCla.insertBefore(fila, ultima); else listaCla.append(fila);
+    ordenarClaves();
+  }
+  function quitarClave(texto) {
+    filasCla().filter((li) => clave(inputDe(li).value) === clave(texto)).forEach((li) => li.remove());
+    ordenarClaves();
+  }
+  const chipsRec = h('div', { class: 'chips' }, recomendadas.map((r) => {
+    const input = h('input', { type: 'checkbox', value: r.texto.trim() });
+    casillasRec.push(input);
+    input.addEventListener('change', () => {
+      limpiar('err-claves');
+      if (!input.checked) { quitarClave(input.value); return; }
+      if (v.palabras_clave.length >= MAX_CLAVES) { input.checked = false; marcar('err-claves', T.errores.palabrasClaveDemasiadas(MAX_CLAVES)); return; }
+      agregarClave(input.value);
+    });
+    return h('label', { class: 'chip-opcion chip-opcion-form' }, input, h('span', { class: 'chip-opcion-cara' },
+      h('span', { class: 'marca' }, icono('i-tilde')), r.texto.trim(), h('span', { class: 'chip-opcion-cuenta num', text: P.recomendadaAvisos(Number(r.avisos) || 0) })));
+  }));
   v.palabras_clave.slice(0, MAX_CLAVES).forEach((x) => listaCla.append(filaClave(x)));
   ordenarClaves();
+  const idRec = id('rec');
+  const fechaRec = sugeridas.calculadas_en ? Terna.fechaCorta(String(sugeridas.calculadas_en)) : '';
+  const subRec = h('div', { class: 'seccion', role: 'group', 'aria-labelledby': idRec },
+    h('span', { id: idRec, class: 'campo-etiqueta', text: P.recomendadasTitulo }),
+    recomendadas.length
+      ? [h('p', { class: 'campo-ayuda', text: P.recomendadasAyuda }), chipsRec,
+        fechaRec ? h('p', { class: 'campo-ayuda', text: P.recomendadasFecha(fechaRec, Number(sugeridas.avisos) || 0) }) : null]
+      : h('p', { class: 'campo-ayuda', text: sugeridas.calculadas_en ? P.recomendadasNinguna : P.recomendadasVacio }));
   const idCla = id('claves');
   const subCla = h('div', { class: 'seccion', role: 'group', 'aria-labelledby': idCla },
     h('div', { class: 'interruptor-fila' }, h('span', { id: idCla, class: 'campo-etiqueta', text: P.palabrasClaveLista }), cuentaCla),
     listaCla, h('p', { class: 'campo-ayuda', id: 'ayuda-claves', text: P.palabrasClaveListaAyuda }), error('err-claves'));
-  const sCla = conClaves ? conInterruptor(P.palabrasClave, P.palabrasClaveAyuda, v.usar_palabras_clave, (x) => { v.usar_palabras_clave = x; }) : null;
-  if (sCla) sCla.append(subCla);
+  const apagadoCla = h('p', { class: 'campo-ayuda', text: P.palabrasClaveApagado(recomendadas.length) });
+  // En No, la lista y las recomendadas no se muestran (no se borran: vuelven al ponerlo en Sí).
+  function verPersonalizadas() {
+    apagadoCla.hidden = !!v.usar_palabras_clave;
+    subRec.hidden = !v.usar_palabras_clave;
+    subCla.hidden = !v.usar_palabras_clave;
+  }
+  const sAvisoCla = conAviso ? conInterruptor(P.clavesAviso, P.clavesAvisoAyuda, v.palabras_clave_aviso, (x) => { v.palabras_clave_aviso = x; }) : null;
+  const sCla = conClaves ? conInterruptor(P.recomendado(P.palabrasClave), P.palabrasClaveAyuda, v.usar_palabras_clave,
+    (x) => { v.usar_palabras_clave = x; verPersonalizadas(); limpiar('err-claves'); }) : null;
+  if (sCla) { sCla.append(apagadoCla, subRec, subCla); verPersonalizadas(); }
   const sPos = conInterruptor(P.postularSola, P.postularSolaAyuda, v.postular_sola, (x) => { v.postular_sola = x; atenuar(); });
   const sRev = conInterruptor(P.revisar, P.revisarAyuda, v.revisar_antes_de_enviar, (x) => { v.revisar_antes_de_enviar = x; });
   // Atenuar (diseno.md §9.3): el ítem sigue visible y legible; sus controles quedan inactivos hasta que vuelva a aplicar.
@@ -651,7 +709,11 @@ Terna.pagina('preferencias', async (ctx) => {
       puestos_objetivo: v.puestos_objetivo, niveles: v.niveles, jornadas: v.jornadas,
     };
     const clavesCambiaron = conClaves && huellaClaves() !== clavesGuardadas;
-    if (clavesCambiaron) { fila.palabras_clave = v.palabras_clave; fila.usar_palabras_clave = !!v.usar_palabras_clave; }
+    if (clavesCambiaron) {
+      fila.palabras_clave = v.palabras_clave;
+      fila.usar_palabras_clave = !!v.usar_palabras_clave;
+      if (conAviso) fila.palabras_clave_aviso = !!v.palabras_clave_aviso;
+    }
     if (conPriorizar) fila.priorizar_puestos = !!v.priorizar_puestos;
     const { error: e } = await sb.from('preferencias').update(fila).eq('usuario_id', uid);
     bGuardar.removeAttribute('aria-disabled');
@@ -671,7 +733,7 @@ Terna.pagina('preferencias', async (ctx) => {
   /* ---------- Página ---------- */
   Terna.vaciar(raiz);
   bloques.bloque('busqueda', P.grupos.busqueda, [sPue, sNiv, sJor, sMod, sAlc, sUmbral, sSal]);
-  bloques.bloque('paquetes', P.grupos.paquetes, [sInt, sArm, sPaq, sIdi, sCla, sPos, sRev].filter(Boolean));
+  bloques.bloque('paquetes', P.grupos.paquetes, [sInt, sArm, sPaq, sIdi, sAvisoCla, sCla, sPos, sRev].filter(Boolean));
   bloques.bloque('respuestas', P.respuestas, cResp);
   bloques.bloque('alertas', P.alertas, cAlertas);
   bloques.bloque('cuenta', P.grupos.cuenta, [sPausa, sBorrar]);

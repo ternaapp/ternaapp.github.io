@@ -260,15 +260,10 @@ window.T = (function () {
         verPorQue: 'Ver por qué',
         idiomaDocs: (idioma) => 'Idioma de los documentos: ' + idioma + '.',
         idiomas: { es: 'español', en: 'inglés' },
-        // Palabras del aviso que el CV no pudo nombrar (brand.md 0.5 §6.4; cv-ats.md 0.4 §3.13).
+        // Palabras del aviso que el CV no pudo nombrar (brand.md 0.6 §6.4; cv-ats.md 0.5 §3.13). Sin botón "Sumar" desde 0.6.
         faltanTitulo: 'Palabras del aviso que tu CV no tiene',
-        faltanAyuda: 'Tu perfil no las menciona, así que Terna no las puso. Si alguna la sabés hacer, sumala a tus palabras clave y va en tus próximos CV.',
-        sumarPalabra: (x) => 'Sumar ' + x,
-        sumarPalabraLargo: (x) => 'Sumar ' + x + ' a mis palabras clave',
-        sumada: 'Sumada',
-        sumadaAviso: 'Sumada a tus palabras clave. Va en tus próximos CV cuando el aviso la pida.',
-        sumadaAvisoPrendida: 'Sumada a tus palabras clave. "Sumar mis palabras clave" quedó en Sí.',
-        palabrasLlenas: (x) => 'Ya tenés ' + x + ' palabras clave. Quitá alguna en Preferencias.',
+        faltanAyuda: 'Tu perfil no las menciona, así que Terna no las puso. Si sabés usar alguna, sumala a tus palabras clave personalizadas: desde ahí va sola en tus próximos CV.',
+        faltanLink: 'Ir a mis palabras clave',
         sinDocs: 'Todavía no hay documentos para este aviso.',
         loArma: 'Terna lo arma en la próxima corrida.',
         noSePudo: 'No se pudo armar el paquete. Terna lo reintenta mañana.',
@@ -503,11 +498,23 @@ window.T = (function () {
       salario: 'Salario', sugerir: 'Que lo sugiera Terna', rango: 'Entre un mínimo y un máximo', minimo: 'Mínimo', maximo: 'Máximo', moneda: 'Moneda',
       salarioAyuda: 'Terna sugiere un salario por aviso y explica por qué. Nunca sugiere menos que tu mínimo; si un aviso paga menos, te lo marca. Tu máximo no recorta: si un aviso paga más, la sugerencia es la del aviso. Si un formulario lo pregunta, responde con ese salario o con tu rango.',
       idiomaDocs: 'Idioma de los documentos', idiomaAviso: 'El del aviso; si no está claro, inglés', idiomaEspanol: 'Siempre español',
-      // Palabras clave a la vista (brand.md 0.5 §6.7; datos.md 0.21, 0026): el botón arranca en No.
-      palabrasClave: 'Sumar mis palabras clave',
-      palabrasClaveAyuda: 'Herramientas, métodos o áreas que querés que aparezcan en tu CV cuando el aviso las pide. Van escritas a la vista, en Habilidades; Terna nunca esconde texto en un CV. Sumá solo lo que sabés hacer: te lo pueden preguntar en la entrevista.',
+      // Palabras clave a la vista (brand.md 0.6 §6.7; datos.md 0.23, 0026): las del aviso arrancan en Sí; las personalizadas, en No
+      // y recomendadas, con las 15 que calcula el motor cada mañana.
+      clavesAviso: 'Palabras clave del aviso',
+      clavesAvisoAyuda: 'En Sí, en cada CV Terna pone en Habilidades las palabras del aviso que tu perfil respalda, escritas como las escribe el aviso: "Demand planning" si tu perfil dice "planificación de la demanda". Nunca una que tu perfil no tenga. En No, Habilidades va con tus palabras.',
+      palabrasClave: 'Palabras clave personalizadas',
+      palabrasClaveAyuda: 'Herramientas o métodos que sabés usar y tu perfil no dice. En Sí, cuentan como parte de tu perfil y van en Habilidades de los CV cuyo aviso las pide, a la vista: Terna nunca esconde texto en un CV. Sumá solo lo que sabés hacer: te lo pueden preguntar en la entrevista.',
+      palabrasClaveApagado: (n) => (n > 1 ? 'Ponelo en Sí y elegí entre las ' + n + ' palabras que más piden tus avisos y tu perfil no dice.'
+        : n === 1 ? 'Ponelo en Sí y mirá la palabra que más piden tus avisos y tu perfil no dice.'
+          : 'Ponelo en Sí para sumar las tuyas. Terna además te recomienda las que más piden tus avisos y tu perfil no dice.'),
+      recomendadasTitulo: 'Recomendadas para vos',
+      recomendadasAyuda: 'Las que más piden tus avisos de los últimos 30 días y tu perfil no dice. Pesan más los avisos de match alto, los de tus puestos y los que las ponen como requisito. Marcá solo las que sabés usar: pasan a tus palabras clave.',
+      recomendadaAvisos: (n) => (n === 1 ? '1 aviso' : n + ' avisos'),
+      recomendadasFecha: (fecha, n) => 'Calculadas el ' + fecha + ' con ' + (n === 1 ? '1 aviso' : n + ' avisos') + '. Terna las vuelve a calcular cada mañana.',
+      recomendadasVacio: 'Todavía no hay recomendadas. Terna las calcula cada mañana con tus avisos de los últimos 30 días.',
+      recomendadasNinguna: 'Hoy tus avisos no piden nada que tu perfil no diga. Terna las vuelve a calcular cada mañana.',
       palabrasClaveLista: 'Tus palabras clave',
-      palabrasClaveListaAyuda: 'Una por casilla, hasta 15, de hasta 40 letras. Terna las usa solo con el botón en Sí.',
+      palabrasClaveListaAyuda: 'Una por casilla, hasta 15, de hasta 40 letras. Las que marcás arriba también aparecen acá.',
       palabraClave: (n) => 'Palabra clave ' + n,
       palabraClavePrimera: 'Por ejemplo, Salesforce',
       palabraClaveOtra: 'Agregar otra palabra',
