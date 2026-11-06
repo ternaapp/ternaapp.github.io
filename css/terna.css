@@ -495,6 +495,8 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .tabla .btn-texto:hover { background: var(--accion-tinte); }
 /* La columna Paquete: el chip y, debajo, lo que se hace con el paquete (Pedir, Pegar texto) o el lugar de un pedido. */
 .celda-paquete { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+/* Sin filas: el aviso de vacío en una sola celda, debajo de los encabezados (diseno.md 0.22 §7.6). */
+.tabla td.tabla-vacia { padding: 12px; }
 .pedido-lugar { font-size: 12px; line-height: 1.3; color: var(--espera-oscuro); }
 .tabla tfoot td { font-weight: 700; border-top: 1px solid var(--borde-control); }
 .tabla-match { font-family: var(--fuente-titulos); font-weight: 700; font-size: 18px; text-align: right; }
@@ -546,6 +548,9 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .filtro-boton.cambiado { background: var(--accion-tinte); border-color: var(--accion); color: var(--accion-oscura); }
 .filtro-boton.cambiado .filtro-nombre, .filtro-boton.cambiado .icono { color: var(--accion-oscura); }
 .filtro-boton.cambiado::before { content: ""; flex: none; width: 6px; height: 6px; margin-right: 2px; border-radius: 50%; background: currentColor; }
+/* Cada filtro en un solo lugar (diseno.md 0.22 §10.18): el de una columna que la tabla muestra está en su encabezado, no en la
+   barra. Lo decide filtros.js (Filtros.ubicar) mirando qué encabezados se ven: en el celular no hay tabla y van todos en la barra. */
+.filtro-boton.en-tabla { display: none; }
 .filtros-estado { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-height: 32px; font-size: 13px; color: var(--tinta-suave); }
 .filtros-estado .btn { margin-left: -8px; }
 .filtro-cuerpo { display: flex; flex-direction: column; gap: 10px; }
@@ -799,8 +804,6 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .tabla-avisos, .tabla-postulaciones { display: block; }
   /* Próximos paquetes: una lista corta, que no se estira a lo ancho de la página. */
   .proximos { max-width: 760px; }
-  /* En escritorio los encabezados abren los filtros de columna: en la barra van solo los que están puestos (diseno.md 0.21 §10.18). */
-  .filtro-boton.de-columna:not(.cambiado) { display: none; }
   .btn-icono { width: 36px; min-height: 36px; }
   .tabla-avisos .tabla { font-size: 13px; }
   .tabla-avisos .tabla th, .tabla-avisos .tabla td { padding: 8px 6px; }

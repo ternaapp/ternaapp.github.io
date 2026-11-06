@@ -61,7 +61,9 @@ Terna.pagina('avisos', async (ctx) => {
      persona cambia sus preferencias, la lista las sigue en el acto, sin esperar la corrida. Un filtro de búsqueda que la persona
      cambió se recuerda en el navegador mientras sus preferencias sigan iguales (`huella`); si las cambia, vuelve a ellas.
      Los de columna (Puesto, Empresa, Ubicación, Publicado) y Paquete y Postulación, que desde 0.21 eligen varios, se recuerdan
-     igual que Interés. En escritorio los de columna van en la barra solo cuando están puestos: el encabezado los abre. */
+     igual que Interés. Desde 0.22 cada filtro está en un solo lugar: en el encabezado de su columna, si la tabla lo muestra, o en
+     la barra (Alcance, Nivel y Jornada, que no tienen columna; los de una columna que la tabla oculta por ancho; todos en el
+     celular, que no tiene tabla). */
   const INTERESES = ['me_interesa', 'por_decidir', 'no_me_interesa'];
   const PAQUETES = ['armado', 'sin_armar', 'pedido', 'no_se_pudo_armar', 'sin_texto', 'por_puntuar'];
   const POSTULACIONES = ['pendiente', 'en_cola', 'para_revisar', 'enviada', 'a_mano', 'postulado', 'entrevista'];
@@ -209,11 +211,13 @@ Terna.pagina('avisos', async (ctx) => {
   }
   // Los botones se arman una sola vez y se actualizan en el lugar: así el foco vuelve al mismo botón al cerrar su filtro.
   const botones = {};
+  const ubicarFiltros = Filtros.ubicar({ botones, lista });
+  const primerFiltro = () => Filtros.primero({ botones, claves: CLAVES, lista });
   const estadoFiltros = h('div', { class: 'filtros-estado' });
   function armarBarra() {
     const barra = h('div', { class: 'filtros-barra', role: 'group', 'aria-label': F.barra });
     for (const k of CLAVES) {
-      const b = h('button', { class: 'filtro-boton' + (DE_COLUMNA.includes(k) ? ' de-columna' : ''), type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', dataset: { filtro: k } },
+      const b = h('button', { class: 'filtro-boton', type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', dataset: { filtro: k } },
         h('span', { class: 'filtro-nombre', text: nombreFiltro(k) + ':' }), ' ', h('span', { class: 'filtro-valor' }),
         h('span', { class: 'oculto-visual filtro-cambiado' }), icono('i-chevron', 'icono-16'));
       b.addEventListener('click', () => abrirFiltro(k, b, false));
@@ -232,12 +236,12 @@ Terna.pagina('avisos', async (ctx) => {
     const enfocado = estadoFiltros.contains(document.activeElement);
     Terna.vaciar(estadoFiltros);
     if (algoCambiado()) {
-      const v = h('button', { class: 'btn btn-texto btn-chico', type: 'button', onclick: () => { volverAPreferencias(); botones[CLAVES[0]].focus(); } },
+      const v = h('button', { class: 'btn btn-texto btn-chico', type: 'button', onclick: () => { volverAPreferencias(); primerFiltro().focus(); } },
         icono('i-deshacer', 'icono-16'), F.volverPreferencias);
       estadoFiltros.append(v);
     } else {
       estadoFiltros.append(h('span', { text: F.segunPreferencias }), ' ', h('a', { href: 'preferencias.html#busqueda', text: F.cambiarPreferencias }));
-      if (enfocado) botones[CLAVES[0]].focus();
+      if (enfocado) primerFiltro().focus();
     }
   }
 
@@ -247,24 +251,24 @@ Terna.pagina('avisos', async (ctx) => {
     Terna.vaciar(lista);
     const vis = visibles();
     cuenta.textContent = avisos.length ? T.avisos.cuenta(vis.length) : '';
-    if (!avisos.length) {
-      lista.append(h('div', { class: 'vacio' }, h('p', { text: yaCorrio ? T.avisos.vacioSinAvisos : T.avisos.vacioSinCorrida }),
-        h('a', { class: 'btn', href: 'preferencias.html' }, T.avisos.revisarPreferencias)));
-      return;
-    }
     if (!vis.length) {
-      if (algoCambiado()) {
-        lista.append(h('div', { class: 'vacio' }, h('p', { text: T.avisos.vacioFiltros }),
-          h('button', { class: 'btn', type: 'button', onclick: () => { volverAPreferencias(); botones[CLAVES[0]].focus(); } }, F.volverPreferencias)));
-      } else {
-        lista.append(h('div', { class: 'vacio' }, h('p', { text: T.avisos.vacioPreferencias }),
-          h('a', { class: 'btn', href: 'preferencias.html#busqueda' }, T.avisos.revisarPreferencias)));
-      }
-      // Con la tabla vacía, los encabezados no están: si un filtro de columna dejó la lista vacía, se ve igual en la barra.
+      const vacio = !avisos.length
+        ? h('div', { class: 'vacio' }, h('p', { text: yaCorrio ? T.avisos.vacioSinAvisos : T.avisos.vacioSinCorrida }),
+          h('a', { class: 'btn', href: 'preferencias.html' }, T.avisos.revisarPreferencias))
+        : algoCambiado()
+          ? h('div', { class: 'vacio' }, h('p', { text: T.avisos.vacioFiltros }),
+            h('button', { class: 'btn', type: 'button', onclick: () => { volverAPreferencias(); primerFiltro().focus(); } }, F.volverPreferencias))
+          : h('div', { class: 'vacio' }, h('p', { text: T.avisos.vacioPreferencias }),
+            h('a', { class: 'btn', href: 'preferencias.html#busqueda' }, T.avisos.revisarPreferencias));
+      // En escritorio la lista es siempre la tabla, también vacía, con sus encabezados, que son los filtros de sus columnas
+      // (diseno.md 0.22 §1.34): si se fuera, esos filtros saltarían a la barra justo cuando hay que cambiarlos.
+      lista.append(Terna.anchoEscritorio.matches ? tabla([], vacio) : vacio);
+      ubicarFiltros();
       return;
     }
     if (Terna.anchoEscritorio.matches) lista.append(tabla(vis));
     else lista.append(h('ul', { class: 'lista-tarjetas', role: 'list' }, vis.map((a) => h('li', null, tarjeta(a)))));
+    ubicarFiltros();
     marcarElegida();
   }
 
@@ -335,16 +339,17 @@ Terna.pagina('avisos', async (ctx) => {
 
   // Los encabezados abren el filtro de su columna (diseno.md 0.21 §7.6 y §10.18); Match y Publicado además ordenan, desde su panel.
   let filtroAbierto = null;
-  function tabla(vis) {
+  function tabla(vis, vacio) {
     const C = T.avisos.columnas;
     const th = (texto, clave, clase, sort) => Filtros.encabezado({ texto, clave, clase, activo: cambiado(clave), abierto: filtroAbierto === clave, sort,
-      alAbrir: (b) => abrirFiltro(clave, b, true) });
+      titulo: F.boton(nombreFiltro(clave), resumen(clave)), alAbrir: (b) => abrirFiltro(clave, b, true) });
     const thead = h('thead', null, h('tr', null,
       th(C.puesto, 'puesto', 'col-puesto'), th(C.empresa, 'empresa', 'col-empresa'), th(C.modalidad, 'modalidad', 'col-modalidad'),
       th(C.ubicacion, 'ubicacion', 'col-ubicacion'), th(C.match, 'match', 'der', orden === 'match' ? 'descending' : 'none'), th(C.paquete, 'paquete', 'col-paquete'),
       th(C.postulacion, 'postulacion', 'col-postulacion'), th(C.interes, 'interes', 'col-interes'), th(C.publicado, 'publicado', 'col-publicado', orden === 'nuevos' ? 'descending' : 'none'),
       h('th', { scope: 'col', text: C.aviso })));
-    const tbody = h('tbody', null, vis.map(fila));
+    // Sin filas (los filtros no dejan ver ninguna), una sola celda con el aviso de vacío, debajo de los encabezados.
+    const tbody = vacio ? h('tbody', null, h('tr', null, h('td', { class: 'tabla-vacia', colspan: '10' }, vacio))) : h('tbody', null, vis.map(fila));
     return h('div', { class: 'tabla-caja tabla-avisos' }, h('table', { class: 'tabla' }, thead, tbody));
   }
   // Lo que dicen las columnas que la tabla esconde cuando no le alcanza el ancho (diseno.md 0.8 §7.6): empresa, lugar y
@@ -755,16 +760,16 @@ Terna.pagina('avisos', async (ctx) => {
     cuerpo.append(prefsLinea);
     return cuerpo;
   }
-  // Al cerrar, el foco vuelve al botón que abrió el filtro; si era un encabezado, al de la tabla de ahora (se rehízo); si era
-  // un filtro de columna de la barra que se borró (en escritorio sale de la barra), a su encabezado o al primer filtro.
+  // Al cerrar, el foco vuelve al botón que abrió el filtro; si era un encabezado, al de la tabla de ahora (se rehízo); si su lugar
+  // ya no se ve (la tabla ocultó o mostró la columna, diseno.md 0.22 §1.34), al otro lugar del filtro o al primer filtro.
   const visible = (el) => !!el && el.isConnected && el.getClientRects().length > 0;
   function abrirFiltro(k, boton, desdeEncabezado) {
     filtroAbierto = k;
     Filtros.abrir({ clave: k, titulo: nombreFiltro(k), cuerpo: cuerpoFiltro(k, desdeEncabezado), boton,
       destino: () => {
         const th = lista.querySelector('th [data-filtro="' + k + '"]');
-        if (desdeEncabezado) return visible(th) ? th : (visible(botones[k]) ? botones[k] : botones[CLAVES[0]]);
-        return visible(botones[k]) ? botones[k] : (visible(th) ? th : botones[CLAVES[0]]);
+        if (desdeEncabezado) return visible(th) ? th : (visible(botones[k]) ? botones[k] : primerFiltro());
+        return visible(botones[k]) ? botones[k] : (visible(th) ? th : primerFiltro());
       },
       alCerrar: () => { filtroAbierto = null; } });
   }

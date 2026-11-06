@@ -165,16 +165,38 @@ window.Filtros = (function () {
 
   /* ---------- El encabezado de una columna ---------- */
   // Un botón con el nombre y la flecha; con un filtro puesto, como un botón cambiado de la barra (fondo, punto y ", filtrado").
-  function encabezado({ texto, clave, clase, activo, abierto, sort, alAbrir }) {
-    const b = h('button', { type: 'button', class: 'th-filtro' + (activo ? ' cambiado' : ''), 'aria-haspopup': 'dialog', 'aria-expanded': abierto ? 'true' : 'false', dataset: { filtro: clave } },
+  // `titulo` es lo que diría su botón de la barra ("Modalidad: Remoto"): desde diseno.md 0.22 el filtro está en un solo lugar,
+  // y el encabezado lo muestra al pasar el mouse.
+  function encabezado({ texto, clave, clase, activo, abierto, sort, titulo, alAbrir }) {
+    const b = h('button', { type: 'button', class: 'th-filtro' + (activo ? ' cambiado' : ''), 'aria-haspopup': 'dialog', 'aria-expanded': abierto ? 'true' : 'false', title: titulo || null, dataset: { filtro: clave } },
       h('span', { text: texto }), activo ? oculto(F().filtradoAccesible) : null, icono('i-chevron', 'icono-14'));
     b.addEventListener('click', () => alAbrir(b));
     return h('th', { scope: 'col', class: clase || null, 'aria-sort': sort || null }, b);
   }
 
+  /* ---------- Cada filtro en un solo lugar (diseno.md 0.22 §10.18) ----------
+     Francisco, 06/11/2026: "quiero que solo estén los filtros en la tabla. si no existe filtro en la tabla, dejalo arriba… no
+     quiero duplicados". Si la tabla muestra el encabezado de su columna, el filtro está ahí y su botón de la barra se oculta
+     (`.en-tabla`); si no (no tiene columna, la tabla la oculta por ancho, por ejemplo con el cajón abierto, o no hay tabla, como en
+     el celular), va en la barra. `ubicar` devuelve la función que lo decide: la página la llama cada vez que dibuja la lista, y un
+     ResizeObserver de la lista, cada vez que la tabla cambia de ancho. */
+  const seVe = (el) => !!el && el.isConnected && el.getClientRects().length > 0;
+  function ubicar({ botones, lista }) {
+    const actualizar = () => {
+      for (const [k, b] of Object.entries(botones)) b.classList.toggle('en-tabla', seVe(lista.querySelector('th [data-filtro="' + k + '"]')));
+    };
+    if ('ResizeObserver' in window) new ResizeObserver(actualizar).observe(lista);
+    return actualizar;
+  }
+  // El primer filtro a la vista, para dejar el foco después de "Volver a mis preferencias" o "Limpiar filtros": el primero de la
+  // barra que se ve o, si no hay ninguno, el primer encabezado de la tabla.
+  function primero({ botones, claves, lista }) {
+    return claves.map((k) => botones[k]).find(seVe) || lista.querySelector('th [data-filtro]') || botones[claves[0]];
+  }
+
   // Abre un filtro en la hoja (celular) o en el panel debajo de su botón (escritorio). `destino()` dice adónde vuelve el foco al
-  // cerrar: el botón puede haberse rehecho (la tabla se redibuja con cada cambio) o haberse ocultado (en escritorio, un filtro de
-  // columna sale de la barra cuando se borra).
+  // cerrar: el botón puede haberse rehecho (la tabla se redibuja con cada cambio) o haberse ocultado (el filtro cambia de lugar
+  // cuando la tabla muestra u oculta su columna).
   function abrir({ clave, titulo, cuerpo, boton, destino, alCerrar }) {
     boton.setAttribute('aria-expanded', 'true');
     Terna.abrirHoja({ titulo, cuerpo, panel: boton, origen: destino || boton,
@@ -191,6 +213,6 @@ window.Filtros = (function () {
   return {
     normal, contiene, textoValido, hayTexto, listaValida, fechaValida, pasaFecha,
     resumenLista, resumenTexto, resumenFecha,
-    cuerpoTexto, cuerpoValores, cuerpoFecha, botonOrden, encabezado, abrir,
+    cuerpoTexto, cuerpoValores, cuerpoFecha, botonOrden, encabezado, abrir, ubicar, primero, seVe,
   };
 })();

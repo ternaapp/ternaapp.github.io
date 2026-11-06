@@ -65,7 +65,9 @@ Terna.pagina('postulaciones', async (ctx) => {
      esconde (diseno.md 0.11 §8.5). Lo cambiado se marca como en Avisos y se recuerda en el navegador.
      Desde diseno.md 0.21, también por columna (Francisco, 06/11/2026: hizo clic en "Requisitos" para filtrar): Puesto, Empresa y
      Etapa con texto, Requisitos y Recorrido con lo que hay, Fecha con Desde, Hasta o El día. Recorrido elige etapas, varias a
-     la vez, y se suma a la del carril. En escritorio los de columna van en la barra solo cuando están puestos. */
+     la vez, y se suma a la del carril. Desde 0.22 cada filtro está en un solo lugar: en el encabezado de su columna, si la tabla
+     lo muestra, o en la barra (Modalidad, Alcance, Nivel, Jornada y Paquete, que no tienen columna; los de una columna que la
+     tabla oculta por ancho; todos en el celular). */
   const PAQUETES = ['armado', 'sin_armar', 'pedido', 'no_se_pudo_armar', 'sin_texto', 'por_puntuar'];
   const REQUISITOS = ['cumple', 'a_confirmar', 'falta', 'sobra_nivel', 'falta_nivel', 'sin_dato'];
   const RECORRIDO = ['a_mano', 'para_revisar', 'en_cola', 'enviada', 'postulado', 'entrevista', 'pendiente'];
@@ -181,18 +183,20 @@ Terna.pagina('postulaciones', async (ctx) => {
   }
   // La barra se arma una sola vez y se actualiza en el lugar: así el foco vuelve al mismo botón al cerrar su filtro.
   const botones = {};
+  const ubicarFiltros = Filtros.ubicar({ botones, lista });
+  const primerFiltro = () => Filtros.primero({ botones, claves: CLAVES, lista });
   const estadoFiltros = h('div', { class: 'filtros-estado', hidden: true });
   function armarBarra() {
     const barra = h('div', { class: 'filtros-barra', role: 'group', 'aria-label': F.barra });
     for (const k of CLAVES) {
-      const b = h('button', { class: 'filtro-boton' + (DE_COLUMNA.includes(k) ? ' de-columna' : ''), type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', dataset: { filtro: k } },
+      const b = h('button', { class: 'filtro-boton', type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', dataset: { filtro: k } },
         h('span', { class: 'filtro-nombre', text: nombreFiltro(k) + ':' }), ' ', h('span', { class: 'filtro-valor' }),
         h('span', { class: 'oculto-visual filtro-cambiado' }), icono('i-chevron', 'icono-16'));
       b.addEventListener('click', () => abrirFiltro(k, b, false));
       botones[k] = b;
       barra.append(b);
     }
-    estadoFiltros.append(h('button', { class: 'btn btn-texto btn-chico', type: 'button', onclick: () => { limpiarFiltros(); botones[CLAVES[0]].focus(); } },
+    estadoFiltros.append(h('button', { class: 'btn btn-texto btn-chico', type: 'button', onclick: () => { limpiarFiltros(); primerFiltro().focus(); } },
       icono('i-deshacer', 'icono-16'), F.limpiarFiltros));
     cajaFiltros.append(h('div', { class: 'filtros-caja' }, barra), estadoFiltros);
   }
@@ -205,21 +209,27 @@ Terna.pagina('postulaciones', async (ctx) => {
     }
     const enfocado = estadoFiltros.contains(document.activeElement);
     estadoFiltros.hidden = !algoCambiado();
-    if (enfocado && estadoFiltros.hidden) botones[CLAVES[0]].focus();
+    if (enfocado && estadoFiltros.hidden) primerFiltro().focus();
   }
   function dibujarLista() {
     Terna.vaciar(lista);
     const vis = ordenar(enEtapa(filtradas(), etapa));
     cuenta.textContent = postulaciones.length ? T.postulaciones.cuenta(vis.length) : '';
-    if (!postulaciones.length) { lista.append(h('p', { class: 'vacio', text: T.postulaciones.vacio })); return; }
     if (!vis.length) {
-      if (etapa !== 'todas' && enEtapa(postulaciones, etapa).length === 0) { lista.append(h('p', { class: 'vacio', text: T.postulaciones.vacioEtapa[etapa] })); return; }
-      lista.append(h('div', { class: 'vacio' }, h('p', { text: T.postulaciones.vacioFiltros }),
-        h('button', { class: 'btn', type: 'button', onclick: () => { limpiarFiltros(); botones[CLAVES[0]].focus(); } }, T.avisos.filtros.limpiarFiltros)));
+      const vacio = !postulaciones.length ? h('p', { class: 'vacio', text: T.postulaciones.vacio })
+        : etapa !== 'todas' && enEtapa(postulaciones, etapa).length === 0
+          ? h('p', { class: 'vacio', text: T.postulaciones.vacioEtapa[etapa] })
+          : h('div', { class: 'vacio' }, h('p', { text: T.postulaciones.vacioFiltros }),
+            h('button', { class: 'btn', type: 'button', onclick: () => { limpiarFiltros(); primerFiltro().focus(); } }, T.avisos.filtros.limpiarFiltros));
+      // En escritorio la lista es siempre la tabla, también vacía, con sus encabezados, que son los filtros de sus columnas
+      // (diseno.md 0.22 §1.34 y §8.6).
+      lista.append(Terna.anchoEscritorio.matches ? tabla([], vacio) : vacio);
+      ubicarFiltros();
       return;
     }
     if (Terna.anchoEscritorio.matches) lista.append(tabla(vis));
     else lista.append(h('ul', { class: 'lista-postulaciones', role: 'list' }, vis.map((a) => h('li', null, filaCelular(a)))));
+    ubicarFiltros();
     marcarElegida();
   }
   function etiquetaEtapa(a) {
@@ -255,14 +265,15 @@ Terna.pagina('postulaciones', async (ctx) => {
   }
   // Cada encabezado abre el filtro de su columna (diseno.md 0.21 §8.6 y §10.18), salvo Aviso.
   let filtroAbierto = null;
-  function tabla(vis) {
+  function tabla(vis, vacio) {
     const C = T.postulaciones.columnas;
     const columnas = [[C.match, 'match', 'der'], [C.puesto, 'puesto', 'col-puesto'], [C.empresa, 'empresa', 'col-empresa'], [C.requisitos, 'requisitos', 'col-requisitos'],
       [C.recorrido, 'recorrido', 'col-recorrido'], [C.etapa, 'etapa', 'col-etapa'], [C.fecha, 'fecha', 'col-fecha']];
     return h('div', { class: 'tabla-caja tabla-postulaciones' }, h('table', { class: 'tabla' },
       h('thead', null, h('tr', null, columnas.map(([texto, clave, clase]) => Filtros.encabezado({ texto, clave, clase, activo: cambiado(clave), abierto: filtroAbierto === clave,
-        alAbrir: (b) => abrirFiltro(clave, b, true) })), h('th', { scope: 'col', text: C.aviso }))),
-      h('tbody', null, vis.map(filaTabla))));
+        titulo: F.boton(nombreFiltro(clave), resumen(clave)), alAbrir: (b) => abrirFiltro(clave, b, true) })), h('th', { scope: 'col', text: C.aviso }))),
+      // Sin filas, una sola celda con el aviso de vacío, debajo de los encabezados.
+      vacio ? h('tbody', null, h('tr', null, h('td', { class: 'tabla-vacia', colspan: '8' }, vacio))) : h('tbody', null, vis.map(filaTabla))));
   }
   function filaTabla(a) {
     const llega = Aviso.llega(a, umbral);
@@ -334,16 +345,16 @@ Terna.pagina('postulaciones', async (ctx) => {
     }
     return cuerpo;
   }
-  // Al cerrar, el foco vuelve al botón que abrió el filtro (el encabezado se rehace con cada cambio: se busca el de ahora); si era
-  // un filtro de columna de la barra que se borró (en escritorio sale de la barra), a su encabezado o al primer filtro.
+  // Al cerrar, el foco vuelve al botón que abrió el filtro (el encabezado se rehace con cada cambio: se busca el de ahora); si su
+  // lugar ya no se ve (la tabla ocultó o mostró la columna, diseno.md 0.22 §1.34), al otro lugar del filtro o al primer filtro.
   const visible = (el) => !!el && el.isConnected && el.getClientRects().length > 0;
   function abrirFiltro(k, boton, desdeEncabezado) {
     filtroAbierto = k;
     Filtros.abrir({ clave: k, titulo: nombreFiltro(k), cuerpo: cuerpoFiltro(k), boton,
       destino: () => {
         const th = lista.querySelector('th [data-filtro="' + k + '"]');
-        if (desdeEncabezado) return visible(th) ? th : (visible(botones[k]) ? botones[k] : botones[CLAVES[0]]);
-        return visible(botones[k]) ? botones[k] : (visible(th) ? th : botones[CLAVES[0]]);
+        if (desdeEncabezado) return visible(th) ? th : (visible(botones[k]) ? botones[k] : primerFiltro());
+        return visible(botones[k]) ? botones[k] : (visible(th) ? th : primerFiltro());
       },
       alCerrar: () => { filtroAbierto = null; } });
   }
