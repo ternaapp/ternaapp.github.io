@@ -76,7 +76,7 @@ Terna.pagina('admin', async (ctx) => {
     const idT = 'h-inv-abiertas';
     const estado = h('span', { 'aria-hidden': 'true' });
     const b = h('button', { class: 'interruptor', type: 'button', role: 'switch', 'aria-labelledby': idT }, estado, h('span', { class: 'interruptor-pista', 'aria-hidden': 'true' }));
-    const pintar = () => { const v = !!ctx.config.invitaciones_abiertas; b.setAttribute('aria-checked', String(v)); estado.textContent = v ? T.preferencias.si : T.preferencias.no; };
+    const pintar = () => { const v = !!ctx.config.invitaciones_abiertas; b.setAttribute('aria-checked', String(v)); estado.textContent = v ? T.comun.si : T.comun.no; };
     pintar();
     b.addEventListener('click', async () => {
       const nuevo = !ctx.config.invitaciones_abiertas;

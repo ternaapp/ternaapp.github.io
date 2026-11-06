@@ -531,11 +531,76 @@ window.Terna = (function () {
     return estado.config;
   }
 
+  /* ---------- Piezas de las páginas por bloques (Preferencias y Mi perfil; diseno.md 0.19 §10.17) ----------
+     Un ítem con su título, radios nativos, un grupo de radios, una pregunta (un grupo con etiqueta, no un título), un
+     interruptor y un ítem con interruptor. Cada página pide las suyas con su prefijo de id y el nivel del título del ítem:
+     h3 en un bloque (Preferencias, Mi perfil › Tu cuenta) y h4 dentro de un subtema (Mi perfil › Datos). */
+  function piezas({ prefijo, nivel }) {
+    const etiqueta = nivel || 'h3';
+    let n = 0;
+    const id = (x) => prefijo + '-' + x + '-' + (n += 1);
+    function item(titulo, ...cuerpo) {
+      const idT = id('t');
+      const s = h('div', { class: 'subbloque' }, h(etiqueta, { id: idT, class: 'tarjeta-titulo', text: titulo }), cuerpo);
+      s.dataset.titulo = idT;
+      return s;
+    }
+    // Radios nativos: [valor, texto, ayuda].
+    const radios = (nombre, opciones, valor, alCambiar) => h('div', { class: 'opciones' }, opciones.map(([val, texto, ayuda]) => h('label', { class: 'casilla' },
+      h('input', { type: 'radio', name: nombre, value: String(val), checked: String(valor) === String(val), onchange: () => alCambiar(val) }),
+      h('span', null, texto, ayuda ? h('small', { text: ayuda }) : null))));
+    // Un grupo de radios: role="group" con su título, en vez de fieldset (la leyenda pisaría el borde).
+    function grupoRadios(titulo, nombre, opciones, valor, alCambiar) {
+      const idT = id('g');
+      return h('div', { class: 'subbloque', role: 'group', 'aria-labelledby': idT }, h(etiqueta, { id: idT, class: 'tarjeta-titulo', text: titulo }), radios(nombre, opciones, valor, alCambiar));
+    }
+    // Una pregunta dentro de un ítem: role="group" con una etiqueta (no un título).
+    function pregunta(texto, ...cuerpo) {
+      const idT = id('q');
+      return h('div', { class: 'campo', role: 'group', 'aria-labelledby': idT }, h('span', { id: idT, class: 'campo-etiqueta', text: texto }), cuerpo);
+    }
+    function interruptor(seccionNodo, valor, alCambiar) {
+      const estadoTexto = h('span', { 'aria-hidden': 'true', text: valor ? T.comun.si : T.comun.no });
+      const b = h('button', { class: 'interruptor', type: 'button', role: 'switch', 'aria-checked': String(!!valor), 'aria-labelledby': seccionNodo.dataset.titulo },
+        estadoTexto, h('span', { class: 'interruptor-pista', 'aria-hidden': 'true' }));
+      b.addEventListener('click', () => {
+        const nuevo = b.getAttribute('aria-checked') !== 'true';
+        b.setAttribute('aria-checked', String(nuevo));
+        estadoTexto.textContent = nuevo ? T.comun.si : T.comun.no;
+        alCambiar(nuevo);
+      });
+      return b;
+    }
+    function conInterruptor(titulo, ayuda, valor, alCambiar) {
+      const s = item(titulo);
+      const titular = s.firstChild;
+      const fila = h('div', { class: 'interruptor-fila' });
+      s.replaceChild(fila, titular);
+      fila.append(titular, interruptor(s, valor, alCambiar));
+      if (ayuda) s.append(h('p', { class: 'campo-ayuda', text: ayuda }));
+      return s;
+    }
+    return { id, item, radios, grupoRadios, pregunta, interruptor, conInterruptor };
+  }
+
+  /* Un subtema dentro de un bloque (Mi perfil › Datos y CV; diseno.md 0.19 §10.17): cuando un bloque junta temas distintos,
+     cada uno empieza con una franja que corta la tarjeta de lado a lado, con su título y, si hace falta, una ayuda. Es un div
+     con su h3 y no una <section> con nombre: el bloque ya es una región, y una región por subtema llenaría la lista de regiones
+     del lector de pantalla; adentro se navega por títulos. */
+  function subtema(titulo, intro, ...cuerpo) {
+    return h('div', { class: 'subtema' },
+      h('h3', { class: 'subtema-titulo', id: idUnico('tema'), text: titulo }),
+      intro ? h('p', { class: 'campo-ayuda', text: intro }) : null, cuerpo);
+  }
+
   /* ---------- Página por bloques: Mi perfil y Preferencias (diseno.md 0.6 §10.17) ----------
      Hasta 767 px cada bloque es un desplegable, cerrado salvo los de `abiertos`. Desde 768 px (modo carril), un carril a
      la izquierda elige el bloque y a la derecha se ve ese bloque entero. El bloque abierto o elegido va en la URL.
      El grupo de "Guardar" va al final del formulario, fijo abajo, en celular, y a la derecha de la cabecera fija desde
-     768. Cada bloque se arma una sola vez: el modo solo cambia qué se oculta, así lo escrito nunca se pierde. */
+     768. Cada bloque se arma una sola vez: el modo solo cambia qué se oculta, así lo escrito nunca se pierde.
+     Desde 0.19 un bloque puede traer subtemas (`temas`: [{ hash, titulo, nodo, alias }]): en el carril van debajo de su
+     bloque, más chicos, y llevan a ese subtema; su hash (o un alias, como #formularios de antes) abre el bloque y baja
+     hasta él, al entrar y cuando el hash cambia en la misma página. */
   function porBloques({ raiz, cabecera, nombre, abiertos }) {
     const escritorio = window.matchMedia('(min-width: 768px)');
     const B = {};
@@ -563,9 +628,36 @@ window.Terna = (function () {
       p.alerta = icono('i-alerta', 'icono-16 carril-alerta');
       p.alerta.setAttribute('hidden', ''); // un <svg> no tiene la propiedad hidden: va el atributo
       p.link = h('a', { href: '#' + p.hash, onclick: (e) => { e.preventDefault(); elegir(clave, true); } }, h('span', { text: titulo }), p.alerta, p.n);
+      p.temas = (o.temas || []).filter((t) => t && t.nodo);
+      p.subLinks = p.temas.map((t) => h('a', { class: 'carril-sub', href: '#' + t.hash, onclick: (e) => { e.preventDefault(); irATema(clave, t); } }, h('span', { text: t.titulo })));
       B[clave] = p;
       orden.push(clave);
       return p.seccion;
+    }
+    // Un subtema: su bloque abierto (celular) o elegido (carril), y la página baja hasta él.
+    function irATema(k, t) {
+      if (modoCarril) { if (elegido !== k) elegir(k); } else plegar(k, true);
+      elegido = k;
+      history.replaceState(null, '', '#' + t.hash);
+      t.nodo.scrollIntoView({ block: 'start' });
+    }
+    // El hash puede ser de un bloque o de un subtema (o un alias de uno).
+    function resolver(hash) {
+      if (!hash) return null;
+      const k = orden.find((x) => B[x].hash === hash);
+      if (k) return { k, tema: null };
+      for (const x of orden) {
+        const t = B[x].temas.find((y) => y.hash === hash || (y.alias || []).includes(hash));
+        if (t) return { k: x, tema: t };
+      }
+      return null;
+    }
+    function irAlHash() {
+      const r = resolver(location.hash.slice(1));
+      if (!r) return;
+      if (r.tema) { irATema(r.k, r.tema); return; }
+      if (modoCarril) elegir(r.k, true);
+      else { plegar(r.k, true); B[r.k].seccion.scrollIntoView({ block: 'start' }); }
     }
     function plegar(k, abrir) {
       const p = B[k];
@@ -633,18 +725,20 @@ window.Terna = (function () {
     // Bloque inicial: el de la URL; si no, el primero de `abiertos`; si no, el primero.
     function montar({ arriba, debajo, guardar }) {
       grupoGuardar = guardar || null;
-      carril.append(...orden.map((k) => B[k].link));
+      carril.append(...orden.flatMap((k) => [B[k].link].concat(B[k].subLinks)));
       actualizarCuentas();
       raiz.append(...(arriba || []),
         h('div', { class: 'bloques-cuerpo' }, carril, h('div', { class: 'seccion bloques-lista' }, orden.map((k) => B[k].seccion), debajo || null)));
       if (grupoGuardar) raiz.append(grupoGuardar);
-      const desdeUrl = orden.find((k) => B[k].hash === location.hash.slice(1));
-      elegido = desdeUrl || orden.find((k) => abiertosAlEntrar.has(k)) || orden[0];
+      const desdeUrl = resolver(location.hash.slice(1));
+      elegido = (desdeUrl && desdeUrl.k) || orden.find((k) => abiertosAlEntrar.has(k)) || orden[0];
       aplicarModo();
-      if (desdeUrl && !modoCarril) { plegar(desdeUrl, true); B[desdeUrl].seccion.scrollIntoView({ block: 'start' }); }
+      if (desdeUrl && desdeUrl.tema) irATema(desdeUrl.k, desdeUrl.tema);
+      else if (desdeUrl && !modoCarril) { plegar(desdeUrl.k, true); B[desdeUrl.k].seccion.scrollIntoView({ block: 'start' }); }
       escritorio.addEventListener('change', aplicarModo);
       if (window.ResizeObserver) new ResizeObserver(medirCabecera).observe(cabecera);
       addEventListener('scroll', marcarPegada, { passive: true });
+      addEventListener('hashchange', irAlHash);
     }
     return { bloque, montar, abrirDe, marcarErrores, irAlPrimerError, actualizarCuentas };
   }
@@ -741,6 +835,6 @@ window.Terna = (function () {
     avisoBreve, cerrarBreve, cargando, errorDeCarga, dialogo, confirmar, devolverFoco,
     abrirHoja, cerrarHoja, hojaAbierta, reemplazarCuerpoHoja, anchoLinea, anchoEscritorio,
     copiar, nombreDescarga, urlFirmada, linkFirmado, leerConfig, pagina, actualizarFaltantes, actualizarPerfil, porBloques,
-    alertasMail,
+    piezas, subtema, alertasMail,
   };
 })();

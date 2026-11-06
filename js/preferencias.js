@@ -1,14 +1,20 @@
 /* Terna · js/preferencias.js
-   Preferencias (diseno.md 0.15 §9.3 y §10.17; brand.md 0.5.1 §6.7; datos.md 0.21.2, 0016, 0019 y 0026): las columnas de preferencias (con "Qué buscás", 0015, y las palabras clave, 0026), la guía del umbral (con los avisos propios de mis_avisos), las
-   alertas por mail (la dirección, cada portal con su última alerta y el link a su guía en alertas.html), pausar la cuenta
-   (escribe en el acto) y el texto para borrarla, en cinco bloques: Búsqueda, Paquetes y postulación, Respuestas para
-   formularios (con opciones y defaults desde 0016), Alertas por mail y Tu cuenta.
-   Desplegables en celular y carril desde 768 px, con Terna.porBloques (comun.js), igual que Mi perfil.
+   Preferencias (diseno.md 0.19 §9.3 y §10.17; brand.md 0.7 §6.7; datos.md 0.24, 0019, 0026 y 0028): las columnas de preferencias (con "Qué buscás", 0015, y las palabras clave, 0026), la guía del umbral (con los avisos propios de mis_avisos) y
+   las alertas por mail (la dirección, cada portal con su última alerta y el link a su guía en alertas.html), en tres bloques:
+   Búsqueda, Paquetes y postulación y Alertas por mail. Desde 0.19 las respuestas para formularios y Tu cuenta están en Mi perfil
+   (perfil.js, respuestas.js): sus hash de antes (#respuestas, #cuenta) llevan ahí, y esta página ya no escribe esas columnas.
+   Desde 0028 los paquetes por día son siempre 3: no hay qué elegir y la ayuda de Armar paquetes dice cuántos arma y en qué orden.
+   Desplegables en celular y carril desde 768 px, con Terna.porBloques (comun.js), igual que Mi perfil; los ítems se arman con
+   Terna.piezas, las mismas piezas que usa Mi perfil.
    "Guardar preferencias" escribe todo; las palabras clave (0026; datos.md 0.23; brand.md 0.6 §6.7), solo si cambiaron en la
    página, así una pestaña abierta antes no las pisa. Desde 0027 (datos.md 0.22; brand.md 0.5.4 §6.7; diseno.md 0.18
    §9.3), "Priorizar mis puestos" va debajo de "Puestos que buscás" y solo con algún puesto escrito; sin la columna no se muestra
    y vale Sí, como en el motor. La regla de qué aviso es de tus puestos está en js/puestos.js. */
 'use strict';
+
+// Respuestas para formularios y Tu cuenta están en Mi perfil desde 0.19: los links de antes (preferencias.html#respuestas, el de
+// "Completar respuestas para formularios" que guardó alguien, #cuenta) llevan ahí, antes de armar nada.
+if (/^#(respuestas|cuenta)$/.test(location.hash)) location.replace('perfil.html' + location.hash);
 
 Terna.pagina('preferencias', async (ctx) => {
   const { h, icono } = Terna;
@@ -21,7 +27,6 @@ Terna.pagina('preferencias', async (ctx) => {
   const JORNADAS = ['completa', 'parcial'];
   const MAX_PUESTOS = 8;
   const MAX_LARGO_PUESTO = 60;
-  const MAX_DIAS = 365;
   const MAX_CLAVES = 15;
   const MAX_LARGO_CLAVE = 40;
 
@@ -62,55 +67,13 @@ Terna.pagina('preferencias', async (ctx) => {
   let clavesGuardadas = huellaClaves();
   const umbralMin = config.umbral_min || 50;
   const umbralMax = config.umbral_max || 95;
-  const opcionesPaquetes = config.paquetes_por_dia_opciones || [3, 5];
+  // Los paquetes por día (0028: siempre 3; config.paquetes_por_dia_opciones = {3}). Ya no se eligen: la ayuda de Armar paquetes
+  // y la cuenta de la guía del umbral los dicen.
   const defectoPaquetes = config.paquetes_por_dia_default || 3;
   const bloques = Terna.porBloques({ raiz, cabecera: document.getElementById('cabecera'), nombre: T.comun.pestanas.preferencias });
 
-  /* ---------- Piezas ---------- */
-  let n = 0;
-  const id = (x) => 'pref-' + x + '-' + (n += 1);
-  // Un ítem dentro de un bloque: su título es un h3 (el h2 es el del bloque).
-  function item(titulo, ...cuerpo) {
-    const idT = id('t');
-    const s = h('div', { class: 'subbloque' }, h('h3', { id: idT, class: 'tarjeta-titulo', text: titulo }), cuerpo);
-    s.dataset.titulo = idT;
-    return s;
-  }
-  // Radios nativos: [valor, texto, ayuda].
-  const radios = (nombre, opciones, valor, alCambiar) => h('div', { class: 'opciones' }, opciones.map(([val, texto, ayuda]) => h('label', { class: 'casilla' },
-    h('input', { type: 'radio', name: nombre, value: String(val), checked: String(valor) === String(val), onchange: () => alCambiar(val) }),
-    h('span', null, texto, ayuda ? h('small', { text: ayuda }) : null))));
-  // Un grupo de radios: role="group" con su título, en vez de fieldset (la leyenda pisaría el borde).
-  function grupoRadios(titulo, nombre, opciones, valor, alCambiar) {
-    const idT = id('g');
-    return h('div', { class: 'subbloque', role: 'group', 'aria-labelledby': idT }, h('h3', { id: idT, class: 'tarjeta-titulo', text: titulo }), radios(nombre, opciones, valor, alCambiar));
-  }
-  // Una pregunta dentro de un ítem: role="group" con una etiqueta (no un h3).
-  function pregunta(etiqueta, ...cuerpo) {
-    const idT = id('q');
-    return h('div', { class: 'campo', role: 'group', 'aria-labelledby': idT }, h('span', { id: idT, class: 'campo-etiqueta', text: etiqueta }), cuerpo);
-  }
-  function interruptor(seccionNodo, valor, alCambiar) {
-    const estado = h('span', { 'aria-hidden': 'true', text: valor ? P.si : P.no });
-    const b = h('button', { class: 'interruptor', type: 'button', role: 'switch', 'aria-checked': String(!!valor), 'aria-labelledby': seccionNodo.dataset.titulo },
-      estado, h('span', { class: 'interruptor-pista', 'aria-hidden': 'true' }));
-    b.addEventListener('click', () => {
-      const nuevo = b.getAttribute('aria-checked') !== 'true';
-      b.setAttribute('aria-checked', String(nuevo));
-      estado.textContent = nuevo ? P.si : P.no;
-      alCambiar(nuevo);
-    });
-    return b;
-  }
-  function conInterruptor(titulo, ayuda, valor, alCambiar) {
-    const s = item(titulo);
-    const titular = s.firstChild;
-    const fila = h('div', { class: 'interruptor-fila' });
-    s.replaceChild(fila, titular);
-    fila.append(titular, interruptor(s, valor, alCambiar));
-    if (ayuda) s.append(h('p', { class: 'campo-ayuda', text: ayuda }));
-    return s;
-  }
+  /* ---------- Piezas (comun.js: las mismas de Mi perfil; diseno.md 0.19 §10.17) ---------- */
+  const { id, item, grupoRadios, interruptor, conInterruptor } = Terna.piezas({ prefijo: 'pref', nivel: 'h3' });
   const error = (idE) => h('p', { class: 'campo-error', id: idE, role: 'alert' });
   // Marcar o limpiar un error también abre su bloque (celular) y actualiza las marcas del carril (escritorio).
   function marcar(idE, texto) {
@@ -126,7 +89,7 @@ Terna.pagina('preferencias', async (ctx) => {
   /* La guía del umbral (diseno.md 0.15 §9.3; brand.md 0.5.1 §6.7). Arriba del deslizador, el cuadro de cinco franjas con lo que
      suele haber en cada una según match.v2 y cuántos avisos de la lista caen ahí, y la línea del umbral; debajo, la cuenta de lo
      que llega con el número elegido, que es la descripción del deslizador. Cambia con el deslizador, con los botones de las
-     franjas (ponen su número y llevan el foco al deslizador) y con Armar paquetes, Paquetes por día y Terna postula por vos. */
+     franjas (ponen su número y llevan el foco al deslizador) y con Armar paquetes y Terna postula por vos. */
   function guiaUmbral(fijar) {
     const G = P.guiaUmbral;
     const piso = config.piso_match || 50;
@@ -204,7 +167,7 @@ Terna.pagina('preferencias', async (ctx) => {
       const mios = deTusPuestos();
       const ademas = mios.size ? lista.filter((a) => a.match < u && mios.has(a)).length : 0;
       if (ademas) partes.push(G.puestos(ademas));
-      if (llegan.length || ademas) partes.push(v.armar_paquetes ? G.arma(v.paquetes_por_dia || defectoPaquetes) : T.inicio.resultado.armar_no);
+      if (llegan.length || ademas) partes.push(v.armar_paquetes ? G.arma(defectoPaquetes) : T.inicio.resultado.armar_no);
       partes.push(G.semanas(llegan.filter((a) => a.creado >= hace14).length, u));
       resumen.textContent = partes.join(' ');
     }
@@ -382,11 +345,9 @@ Terna.pagina('preferencias', async (ctx) => {
     h('div', { class: 'campo' }, h('label', { for: idMoneda, text: P.moneda }), moneda));
   sSal.append(camposRango, h('p', { class: 'campo-ayuda', text: P.salarioAyuda }), error('err-sal'));
 
-  /* ---------- Paquetes y postulación: interés, armar, paquetes, idioma, postular, revisar ---------- */
+  /* ---------- Paquetes y postulación: interés, armar (3 por día), idioma, palabras clave, postular, revisar ---------- */
   const sInt = conInterruptor(P.interesDefecto, P.interesDefectoAyuda, v.interes_por_defecto, (x) => { v.interes_por_defecto = x; });
-  const sArm = conInterruptor(P.armar, P.armarAyuda, v.armar_paquetes, (x) => { v.armar_paquetes = x; atenuar(); });
-  const sPaq = grupoRadios(P.paquetesDia, 'paquetes', opcionesPaquetes.map((x) => [x, x === defectoPaquetes ? P.recomendado(x) : String(x)]), v.paquetes_por_dia, (x) => { v.paquetes_por_dia = Number(x); limpiar('err-paq'); guia.actualizar(); });
-  sPaq.append(h('p', { class: 'campo-ayuda', text: P.paquetesAyuda }), error('err-paq'));
+  const sArm = conInterruptor(P.armar, P.armarAyuda(defectoPaquetes), v.armar_paquetes, (x) => { v.armar_paquetes = x; atenuar(); });
   const sIdi = grupoRadios(P.idiomaDocs, 'idioma', [['aviso', P.idiomaAviso], ['espanol', P.idiomaEspanol]], v.idioma_documentos, (x) => { v.idioma_documentos = x; });
   /* Palabras clave, a la vista (brand.md 0.6 §6.7; datos.md 0.23, 0026; cv-ats.md 0.5 §3.7). Dos interruptores:
      - "Palabras clave del aviso", en Sí por defecto: en cada CV, Terna pone en Habilidades las del aviso que el perfil respalda.
@@ -527,92 +488,12 @@ Terna.pagina('preferencias', async (ctx) => {
       sec.classList.toggle('atenuado', off);
       sec.querySelectorAll('input, button[role="switch"]').forEach((x) => { x.disabled = off; });
     };
-    poner(sPaq, !v.armar_paquetes);
     poner(sPos, !v.armar_paquetes);
     poner(sRev, !v.postular_sola || !v.armar_paquetes);
     // La línea y la cuenta de la guía del umbral dicen qué hace Terna para arriba (diseno.md 0.15 §9.3).
     guia.actualizar();
   }
   atenuar();
-
-  /* ---------- Respuestas para formularios (el título es el del bloque; brand.md 0.4.6 §6.7, datos.md §5.6) ----------
-     Las opciones se guardan en los mismos textos que el motor ya lee (pipeline.md §4.12): "Argentina: sí. Italia: sí.
-     Otros países: solo remoto, sin visa." e "inmediata" o "30 días". Lo que no entra en esas opciones va con tus palabras. */
-  const F = P.formato;
-  const PAISES = Object.keys(P.paises);
-  const aut = { argentina: true, otros: 'remoto', paises: [], propias: false, texto: '' };
-  const armarAut = () => [F.pais(P.argentina, aut.argentina)]
-    .concat(PAISES.filter((c) => aut.paises.includes(c)).map((c) => F.pais(P.paises[c], true)), aut.otros === 'visa' ? F.visa : F.remoto).join(' ');
-  // Al entrar: si el texto guardado es exactamente el que armarían unas opciones, se muestran esas opciones;
-  // si es otro (o está vacío, que es "no respondas esa pregunta"), queda con tus palabras, tal cual.
-  (function leerAut(t) {
-    aut.argentina = !t.startsWith(F.pais(P.argentina, false));
-    aut.otros = t.endsWith(F.visa) ? 'visa' : 'remoto';
-    aut.paises = PAISES.filter((c) => t.includes(F.pais(P.paises[c], true)));
-    if (!t || armarAut() !== t) { aut.propias = true; aut.texto = t; }
-  }(String(v.autorizacion_trabajo || '').trim()));
-
-  const vistaAut = h('p', { class: 'campo-ayuda', 'aria-live': 'polite' });
-  const chipsPaises = h('div', { class: 'chips' }, PAISES.map((c) => {
-    const input = h('input', { type: 'checkbox', value: c, checked: aut.paises.includes(c) });
-    input.addEventListener('change', () => { aut.paises = PAISES.filter((y) => (y === c ? input.checked : aut.paises.includes(y))); verAut(); });
-    return h('label', { class: 'chip-opcion chip-opcion-form' }, input, h('span', { class: 'chip-opcion-cara' }, h('span', { class: 'marca' }, icono('i-tilde')), P.paises[c]));
-  }));
-  const idAyudaPaises = id('ayuda');
-  const qPaises = pregunta(P.autPaises, chipsPaises, h('p', { class: 'campo-ayuda', id: idAyudaPaises, text: P.autPaisesAyuda }));
-  qPaises.setAttribute('aria-describedby', idAyudaPaises);
-  const opcionesAut = h('div', { class: 'seccion' },
-    pregunta(P.autArgentina, radios('aut-argentina', [[true, P.si], [false, P.no]], aut.argentina, (x) => { aut.argentina = x; verAut(); })),
-    pregunta(P.autOtros, radios('aut-otros', [['remoto', P.autRemoto, P.autRemotoAyuda], ['visa', P.autVisa]], aut.otros, (x) => { aut.otros = x; verAut(); })),
-    qPaises, vistaAut);
-  const idTexto = id('aut-texto');
-  const textoAut = h('textarea', { class: 'control', id: idTexto, rows: '3', maxlength: '300', 'aria-describedby': idTexto + '-ayuda' });
-  textoAut.value = aut.texto;
-  textoAut.addEventListener('input', () => { aut.texto = textoAut.value; });
-  const campoTexto = h('div', { class: 'campo' }, h('label', { for: idTexto, text: P.autTexto }), textoAut, h('p', { class: 'campo-ayuda', id: idTexto + '-ayuda', text: P.autTextoAyuda }));
-  // Al pasar a tus palabras, el texto arranca con lo que armaban las opciones, para corregirlo en vez de escribirlo de cero.
-  let armadoAlPasar = null;
-  const casPropias = h('input', { type: 'checkbox', checked: aut.propias });
-  casPropias.addEventListener('change', () => {
-    aut.propias = casPropias.checked;
-    if (aut.propias && (!aut.texto.trim() || aut.texto === armadoAlPasar)) { armadoAlPasar = armarAut(); aut.texto = armadoAlPasar; textoAut.value = aut.texto; }
-    verAut();
-  });
-  function verAut() {
-    opcionesAut.hidden = aut.propias;
-    campoTexto.hidden = !aut.propias;
-    vistaAut.textContent = P.autVista(armarAut());
-  }
-  verAut();
-  const sAut = item(P.autorizacion, opcionesAut, h('label', { class: 'casilla' }, casPropias, h('span', { text: P.autPropias })), campoTexto);
-
-  // Disponibilidad: inmediata (default) o en unos días; un texto viejo que no sea ninguno de los dos pide la cantidad.
-  const disp = (function leerDisp(t) {
-    if (!t || t === F.inmediata) return { modo: 'inmediata', dias: null };
-    const m = /^(\d{1,3}) d[ií]as?$/.exec(t);
-    return { modo: 'dias', dias: m ? Number(m[1]) : null };
-  }(String(v.disponibilidad || '').trim().toLowerCase()));
-  const idDias = id('dias');
-  const inDias = h('input', { class: 'control control-corto num', id: idDias, type: 'number', min: '1', max: String(MAX_DIAS), step: '1', inputmode: 'numeric',
-    value: disp.dias === null ? '' : String(disp.dias), 'aria-describedby': idDias + '-ayuda err-disp' });
-  inDias.addEventListener('input', () => { disp.dias = inDias.value === '' ? null : Number(inDias.value); limpiar('err-disp'); });
-  const campoDias = h('div', { class: 'campo anidado', hidden: disp.modo !== 'dias' },
-    h('label', { for: idDias, text: P.dispCantidad }), inDias, h('p', { class: 'campo-ayuda', id: idDias + '-ayuda', text: P.dispCantidadAyuda }));
-  const sDisp = grupoRadios(P.disponibilidad, 'disponibilidad', [['inmediata', P.dispInmediata], ['dias', P.dispDias]], disp.modo,
-    (x) => { disp.modo = x; campoDias.hidden = x !== 'dias'; limpiar('err-disp'); });
-  sDisp.append(campoDias, error('err-disp'));
-
-  const sMud = conInterruptor(P.mudanza, P.mudanzaAyuda, v.mudanza, (x) => { v.mudanza = x; });
-  // 0020: la nacionalidad, que pidieron formularios reales de Greenhouse (31/10/2026). Texto corto; el motor la busca entre las
-  // opciones por país o gentilicio.
-  const inNac = h('input', { class: 'control', id: 'pref-nacionalidad', type: 'text', maxlength: '60', autocomplete: 'off',
-    value: v.nacionalidad || '', 'aria-describedby': 'pref-nacionalidad-ayuda' });
-  inNac.addEventListener('input', () => { v.nacionalidad = inNac.value; });
-  const sNac = h('div', { class: 'campo' }, h('label', { for: 'pref-nacionalidad', text: P.nacionalidad }), inNac,
-    h('p', { class: 'campo-ayuda', id: 'pref-nacionalidad-ayuda', text: P.nacionalidadAyuda }));
-  // 0021: las casillas de consentimiento obligatorias (Sí por defecto, como hacía el motor desde pipeline.md 0.3.8).
-  const sCons = conInterruptor(P.consentimientos, P.consentimientosAyuda, v.aceptar_consentimientos !== false, (x) => { v.aceptar_consentimientos = x; });
-  const cResp = [h('p', { class: 'campo-ayuda', text: P.respuestasIntro }), sAut, sDisp, sMud, sNac, sCons];
 
   /* ---------- Alertas por mail (el título es el del bloque; diseno.md 0.12 §9.3) ---------- */
   // La dueña del buzón no tiene a quién reenviar (Gmail no deja reenviarse a uno mismo): sin dirección, con su filtro.
@@ -645,22 +526,6 @@ Terna.pagina('preferencias', async (ctx) => {
     h('p', { class: 'campo-ayuda', text: dueno ? P.alertasNotaDueno : P.alertasNota }),
   ].filter(Boolean);
 
-  /* ---------- Tu cuenta: pausar (escribe en el acto) y borrar ---------- */
-  const bPausa = h('button', { class: 'btn', type: 'button' });
-  function dibujarPausa() {
-    Terna.vaciar(bPausa);
-    const pausada = Terna.estado.usuario.estado === 'pausado';
-    bPausa.append(icono(pausada ? 'i-reanudar' : 'i-pausar'), pausada ? P.reanudarCuenta : P.pausarCuenta);
-  }
-  bPausa.addEventListener('click', async () => {
-    const pausada = Terna.estado.usuario.estado === 'pausado';
-    if (await Terna.cambiarEstadoCuenta(pausada ? 'activo' : 'pausado', bPausa)) { dibujarPausa(); bPausa.focus(); }
-  });
-  document.addEventListener('terna:estado-cuenta', dibujarPausa);
-  dibujarPausa();
-  const sPausa = item(P.pausar, h('p', { text: P.pausarTexto }), h('div', null, bPausa));
-  const sBorrar = item(P.borrar, h('p', { text: P.borrarTexto }));
-
   /* ---------- Guardar ---------- */
   const banda = h('div', { class: 'banda banda-error', role: 'alert', tabindex: '-1', hidden: true });
   const bGuardar = h('button', { class: 'btn btn-primario btn-ancho', type: 'button' }, P.guardar);
@@ -673,7 +538,7 @@ Terna.pagina('preferencias', async (ctx) => {
   }
   bGuardar.addEventListener('click', async () => {
     banda.hidden = true;
-    ['err-umbral', 'err-mod', 'err-sal', 'err-paq', 'err-puestos', 'err-niv', 'err-jor', 'err-disp', 'err-claves'].forEach((x) => marcar(x, ''));
+    ['err-umbral', 'err-mod', 'err-sal', 'err-puestos', 'err-niv', 'err-jor', 'err-claves'].forEach((x) => marcar(x, ''));
     let ok = true;
     v.puestos_objetivo = leerPuestos();
     if (v.puestos_objetivo.length > MAX_PUESTOS) { marcar('err-puestos', T.errores.puestosDemasiados(MAX_PUESTOS)); ok = false; }
@@ -690,7 +555,6 @@ Terna.pagina('preferencias', async (ctx) => {
       if (v.salario_min === null || v.salario_max === null || !v.salario_moneda) { marcar('err-sal', T.errores.salarioIncompleto); ok = false; }
       else if (v.salario_min > v.salario_max) { marcar('err-sal', T.errores.minimoMayor); ok = false; }
     }
-    if (disp.modo === 'dias' && !(Number.isInteger(disp.dias) && disp.dias >= 1 && disp.dias <= MAX_DIAS)) { marcar('err-disp', T.errores.dias(1, MAX_DIAS)); ok = false; }
     if (!ok) { mostrarBanda(T.errores.guardarCampos); return; }
     bGuardar.setAttribute('aria-disabled', 'true');
     const fila = {
@@ -699,13 +563,9 @@ Terna.pagina('preferencias', async (ctx) => {
       salario_min: v.salario_modo === 'rango' ? v.salario_min : null,
       salario_max: v.salario_modo === 'rango' ? v.salario_max : null,
       salario_moneda: v.salario_modo === 'rango' ? v.salario_moneda : null,
-      idioma_documentos: v.idioma_documentos, armar_paquetes: v.armar_paquetes, paquetes_por_dia: v.paquetes_por_dia,
+      // Sin paquetes_por_dia (0028: siempre 3) ni las respuestas para formularios (las escribe Mi perfil desde 0.19).
+      idioma_documentos: v.idioma_documentos, armar_paquetes: v.armar_paquetes,
       interes_por_defecto: v.interes_por_defecto, postular_sola: v.postular_sola, revisar_antes_de_enviar: v.revisar_antes_de_enviar,
-      autorizacion_trabajo: aut.propias ? (aut.texto.trim() || null) : armarAut(),
-      disponibilidad: disp.modo === 'dias' ? F.dias(disp.dias) : F.inmediata,
-      mudanza: !!v.mudanza,
-      nacionalidad: (String(v.nacionalidad || '').trim().slice(0, 60)) || null,
-      aceptar_consentimientos: v.aceptar_consentimientos !== false,
       puestos_objetivo: v.puestos_objetivo, niveles: v.niveles, jornadas: v.jornadas,
     };
     const clavesCambiaron = conClaves && huellaClaves() !== clavesGuardadas;
@@ -720,7 +580,7 @@ Terna.pagina('preferencias', async (ctx) => {
     if (e) {
       if (Terna.siSesionVencida(e)) return;
       const clave = String(e.message || '').trim();
-      const destino = { umbral_fuera_de_rango: 'err-umbral', modalidades_vacias: 'err-mod', salario_incompleto: 'err-sal', salario_rango_invalido: 'err-sal', paquetes_por_dia_invalido: 'err-paq',
+      const destino = { umbral_fuera_de_rango: 'err-umbral', modalidades_vacias: 'err-mod', salario_incompleto: 'err-sal', salario_rango_invalido: 'err-sal',
         niveles_vacios: 'err-niv', jornadas_vacias: 'err-jor', puestos_demasiados: 'err-puestos', puesto_largo: 'err-puestos',
         palabras_clave_demasiadas: 'err-claves', palabra_clave_larga: 'err-claves' }[clave];
       if (destino) { marcar(destino, Terna.textoError(e)); mostrarBanda(T.errores.guardarCampos); } else mostrarBanda(T.errores.guardar);
@@ -733,9 +593,7 @@ Terna.pagina('preferencias', async (ctx) => {
   /* ---------- Página ---------- */
   Terna.vaciar(raiz);
   bloques.bloque('busqueda', P.grupos.busqueda, [sPue, sNiv, sJor, sMod, sAlc, sUmbral, sSal]);
-  bloques.bloque('paquetes', P.grupos.paquetes, [sInt, sArm, sPaq, sIdi, sAvisoCla, sCla, sPos, sRev].filter(Boolean));
-  bloques.bloque('respuestas', P.respuestas, cResp);
+  bloques.bloque('paquetes', P.grupos.paquetes, [sInt, sArm, sIdi, sAvisoCla, sCla, sPos, sRev].filter(Boolean));
   bloques.bloque('alertas', P.alertas, cAlertas);
-  bloques.bloque('cuenta', P.grupos.cuenta, [sPausa, sBorrar]);
   bloques.montar({ arriba: [banda], guardar: h('div', { class: 'guardar-fijo' }, bGuardar) });
 });

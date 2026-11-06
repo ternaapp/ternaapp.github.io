@@ -7,6 +7,9 @@
   --papel: #F5F6F3;        --hoja: #FFFFFF;
   --tinta: #1F2522;        --tinta-suave: #596560;
   --linea: #D7DCD8;        --borde-control: #7A857F;   --seleccion: #EEF1EF;
+  /* Separadores que tienen que verse (diseno.md 0.19 §12.1): entre ítems de un bloque, en la franja de un subtema y en el
+     borde de cada caja de una lista (un trabajo, un estudio, un idioma). 2,1:1 sobre hoja; decorativo, como la línea. */
+  --linea-fuerte: #ADB6B0;
   --accion: #1F6A4E;       --accion-oscura: #17543E;   --accion-tinte: #DDEFE6;
   --espera-tinte: #F5E9C9; --espera-oscuro: #5C4409;
   --azul-tinte: #DCE8F3;   --azul-oscuro: #1E3F5E;
@@ -571,8 +574,14 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .indicador { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; }
 .indicador.completo { color: var(--accion-oscura); }
 .indicador.falta { color: var(--espera-oscuro); }
-.bloque-lista { border-top: 1px solid var(--linea); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; }
-.bloque-lista:first-of-type { border-top: 0; padding-top: 0; }
+/* Cada ítem de una lista de Mi perfil (un trabajo, un estudio, un idioma) va en su propia caja, sobre papel y con el borde
+   fuerte, así se ve dónde termina uno y empieza el otro (diseno.md 0.19 §10.17; hasta 0.18 los separaba una línea de 1 px). */
+.bloque-lista {
+  display: flex; flex-direction: column; gap: 10px; padding: 12px;
+  background: var(--papel); border: 1px solid var(--linea-fuerte); border-radius: 10px;
+}
+.bloque-lista-titulo { font-size: 15px; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
+.bloque-lista .botones { margin-top: 2px; }
 .mes-anio { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 8px; }
 .guardar-fijo {
   position: sticky; bottom: 0; z-index: 10; margin: 0 -16px -32px; padding: 10px 16px;
@@ -826,11 +835,21 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
    Terna.porBloques (comun.js) con el mismo corte y lo marca con .modo-carril. */
 .titulo-fijo { display: none; }
 .carril-alerta { color: var(--error); flex: none; }
-/* Ítems dentro de un bloque (Preferencias): separados por una línea, con el título un paso más chico que el del bloque. */
+/* Ítems dentro de un bloque (Preferencias, Mi perfil › Tu cuenta y los de un subtema): separados por la línea fuerte, con el
+   título un paso más chico que el del bloque. */
 .subbloque { display: flex; flex-direction: column; gap: 10px; }
-.subbloque + .subbloque { border-top: 1px solid var(--linea); padding-top: 16px; margin-top: 4px; }
+.subbloque + .subbloque { border-top: 1px solid var(--linea-fuerte); padding-top: 16px; margin-top: 4px; }
 .subbloque .tarjeta-titulo { font-size: 15px; }
 .campo-ayuda + .subbloque { margin-top: 6px; }
+/* Subtemas (Mi perfil › Datos y CV; diseno.md 0.19 §10.17): cuando un bloque junta temas distintos, cada uno arranca con una
+   franja de papel que corta la tarjeta de lado a lado, con la línea fuerte arriba y abajo y el título adentro. */
+.subtema { display: flex; flex-direction: column; gap: 12px; }
+.subtema + .subtema { margin-top: 14px; }
+.subtema-titulo {
+  margin: 0 -14px; padding: 9px 14px; background: var(--papel);
+  border-top: 1px solid var(--linea-fuerte); border-bottom: 1px solid var(--linea-fuerte);
+  font-size: 16px; font-weight: 700; line-height: 1.3;
+}
 /* Un campo que depende del radio de arriba (Disponibilidad › En unos días): alineado con el texto de los radios. */
 .anidado { padding-left: 30px; }
 .control-corto { max-width: 160px; }
@@ -857,6 +876,11 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .modo-carril .plegable-boton { display: none; }
   .modo-carril .titulo-fijo { display: block; }
   .modo-carril .bloques-lista > .tarjeta { padding: 16px 20px; }
+  .modo-carril .subtema-titulo { margin: 0 -20px; padding: 10px 20px; }
+  .modo-carril .bloque-lista { padding: 14px 16px; }
+  /* Los subtemas de un bloque, debajo de él en el carril: más chicos, corridos y en tinta suave. */
+  .carril a.carril-sub { min-height: 32px; padding-left: 26px; font-size: 14px; color: var(--tinta-suave); }
+  .carril a.carril-sub:hover { color: var(--tinta); }
 }
 /* Entre 768 y 1023 el bloque mide unos 460 px: los pares largos (desde y hasta; teléfono y LinkedIn) van apilados,
    si no "septiembre" no entra en su selector. */
@@ -869,7 +893,7 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 
 /* ---------- 9. Preferencias del sistema ---------- */
 @media (prefers-contrast: more) {
-  :root { --linea: #1F2522; --borde-control: #1F2522; }
+  :root { --linea: #1F2522; --borde-control: #1F2522; --linea-fuerte: #1F2522; }
 }
 @media (prefers-reduced-motion: reduce) {
   :root { --mov: 0ms; }

@@ -1,9 +1,15 @@
 /* Terna · js/perfil.js
-   Mi perfil (diseno.md 0.6 §9.1, §9.2 y §10.17; brand.md §6.6): datos, CV original, perfil estructurado, datos para formularios,
-   experiencia, estudios e idiomas, en ese orden también en primer uso. En celular cada bloque es un desplegable (cerrado,
-   salvo los que tienen algo que falta) y "Guardar" va fijo abajo. Desde 768 px: carril a la izquierda, el bloque elegido
-   a la derecha y "Guardar" arriba a la derecha en la cabecera fija. Un error al guardar muestra su bloque.
-   Un "Guardar" para la página; el CV se sube en el acto y el perfil estructurado tiene su propio "Guardar". */
+   Mi perfil (diseno.md 0.19 §9.1, §9.2 y §10.17; brand.md 0.7 §6.6), en seis bloques y en este orden, también en primer uso:
+   - Datos, con tres subtemas: Contacto; Identificación (DNI, CUIL y fecha de nacimiento, hasta 0.18 el bloque "Datos para
+     formularios"); y Respuestas para formularios (hasta 0.18 en Preferencias; js/respuestas.js).
+   - CV, con el CV original, el perfil estructurado (si existe) y el analítico (hasta 0.18, tres bloques sueltos).
+   - Experiencia laboral, Estudios y cursos e Idiomas: cada ítem en su propia caja.
+   - Tu cuenta: pausar (escribe en el acto) y cómo borrarla (hasta 0.18 en Preferencias).
+   En celular cada bloque es un desplegable (cerrado, salvo los que tienen algo que falta) y "Guardar" va fijo abajo. Desde
+   768 px: carril a la izquierda, con los subtemas debajo de su bloque, el bloque elegido a la derecha y "Guardar" arriba a la
+   derecha en la cabecera fija. Un error al guardar muestra su bloque.
+   Un "Guardar" para la página (perfil, listas, identificación y respuestas); el CV y el analítico se suben en el acto, el
+   perfil estructurado tiene su propio "Guardar" y pausar la cuenta escribe en el acto. */
 'use strict';
 
 Terna.pagina('perfil', async (ctx) => {
@@ -35,16 +41,18 @@ Terna.pagina('perfil', async (ctx) => {
   const mesHoy = Terna.hoy().slice(0, 7);
 
   const parar = Terna.cargando(raiz);
-  const [rP, rE, rS, rI, rC, rA] = await Promise.all([
+  const [rP, rE, rS, rI, rC, rA, rR] = await Promise.all([
     sb.from('perfiles').select('nombre, apellido, telefono, ciudad, linkedin, portfolio, perfil_estructurado, perfil_estructurado_en, cv_original_leido_en').eq('usuario_id', uid).maybeSingle(),
     sb.from('experiencias').select('id, puesto, empresa, desde, hasta, actual, descripcion, orden').eq('usuario_id', uid).order('orden').order('desde', { ascending: false }),
     sb.from('estudios').select('id, titulo, institucion, anio, estado, promedio, nivel, orden').eq('usuario_id', uid).order('orden'),
     sb.from('idiomas').select('id, idioma, nivel').eq('usuario_id', uid).order('creado_en'),
     sb.rpc('cv_original'),
     sb.rpc('analitico'),
+    // Las respuestas para formularios (0016, 0020, 0021): columnas de preferencias (datos.md 0.24 §14).
+    sb.from('preferencias').select('autorizacion_trabajo, disponibilidad, mudanza, nacionalidad, aceptar_consentimientos').eq('usuario_id', uid).maybeSingle(),
   ]);
   parar();
-  const errorCarga = rP.error || rE.error || rS.error || rI.error || rC.error;
+  const errorCarga = rP.error || rE.error || rS.error || rI.error || rC.error || rR.error;
   if (errorCarga) { Terna.errorDeCarga(raiz, errorCarga); return; }
   if (primerUso) {
     history.replaceState(null, '', location.pathname + location.hash);
@@ -137,7 +145,7 @@ Terna.pagina('perfil', async (ctx) => {
       faltantes.length ? P.falta(Terna.listaFaltantes(faltantes)) : P.completo);
   }
 
-  /* ---------- Bloques (diseno.md 0.6 §9.2 y §10.17) ----------
+  /* ---------- Bloques (diseno.md 0.19 §9.2 y §10.17) ----------
      Desplegables en celular, carril desde 768 px: lo hace Terna.porBloques (comun.js), igual que en Preferencias.
      Arrancan abiertos (o elegido el primero) los bloques con algo que falta para el perfil completo. */
   const abiertosAlEntrar = new Set();
@@ -145,27 +153,82 @@ Terna.pagina('perfil', async (ctx) => {
   if (faltantes.includes('experiencia')) { abiertosAlEntrar.add('exp'); abiertosAlEntrar.add('est'); }
   if (faltantes.includes('idioma')) abiertosAlEntrar.add('idi');
   const bloques = Terna.porBloques({ raiz, cabecera: document.getElementById('cabecera'), nombre: T.comun.pestanas.perfil, abiertos: abiertosAlEntrar });
-  const HASH = { datos: 'datos', cv: 'cv', estr: 'estructurado', form: 'formularios', exp: 'experiencia', est: 'estudios', idi: 'idiomas' };
+  // Los hash de los bloques; los de los subtemas van en cada uno (#contacto, #identificacion, #respuestas, #cv-original,
+  // #estructurado, #analitico). Los de antes siguen andando: #formularios (alias de Identificación) y #estructurado.
+  const HASH = { datos: 'datos', cv: 'cv', exp: 'experiencia', est: 'estudios', idi: 'idiomas', cuenta: 'cuenta' };
   const CUENTA = { exp: () => listas.exp.length, est: () => listas.est.length, idi: () => listas.idi.length };
-  const seccion = (clave, titulo, cuerpo, alAbrir) => bloques.bloque(clave, titulo, cuerpo, { hash: HASH[clave], alAbrir, cuenta: CUENTA[clave] });
+  const seccion = (k, titulo, cuerpo, extra) => bloques.bloque(k, titulo, cuerpo, Object.assign({ hash: HASH[k], cuenta: CUENTA[k] }, extra || {}));
   const abrirSeccionDe = (el) => bloques.abrirDe(el);
   const marcarCarril = () => bloques.marcarErrores();
   const irAlPrimerError = () => bloques.irAlPrimerError();
   const actualizarCuentas = () => bloques.actualizarCuentas();
 
+  /* ---------- Datos: Contacto, Identificación y Respuestas para formularios ---------- */
+  const resp = Respuestas.montar({
+    fila: rR.data || {},
+    piezas: Terna.piezas({ prefijo: 'resp', nivel: 'h4' }),
+    alMarcar: (el) => { if (el.textContent) abrirSeccionDe(el); marcarCarril(); },
+  });
+  let respOriginal = JSON.stringify(resp.columnas());
+
   function bloqueDatos() {
     const c = (k, etiqueta, extra) => campo(Object.assign({ id: 'dato-' + k, etiqueta, valor: datos[k], alCambiar: (v) => { datos[k] = v; } }, extra));
-    return seccion('datos', P.datos, [
+    const contacto = Terna.subtema(P.contacto, null,
       h('div', { class: 'dos' }, c('nombre', P.nombre, { max: 80, autocomplete: 'given-name' }), c('apellido', P.apellido, { max: 80, autocomplete: 'family-name' })),
       campo({ id: 'dato-mail', etiqueta: P.mail, valor: ctx.usuario.mail, ayuda: P.mailAyuda, readonly: true, tipo: 'email', autocomplete: 'email' }),
       c('ciudad', P.ciudad, { max: 80, autocomplete: 'address-level2', ayuda: P.ciudadAyuda }),
       h('div', { class: 'dos dos-apilable' }, c('telefono', P.telefono, { max: 30, tipo: 'tel', autocomplete: 'tel' }), c('linkedin', P.linkedin, { max: 200, tipo: 'url', autocomplete: 'url', inputmode: 'url' })),
-      c('portfolio', P.portfolio, { max: 300, tipo: 'url', inputmode: 'url', ayuda: P.portfolioAyuda })]);
+      c('portfolio', P.portfolio, { max: 300, tipo: 'url', inputmode: 'url', ayuda: P.portfolioAyuda }));
+    const identificacion = temaIdentificacion();
+    const respuestas = Terna.subtema(T.respuestas.titulo, T.respuestas.intro, resp.nodos);
+    return seccion('datos', P.datos, [contacto, identificacion, respuestas], { alAbrir: cargarIdentificacion || undefined, temas: [
+      { hash: 'contacto', titulo: P.contacto, nodo: contacto },
+      { hash: 'identificacion', alias: ['formularios'], titulo: P.identificacion, nodo: identificacion },
+      { hash: 'respuestas', titulo: T.respuestas.titulo, nodo: respuestas },
+    ] });
+  }
+
+  /* Identificación: DNI, CUIL y fecha de nacimiento, cifrados. Se descifran recién cuando el subtema está por verse (a 200 px de
+     la pantalla, con su bloque abierto o elegido), una sola vez por visita. Sin IntersectionObserver, al abrir el bloque. */
+  let cargarIdentificacion = null;
+  function temaIdentificacion() {
+    const campos = h('div', { class: 'seccion' });
+    let pidiendo = false;
+    const cargar = async () => {
+      if (formularios.cargado || pidiendo) return;
+      pidiendo = true;
+      const parar2 = Terna.cargando(campos);
+      const { data, error } = await sb.rpc('leer_datos_formularios');
+      parar2();
+      pidiendo = false;
+      if (error) { Terna.errorDeCarga(campos, error); return; }
+      const fila = (Array.isArray(data) ? data[0] : data) || {};
+      Object.assign(formularios, { cargado: true, dni: fila.dni || '', cuil: fila.cuil || '', fecha: fila.fecha_nacimiento || '' });
+      formularios.original = JSON.stringify([formularios.dni, formularios.cuil, formularios.fecha]);
+      Terna.vaciar(campos);
+      campos.append(
+        h('div', { class: 'dos' },
+          campo({ id: 'form-dni', etiqueta: P.dni, valor: formularios.dni, max: 10, inputmode: 'numeric', autocomplete: 'off', alCambiar: (x) => { formularios.dni = x; } }),
+          campo({ id: 'form-cuil', etiqueta: P.cuil, valor: formularios.cuil, max: 13, inputmode: 'numeric', autocomplete: 'off', alCambiar: (x) => { formularios.cuil = x; } })),
+        campo({ id: 'form-fecha', etiqueta: P.nacimiento, valor: formularios.fecha, tipo: 'date', autocomplete: 'bday', alCambiar: (x) => { formularios.fecha = x; } }));
+    };
+    const tema = Terna.subtema(P.identificacion, P.identificacionAyuda, campos);
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((vistos) => { if (vistos.some((x) => x.isIntersecting)) { io.disconnect(); cargar(); } }, { rootMargin: '200px 0px' });
+      io.observe(tema);
+    } else cargarIdentificacion = cargar;
+    return tema;
   }
 
   function enfocar(id) { const el = document.getElementById(id); if (el) el.focus(); }
   function moverEn(lista, i, d) { const j = i + d; if (j < 0 || j >= lista.length) return; [lista[i], lista[j]] = [lista[j], lista[i]]; }
+  // La caja de un ítem de lista (diseno.md 0.19 §10.17): un grupo con su título ("1. Puesto · Empresa"), que se actualiza al escribir.
+  function caja(p, titulo, ...cuerpo) {
+    const idT = p + '-cabeza';
+    return h('div', { class: 'bloque-lista', role: 'group', 'aria-labelledby': idT }, h('h3', { class: 'bloque-lista-titulo', id: idT, text: titulo }), cuerpo);
+  }
 
+  /* ---------- Experiencia laboral ---------- */
   function bloqueExperiencia() {
     const cont = h('div', { class: 'seccion', id: 'lista-exp' });
     const dibujarLista = (foco) => {
@@ -173,11 +236,11 @@ Terna.pagina('perfil', async (ctx) => {
       if (!listas.exp.length) cont.append(h('p', { class: 'suave', text: P.sinExperiencia }));
       listas.exp.forEach((e, i) => {
         const p = 'exp-' + e.clave;
-        const b = h('div', { class: 'bloque-lista' });
-        b.append(
+        const ponerTitulo = () => { const t = document.getElementById(p + '-cabeza'); if (t) t.textContent = P.tituloItem(i + 1, e.puesto, e.empresa, P.trabajoNuevo); };
+        const b = caja(p, P.tituloItem(i + 1, e.puesto, e.empresa, P.trabajoNuevo),
           h('div', { class: 'dos' },
-            campo({ id: p + '-puesto', etiqueta: P.puesto, valor: e.puesto, max: 120, alCambiar: (v) => { e.puesto = v; } }),
-            campo({ id: p + '-empresa', etiqueta: P.empresa, valor: e.empresa, max: 120, alCambiar: (v) => { e.empresa = v; } })),
+            campo({ id: p + '-puesto', etiqueta: P.puesto, valor: e.puesto, max: 120, alCambiar: (v) => { e.puesto = v; ponerTitulo(); } }),
+            campo({ id: p + '-empresa', etiqueta: P.empresa, valor: e.empresa, max: 120, alCambiar: (v) => { e.empresa = v; ponerTitulo(); } })),
           h('div', { class: 'dos dos-apilable' },
             mesAnio({ id: p + '-desde', etiqueta: P.desde, valor: e.desde, alCambiar: (v) => { e.desde = v; } }),
             mesAnio({ id: p + '-hasta', etiqueta: P.hasta, valor: e.actual ? null : e.hasta, deshabilitado: e.actual, alCambiar: (v) => { e.hasta = v; } })),
@@ -203,6 +266,7 @@ Terna.pagina('perfil', async (ctx) => {
     return seccion('exp', P.experiencia, cont);
   }
 
+  /* ---------- Estudios y cursos ---------- */
   function bloqueEstudios() {
     const cont = h('div', { class: 'seccion' });
     const dibujarLista = (foco) => {
@@ -210,16 +274,17 @@ Terna.pagina('perfil', async (ctx) => {
       if (!listas.est.length) cont.append(h('p', { class: 'suave', text: P.sinEstudios }));
       listas.est.forEach((e, i) => {
         const p = 'est-' + e.clave;
+        const ponerTitulo = () => { const t = document.getElementById(p + '-cabeza'); if (t) t.textContent = P.tituloItem(i + 1, e.titulo, e.institucion, P.estudioNuevo); };
         // El promedio es de una carrera (0022): para un curso o el secundario no se muestra y no se guarda.
         const promedio = campo({ id: p + '-promedio', etiqueta: P.promedio, valor: e.promedio, max: 20, ayuda: P.promedioAyuda, alCambiar: (v) => { e.promedio = v; } });
         const mostrarPromedio = () => { promedio.hidden = !NIVELES_CARRERA.includes(e.nivel); };
         mostrarPromedio();
-        cont.append(h('div', { class: 'bloque-lista' },
+        cont.append(caja(p, P.tituloItem(i + 1, e.titulo, e.institucion, P.estudioNuevo),
           seleccion({ id: p + '-nivel', etiqueta: P.tipoEstudio, valor: e.nivel, opciones: NIVELES_ESTUDIO.map((n) => [n, P.tiposEstudio[n]]),
             alCambiar: (v) => { e.nivel = v; mostrarPromedio(); } }),
           h('p', { class: 'campo-ayuda', text: P.tipoEstudioAyuda }),
-          campo({ id: p + '-titulo', etiqueta: P.titulo_, valor: e.titulo, max: 160, ayuda: P.tituloAyuda, alCambiar: (v) => { e.titulo = v; } }),
-          campo({ id: p + '-institucion', etiqueta: P.institucion, valor: e.institucion, max: 160, alCambiar: (v) => { e.institucion = v; } }),
+          campo({ id: p + '-titulo', etiqueta: P.titulo_, valor: e.titulo, max: 160, ayuda: P.tituloAyuda, alCambiar: (v) => { e.titulo = v; ponerTitulo(); } }),
+          campo({ id: p + '-institucion', etiqueta: P.institucion, valor: e.institucion, max: 160, alCambiar: (v) => { e.institucion = v; ponerTitulo(); } }),
           h('div', { class: 'dos' },
             campo({ id: p + '-anio', etiqueta: P.anio, valor: e.anio, tipo: 'number', inputmode: 'numeric', ayuda: P.anioAyuda, alCambiar: (v) => { e.anio = v; } }),
             seleccion({ id: p + '-estado', etiqueta: P.estado, valor: e.estado || 'terminado', opciones: [['terminado', P.terminado], ['en_curso', P.enCurso]], alCambiar: (v) => { e.estado = v; } })),
@@ -240,6 +305,7 @@ Terna.pagina('perfil', async (ctx) => {
     return seccion('est', P.estudios, cont);
   }
 
+  /* ---------- Idiomas: cada uno en su caja, sin título (el idioma y el nivel ya lo dicen) ---------- */
   function bloqueIdiomas() {
     const cont = h('div', { class: 'seccion' });
     const sugeridos = h('datalist', { id: 'idiomas-sugeridos' }, P.idiomasSugeridos.map((x) => h('option', { value: x })));
@@ -270,8 +336,25 @@ Terna.pagina('perfil', async (ctx) => {
     return seccion('idi', P.idiomas, cont);
   }
 
-  /* ---------- CV original ---------- */
+  /* ---------- CV: el CV original, el perfil estructurado (si existe) y el analítico, uno debajo del otro ---------- */
   function bloqueCv() {
+    const original = Terna.subtema(P.cv, null, partesCv());
+    const partes = [original];
+    const temas = [{ hash: 'cv-original', titulo: P.cv, nodo: original }];
+    if (estructurado) {
+      const t = Terna.subtema(P.estructurado, null, partesEstructurado());
+      partes.push(t);
+      temas.push({ hash: 'estructurado', titulo: P.estructurado, nodo: t });
+    }
+    if (analitico !== undefined) {
+      const t = Terna.subtema(P.analitico, null, partesAnalitico());
+      partes.push(t);
+      temas.push({ hash: 'analitico', titulo: P.analitico, nodo: t });
+    }
+    return seccion('cv', P.cvBloque, partes, { temas });
+  }
+
+  function partesCv() {
     const cont = h('div', { class: 'seccion' });
     const estado = h('p', { class: 'campo-ayuda', role: 'status' });
     const error = h('p', { class: 'campo-error', role: 'alert' });
@@ -317,13 +400,12 @@ Terna.pagina('perfil', async (ctx) => {
       cont.append(h('p', { class: 'campo-ayuda', text: P.cvAyuda }), estado, error, archivo);
     };
     dibujar();
-    return seccion('cv', P.cv, [cont, partesAnalitico()]);
+    return cont;
   }
 
-  /* ---------- Analítico (0021; brand.md 0.4.14): un PDF que Terna adjunta solo si un formulario lo pide ---------- */
+  /* Analítico (0021; brand.md 0.4.14): un PDF que Terna adjunta solo si un formulario lo pide. */
   function partesAnalitico() {
     const cont = h('div', { class: 'seccion' });
-    if (analitico === undefined) return cont;
     const estado = h('p', { class: 'campo-ayuda', role: 'status' });
     const error = h('p', { class: 'campo-error', role: 'alert' });
     const archivo = h('input', { type: 'file', accept: 'application/pdf,.pdf', class: 'oculto-visual', tabindex: '-1', 'aria-hidden': 'true' });
@@ -346,7 +428,6 @@ Terna.pagina('perfil', async (ctx) => {
     });
     const dibujar = () => {
       Terna.vaciar(cont);
-      cont.append(h('h3', { class: 'tarjeta-titulo', text: P.analitico }));
       if (analitico) {
         cont.append(h('p', { text: P.analiticoCargado(Terna.fechaLarga(analitico.subido_en)) }),
           h('div', { class: 'botones' },
@@ -370,8 +451,8 @@ Terna.pagina('perfil', async (ctx) => {
     return cont;
   }
 
-  /* ---------- Perfil estructurado: lo que Terna lee (cuatro partes editables) ---------- */
-  function bloqueEstructurado() {
+  /* Perfil estructurado: lo que Terna lee (cuatro partes editables). */
+  function partesEstructurado() {
     const cont = h('div', { class: 'seccion' });
     const certNombre = (c) => (c && typeof c === 'object' ? c.nombre : c) || '';
     const lectura = () => {
@@ -425,32 +506,25 @@ Terna.pagina('perfil', async (ctx) => {
       enfocar('estr-titulo');
     };
     lectura();
-    return seccion('estr', P.estructurado, cont);
+    return cont;
   }
 
-  /* ---------- Datos para formularios (se descifran solo al abrir el bloque) ---------- */
-  function bloqueFormularios() {
-    const campos = h('div', { class: 'seccion' });
-    let pidiendo = false;
-    const cargar = async () => {
-      if (formularios.cargado || pidiendo) return;
-      pidiendo = true;
-      const parar2 = Terna.cargando(campos);
-      const { data, error } = await sb.rpc('leer_datos_formularios');
-      parar2();
-      pidiendo = false;
-      if (error) { Terna.errorDeCarga(campos, error); return; }
-      const fila = (Array.isArray(data) ? data[0] : data) || {};
-      Object.assign(formularios, { cargado: true, dni: fila.dni || '', cuil: fila.cuil || '', fecha: fila.fecha_nacimiento || '' });
-      formularios.original = JSON.stringify([formularios.dni, formularios.cuil, formularios.fecha]);
-      Terna.vaciar(campos);
-      campos.append(
-        h('div', { class: 'dos' },
-          campo({ id: 'form-dni', etiqueta: P.dni, valor: formularios.dni, max: 10, inputmode: 'numeric', autocomplete: 'off', alCambiar: (x) => { formularios.dni = x; } }),
-          campo({ id: 'form-cuil', etiqueta: P.cuil, valor: formularios.cuil, max: 13, inputmode: 'numeric', autocomplete: 'off', alCambiar: (x) => { formularios.cuil = x; } })),
-        campo({ id: 'form-fecha', etiqueta: P.nacimiento, valor: formularios.fecha, tipo: 'date', autocomplete: 'bday', alCambiar: (x) => { formularios.fecha = x; } }));
-    };
-    return seccion('form', P.formularios, [h('p', { class: 'campo-ayuda', text: P.formulariosAyuda }), campos], cargar);
+  /* ---------- Tu cuenta: pausar (escribe en el acto) y borrar (hasta 0.18 en Preferencias) ---------- */
+  function bloqueCuenta() {
+    const pz = Terna.piezas({ prefijo: 'cuenta', nivel: 'h3' });
+    const bPausa = h('button', { class: 'btn', type: 'button', id: 'pausar-cuenta' });
+    function dibujarPausa() {
+      Terna.vaciar(bPausa);
+      const pausada = Terna.estado.usuario.estado === 'pausado';
+      bPausa.append(icono(pausada ? 'i-reanudar' : 'i-pausar'), pausada ? P.reanudarCuenta : P.pausarCuenta);
+    }
+    bPausa.addEventListener('click', async () => {
+      const pausada = Terna.estado.usuario.estado === 'pausado';
+      if (await Terna.cambiarEstadoCuenta(pausada ? 'activo' : 'pausado', bPausa)) { dibujarPausa(); bPausa.focus(); }
+    });
+    document.addEventListener('terna:estado-cuenta', dibujarPausa);
+    dibujarPausa();
+    return seccion('cuenta', P.cuenta, [pz.item(P.pausar, h('p', { text: P.pausarTexto }), h('div', null, bPausa)), pz.item(P.borrar, h('p', { text: P.borrarTexto }))]);
   }
 
   /* ---------- Guardar ---------- */
@@ -501,6 +575,7 @@ Terna.pagina('perfil', async (ctx) => {
       const cuil = formularios.cuil.replace(/\D/g, '');
       if (cuil && !/^\d{11}$/.test(cuil)) { marcarError('form-cuil', T.errores.cuil); ok = false; }
     }
+    if (!resp.validar()) ok = false;
     return ok;
   }
   const ERROR_CAMPO = { fecha_futura: ['-desde', T.errores.fechaFutura], fecha_fin_anterior: ['-hasta', T.errores.fechaFinAnterior] };
@@ -512,7 +587,7 @@ Terna.pagina('perfil', async (ctx) => {
     bGuardar.setAttribute('aria-disabled', 'true');
     const eraIncompleto = faltantes.length > 0;
     try {
-      // 1. Datos
+      // 1. Contacto
       if (JSON.stringify(datos) !== originales.datos) {
         const v = (x) => (String(x || '').trim() || null);
         // 0020: el portfolio se guarda como link; sin "https://" adelante, se lo agrega (la base pide http o https).
@@ -529,11 +604,19 @@ Terna.pagina('perfil', async (ctx) => {
         (e, i) => JSON.stringify([e.titulo, e.institucion, e.anio === '' || e.anio === undefined ? null : (e.anio === null ? null : Number(e.anio)), e.estado || 'terminado', e.promedio || '', e.nivel || null].concat(i)), 'est');
       await guardarLista('idiomas', listas.idi, originales.idi, (e) => ({ idioma: e.idioma.trim(), nivel: e.nivel }),
         (e) => JSON.stringify([e.idioma, e.nivel]), 'idi');
-      // 3. Datos para formularios, solo si se abrieron y cambiaron.
+      // 3. Identificación, solo si se descifró y cambió.
       if (formularios.cargado && JSON.stringify([formularios.dni, formularios.cuil, formularios.fecha]) !== formularios.original) {
         const { error } = await sb.rpc('guardar_datos_formularios', { p_dni: formularios.dni || null, p_cuil: formularios.cuil || null, p_fecha_nacimiento: formularios.fecha || null });
         if (error) throw Object.assign(error, { _campo: true });
         formularios.original = JSON.stringify([formularios.dni, formularios.cuil, formularios.fecha]);
+      }
+      // 4. Respuestas para formularios (columnas de preferencias), solo si cambiaron: así una pestaña de Preferencias abierta
+      //    antes no se pisa con esta, ni esta con aquella (Preferencias ya no las escribe).
+      const columnas = resp.columnas();
+      if (JSON.stringify(columnas) !== respOriginal) {
+        const { error } = await sb.from('preferencias').update(columnas).eq('usuario_id', uid);
+        if (error) throw error;
+        respOriginal = JSON.stringify(columnas);
       }
     } catch (error) {
       bGuardar.removeAttribute('aria-disabled');
@@ -551,8 +634,9 @@ Terna.pagina('perfil', async (ctx) => {
     bGuardar.removeAttribute('aria-disabled');
     if (!r.error) { faltantes = r.data || []; Terna.actualizarFaltantes(faltantes); dibujarIndicador(); }
     if (eraIncompleto && !faltantes.length) {
+      // Las respuestas para formularios ya están acá (con sus valores por defecto): lo que queda para revisar es la búsqueda.
       Terna.vaciar(estadoGuardado);
-      estadoGuardado.append(T.perfil.guardadoBusca + ' ', h('a', { href: 'preferencias.html#respuestas', text: P.revisarPrefs }));
+      estadoGuardado.append(T.perfil.guardadoBusca + ' ', h('a', { href: 'preferencias.html#busqueda', text: P.revisarPrefs }));
     } else {
       Terna.avisoBreve(T.comun.guardado);
     }
@@ -583,8 +667,7 @@ Terna.pagina('perfil', async (ctx) => {
   /* ---------- Página ---------- */
   dibujarIndicador();
   Terna.vaciar(raiz);
-  bloqueDatos(); bloqueCv(); if (estructurado) bloqueEstructurado(); bloqueFormularios();
-  bloqueExperiencia(); bloqueEstudios(); bloqueIdiomas();
+  bloqueDatos(); bloqueCv(); bloqueExperiencia(); bloqueEstudios(); bloqueIdiomas(); bloqueCuenta();
   bloques.montar({ arriba: [banda], debajo: h('p', { class: 'campo-ayuda', text: P.privacidad }),
     guardar: h('div', { class: 'guardar-fijo' }, estadoGuardado, bGuardar) });
 });

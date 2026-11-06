@@ -1,5 +1,5 @@
 /* Terna · js/textos.js
-   Los textos de la web, copiados de brand.md (0.4) y el mapa de claves de error de datos.md §11.
+   Los textos de la web, copiados de brand.md (0.7) y el mapa de claves de error de datos.md §11.
    El código los usa tal cual; si un texto cambia, cambia en brand.md primero y después acá. */
 'use strict';
 
@@ -21,6 +21,8 @@ window.T = (function () {
       salir: 'Salir',
       guardar: 'Guardar', cancelar: 'Cancelar', cerrar: 'Cerrar', volver: 'Volver', probarDeNuevo: 'Probar de nuevo',
       entendido: 'Entendido', deshacer: 'Deshacer', copiar: 'Copiar',
+      // El estado de un interruptor (Preferencias y Mi perfil; diseno.md §10.6).
+      si: 'Sí', no: 'No',
       guardado: 'Guardado.',
       copiado: 'Copiado.',
       copiarFallo: 'Seleccioná el texto y copialo.',
@@ -38,7 +40,7 @@ window.T = (function () {
       completar: 'Completar perfil',
       sinConexion: 'Sin conexión. Lo que ves puede estar desactualizado.',
     },
-    faltantes: { nombre: 'el nombre', ciudad: 'la ciudad', experiencia: 'una experiencia o un estudio', idioma: 'un idioma' },
+    faltantes: { nombre: 'el nombre', ciudad: 'la ciudad', experiencia: 'un trabajo o un estudio', idioma: 'un idioma' },
 
     cuenta: {
       entrarTitulo: 'Entrar a Terna',
@@ -363,19 +365,31 @@ window.T = (function () {
       intro: 'Terna usa este perfil para elegir avisos, armar tus documentos y responder formularios. Cuanto más completo, mejor elige y mejor responde.',
       completo: 'Perfil completo.',
       falta: (lista) => 'Falta: ' + lista + '.',
+      // Los bloques y sus subtemas (brand.md 0.7 §6.6; diseno.md 0.19 §9.2): Datos junta Contacto, Identificación y Respuestas para
+      // formularios (antes en Preferencias); CV junta el CV original, el perfil estructurado y el analítico.
       datos: 'Datos',
+      contacto: 'Contacto',
       nombre: 'Nombre', apellido: 'Apellido', mail: 'Mail', mailAyuda: 'Es el de tu cuenta. Va en tus postulaciones.',
       telefono: 'Teléfono (opcional)', ciudad: 'Ciudad',
       ciudadAyuda: 'Terna busca en tu ciudad y alrededores; si ponés Buenos Aires, incluye CABA y el Gran Buenos Aires.',
       linkedin: 'LinkedIn (opcional)',
       portfolio: 'Portfolio o sitio propio (opcional)', portfolioAyuda: 'Un link a tu trabajo. Terna lo usa solo si un formulario lo pide.',
-      experiencia: 'Experiencia',
+      // Experiencia laboral (brand.md 0.7 §6.6): cada trabajo en su propia caja, con un título que dice cuál es.
+      experiencia: 'Experiencia laboral',
       puesto: 'Puesto', empresa: 'Empresa', desde: 'Desde', hasta: 'Hasta', mes: 'Mes', anio: 'Año', actual: 'Trabajo actual',
       queHiciste: 'Qué hiciste',
       queHicisteAyuda: 'Tareas y resultados, en tus palabras. Poné números cuando los tengas: Terna solo usa los que vos cargás, y los redacta para cada aviso.',
-      agregarExperiencia: 'Agregar experiencia', quitar: 'Quitar', subir: 'Subir', bajar: 'Bajar',
-      sinExperiencia: 'Todavía no cargaste experiencia.',
-      topeExperiencias: (x) => 'Hasta ' + x + ' experiencias.',
+      agregarExperiencia: 'Agregar trabajo', quitar: 'Quitar', subir: 'Subir', bajar: 'Bajar',
+      sinExperiencia: 'Todavía no cargaste ningún trabajo.',
+      topeExperiencias: (x) => 'Hasta ' + x + ' trabajos.',
+      // El título de cada caja: "1. Puesto · Empresa", con lo que haya escrito; vacía, "1. Trabajo nuevo".
+      tituloItem: (n, a, b, nuevo) => {
+        const x = String(a || '').trim();
+        const y = String(b || '').trim();
+        return n + '. ' + (x && y ? x + ' · ' + y : x || y || nuevo);
+      },
+      trabajoNuevo: 'Trabajo nuevo',
+      estudioNuevo: 'Estudio nuevo',
       estudios: 'Estudios y cursos',
       titulo_: 'Título o curso', institucion: 'Institución', estado: 'Estado', terminado: 'Terminado', enCurso: 'En curso',
       tituloAyuda: 'El nombre completo, como figura en el título o el certificado: Licenciatura en…, Maestría en…, Curso de…. El secundario no hace falta si tenés otro estudio.',
@@ -391,6 +405,7 @@ window.T = (function () {
       idiomas: 'Idiomas', idioma: 'Idioma', nivel: 'Nivel', nativo: 'Nativo',
       agregarIdioma: 'Agregar idioma', sinIdiomas: 'Todavía no cargaste idiomas.',
       topeIdiomas: (x) => 'Hasta ' + x + ' idiomas.',
+      cvBloque: 'CV',
       cv: 'CV original',
       subirCv: (mb) => 'Subir CV (PDF, hasta ' + mb + ' MB)',
       cvAyuda: 'Opcional. Si lo subís, Terna lo lee una vez y completa tu perfil con más detalle. No lo manda a nadie tal cual. Lo que va al CV de cada aviso sale de las experiencias y los estudios que cargás acá, no del archivo.',
@@ -413,9 +428,17 @@ window.T = (function () {
       unaPorLinea: 'Una por línea.',
       topeHabilidades: (x) => 'Hasta ' + x + ' habilidades.',
       topeCertificaciones: (x) => 'Hasta ' + x + ' certificaciones.',
-      formularios: 'Datos para formularios',
+      // Hasta 0.6 de brand.md, el bloque "Datos para formularios"; desde 0.7, el subtema Identificación de Datos.
+      identificacion: 'Identificación',
       dni: 'DNI', cuil: 'CUIL', nacimiento: 'Fecha de nacimiento',
-      formulariosAyuda: 'Opcionales. Nunca van en el CV. Si un formulario los pide, Terna los escribe; si no los cargaste, esa postulación queda para hacer a mano. Se guardan cifrados.',
+      identificacionAyuda: 'Opcionales. Nunca van en el CV. Si un formulario los pide, Terna los escribe; si no los cargaste, esa postulación queda para hacer a mano. Se guardan cifrados.',
+      // Tu cuenta (desde brand.md 0.7 en Mi perfil; hasta 0.6, en Preferencias).
+      cuenta: 'Tu cuenta',
+      pausar: 'Pausar mi cuenta',
+      pausarTexto: 'Mientras esté pausada, Terna no busca avisos, no arma documentos ni postula. Tus datos quedan.',
+      pausarCuenta: 'Pausar cuenta', reanudarCuenta: 'Reanudar cuenta',
+      borrar: 'Borrar la cuenta',
+      borrarTexto: 'Para borrar tu cuenta y todo lo tuyo, escribile a Francisco. Se borra en el día. Lo que ya recibió un empleador queda en el empleador.',
       privacidad: 'Tus datos y tus documentos los ves vos sola o solo. Francisco administra Terna y ve la lista de cuentas y el uso, no tu perfil, tus documentos ni tus postulaciones desde la web; como operador del servicio tiene acceso técnico a la base, como cualquier administrador de un sistema. Para puntuar, armar y responder, Terna manda tu perfil y el texto del aviso a un proveedor externo que, según sus términos, no usa esos datos para entrenar.',
       guardadoBusca: 'Guardado. Terna empieza a buscar en la próxima corrida.',
       revisarPrefs: 'Revisar preferencias (opcional)',
@@ -424,11 +447,50 @@ window.T = (function () {
       idiomasSugeridos: ['español', 'inglés', 'portugués', 'italiano', 'francés', 'alemán', 'chino', 'japonés'],
     },
 
+    // Respuestas para formularios (js/respuestas.js; brand.md 0.7 §6.6, datos.md §5.6). Desde 0.7 son un subtema de Mi perfil ›
+    // Datos; hasta 0.6 eran un bloque de Preferencias. Opciones y defaults desde brand.md 0.4.6 (datos.md 0.10, 0016).
+    respuestas: {
+      titulo: 'Respuestas para formularios',
+      intro: 'Lo que Terna responde cuando un formulario pregunta si podés trabajar en un país, cuándo podés empezar o si te mudarías. Van solo al empleador del aviso en que postula.',
+      autorizacion: 'Autorización para trabajar',
+      argentina: 'Argentina',
+      autArgentina: '¿Podés trabajar en Argentina?',
+      autOtros: '¿Y en otros países?',
+      autRemoto: 'Solo remoto desde Argentina', autRemotoAyuda: 'Sin visa ni patrocinio de la empresa.',
+      autVisa: 'Necesitaría que me tramiten la visa',
+      autPaises: 'Países donde ya podés trabajar sin visa (opcional)',
+      autPaisesAyuda: 'Marcá solo los países donde hoy podés trabajar sin hacer ningún trámite.',
+      paises: { DE: 'Alemania', BR: 'Brasil', CA: 'Canadá', CL: 'Chile', ES: 'España', US: 'Estados Unidos', FR: 'Francia', IT: 'Italia', MX: 'México', PT: 'Portugal', GB: 'Reino Unido', UY: 'Uruguay' },
+      autVista: (x) => 'Terna lo anota así: "' + x + '"',
+      autPropias: 'Prefiero escribirlo con mis palabras',
+      autTexto: 'Tu respuesta',
+      autTextoAyuda: 'Si lo dejás vacío, Terna no responde esa pregunta y esas postulaciones te quedan a mano.',
+      // 0020: la nacionalidad, que pidieron formularios reales de Greenhouse.
+      nacionalidad: 'Nacionalidad (opcional)', nacionalidadAyuda: 'Por ejemplo, argentina. Terna la responde solo si un formulario la pregunta.',
+      disponibilidad: 'Disponibilidad',
+      dispInmediata: 'Inmediata', dispDias: 'En unos días',
+      dispCantidad: 'Cantidad de días',
+      dispCantidadAyuda: 'Por ejemplo, 15 o 30 si tenés que avisar en tu trabajo actual.',
+      mudanza: 'Mudanza', mudanzaAyuda: 'Lo que Terna responde si un formulario pregunta si te mudarías por el trabajo.',
+      // 0021 (brand.md 0.4.14)
+      consentimientos: 'Aceptar los consentimientos',
+      consentimientosAyuda: 'Terna marca que sí en las casillas de consentimiento de los formularios: la política de privacidad del empleador, que use tus respuestas demográficas, que te contacte por otras búsquedas, por SMS o WhatsApp, y sus novedades. Si lo apagás, no marca ninguna, y las postulaciones que piden una obligatoria te quedan a mano.',
+      // Los textos que se guardan y que el motor lee (datos.md §5.6, pipeline.md §4.12): no son textos de pantalla, son el formato.
+      formato: {
+        pais: (pais, si) => pais + ': ' + (si ? 'sí' : 'no') + '.',
+        remoto: 'Otros países: solo remoto, sin visa.',
+        visa: 'Otros países: necesitaría que me tramiten la visa.',
+        inmediata: 'inmediata',
+        dias: (n) => n + (n === 1 ? ' día' : ' días'),
+      },
+    },
+
     preferencias: {
       titulo: 'Preferencias',
       intro: 'Lo que Terna usa para filtrar, armar y postular. Se aplica desde la próxima corrida.',
-      // Los bloques de la página (brand.md 0.4.3 §6.7); Respuestas para formularios y Alertas por mail usan su propio título.
-      grupos: { busqueda: 'Búsqueda', paquetes: 'Paquetes y postulación', cuenta: 'Tu cuenta' },
+      // Los bloques de la página (brand.md 0.7 §6.7): Búsqueda, Paquetes y postulación y Alertas por mail, que usa su propio título.
+      // Respuestas para formularios y Tu cuenta pasaron a Mi perfil (T.respuestas, T.perfil.cuenta).
+      grupos: { busqueda: 'Búsqueda', paquetes: 'Paquetes y postulación' },
       umbral: 'Umbral de match',
       umbralAyuda: (min) => 'Terna arma paquetes y postula solo en avisos que lleguen a este número, salvo los de tus puestos si los priorizás. Los que quedan entre ' + min + ' y tu umbral igual aparecen en la lista, sin paquete, y podés pedirlo.',
       // La guía del umbral (brand.md 0.5.1 §6.7; diseno.md 0.15 §9.3): las franjas siguen la rúbrica de match.v2.
@@ -521,48 +583,18 @@ window.T = (function () {
       quitarPalabraClave: (x) => 'Quitar ' + x,
       interesDefecto: 'Me interesa por defecto',
       interesDefectoAyuda: 'En Sí, todo aviso que llega a tu umbral te interesa hasta que digas lo contrario, y Terna arma y postula sola. En No, decidís aviso por aviso y Terna espera tu marca.',
-      armar: 'Armar paquetes', armarAyuda: 'En No, Terna solo busca y puntúa avisos.',
-      paquetesDia: 'Paquetes por día', recomendado: (x) => x + ' (recomendado)',
-      paquetesAyuda: 'Tres buenos valen más que cinco regulares. Terna postula como máximo a los paquetes que armó en el día, y no más de una vez por semana a la misma empresa.',
+      // Desde brand.md 0.7 los paquetes por día son siempre 3 (config.paquetes_por_dia_opciones = {3}, 0028): no hay qué elegir, y la
+      // ayuda de Armar paquetes dice cuántos arma y en qué orden (seleccion.py, pipeline.md §4.9).
+      armar: 'Armar paquetes',
+      armarAyuda: (n) => 'En Sí, Terna arma ' + n + ' paquetes por día, del aviso de mayor match para abajo. Se adelantan los que pediste, '
+        + 'los de tus puestos si los priorizás y, si Terna postula por vos, los que puede postular sola. Terna postula como máximo a esos '
+        + n + ', y no más de una vez por semana a la misma empresa. En No, solo busca y puntúa avisos.',
+      recomendado: (x) => x + ' (recomendado)',
       postularSola: 'Terna postula por vos',
       postularSolaAyuda: 'Terna postula sola en los avisos que te interesan y cuyo formulario es público y conocido. Llena el formulario con tu perfil, sube tu CV y tu carta y responde las preguntas con lo que tu perfil dice. Nunca entra con cuentas tuyas, nunca resuelve captchas y nunca inventa una respuesta. Lo que no puede hacer te lo deja listo para hacerlo a mano. Cada envío queda guardado con las respuestas y una captura.',
       cobertura: (x) => 'De cada 10 avisos, Terna puede postular en ' + x + '.',
       revisar: 'Revisar antes de enviar',
       revisarAyuda: 'En Sí, Terna llena el formulario y espera que lo apruebes desde Postulaciones. Se envía en la corrida siguiente.',
-      si: 'Sí', no: 'No',
-      respuestas: 'Respuestas para formularios',
-      // Respuestas para formularios con opciones y defaults (brand.md 0.4.6 §6.7; datos.md 0.10, 0016)
-      respuestasIntro: 'Lo que Terna responde cuando un formulario pregunta si podés trabajar en un país, cuándo podés empezar o si te mudarías. Van solo al empleador del aviso en que postula.',
-      autorizacion: 'Autorización para trabajar',
-      argentina: 'Argentina',
-      autArgentina: '¿Podés trabajar en Argentina?',
-      autOtros: '¿Y en otros países?',
-      autRemoto: 'Solo remoto desde Argentina', autRemotoAyuda: 'Sin visa ni patrocinio de la empresa.',
-      autVisa: 'Necesitaría que me tramiten la visa',
-      autPaises: 'Países donde ya podés trabajar sin visa (opcional)',
-      autPaisesAyuda: 'Marcá solo los países donde hoy podés trabajar sin hacer ningún trámite.',
-      paises: { DE: 'Alemania', BR: 'Brasil', CA: 'Canadá', CL: 'Chile', ES: 'España', US: 'Estados Unidos', FR: 'Francia', IT: 'Italia', MX: 'México', PT: 'Portugal', GB: 'Reino Unido', UY: 'Uruguay' },
-      autVista: (x) => 'Terna lo anota así: "' + x + '"',
-      autPropias: 'Prefiero escribirlo con mis palabras',
-      autTexto: 'Tu respuesta',
-      autTextoAyuda: 'Si lo dejás vacío, Terna no responde esa pregunta y esas postulaciones te quedan a mano.',
-      disponibilidad: 'Disponibilidad',
-      dispInmediata: 'Inmediata', dispDias: 'En unos días',
-      dispCantidad: 'Cantidad de días',
-      dispCantidadAyuda: 'Por ejemplo, 15 o 30 si tenés que avisar en tu trabajo actual.',
-      mudanza: 'Mudanza', mudanzaAyuda: 'Lo que Terna responde si un formulario pregunta si te mudarías por el trabajo.',
-      nacionalidad: 'Nacionalidad (opcional)', nacionalidadAyuda: 'Por ejemplo, argentina. Terna la responde solo si un formulario la pregunta.',
-      // 0021 (brand.md 0.4.14)
-      consentimientos: 'Aceptar los consentimientos',
-      consentimientosAyuda: 'Terna marca que sí en las casillas de consentimiento de los formularios: la política de privacidad del empleador, que use tus respuestas demográficas, que te contacte por otras búsquedas, por SMS o WhatsApp, y sus novedades. Si lo apagás, no marca ninguna, y las postulaciones que piden una obligatoria te quedan a mano.',
-      // Los textos que se guardan y que el motor lee (datos.md §5.6, pipeline.md §4.12): no son textos de pantalla, son el formato.
-      formato: {
-        pais: (pais, si) => pais + ': ' + (si ? 'sí' : 'no') + '.',
-        remoto: 'Otros países: solo remoto, sin visa.',
-        visa: 'Otros países: necesitaría que me tramiten la visa.',
-        inmediata: 'inmediata',
-        dias: (n) => n + (n === 1 ? ' día' : ' días'),
-      },
       // Alertas por mail (brand.md 0.4.11 §6.7): la dirección, los cinco portales con su estado y las guías de alertas.html.
       alertas: 'Alertas por mail',
       alertasIntro: 'Para que Terna vea las alertas de empleo de LinkedIn, Bumeran, Zonajobs, Computrabajo e Indeed sin entrar a esos sitios.',
@@ -586,11 +618,6 @@ window.T = (function () {
       reenvioAyudaDueno: 'Se arma una vez, desde una computadora: un filtro de tu Gmail que les pone a tus alertas la etiqueta Terna/Alertas.',
       guiasCorreoDueno: [['Gmail', 'gmail'], ['A mano, desde el celular', 'a-mano']],
       alertasNotaDueno: 'Terna lee solo los mails de tu Gmail que tienen la etiqueta Terna/Alertas. Ponésela solo a las alertas.',
-      pausar: 'Pausar mi cuenta',
-      pausarTexto: 'Mientras esté pausada, Terna no busca avisos, no arma documentos ni postula. Tus datos quedan.',
-      pausarCuenta: 'Pausar cuenta', reanudarCuenta: 'Reanudar cuenta',
-      borrar: 'Borrar la cuenta',
-      borrarTexto: 'Para borrar tu cuenta y todo lo tuyo, escribile a Francisco. Se borra en el día. Lo que ya recibió un empleador queda en el empleador.',
       guardar: 'Guardar preferencias',
       guardado: 'Guardado. Se aplica desde la próxima corrida.',
     },
@@ -920,7 +947,8 @@ window.T = (function () {
       palabraClaveLarga: (x) => 'Cada palabra clave, hasta ' + x + ' letras.',
       dias: (a, b) => 'Poné una cantidad de días entre ' + a + ' y ' + b + '.',
       umbral: (a, b) => 'El umbral va de ' + a + ' a ' + b + '.',
-      paquetes: (a, b) => 'Paquetes por día: ' + a + ' o ' + b + '.',
+      // Desde 0028 la lista es una sola opción, {3}: "Paquetes por día: 3." (con más de una, "3 o 5").
+      paquetes: (lista) => 'Paquetes por día: ' + (lista.length > 1 ? lista.slice(0, -1).join(', ') + ' o ' + lista[lista.length - 1] : lista[0]) + '.',
       dni: 'Ese DNI no parece válido.', cuil: 'Ese CUIL no parece válido.', nacimiento: 'Esa fecha de nacimiento no parece válida.',
       credenciales: 'Mail o contraseña incorrectos.',
       sesion: 'Tu sesión venció. Entrá de nuevo.',
@@ -954,7 +982,7 @@ window.T = (function () {
       motivoSinNoInteresa: 'Primero marcá No me interesa.',
       general: 'Algo falló del lado de Terna. Probá de nuevo; si sigue, avisale a Francisco.',
       borrarUsuario: 'No se pudo borrar el usuario. Probá de nuevo.',
-      limiteExperiencias: (x) => 'Hasta ' + x + ' experiencias.',
+      limiteExperiencias: (x) => 'Hasta ' + x + ' trabajos.',
       limiteEstudios: (x) => 'Hasta ' + x + ' estudios.',
       limiteIdiomas: (x) => 'Hasta ' + x + ' idiomas.',
     },
@@ -975,7 +1003,7 @@ window.T = (function () {
         puestos_demasiados: e.puestosDemasiados(8), puesto_largo: e.puestoLargo(60),
         palabras_clave_demasiadas: e.palabrasClaveDemasiadas(15), palabra_clave_larga: e.palabraClaveLarga(40),
         umbral_fuera_de_rango: e.umbral(c.umbral_min || 50, c.umbral_max || 95),
-        paquetes_por_dia_invalido: e.paquetes(...(c.paquetes_por_dia_opciones || [3, 5])),
+        paquetes_por_dia_invalido: e.paquetes(c.paquetes_por_dia_opciones && c.paquetes_por_dia_opciones.length ? c.paquetes_por_dia_opciones : [3]),
         limite_experiencias: e.limiteExperiencias(c.max_experiencias || 15),
         limite_estudios: e.limiteEstudios(c.max_estudios || 15),
         limite_idiomas: e.limiteIdiomas(c.max_idiomas || 10),

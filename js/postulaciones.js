@@ -441,14 +441,14 @@ Terna.pagina('postulaciones', async (ctx) => {
     if (et) sec.append(et);
     return sec;
   }
-  // Dónde se destraba (brand.md 0.4.8 §6.5): el motor deja en respuestas.traba qué campo frenó la postulación. Un dato de
-  // Mi perfil lleva a Mi perfil; DNI, CUIL o fecha de nacimiento, a Datos para formularios (desde 0.4.8 Terna los escribe si
-  // están cargados); lo demás, a las respuestas para formularios de Preferencias, como hasta ahora.
-  // 0021: el analítico se sube en el bloque del CV original; un promedio que no tiene opción en la escala del formulario, en Estudios.
+  // Dónde se destraba (brand.md 0.7 §6.5): el motor deja en respuestas.traba qué campo frenó la postulación. Todo se completa en
+  // Mi perfil (diseno.md 0.19 §9.2): un dato de contacto en Datos; DNI, CUIL o fecha de nacimiento en Identificación (desde
+  // brand.md 0.4.8 Terna los escribe si están cargados); el analítico en CV; el promedio en Estudios; lo demás (autorización,
+  // disponibilidad, nacionalidad, consentimientos…) en Respuestas para formularios, que hasta 0.18 estaba en Preferencias.
   const CAMPOS_PERFIL = { empresa_actual: 'experiencia', telefono: 'datos', linkedin: 'datos', sitio: 'datos', promedio: 'estudios', promedio_sin_opcion: 'estudios',
-    analitico: 'cv', dni: 'formularios' };
+    analitico: 'analitico', dni: 'identificacion' };
   // Lo que Terna no tiene en ningún lado (un archivo que no es el CV ni la carta): no hay dónde completarlo, así que no va link
-  // (pipeline.md 0.3.19 §4.12). Desde 0020 el promedio y el portfolio se cargan en Mi perfil, y la nacionalidad en Preferencias.
+  // (pipeline.md 0.3.19 §4.12).
   const CAMPOS_SIN_LINK = { archivo: true };
   function campoTraba(a) { return a.respuestas && a.respuestas.traba ? a.respuestas.traba.campo || null : null; }
   function linkTraba(a) {
@@ -456,7 +456,7 @@ Terna.pagina('postulaciones', async (ctx) => {
     const campo = campoTraba(a);
     if (CAMPOS_SIN_LINK[campo]) return null;
     if (CAMPOS_PERFIL[campo]) return h('a', { href: 'perfil.html#' + CAMPOS_PERFIL[campo], text: T.postulaciones.completarPerfil });
-    return h('a', { href: 'preferencias.html#respuestas', text: T.postulaciones.completarRespuestas });
+    return h('a', { href: 'perfil.html#respuestas', text: T.postulaciones.completarRespuestas });
   }
   function captura(a) {
     const caja = h('div', { class: 'ficha-seccion' });
