@@ -446,7 +446,7 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 /* Las tablas de Avisos y Postulaciones se adaptan a su propio ancho, no al de la ventana (diseno.md 0.8 §7.6 y §8.6): con el
    cajón abierto o con el carril, lo que no entra pasa a la línea de apoyo debajo del puesto en vez de desplazarse. */
 .tabla-avisos, .tabla-postulaciones { container-type: inline-size; container-name: tabla; }
-.tabla-avisos .linea-apoyo, .tabla-postulaciones .apoyo-empresa, .tabla-postulaciones .apoyo-requisitos { display: none; }
+.tabla-avisos .linea-apoyo, .tabla-postulaciones .apoyo-empresa, .tabla-postulaciones .apoyo-recorrido { display: none; }
 .tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
 .tabla th {
   text-align: left; font-weight: 500; color: var(--tinta-suave); font-size: 13px; padding: 10px; white-space: nowrap;
@@ -781,24 +781,25 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .tabla-avisos .col-empresa { display: none; }
   .tabla-avisos .apoyo-empresa { display: inline; }
 }
-/* Postulaciones (diseno.md 0.16 §8.6), en este orden: Fecha se oculta (la etapa la dice en las enviadas y postuladas, y la ficha);
-   Empresa pasa a los atributos del puesto; por último Requisitos pasa debajo del puesto, porque es lo que se quiere ver de un
-   vistazo. Medido 05/11/2026 en el banco: con todo a la vista la tabla necesita 834 px (850 con la etiqueta más larga, "Nivel más
-   bajo que el tuyo"), sin Fecha 735 (751), sin Fecha y con Empresa en los atributos 654 (670) y con Requisitos también debajo del
-   puesto 477. */
+/* Postulaciones (diseno.md 0.17 §8.6): Requisitos y Fecha se ven siempre (lo pidió Francisco). Cuando la caja no alcanza se
+   acomoda lo demás: hasta 880 px Empresa pasa a los atributos del puesto, el recorrido pasa arriba de la etapa, en su misma
+   celda, las celdas pierden 4 px de relleno a cada lado y Puesto se queda con el 40 % del ancho (sin eso la etapa, que es larga
+   en las trabas, se lleva el lugar y el puesto se parte en cinco renglones); hasta 650 el veredicto y la fecha pueden partirse
+   en varias líneas. Dejarlos enteros, darle al veredicto un mínimo de 108 px o no cortar "hace 3" alarga las filas (el lugar se
+   lo sacan al puesto) y a 768 px deja la tabla sin margen. Medido 05/11/2026 en el banco: con todo a la vista la tabla necesita
+   834 px (850 con la etiqueta más larga, "Nivel más bajo que el tuyo"), acomodada 609 (625), con el veredicto partido 526 y
+   con la fecha también 481. */
 @container tabla (max-width: 880px) {
-  .tabla-postulaciones .col-fecha { display: none; }
-}
-@container tabla (max-width: 780px) {
-  .tabla-postulaciones .col-empresa { display: none; }
+  .tabla-postulaciones .col-empresa, .tabla-postulaciones .col-recorrido { display: none; }
   .tabla-postulaciones .apoyo-empresa { display: inline; }
+  .tabla-postulaciones .apoyo-recorrido { display: block; margin-bottom: 6px; }
+  .tabla-postulaciones .tabla th, .tabla-postulaciones .tabla td { padding-left: 6px; padding-right: 6px; }
+  .tabla-postulaciones .col-puesto { width: 40%; }
 }
-@container tabla (max-width: 700px) {
-  .tabla-postulaciones .col-requisitos { display: none; }
-  .tabla-postulaciones .apoyo-requisitos { display: block; margin-top: 4px; }
+@container tabla (max-width: 650px) {
+  .tabla-postulaciones .col-requisitos .chip-texto { white-space: normal; align-items: flex-start; }
+  .tabla-postulaciones td.col-fecha { white-space: normal; }
 }
-/* Debajo del puesto, el veredicto puede partirse en dos líneas: así no le pone a la celda un mínimo de 170 px. */
-.tabla-postulaciones .apoyo-requisitos .chip-texto { white-space: normal; align-items: flex-start; }
 
 /* ---------- 8. Escritorio ancho: 1200 px o más ---------- */
 @media (min-width: 1200px) {

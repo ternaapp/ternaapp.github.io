@@ -240,15 +240,15 @@ Terna.pagina('postulaciones', async (ctx) => {
       icono('i-adelante', 'i-adelante'));
     return boton;
   }
-  // El veredicto de requisitos (diseno.md 0.16 §8.3 y §8.6; brand.md 0.5.2 §6.5): en la fila de celular, una línea debajo de los
-  // atributos; en la tabla, su columna, que cuando la caja no alcanza pasa debajo del puesto (.apoyo-requisitos).
+  // El veredicto de requisitos (diseno.md 0.17 §8.3 y §8.6; brand.md 0.5.3 §6.5): en la fila de celular, una línea debajo de los
+  // atributos; en la tabla, su columna, que se ve siempre: cuando la caja no alcanza se acomodan las demás.
   function lineaCalificacion(a) {
     const chip = Aviso.chipCalificacion(a, false);
     return chip ? h('span', { class: 'linea-calificacion' }, chip) : null;
   }
   function tabla(vis) {
     const C = T.postulaciones.columnas;
-    const columnas = [[C.match, 'der'], [C.puesto], [C.empresa, 'col-empresa'], [C.requisitos, 'col-requisitos'], [C.recorrido], [C.etapa], [C.fecha, 'col-fecha'], [C.aviso]];
+    const columnas = [[C.match, 'der'], [C.puesto, 'col-puesto'], [C.empresa, 'col-empresa'], [C.requisitos, 'col-requisitos'], [C.recorrido, 'col-recorrido'], [C.etapa, 'col-etapa'], [C.fecha, 'col-fecha'], [C.aviso]];
     return h('div', { class: 'tabla-caja tabla-postulaciones' }, h('table', { class: 'tabla' },
       h('thead', null, h('tr', null, columnas.map(([texto, clase]) => h('th', { scope: 'col', class: clase || null, text: texto })))),
       h('tbody', null, vis.map(filaTabla))));
@@ -257,17 +257,18 @@ Terna.pagina('postulaciones', async (ctx) => {
     const llega = Aviso.llega(a, umbral);
     const linea = Aviso.lineaEtapa(a, config);
     const calificacion = Aviso.chipCalificacion(a);
+    // El recorrido va en su columna y, cuando la caja no alcanza, arriba de la etapa (.apoyo-recorrido; diseno.md 0.17 §8.6).
+    const recorrido = () => [Aviso.recorrido(a), oculto(T.postulaciones.recorridoAccesible(etiquetaEtapa(a))),
+      h('div', { class: 'etapa-texto ' + Aviso.claseEtapa(a), 'aria-hidden': 'true', text: etiquetaEtapa(a) })];
     const tr = h('tr', { tabindex: '0', dataset: { match: a.match_id, control: 'abrir' } },
       h('td', { class: 'tabla-match' + (llega || a.match === null ? '' : ' bajo') }, h('span', { 'aria-hidden': 'true', text: a.match === null ? '—' : String(a.match) }),
         oculto(a.match === null ? T.avisos.sinMatch : T.avisos.matchAccesible(a.match, llega))),
       h('td', null, h('div', { class: 'aviso-puesto', text: a.puesto }), h('div', { class: 'atributos' },
-        a.empresa ? h('span', { class: 'apoyo-empresa', text: a.empresa + ' · ' }) : null, Aviso.lugar(a), a.modalidad ? ' · ' + T.avisos.modalidadMin[a.modalidad] : ''),
-        calificacion ? h('div', { class: 'apoyo-requisitos' }, Aviso.chipCalificacion(a)) : null),
+        a.empresa ? h('span', { class: 'apoyo-empresa', text: a.empresa + ' · ' }) : null, Aviso.lugar(a), a.modalidad ? ' · ' + T.avisos.modalidadMin[a.modalidad] : '')),
       h('td', { class: 'col-empresa', text: a.empresa || '' }),
       h('td', { class: 'col-requisitos' }, calificacion),
-      h('td', null, Aviso.recorrido(a), oculto(T.postulaciones.recorridoAccesible(etiquetaEtapa(a))),
-        h('div', { class: 'etapa-texto ' + Aviso.claseEtapa(a), 'aria-hidden': 'true', text: etiquetaEtapa(a) })),
-      h('td', null, linea ? h('div', { class: 'traba', text: linea }) : null),
+      h('td', { class: 'col-recorrido' }, recorrido()),
+      h('td', { class: 'col-etapa' }, h('div', { class: 'apoyo-recorrido' }, recorrido()), linea ? h('div', { class: 'traba', text: linea }) : null),
       h('td', { class: 'num sin-corte col-fecha', text: Terna.relativa(fechaEtapa(a)) }),
       h('td', null, h('a', { class: 'btn btn-texto btn-chico', href: a.url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(a.fuente) }, icono('i-abrir'))));
     tr.addEventListener('click', (e) => { if (!e.target.closest('a, button')) abrirFicha(a, tr); });
