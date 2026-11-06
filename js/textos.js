@@ -680,7 +680,7 @@ window.T = (function () {
       revisarAyuda: 'En Sí, Terna llena el formulario y espera que lo apruebes desde Postulaciones. Se envía en la corrida siguiente.',
       // Alertas por mail (brand.md 0.4.11 §6.7): la dirección, los cinco portales con su estado y las guías de alertas.html.
       alertas: 'Alertas por mail',
-      alertasIntro: 'Para que Terna vea las alertas de empleo de LinkedIn, Bumeran, Zonajobs, Computrabajo e Indeed sin entrar a esos sitios.',
+      alertasIntro: 'Para que Terna vea las alertas de empleo de LinkedIn, Bumeran, Zonajobs, Computrabajo e Indeed sin entrar con tu cuenta a esos sitios.',
       copiarDireccion: 'Copiar dirección',
       alertasPasos: ['En cada portal que uses, creá una alerta de empleo diaria por mail.', 'Hacé que tu correo le reenvíe solo esas alertas a tu dirección de Terna, la de arriba.', 'Al día siguiente de cada alerta, sus avisos aparecen en Avisos.'],
       // La dueña del buzón de Terna (Terna.alertasMail) no reenvía: etiqueta sus alertas en su Gmail (brand.md 0.4.17 §6.7).
@@ -727,16 +727,16 @@ window.T = (function () {
         // Las piezas con un tercer elemento se muestran solo a quien no es ('resto') o a quien es ('dueno') la dueña del
         // buzón de Terna (Terna.alertasMail): Gmail no la deja reenviarse a sí misma, así que etiqueta sus alertas.
         { clave: 'como-funciona', titulo: 'Cómo funciona', piezas: [
-          ['p', 'Los portales de empleo te mandan por mail los avisos nuevos de lo que buscás. Si esos mails le llegan a Terna, Terna los lee cada mañana, sin entrar a los portales, y suma los avisos a tu lista.'],
+          ['p', 'Los portales de empleo te mandan por mail los avisos nuevos de lo que buscás. Si esos mails le llegan a Terna, Terna los lee cada mañana, sin entrar con tu cuenta a los portales, y suma los avisos a tu lista.'],
           ['pasos', [
             '*Creá las alertas* en los portales que uses: una por cada puesto que buscás, diaria y por mail.',
             '*Armá en tu correo* una carpeta para las alertas y un filtro que se las reenvía solo a tu dirección de Terna. Se hace una vez, desde una computadora.',
-            '*Listo.* Al día siguiente de cada alerta, sus avisos aparecen en Avisos. Si Terna encuentra el mismo aviso en la página de empleos de la empresa, lo trae completo; si no, te pide que pegues el texto para darte el match.',
+            '*Listo.* Al día siguiente de cada alerta, sus avisos aparecen en Avisos. Terna busca el texto completo de cada uno en la página de empleos de la empresa y, si es de LinkedIn, en la página pública del aviso, sin entrar con ninguna cuenta; si no lo consigue, te pide que pegues el texto para darte el match.',
           ], 'resto'],
           ['pasos', [
             '*Creá las alertas* en los portales que uses: una por cada puesto que buscás, diaria y por mail.',
             '*Armá en tu Gmail* un filtro que les ponga a tus alertas la etiqueta *Terna/Alertas*. Se hace una vez, desde una computadora.',
-            '*Listo.* Al día siguiente de cada alerta, sus avisos aparecen en Avisos. Si Terna encuentra el mismo aviso en la página de empleos de la empresa, lo trae completo; si no, te pide que pegues el texto para darte el match.',
+            '*Listo.* Al día siguiente de cada alerta, sus avisos aparecen en Avisos. Terna busca el texto completo de cada uno en la página de empleos de la empresa y, si es de LinkedIn, en la página pública del aviso, sin entrar con ninguna cuenta; si no lo consigue, te pide que pegues el texto para darte el match.',
           ], 'dueno'],
           ['subtitulo', 'Tu dirección de Terna', 'resto'],
           ['p', 'Es la dirección de mail a la que le mandás tus alertas. Es solo tuya: por ella Terna sabe que esas alertas son tuyas. Lleva el nombre de Francisco porque llega a una casilla de Gmail suya, en una etiqueta aparte que lee Terna.', 'resto'],
@@ -932,14 +932,14 @@ window.T = (function () {
             'En Preferencias, *Alertas por mail* dice para cada portal cuándo llegó su última alerta. Si dice *Sin alertas en los últimos 7 días*, fijate que la alerta llegue a tu etiqueta o carpeta *Alertas de empleo* y que el filtro o la regla tenga tu dirección de Terna.',
             'En Gmail, si *Reenviarlo a* no muestra tu dirección de Terna, falta que Francisco confirme la parte 2: avisale.',
             'Si dice *Llegaron mails, pero sin avisos*, avisale a Francisco: puede ser que el portal haya cambiado la forma de sus mails.',
-            'Los avisos de una alerta llegan sin el texto completo. Si Terna no lo encuentra en la página de empleos de la empresa, en Avisos tocá *Pegar el texto del aviso* para que lo puntúe.',
+            'Los avisos de una alerta llegan sin el texto completo. Si Terna no lo encuentra en la página de empleos de la empresa ni, en los de LinkedIn, en la página pública del aviso, en Avisos tocá *Pegar el texto del aviso* para que lo puntúe.',
             'Para dejar de mandarle alertas a Terna, borrá el filtro (Gmail: *Filtros y direcciones bloqueadas*) o la regla (Outlook: *Reglas*), o la alerta en el portal.',
           ], 'resto'],
           ['lista', [
             '*Terna lee las alertas una vez por día*, a la mañana: lo que llega hoy aparece mañana.',
             'En Preferencias, *Alertas por mail* dice para cada portal cuándo llegó su última alerta. Si dice *Sin alertas en los últimos 7 días*, fijate en tu Gmail que la alerta tenga la etiqueta *Terna/Alertas*.',
             'Si dice *Llegaron mails, pero sin avisos*, puede ser que el portal haya cambiado la forma de sus mails y haya que ajustar cómo Terna los lee.',
-            'Los avisos de una alerta llegan sin el texto completo. Si Terna no lo encuentra en la página de empleos de la empresa, en Avisos tocá *Pegar el texto del aviso* para que lo puntúe.',
+            'Los avisos de una alerta llegan sin el texto completo. Si Terna no lo encuentra en la página de empleos de la empresa ni, en los de LinkedIn, en la página pública del aviso, en Avisos tocá *Pegar el texto del aviso* para que lo puntúe.',
             'Para que Terna deje de leer tus alertas, borrá el filtro (*Filtros y direcciones bloqueadas*) o la alerta en el portal.',
           ], 'dueno'],
           ['ir', ['Ver mis portales en Preferencias', 'preferencias.html#alertas']],
