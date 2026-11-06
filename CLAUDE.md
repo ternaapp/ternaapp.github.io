@@ -7,7 +7,7 @@ La web de Terna: HTML, CSS y JS planos, sin build, publicados con GitHub Pages d
 - Once páginas: `index.html` (Inicio), `avisos.html`, `postulaciones.html`, `perfil.html`, `preferencias.html`, `invitaciones.html`, `admin.html`, `alertas.html` (las guías de alertas por mail, sin pestaña propia: marca Preferencias), y sin sesión `entrar.html`, `crear-cuenta.html`, `contrasena.html`. Cada una trae su esqueleto y carga los scripts con `defer`.
 - `css/terna.css`: tokens de diseno.md §12, componentes, y los cortes 768 (contenido de escritorio), 1024 (barra única) y 1200 (cajón en línea).
 - `js/textos.js`: todos los textos (copiados de brand.md) y el mapa de claves de error de datos.md §11. El código no escribe textos propios.
-- `js/iconos.js`: el sprite de diseno.md §11.2. `js/comun.js`: cliente de Supabase, sesión, barra, bandas, avisos breves, hojas, diálogos, links firmados. `js/aviso.js`: piezas comunes de Avisos y Postulaciones. Un `js/{pagina}.js` por página.
+- `js/iconos.js`: el sprite de diseno.md §11.2. `js/comun.js`: cliente de Supabase, sesión, barra, bandas, avisos breves, hojas, diálogos, links firmados. `js/aviso.js`: piezas comunes de Avisos y Postulaciones. `js/puestos.js`: qué aviso es de tus puestos ("Priorizar mis puestos"), con la misma regla que el motor (`que_buscas.puesto_buscado`; el banco compara las dos), para Avisos y Preferencias. Un `js/{pagina}.js` por página.
 
 ## Reglas que no se negocian
 
@@ -24,7 +24,7 @@ En `terna-motor/pruebas_web/` (qa.md §2.6; necesita PostgreSQL local, Python co
 
 ```
 PGHOST=localhost PGPORT=5432 PGUSER=postgres pruebas_web/preparar.sh   # base local terna_web con A, B y un admin
-python pruebas_web/probar_web.py        # 57 casos con aserciones (o -k avisos, -k alta…)
+python pruebas_web/probar_web.py        # 61 casos con aserciones (o -k avisos, -k puestos, -k alta…)
 python pruebas_web/recorrido.py         # capturas de cada página a 390, 320, 768, 1024 y 1280 px
 ```
 

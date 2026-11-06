@@ -5,7 +5,9 @@
    formularios (con opciones y defaults desde 0016), Alertas por mail y Tu cuenta.
    Desplegables en celular y carril desde 768 px, con Terna.porBloques (comun.js), igual que Mi perfil.
    "Guardar preferencias" escribe todo; las palabras clave, solo si cambiaron en la página (desde un aviso se suman con
-   sumar_palabra_clave, y una pestaña abierta antes no las pisa). */
+   sumar_palabra_clave, y una pestaña abierta antes no las pisa). Desde 0027 (datos.md 0.22; brand.md 0.5.4 §6.7; diseno.md 0.18
+   §9.3), "Priorizar mis puestos" va debajo de "Puestos que buscás" y solo con algún puesto escrito; sin la columna no se muestra
+   y vale Sí, como en el motor. La regla de qué aviso es de tus puestos está en js/puestos.js. */
 'use strict';
 
 Terna.pagina('preferencias', async (ctx) => {
@@ -31,7 +33,7 @@ Terna.pagina('preferencias', async (ctx) => {
     sb.from('alertas_mail').select('portal, recibido_en, procesado_en, avisos_detectados').eq('usuario_id', uid).order('procesado_en', { ascending: false }).limit(200),
     // La guía del umbral (diseno.md 0.15 §9.3; datos.md 0.21.2 §14): el match de los avisos propios; la vista trae solo los
     // visibles y RLS, solo los de la persona. Se cuenta en el navegador. Si la lectura falla, la guía va sin cuentas.
-    sb.from('mis_avisos').select('match, interes, creado_en').limit(1000),
+    sb.from('mis_avisos').select('match, interes, creado_en, puesto').limit(1000),
   ]);
   parar();
   // Las alertas que llegaron (0019; la retención las borra a los 7 días). Si no se pueden leer, los portales van sin estado.
@@ -39,10 +41,12 @@ Terna.pagina('preferencias', async (ctx) => {
   // Los avisos que cuentan para la guía: con match y sin "No me interesa" (los que se ven en Avisos con un número).
   const avisosGuia = lecturaAvisos.error ? null
     : (lecturaAvisos.data || []).filter((a) => a.match !== null && a.match !== undefined && a.interes !== 'no_me_interesa')
-      .map((a) => ({ match: Number(a.match), creado: Date.parse(a.creado_en) || 0 }));
+      .map((a) => ({ match: Number(a.match), creado: Date.parse(a.creado_en) || 0, puesto: a.puesto || '' }));
   const data = lectura.data;
   if (lectura.error || !data) { Terna.errorDeCarga(raiz, lectura.error); return; }
   const conClaves = Object.prototype.hasOwnProperty.call(data, 'palabras_clave');
+  // 0027: "Priorizar mis puestos". Sin la columna, el interruptor no aparece y la guía cuenta como con Sí (el default del motor).
+  const conPriorizar = Object.prototype.hasOwnProperty.call(data, 'priorizar_puestos');
   const v = Object.assign({}, data, {
     modalidades: (data.modalidades || []).slice(),
     niveles: (data.niveles || NIVELES).slice(),
@@ -50,6 +54,7 @@ Terna.pagina('preferencias', async (ctx) => {
     puestos_objetivo: (data.puestos_objetivo || []).slice(),
     palabras_clave: conClaves ? (data.palabras_clave || []).slice() : [],
     usar_palabras_clave: conClaves ? !!data.usar_palabras_clave : false,
+    priorizar_puestos: conPriorizar ? data.priorizar_puestos !== false : true,
   });
   const huellaClaves = () => JSON.stringify([v.palabras_clave, !!v.usar_palabras_clave]);
   let clavesGuardadas = huellaClaves();
@@ -158,6 +163,16 @@ Terna.pagina('preferencias', async (ctx) => {
     const arriba = h('div', { class: 'umbral-guia' },
       h('p', { class: 'umbral-intro', text: G.intro(config.umbral_default || 70) }), tabla, h('p', { class: 'campo-ayuda', text: G.nota(piso) }));
     const resumen = h('p', { class: 'umbral-resumen', id: id('umbral-resumen') });
+    // Los avisos de la lista que son de tus puestos (brand.md 0.5.4 §6.7), recalculados solo cuando cambian los puestos.
+    let tuyos = { clave: null, cuales: new Set() };
+    function deTusPuestos() {
+      const puestos = v.priorizar_puestos ? v.puestos_objetivo : [];
+      const clave = JSON.stringify(puestos);
+      if (tuyos.clave !== clave) {
+        tuyos = { clave, cuales: new Set(puestos.length && lista ? lista.filter((a) => Puestos.buscado(a.puesto, puestos)) : []) };
+      }
+      return tuyos.cuales;
+    }
     function actualizar() {
       const u = Number(v.umbral);
       let ultima = null;
@@ -184,7 +199,10 @@ Terna.pagina('preferencias', async (ctx) => {
       if (!lista.length) { resumen.textContent = G.sinLista; return; }
       const llegan = lista.filter((a) => a.match >= u);
       const partes = [G.llegan(u, llegan.length, lista.length)];
-      if (llegan.length) partes.push(v.armar_paquetes ? G.arma(v.paquetes_por_dia || defectoPaquetes) : T.inicio.resultado.armar_no);
+      const mios = deTusPuestos();
+      const ademas = mios.size ? lista.filter((a) => a.match < u && mios.has(a)).length : 0;
+      if (ademas) partes.push(G.puestos(ademas));
+      if (llegan.length || ademas) partes.push(v.armar_paquetes ? G.arma(v.paquetes_por_dia || defectoPaquetes) : T.inicio.resultado.armar_no);
       partes.push(G.semanas(llegan.filter((a) => a.creado >= hace14).length, u));
       resumen.textContent = partes.join(' ');
     }
@@ -294,12 +312,35 @@ Terna.pagina('preferencias', async (ctx) => {
     });
     v.puestos_objetivo = leerPuestos();
     cuentaPue.textContent = P.puestosCuenta(v.puestos_objetivo.length, MAX_PUESTOS);
+    verPriorizar();
+    guia.actualizar();
+  }
+  /* Priorizar mis puestos (0027; brand.md 0.5.4 §6.7; diseno.md 0.18 §9.3): el interruptor, en Sí por defecto, solo con algún
+     puesto escrito (aparece y se va mientras se escribe o se borra; el valor se conserva). Con Sí, debajo, los puestos muy
+     generales para priorizar ("Analista"). Mueve también la cuenta de la guía del umbral. */
+  const idPri = id('priorizar');
+  const idPriAyuda = id('priorizar-ayuda');
+  const generales = h('p', { class: 'campo-nota', hidden: true });
+  const sPri = conPriorizar ? h('div', { class: 'seccion priorizar', dataset: { titulo: idPri } }) : null;
+  if (sPri) {
+    const boton = interruptor(sPri, v.priorizar_puestos, (x) => { v.priorizar_puestos = x; verPriorizar(); guia.actualizar(); });
+    boton.setAttribute('aria-describedby', idPriAyuda);
+    sPri.append(h('div', { class: 'interruptor-fila' }, h('span', { id: idPri, class: 'campo-etiqueta', text: P.priorizar }), boton),
+      h('p', { class: 'campo-ayuda', id: idPriAyuda, text: P.priorizarAyuda(config.piso_match || 50) }), generales);
+  }
+  function verPriorizar() {
+    if (!sPri) return;
+    const hay = v.puestos_objetivo.length > 0;
+    sPri.hidden = !hay;
+    const muy = hay && v.priorizar_puestos ? v.puestos_objetivo.filter((x) => Puestos.general(x)) : [];
+    generales.hidden = !muy.length;
+    generales.textContent = muy.length ? P.puestosGenerales(muy) : '';
   }
   v.puestos_objetivo.slice(0, MAX_PUESTOS).forEach((x) => listaPue.append(filaPuesto(x)));
   ordenarPuestos();
   const sPue = h('div', { class: 'subbloque', role: 'group', 'aria-labelledby': idPue },
     h('div', { class: 'interruptor-fila' }, h('h3', { id: idPue, class: 'tarjeta-titulo', text: P.puestos }), cuentaPue),
-    listaPue, h('p', { class: 'campo-ayuda', id: 'ayuda-puestos', text: P.puestosAyuda }), error('err-puestos'));
+    listaPue, h('p', { class: 'campo-ayuda', id: 'ayuda-puestos', text: P.puestosAyuda }), error('err-puestos'), sPri);
   // Un grupo de casillas en chips, como Modalidades: al menos una.
   function grupoChips(titulo, clave, valores, etiquetas, ayuda, idErr) {
     const idT = id('t');
@@ -611,6 +652,7 @@ Terna.pagina('preferencias', async (ctx) => {
     };
     const clavesCambiaron = conClaves && huellaClaves() !== clavesGuardadas;
     if (clavesCambiaron) { fila.palabras_clave = v.palabras_clave; fila.usar_palabras_clave = !!v.usar_palabras_clave; }
+    if (conPriorizar) fila.priorizar_puestos = !!v.priorizar_puestos;
     const { error: e } = await sb.from('preferencias').update(fila).eq('usuario_id', uid);
     bGuardar.removeAttribute('aria-disabled');
     if (e) {

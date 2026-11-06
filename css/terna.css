@@ -837,6 +837,9 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 .puesto-numero { font-size: 15px; color: var(--tinta-suave); text-align: right; }
 .puesto-nuevo .control { border-style: dashed; }
 .puestos-cuenta { font-size: 13px; color: var(--tinta-suave); }
+/* Priorizar mis puestos (diseno.md 0.18 §9.3): debajo de la lista de puestos; la nota de los puestos muy generales, en tinta. */
+.subbloque .priorizar { gap: 6px; margin-top: 4px; }
+.campo-nota { font-size: 14px; color: var(--tinta); line-height: 1.4; }
 @media (min-width: 768px) {
   .cabecera-pagina.cabecera-fija {
     position: sticky; top: 59px; z-index: 15; max-width: 1024px; justify-content: flex-start; column-gap: 16px;

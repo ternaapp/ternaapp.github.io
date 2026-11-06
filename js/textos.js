@@ -106,6 +106,11 @@ window.T = (function () {
       filtrarCon: (x) => 'Filtrar (' + x + ')',
       ordenarPor: 'Ordenar por',
       ordenMatch: 'Match', ordenNuevos: 'Más nuevos',
+      // Priorizar mis puestos (brand.md 0.5.4 §6.4; diseno.md 0.18 §7.2 y §7.3; datos.md 0.22, 0027)
+      ordenPuestos: 'Tus puestos primero',
+      tuPuesto: 'Tu puesto',
+      tuPuestoExplicacion: (puesto, llega) => 'Está en tus puestos ("' + puesto + '"). Terna lo pone primero para el paquete y la postulación'
+        + (llega ? '.' : ', aunque no llegue a tu umbral.'),
       filtros: {
         interes: 'Interés', paquete: 'Paquete', postulacion: 'Postulación', modalidad: 'Modalidad', alcance: 'Alcance',
         matchMinimo: 'Match mínimo', matchMinimoChip: (x) => 'Match mínimo: ' + x,
@@ -122,6 +127,8 @@ window.T = (function () {
         sin: (x) => 'sin ' + x,
         nDe: (x, total) => x + ' de ' + total,
         matchResumen: (x) => x + ' o más',
+        matchResumenPuestos: (x) => x + ' o más y tus puestos',
+        matchPuestos: (piso) => 'Tus puestos se ven desde ' + piso + ', aunque no lleguen a este número.',
         cambiadoAccesible: ', cambiado',
         segunPreferencias: 'Según tus preferencias.',
         cambiarPreferencias: 'Cambiarlas',
@@ -428,7 +435,7 @@ window.T = (function () {
       // Los bloques de la página (brand.md 0.4.3 §6.7); Respuestas para formularios y Alertas por mail usan su propio título.
       grupos: { busqueda: 'Búsqueda', paquetes: 'Paquetes y postulación', cuenta: 'Tu cuenta' },
       umbral: 'Umbral de match',
-      umbralAyuda: (min) => 'Terna arma paquetes y postula solo en avisos que lleguen a este número. Los que quedan entre ' + min + ' y tu umbral igual aparecen en la lista, sin paquete, y podés pedirlo.',
+      umbralAyuda: (min) => 'Terna arma paquetes y postula solo en avisos que lleguen a este número, salvo los de tus puestos si los priorizás. Los que quedan entre ' + min + ' y tu umbral igual aparecen en la lista, sin paquete, y podés pedirlo.',
       // La guía del umbral (brand.md 0.5.1 §6.7; diseno.md 0.15 §9.3): las franjas siguen la rúbrica de match.v2.
       guiaUmbral: {
         intro: (defecto) => 'Cuanto más alto, menos avisos y más parecidos a tu trabajo. Si dudás, ' + defecto + '.',
@@ -457,6 +464,9 @@ window.T = (function () {
           if (k === 0) return 'Con ' + u + ', no llega ninguno de tus ' + n(total) + ' avisos.';
           return 'Con ' + u + ', ' + plural(k, 'llega 1', 'llegan ' + n(k)) + ' de tus ' + n(total) + ' avisos.';
         },
+        // Con Priorizar mis puestos (brand.md 0.5.4 §6.7): los de tus puestos que no llegan y Terna toma igual.
+        puestos: (k) => (k === 1 ? 'Por Priorizar mis puestos, Terna toma además 1 de tus puestos que no llega.'
+          : 'Por Priorizar mis puestos, Terna toma además ' + n(k) + ' de tus puestos que no llegan.'),
         arma: (p) => 'Terna arma hasta ' + p + ' por día entre los que todavía no tienen paquete.',
         semanas: (k, u) => (k === 0 ? 'En las últimas dos semanas no llegó ninguno nuevo con ' + u + ' o más.'
           : k === 1 ? 'En las últimas dos semanas llegó 1 nuevo con ' + u + ' o más.'
@@ -473,6 +483,16 @@ window.T = (function () {
       puestoPrimero: 'Por ejemplo, Sales Operations',
       puestoOtro: 'Agregar otro puesto',
       quitarPuesto: (x) => 'Quitar ' + x,
+      // Priorizar mis puestos (brand.md 0.5.4 §6.7; datos.md 0.22, 0027): solo con algún puesto escrito; en Sí por defecto.
+      priorizar: 'Priorizar mis puestos',
+      priorizarAyuda: (piso) => 'En Sí, Terna arma y postula primero los avisos de estos puestos, aunque no lleguen a tu umbral (desde ' + piso + '). '
+        + 'Cuenta cuando el título del aviso tiene el puesto entero, como lo escribiste. Siguen tus paquetes por día: si estos avisos los llenan, '
+        + 'los demás esperan. Lo que no quieras, como pasantías, sacalo en Nivel de los puestos.',
+      puestosGenerales: (lista) => {
+        const q = lista.map((x) => '"' + x + '"');
+        const nombres = q.length === 1 ? q[0] : q.slice(0, -1).join(', ') + ' y ' + q[q.length - 1];
+        return 'Para priorizar, ' + nombres + (q.length === 1 ? ' es muy general: sumale el área.' : ' son muy generales: sumales el área.');
+      },
       niveles: 'Nivel de los puestos',
       nivel: { pasantia: 'Pasantía', junior: 'Junior', semi_senior: 'Semi Senior', senior: 'Senior', lider: 'Líder o gerente', director: 'Director' },
       nivelesAyuda: 'Destildá los que no quieras. Si un aviso no dice el nivel, igual te aparece.',
