@@ -1,7 +1,8 @@
 /* Terna · js/preferencias.js
-   Preferencias (diseno.md 0.19 §9.3 y §10.17; brand.md 0.7 §6.7; datos.md 0.24, 0019, 0026 y 0028): las columnas de preferencias (con "Qué buscás", 0015, y las palabras clave, 0026), la guía del umbral (con los avisos propios de mis_avisos) y
+   Preferencias (diseno.md 0.20 §9.3 y §10.17; brand.md 0.7.1 §6.7; datos.md 0.24, 0019, 0026 y 0028): las columnas de preferencias (con "Qué buscás", 0015, y las palabras clave, 0026), la guía del umbral (con los avisos propios de mis_avisos) y
    las alertas por mail (la dirección, cada portal con su última alerta y el link a su guía en alertas.html), en tres bloques:
-   Búsqueda, Paquetes y postulación y Alertas por mail. Desde 0.19 las respuestas para formularios y Tu cuenta están en Mi perfil
+   Búsqueda, Paquetes y postulación y Alertas por mail. Desde 0.20 Paquetes y postulación va en dos subtemas, Paquetes y
+   Postulación, como Mi perfil › Datos. Desde 0.19 las respuestas para formularios y Tu cuenta están en Mi perfil
    (perfil.js, respuestas.js): sus hash de antes (#respuestas, #cuenta) llevan ahí, y esta página ya no escribe esas columnas.
    Desde 0028 los paquetes por día son siempre 3: no hay qué elegir y la ayuda de Armar paquetes dice cuántos arma y en qué orden.
    Desplegables en celular y carril desde 768 px, con Terna.porBloques (comun.js), igual que Mi perfil; los ítems se arman con
@@ -74,6 +75,8 @@ Terna.pagina('preferencias', async (ctx) => {
 
   /* ---------- Piezas (comun.js: las mismas de Mi perfil; diseno.md 0.19 §10.17) ---------- */
   const { id, item, grupoRadios, interruptor, conInterruptor } = Terna.piezas({ prefijo: 'pref', nivel: 'h3' });
+  // Las de Paquetes y postulación van dentro de un subtema, así que su título es un <h4> (diseno.md 0.20 §9.3).
+  const enTema = Terna.piezas({ prefijo: 'paq', nivel: 'h4' });
   const error = (idE) => h('p', { class: 'campo-error', id: idE, role: 'alert' });
   // Marcar o limpiar un error también abre su bloque (celular) y actualiza las marcas del carril (escritorio).
   function marcar(idE, texto) {
@@ -345,10 +348,11 @@ Terna.pagina('preferencias', async (ctx) => {
     h('div', { class: 'campo' }, h('label', { for: idMoneda, text: P.moneda }), moneda));
   sSal.append(camposRango, h('p', { class: 'campo-ayuda', text: P.salarioAyuda }), error('err-sal'));
 
-  /* ---------- Paquetes y postulación: interés, armar (3 por día), idioma, palabras clave, postular, revisar ---------- */
-  const sInt = conInterruptor(P.interesDefecto, P.interesDefectoAyuda, v.interes_por_defecto, (x) => { v.interes_por_defecto = x; });
-  const sArm = conInterruptor(P.armar, P.armarAyuda(defectoPaquetes), v.armar_paquetes, (x) => { v.armar_paquetes = x; atenuar(); });
-  const sIdi = grupoRadios(P.idiomaDocs, 'idioma', [['aviso', P.idiomaAviso], ['espanol', P.idiomaEspanol]], v.idioma_documentos, (x) => { v.idioma_documentos = x; });
+  /* ---------- Paquetes y postulación, en dos subtemas (diseno.md 0.20 §9.3; brand.md 0.7.1 §6.7) ----------
+     Paquetes: qué avisos te interesan, armar (3 por día), el idioma y las palabras clave. Postulación: postular y revisar. */
+  const sInt = enTema.conInterruptor(P.interesDefecto, P.interesDefectoAyuda, v.interes_por_defecto, (x) => { v.interes_por_defecto = x; });
+  const sArm = enTema.conInterruptor(P.armar, P.armarAyuda(defectoPaquetes), v.armar_paquetes, (x) => { v.armar_paquetes = x; atenuar(); });
+  const sIdi = enTema.grupoRadios(P.idiomaDocs, 'idioma', [['aviso', P.idiomaAviso], ['espanol', P.idiomaEspanol]], v.idioma_documentos, (x) => { v.idioma_documentos = x; });
   /* Palabras clave, a la vista (brand.md 0.6 §6.7; datos.md 0.23, 0026; cv-ats.md 0.5 §3.7). Dos interruptores:
      - "Palabras clave del aviso", en Sí por defecto: en cada CV, Terna pone en Habilidades las del aviso que el perfil respalda.
      - "Palabras clave personalizadas (recomendado)", en No por defecto. En No, una línea que invita a ponerlo en Sí; en Sí, las
@@ -476,12 +480,14 @@ Terna.pagina('preferencias', async (ctx) => {
     subRec.hidden = !v.usar_palabras_clave;
     subCla.hidden = !v.usar_palabras_clave;
   }
-  const sAvisoCla = conAviso ? conInterruptor(P.clavesAviso, P.clavesAvisoAyuda, v.palabras_clave_aviso, (x) => { v.palabras_clave_aviso = x; }) : null;
-  const sCla = conClaves ? conInterruptor(P.recomendado(P.palabrasClave), P.palabrasClaveAyuda, v.usar_palabras_clave,
+  const sAvisoCla = conAviso ? enTema.conInterruptor(P.clavesAviso, P.clavesAvisoAyuda, v.palabras_clave_aviso, (x) => { v.palabras_clave_aviso = x; }) : null;
+  const sCla = conClaves ? enTema.conInterruptor(P.recomendado(P.palabrasClave), P.palabrasClaveAyuda, v.usar_palabras_clave,
     (x) => { v.usar_palabras_clave = x; verPersonalizadas(); limpiar('err-claves'); }) : null;
   if (sCla) { sCla.append(apagadoCla, subRec, subCla); verPersonalizadas(); }
-  const sPos = conInterruptor(P.postularSola, P.postularSolaAyuda, v.postular_sola, (x) => { v.postular_sola = x; atenuar(); });
-  const sRev = conInterruptor(P.revisar, P.revisarAyuda, v.revisar_antes_de_enviar, (x) => { v.revisar_antes_de_enviar = x; });
+  const sPos = enTema.conInterruptor(P.postularSola, P.postularSolaAyuda, v.postular_sola, (x) => { v.postular_sola = x; atenuar(); });
+  const sRev = enTema.conInterruptor(P.revisar, P.revisarAyuda, v.revisar_antes_de_enviar, (x) => { v.revisar_antes_de_enviar = x; });
+  const temaPaquetes = Terna.subtema(P.temas.paquetes, null, [sInt, sArm, sIdi, sAvisoCla, sCla].filter(Boolean));
+  const temaPostulacion = Terna.subtema(P.temas.postulacion, null, sPos, sRev);
   // Atenuar (diseno.md §9.3): el ítem sigue visible y legible; sus controles quedan inactivos hasta que vuelva a aplicar.
   function atenuar() {
     const poner = (sec, off) => {
@@ -593,7 +599,12 @@ Terna.pagina('preferencias', async (ctx) => {
   /* ---------- Página ---------- */
   Terna.vaciar(raiz);
   bloques.bloque('busqueda', P.grupos.busqueda, [sPue, sNiv, sJor, sMod, sAlc, sUmbral, sSal]);
-  bloques.bloque('paquetes', P.grupos.paquetes, [sInt, sArm, sIdi, sAvisoCla, sCla, sPos, sRev].filter(Boolean));
+  // Paquetes es el principio del bloque: usa su mismo hash, así #paquetes (el link "Ir a mis palabras clave" de la ficha y los de
+  // antes) sigue llevando al bloque, que arranca en él. Postulación tiene el suyo.
+  bloques.bloque('paquetes', P.grupos.paquetes, [temaPaquetes, temaPostulacion], { temas: [
+    { hash: 'paquetes', titulo: P.temas.paquetes, nodo: temaPaquetes },
+    { hash: 'postulacion', titulo: P.temas.postulacion, nodo: temaPostulacion },
+  ] });
   bloques.bloque('alertas', P.alertas, cAlertas);
   bloques.montar({ arriba: [banda], guardar: h('div', { class: 'guardar-fijo' }, bGuardar) });
 });

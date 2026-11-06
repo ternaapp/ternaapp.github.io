@@ -491,6 +491,9 @@ window.T = (function () {
       // Los bloques de la página (brand.md 0.7 §6.7): Búsqueda, Paquetes y postulación y Alertas por mail, que usa su propio título.
       // Respuestas para formularios y Tu cuenta pasaron a Mi perfil (T.respuestas, T.perfil.cuenta).
       grupos: { busqueda: 'Búsqueda', paquetes: 'Paquetes y postulación' },
+      // Los dos subtemas de Paquetes y postulación (brand.md 0.7.1 §6.7; diseno.md 0.20 §9.3): primero lo del paquete, después
+      // lo de postular.
+      temas: { paquetes: 'Paquetes', postulacion: 'Postulación' },
       umbral: 'Umbral de match',
       umbralAyuda: (min) => 'Terna arma paquetes y postula solo en avisos que lleguen a este número, salvo los de tus puestos si los priorizás. Los que quedan entre ' + min + ' y tu umbral igual aparecen en la lista, sin paquete, y podés pedirlo.',
       // La guía del umbral (brand.md 0.5.1 §6.7; diseno.md 0.15 §9.3): las franjas siguen la rúbrica de match.v2.
