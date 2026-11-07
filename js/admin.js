@@ -1,7 +1,7 @@
 /* Terna · js/admin.js
    Admin (brand.md §6.9), solo Francisco: Usuarios (con Borrar), Invitaciones (abrir o cerrar), Uso, Problemas y, desde
-   brand.md 0.11, Empresas: las que ni el motor ni la búsqueda web diaria ubicaron, para que pegue dónde se postula (datos.md 0.29,
-   0033). La pausa del motor no está acá. Lee y escribe solo por las funciones admin_* y config.invitaciones_abiertas (datos.md §14).
+   brand.md 0.11, Empresas: las que ni el motor ni la búsqueda web diaria ubicaron, para que pegue dónde se postula (datos.md 0.28,
+   0032). La pausa del motor no está acá. Lee y escribe solo por las funciones admin_* y config.invitaciones_abiertas (datos.md §14).
    Pensada primero para escritorio: en celular las tablas se desplazan. */
 'use strict';
 
@@ -15,7 +15,7 @@ Terna.pagina('admin', async (ctx) => {
   let seccion = SECCIONES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'uso';
   const dias = { uso: Terna.leerLocal('admin.uso', 7) === 30 ? 30 : 7, problemas: Terna.leerLocal('admin.problemas', 7) === 30 ? 30 : 7 };
   let sinVer = 0;
-  // Empresas (0033): sin la migración la función no existe y la subpestaña no se muestra.
+  // Empresas (0032): sin la migración la función no existe y la subpestaña no se muestra.
   let empresas = null;
 
   async function contarSinVer() {
