@@ -93,7 +93,13 @@
   async function crearCuenta() {
     document.title = C.crearTitulo + ' | Terna';
     const cont = raiz();
-    const token = new URLSearchParams(location.search).get('token') || '';
+    // El código llega después de # (crear-cuenta.html#token=…; informe de seguridad del 06/11/2026, H1) o, en los links
+    // anteriores, con ?token=. Se lee de los dos lados y la barra se limpia en el acto, antes de consultar nada.
+    const token = new URLSearchParams(Terna.hashInicial.slice(1)).get('token') || new URLSearchParams(location.search).get('token') || '';
+    if (location.search || location.hash) { try { history.replaceState(null, '', location.pathname); } catch (e) { /* igual sigue */ } }
+    // Un link nuevo pegado en esta misma pestaña cambia solo lo que va después de # y el navegador no vuelve a cargar la
+    // página: se recarga a mano para leerlo (el salto "Ir al contenido" también cambia el #, pero sin token, y no recarga).
+    window.addEventListener('hashchange', () => { if (/(?:^#|&)token=/.test(location.hash)) location.reload(); });
     const titulo = h('h1', { class: 'titulo', text: C.crearTitulo });
     const fin = (texto) => { cont.append(titulo, banda(texto, true)); };
     if (!/^[a-f0-9]{32}$/.test(token)) { fin(E.invNoExiste); return; }

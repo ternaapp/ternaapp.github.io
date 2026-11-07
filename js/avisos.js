@@ -387,7 +387,7 @@ Terna.pagina('avisos', async (ctx) => {
       h('td', { class: 'col-donde' }, Aviso.celdaDonde(a, prefs)),
       h('td', { class: 'col-interes' }, accionesAviso(a, 'tabla')),
       h('td', { class: 'col-publicado' }, Aviso.fecha(a)),
-      h('td', null, h('a', { class: 'btn btn-texto btn-chico', href: a.url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(a.fuente) }, icono('i-abrir'))));
+      h('td', null, h('a', { class: 'btn btn-texto btn-chico', href: Terna.urlExterna(a.url), target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(a.fuente) }, icono('i-abrir'))));
     tr.addEventListener('click', (e) => { if (!e.target.closest('button, a, input, label, select')) abrirFicha(a, tr); });
     tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target === tr) { e.preventDefault(); abrirFicha(a, tr); } });
     return tr;

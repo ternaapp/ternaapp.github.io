@@ -502,6 +502,19 @@ window.Terna = (function () {
     }
   }
 
+  /* ---------- Links a otros sitios ---------- */
+  // La URL de un aviso (o cualquier dato que termine en un href): solo http o https. Con otra cosa (javascript:, data:…)
+  // devuelve null y h() no pone el href (informe de seguridad del 06/11/2026, H8; la CSP ya frenaba javascript:).
+  function urlExterna(valor) {
+    const texto = String(valor || '').trim();
+    try {
+      const u = new URL(texto);
+      return u.protocol === 'https:' || u.protocol === 'http:' ? texto : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   /* ---------- Archivos ---------- */
   function nombreDescarga(tipo, idioma) {
     const base = [estado.perfil && estado.perfil.nombre, estado.perfil && estado.perfil.apellido].filter(Boolean).join(' ');
@@ -829,7 +842,7 @@ window.Terna = (function () {
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', correr); else correr();
   }
   // La dirección de Terna de la persona (config.alertas_mail_patron con su codigo_alertas) y si es la dueña del buzón: su
-  // mail es el del patrón sin el alias (franciscoperezrusso+terna-{codigo}@gmail.com → franciscoperezrusso@gmail.com). Es la
+  // mail es el del patrón sin el alias (buzon+terna-{codigo}@gmail.com → buzon@gmail.com). Es la
   // misma regla del motor (fuentes/alertas_mail.py: usuarios.mail == TERNA_IMAP_USUARIO). Gmail no deja reenviarse a uno
   // mismo, así que la dueña no reenvía: etiqueta sus alertas en su Gmail (arquitectura.md §7.8; brand.md 0.4.17 §6.7.1).
   function alertasMail(config, usuario) {
@@ -849,7 +862,7 @@ window.Terna = (function () {
     irAEntrar, volverValido, salir, token, dibujarPie, listaFaltantes, cambiarEstadoCuenta, bandas,
     avisoBreve, cerrarBreve, cargando, errorDeCarga, dialogo, confirmar, devolverFoco,
     abrirHoja, cerrarHoja, hojaAbierta, reemplazarCuerpoHoja, anchoLinea, anchoEscritorio,
-    copiar, nombreDescarga, urlFirmada, linkFirmado, leerConfig, pagina, actualizarFaltantes, actualizarPerfil, porBloques,
+    copiar, urlExterna, nombreDescarga, urlFirmada, linkFirmado, leerConfig, pagina, actualizarFaltantes, actualizarPerfil, porBloques,
     piezas, subtema, alertasMail,
   };
 })();

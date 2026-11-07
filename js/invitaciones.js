@@ -12,7 +12,9 @@ Terna.pagina('invitaciones', async (ctx) => {
   const cupo = config.invitaciones_cupo || 0;
   const dias = config.invitaciones_dias || 7;
   const base = location.origin + location.pathname.replace(/[^/]*$/, '');
-  const linkDe = (token) => base + 'crear-cuenta.html?token=' + encodeURIComponent(token);
+  // El código va después de #: esa parte no sale del navegador, así que no llega al alojamiento ni a las vistas previas
+  // de las apps de mensajes (informe de seguridad del 06/11/2026, H1). Crear tu cuenta acepta también los links viejos.
+  const linkDe = (token) => base + 'crear-cuenta.html#token=' + encodeURIComponent(token);
   let invitaciones = [];
   let recien = null;
 

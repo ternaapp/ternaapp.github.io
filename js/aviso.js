@@ -628,25 +628,28 @@ window.Aviso = (function () {
   }
 
   // El botón de la ficha va adonde se postula: el sitio de la empresa o el portal cuando el aviso lleva ahí (diseno.md 0.23 §7.5);
-  // si no, a la página del aviso. `verAviso` es el link a la página del aviso cuando el botón va a otro lado.
+  // si no, a la página del aviso. `verAviso` es el link a la página del aviso cuando el botón va a otro lado. Las dos URL son
+  // datos que salen de Terna: solo http y https (Terna.urlExterna; informe de seguridad del 06/11/2026, H8). Si la del
+  // formulario no sirve, el botón va a la página del aviso, como cuando no hay.
   function abrirAviso(a, clase, prefs) {
     const d = donde(a, prefs);
+    const destino = Terna.urlExterna(d.url);
     const clases = clase || 'btn btn-primario btn-ancho';
-    if (d.url && d.clave === 'empresa') {
-      return h('a', { class: clases, href: d.url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnEmpresaAccesible },
+    if (destino && d.clave === 'empresa') {
+      return h('a', { class: clases, href: destino, target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnEmpresaAccesible },
         T.avisos.abrirEnEmpresa, icono('i-abrir'));
     }
-    if (d.url && d.clave === 'portal') {
-      return h('a', { class: clases, href: d.url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(d.nombre) },
+    if (destino && d.clave === 'portal') {
+      return h('a', { class: clases, href: destino, target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(d.nombre) },
         T.avisos.abrirEn(d.nombre), icono('i-abrir'));
     }
-    return h('a', { class: clases, href: a.url, target: '_blank', rel: 'noopener noreferrer',
+    return h('a', { class: clases, href: Terna.urlExterna(a.url), target: '_blank', rel: 'noopener noreferrer',
       'aria-label': T.avisos.abrirEnAccesible(a.fuente) }, T.avisos.abrirEn(a.fuente), icono('i-abrir'));
   }
   function verAviso(a, prefs) {
     const d = donde(a, prefs);
-    if (!d.url || (d.clave !== 'empresa' && d.clave !== 'portal')) return null;
-    return h('a', { class: 'btn btn-texto', href: a.url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(a.fuente) },
+    if (!Terna.urlExterna(d.url) || (d.clave !== 'empresa' && d.clave !== 'portal')) return null;
+    return h('a', { class: 'btn btn-texto', href: Terna.urlExterna(a.url), target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(a.fuente) },
       T.avisos.verEnFuente(a.fuente), icono('i-abrir', 'icono-16'));
   }
 
