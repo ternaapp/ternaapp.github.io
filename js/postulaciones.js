@@ -39,7 +39,11 @@ Terna.pagina('postulaciones', async (ctx) => {
   const porId = new Map(postulaciones.map((a) => [a.match_id, a]));
   const prefs = rP.data || { umbral: 70, salario_modo: 'sugerir' };
   const umbral = prefs.umbral;
+  // El piso de Avisos no esconde nada acá: lo que tiene paquete o una postulación sigue a la vista aunque un repuntaje lo baje
+  // del piso (pipeline.md 0.4.10 §12), e Inicio lo cuenta en "para hacer a mano" (mi_resumen). Match arranca en 0, "Todos"
+  // (diseno.md 0.24.3 §8.1). El piso solo sirve para leer los filtros guardados hasta `v: 3`, donde valía "Todos".
   const piso = config.piso_match || 50;
+  const MATCH_TODOS = 0;
   const conMinimo = new Set((rB.data || []).filter((p) => p.bajo_minimo === true).map((p) => p.match_id));
   // Palabras del aviso que el CV no tiene (cv-ats.md 0.4 §3.13): el motor las guarda en el paquete desde paquete.v3.
   const faltanPor = new Map((rB.data || []).filter((p) => Array.isArray(p.terminos_faltantes)).map((p) => [p.match_id, p.terminos_faltantes]));
@@ -62,7 +66,9 @@ Terna.pagina('postulaciones', async (ctx) => {
      Un botón por filtro con su valor, siempre a la vista; cada uno abre su hoja (celular) o su panel (escritorio) y se
      aplica al tocar. Interés no va (acá todo interesa) y Postulación tampoco: las etapas ya son ese filtro. Arrancan en
      todo, no en las preferencias: acá está lo que la persona ya tiene, y lo que quedó fuera de sus preferencias no se
-     esconde (diseno.md 0.11 §8.5). Lo cambiado se marca como en Avisos y se recuerda en el navegador.
+     esconde (diseno.md 0.11 §8.5). Desde 0.24.3, Match tampoco esconde lo que bajó del piso: "Todos" es desde 0 (Francisco,
+     07/11/2026: Inicio contaba más postulaciones para hacer a mano que las que se veían acá; las que faltaban eran las que el
+     repuntaje dejó bajo el piso). Lo cambiado se marca como en Avisos y se recuerda en el navegador.
      Desde diseno.md 0.21, también por columna (Francisco, 06/11/2026: hizo clic en "Requisitos" para filtrar): Puesto, Empresa y
      Etapa con texto, Requisitos y Recorrido con lo que hay, Fecha con Desde, Hasta o El día. Recorrido elige etapas, varias a
      la vez, y se suma a la del carril. Desde 0.22 cada filtro está en un solo lugar: en el encabezado de su columna, si la tabla
@@ -75,7 +81,7 @@ Terna.pagina('postulaciones', async (ctx) => {
   const DE_COLUMNA = ['puesto', 'empresa', 'requisitos', 'recorrido', 'etapa', 'fecha'];
   const CLAVES = ['modalidad', 'alcance', 'nivel', 'jornada', 'match', 'paquete', ...DE_COLUMNA];
   const TODOS = Aviso.TODOS_BUSQUEDA;
-  const inicial = () => ({ modalidad: null, alcance: null, nivel: null, jornada: null, matchMin: piso, paquete: null,
+  const inicial = () => ({ modalidad: null, alcance: null, nivel: null, jornada: null, matchMin: MATCH_TODOS, paquete: null,
     puesto: '', empresa: '', requisitos: null, recorrido: null, etapa: '', fecha: null });
   const mismos = (x, y) => x.length === y.length && x.every((v) => y.includes(v));
   // Una lista que deja pasar todo se guarda como null ("todas"); una vacía o rara, también.
@@ -87,7 +93,11 @@ Terna.pagina('postulaciones', async (ctx) => {
     for (const k of BUSQUEDA) r[k] = deLista(f[k], TODOS[k]);
     // Hasta 0.21 Paquete era uno solo ('todos', 'armado'…): se lee como lista.
     r.paquete = Array.isArray(f.paquete) ? Filtros.listaValida(f.paquete, PAQUETES) : (PAQUETES.includes(f.paquete) ? [f.paquete] : null);
-    if (Number.isInteger(f.matchMin)) r.matchMin = Math.max(piso, Math.min(100, f.matchMin));
+    // Hasta `v: 3` el deslizador empezaba en el piso y "Todos" se guardaba como el piso: se lee como Todos.
+    if (Number.isInteger(f.matchMin)) {
+      const deAntes = !(Number(f.v) >= 4);
+      r.matchMin = deAntes && f.matchMin <= piso ? MATCH_TODOS : Math.max(MATCH_TODOS, Math.min(100, f.matchMin));
+    }
     r.puesto = Filtros.textoValido(f.puesto);
     r.empresa = Filtros.textoValido(f.empresa);
     r.etapa = Filtros.textoValido(f.etapa);
@@ -97,7 +107,7 @@ Terna.pagina('postulaciones', async (ctx) => {
     return r;
   }
   let filtros = validos(Terna.leerLocal('postulaciones.filtros', null));
-  const guardarFiltros = () => Terna.guardarLocal('postulaciones.filtros', Object.assign({ v: 3 }, filtros));
+  const guardarFiltros = () => Terna.guardarLocal('postulaciones.filtros', Object.assign({ v: 4 }, filtros));
   const efectiva = (k) => filtros[k] || TODOS[k];
   // El veredicto de requisitos como categoría del filtro: el de match.v2 o, en un match de antes, "falta" si tenía faltantes.
   function categoriaRequisitos(a) {
@@ -122,7 +132,7 @@ Terna.pagina('postulaciones', async (ctx) => {
   }
   function cambiado(k) {
     if (BUSQUEDA.includes(k)) return filtros[k] !== null;
-    if (k === 'match') return filtros.matchMin !== piso;
+    if (k === 'match') return filtros.matchMin !== MATCH_TODOS;
     if (k === 'puesto' || k === 'empresa' || k === 'etapa') return Filtros.hayTexto(filtros[k]);
     return filtros[k] !== null;  // paquete, requisitos, recorrido, fecha
   }
@@ -136,7 +146,7 @@ Terna.pagina('postulaciones', async (ctx) => {
   const F = T.avisos.filtros;
   const nombreFiltro = (k) => F.nombres[k] || F.columnas[k];
   function resumen(k) {
-    if (k === 'match') return filtros.matchMin === piso ? F.todos : F.matchResumen(filtros.matchMin);
+    if (k === 'match') return filtros.matchMin === MATCH_TODOS ? F.todos : F.matchResumen(filtros.matchMin);
     if (k === 'paquete') return Filtros.resumenLista(filtros.paquete, PAQUETES, (v) => T.avisos.paquete[v], F.todos);
     if (k === 'requisitos') return Filtros.resumenLista(filtros.requisitos, REQUISITOS, (v) => F.requisitos[v], F.todosColumna.requisitos);
     if (k === 'recorrido') return Filtros.resumenLista(filtros.recorrido, RECORRIDO, (v) => T.avisos.postulacion[v], F.todosColumna.recorrido);
@@ -336,7 +346,7 @@ Terna.pagina('postulaciones', async (ctx) => {
       if (F.sinDato[k]) cuerpo.append(h('p', { class: 'campo-ayuda', text: F.sinDato[k] }));
     } else {
       const idRango = Terna.idUnico('match');
-      const rango = h('input', { type: 'range', id: idRango, name: 'match', min: String(piso), max: '100', step: '1', value: String(filtros.matchMin) });
+      const rango = h('input', { type: 'range', id: idRango, name: 'match', min: String(MATCH_TODOS), max: '100', step: '1', value: String(filtros.matchMin) });
       const valor = h('output', { class: 'umbral-valor', for: idRango, text: String(filtros.matchMin) });
       rango.addEventListener('input', () => { valor.textContent = rango.value; });
       rango.addEventListener('change', () => { filtros.matchMin = Number(rango.value); aplicarFiltro(); });
