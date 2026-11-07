@@ -167,6 +167,8 @@ Terna.pagina('admin', async (ctx) => {
   function tarjetaEmpresa(e, i) {
     const E = A.empresas;
     const id = 'empresa-' + i;
+    // El link del aviso de ejemplo sale de avisos.url: solo http y https (Terna.urlExterna; informe de seguridad, H8).
+    const avisoUrl = Terna.urlExterna(e.aviso_url);
     const input = h('input', { class: 'control', id: id + '-link', type: 'url', inputmode: 'url', autocomplete: 'off', spellcheck: 'false',
       maxlength: '2048', placeholder: 'https://', 'aria-describedby': id + '-ayuda ' + id + '-error' });
     const error = h('p', { class: 'campo-error', id: id + '-error' });
@@ -201,7 +203,7 @@ Terna.pagina('admin', async (ctx) => {
         h('span', { text: E.estados[e.estado] || '' })),
       e.nota ? h('p', { class: 'campo-ayuda', text: e.nota }) : null,
       h('p', { class: 'empresa-ejemplo' }, h('span', { text: E.ejemplo(e.puesto || '') + ' ' }),
-        e.aviso_url ? h('a', { href: e.aviso_url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': E.abrirAccesible(e.fuente || 'LinkedIn') },
+        avisoUrl ? h('a', { href: avisoUrl, target: '_blank', rel: 'noopener noreferrer', 'aria-label': E.abrirAccesible(e.fuente || 'LinkedIn') },
           E.abrir(e.fuente || 'LinkedIn'), icono('i-abrir', 'icono-16')) : null),
       e.linkedin_postulacion === 'externa' ? h('p', { class: 'campo-ayuda', text: E.lleva }) : null,
       h('div', { class: 'campo' }, h('label', { for: id + '-link', text: E.link }), input, h('p', { class: 'campo-ayuda', id: id + '-ayuda', text: E.linkAyuda }), error),
