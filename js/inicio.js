@@ -1,6 +1,8 @@
 /* Terna · js/inicio.js
    Inicio (diseno.md §6): la última corrida, cinco cifras del período, qué hay para hacer y el umbral.
-   Lee mi_resumen(p_desde) y, para "Ya se armaron tus {3} paquetes", preferencias.paquetes_por_dia (datos.md §14). */
+   Lee mi_resumen(p_desde) y, para "Ya se armaron tus {3} paquetes", preferencias.paquetes_por_dia (datos.md §14). Desde
+   diseno.md 0.25, "para hacer a mano" cuenta solo lo que Terna te sugiere (Aviso.sugerida: lo pediste, llega a tu umbral o es de
+   tus puestos), con la misma regla y las mismas filas de mis_avisos que Postulaciones; lo demás está ahí, en "Bajo tu umbral". */
 'use strict';
 
 Terna.pagina('inicio', async (ctx) => {
@@ -19,8 +21,16 @@ Terna.pagina('inicio', async (ctx) => {
   document.getElementById('periodo').append(seg);
 
   const parar = Terna.cargando(cont);
-  const pref = await ctx.sb.from('preferencias').select('paquetes_por_dia').eq('usuario_id', ctx.usuario.id).maybeSingle();
+  // La fila entera de preferencias (como Avisos y Postulaciones: trae lo de cada migración aplicada) y las postulaciones a mano.
+  const [pref, aMano] = await Promise.all([
+    ctx.sb.from('preferencias').select('*').eq('usuario_id', ctx.usuario.id).maybeSingle(),
+    ctx.sb.from('mis_avisos').select('match_id, puesto, match, interes, pedido_en, estado_postulacion, modalidad, alcance, nivel, jornada')
+      .eq('estado_postulacion', 'a_mano').neq('interes', 'no_me_interesa'),
+  ]);
   const paquetesDia = (pref.data && pref.data.paquetes_por_dia) || 3;
+  // Las que Terna te sugiere; si alguna lectura falla, queda el número de mi_resumen (todas las de a mano), como hasta 0.24.
+  const criterio = Aviso.criterio(pref.data, (ctx.config && ctx.config.piso_match) || 50);
+  const aManoSugeridas = pref.error || !pref.data || aMano.error ? null : (aMano.data || []).filter((a) => Aviso.sugerida(a, criterio)).length;
 
   function desde() {
     const hoy = Terna.hoy();
@@ -87,7 +97,8 @@ Terna.pagina('inicio', async (ctx) => {
     } else {
       const filas = [];
       const n = (x) => Number(x || 0);
-      if (n(r.a_mano_pendientes)) filas.push(filaPendiente('postulaciones.html#a-mano', 'i-a-mano', T.inicio.aMano(n(r.a_mano_pendientes))));
+      const cuantasAMano = aManoSugeridas === null ? n(r.a_mano_pendientes) : aManoSugeridas;
+      if (cuantasAMano) filas.push(filaPendiente('postulaciones.html#a-mano', 'i-a-mano', T.inicio.aMano(cuantasAMano)));
       if (n(r.para_revisar)) filas.push(filaPendiente('postulaciones.html#para-revisar', 'i-revisar', T.inicio.paraRevisar(n(r.para_revisar))));
       if (n(r.por_decidir)) filas.push(filaPendiente('avisos.html?interes=por_decidir', 'i-por-decidir', T.inicio.porDecidir(n(r.por_decidir))));
       if (n(r.sin_texto)) filas.push(filaPendiente('avisos.html?paquete=sin_texto', 'i-sin-texto', T.inicio.sinTexto(n(r.sin_texto))));

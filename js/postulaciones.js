@@ -44,6 +44,12 @@ Terna.pagina('postulaciones', async (ctx) => {
   // (diseno.md 0.24.3 §8.1). El piso solo sirve para leer los filtros guardados hasta `v: 3`, donde valía "Todos".
   const piso = config.piso_match || 50;
   const MATCH_TODOS = 0;
+  // Lo que Terna te sugiere (diseno.md 0.25 §1.36 y §8.2): la regla de Aviso.sugerida, la misma de Inicio y con la que el motor
+  // elige qué armar. Una postulación a mano que no llega a tu umbral, no es de tus puestos y no pediste va a "Bajo tu umbral",
+  // no a "Para postular a mano" (Francisco, 07/11/2026: no tiene sentido que Terna sugiera postular a lo que no llega al umbral).
+  const criterio = Aviso.criterio(prefs, piso);
+  const conPuestos = criterio.puestos.length > 0;
+  const etapaDe = (a) => (Aviso.bajoUmbral(a, criterio) ? 'bajo_umbral' : a.estado_postulacion);
   const conMinimo = new Set((rB.data || []).filter((p) => p.bajo_minimo === true).map((p) => p.match_id));
   // Palabras del aviso que el CV no tiene (cv-ats.md 0.4 §3.13): el motor las guarda en el paquete desde paquete.v3.
   const faltanPor = new Map((rB.data || []).filter((p) => Array.isArray(p.terminos_faltantes)).map((p) => [p.match_id, p.terminos_faltantes]));
@@ -54,11 +60,12 @@ Terna.pagina('postulaciones', async (ctx) => {
   const busquedaPrefs = Aviso.busquedaDe(prefs);
 
   /* ---------- Etapas (§8.2) ---------- */
-  const ETAPAS = ['todas', 'a_mano', 'para_revisar', 'en_cola', 'enviada', 'postulado', 'entrevista'];
+  // Desde 0.25, "Bajo tu umbral" al final: se ve solo cuando tiene alguna (dibujarEtapas).
+  const ETAPAS = ['todas', 'a_mano', 'para_revisar', 'en_cola', 'enviada', 'postulado', 'entrevista', 'bajo_umbral'];
   const URGENCIA = { a_mano: 0, para_revisar: 1, en_cola: 2, enviada: 3, postulado: 4, entrevista: 5, pendiente: 6 };
-  const HASH = { a_mano: 'a-mano', para_revisar: 'para-revisar', en_cola: 'en-cola', enviada: 'enviadas', postulado: 'postuladas', entrevista: 'entrevistas', todas: 'todas' };
+  const HASH = { a_mano: 'a-mano', para_revisar: 'para-revisar', en_cola: 'en-cola', enviada: 'enviadas', postulado: 'postuladas', entrevista: 'entrevistas', bajo_umbral: 'bajo-umbral', todas: 'todas' };
   const DE_HASH = Object.fromEntries(Object.entries(HASH).map(([k, v]) => [v, k]));
-  const PUNTO = { a_mano: 'punto-mano', para_revisar: 'punto-espera', en_cola: 'punto-espera', enviada: 'punto-azul', postulado: 'punto-azul', entrevista: 'punto-entrevista', todas: '' };
+  const PUNTO = { a_mano: 'punto-mano', para_revisar: 'punto-espera', en_cola: 'punto-espera', enviada: 'punto-azul', postulado: 'punto-azul', entrevista: 'punto-entrevista', bajo_umbral: '', todas: '' };
   let etapa = 'todas';
   const fechaEtapa = (a) => ({ enviada: a.enviada_en, postulado: a.postulado_en, entrevista: a.entrevista_en, en_cola: a.en_cola_en, a_mano: a.captura_en || a.armado_en || a.creado_en })[a.estado_postulacion] || a.armado_en || a.creado_en;
 
@@ -156,7 +163,7 @@ Terna.pagina('postulaciones', async (ctx) => {
   }
   function limpiarFiltros() { filtros = inicial(); guardarFiltros(); dibujar(); }
   const filtradas = () => postulaciones.filter((a) => pasaFiltros(a));
-  function enEtapa(lista, e) { return e === 'todas' ? lista : lista.filter((a) => a.estado_postulacion === e); }
+  function enEtapa(lista, e) { return e === 'todas' ? lista : lista.filter((a) => etapaDe(a) === e); }
   // diseno.md 0.3.1 §8: por match de mayor a menor (sin match, al final); a igual match, por urgencia y las más nuevas primero.
   const matchDe = (a) => (a.match === null || a.match === undefined ? -1 : Number(a.match));
   function ordenar(lista) {
@@ -172,7 +179,9 @@ Terna.pagina('postulaciones', async (ctx) => {
     const cantidad = (e) => enEtapa(base, e).length;
     Terna.vaciar(etapasCelular);
     const grupo = h('div', { class: 'pildoras', role: 'radiogroup', 'aria-label': T.postulaciones.etapa });
-    const orden = ['todas', 'a_mano', 'para_revisar', 'en_cola', 'enviada', 'postulado', 'entrevista'];
+    // "Bajo tu umbral" va solo si tiene alguna sin filtros (o es la elegida): para casi todos, casi siempre, estaría en 0.
+    const hayBajo = etapa === 'bajo_umbral' || postulaciones.some((a) => etapaDe(a) === 'bajo_umbral');
+    const orden = ETAPAS.filter((e) => e !== 'bajo_umbral' || hayBajo);
     for (const e of orden) {
       const input = h('input', { type: 'radio', name: 'etapa', value: e, checked: etapa === e, onchange: () => cambiarEtapa(e) });
       grupo.append(h('label', { class: 'pildora' }, input, h('span', null, h('b', { class: 'num', text: String(cantidad(e)) }), ' ', T.postulaciones.etapas[e])));
@@ -237,10 +246,27 @@ Terna.pagina('postulaciones', async (ctx) => {
       ubicarFiltros();
       return;
     }
+    // En "Bajo tu umbral", arriba de la lista, por qué están ahí y qué hacer (brand.md 0.12 §6.5).
+    if (etapa === 'bajo_umbral') lista.append(h('p', { class: 'etapa-nota', text: T.postulaciones.bajoUmbral.nota(umbral, conPuestos) }));
     if (Terna.anchoEscritorio.matches) lista.append(tabla(vis));
     else lista.append(h('ul', { class: 'lista-postulaciones', role: 'list' }, vis.map((a) => h('li', null, filaCelular(a)))));
     ubicarFiltros();
     marcarElegida();
+  }
+  // Por qué Terna te la sugiere aunque no llegue (o por qué no): "Tu puesto", como en Avisos, o "Bajo tu umbral" (diseno.md 0.25
+  // §8.3, §8.5 y §8.6). `conExplicacion` en false: sin el texto oculto (la fila de celular es un botón, como el veredicto).
+  function explicacionSugerencia(a) {
+    const puesto = Aviso.tuPuesto(a, criterio);
+    if (puesto) return T.avisos.tuPuestoExplicacion(puesto, Aviso.llega(a, umbral));
+    return etapaDe(a) === 'bajo_umbral' ? T.postulaciones.bajoUmbral.explicacion(umbral, conPuestos) : null;
+  }
+  function chipSugerencia(a, conExplicacion) {
+    const ex = explicacionSugerencia(a);
+    if (!ex) return null;
+    const tuyo = !!Aviso.tuPuesto(a, criterio);
+    return h('span', { class: 'chip-texto' + (tuyo ? ' tinta tu-puesto' : ' bajo-umbral'), title: ex },
+      tuyo ? icono('i-foco', 'icono-14') : null, h('span', { text: tuyo ? T.avisos.tuPuesto : T.avisos.bajoUmbral }),
+      conExplicacion === false ? null : oculto(': ' + ex));
   }
   function etiquetaEtapa(a) {
     if (a.estado_postulacion === 'pendiente') return T.avisos.postulacion.pendiente;
@@ -260,7 +286,7 @@ Terna.pagina('postulaciones', async (ctx) => {
         h('span', { class: 'aviso-puesto', text: a.puesto }),
         h('span', { class: 'atributos' }, a.empresa ? [h('span', { text: a.empresa }), h('span', { 'aria-hidden': 'true', text: '·' }), oculto(', ')] : null,
           h('span', { text: Aviso.lugar(a) }), a.modalidad ? [h('span', { 'aria-hidden': 'true', text: '·' }), oculto(', '), h('span', { text: T.avisos.modalidadMin[a.modalidad] })] : null),
-        lineaCalificacion(a),
+        lineaCalificacion(a), lineaSugerencia(a),
         h('span', { class: 'linea-etapa' }, Aviso.recorrido(a), oculto(T.postulaciones.recorridoAccesible(etiquetaEtapa(a)) + '. '),
           h('span', { class: 'etapa-texto ' + Aviso.claseEtapa(a), text: lineaCorta(a) })),
         a.estado_postulacion === 'a_mano' ? h('span', { class: 'traba', text: Aviso.traba(a, config) }) : null),
@@ -272,6 +298,10 @@ Terna.pagina('postulaciones', async (ctx) => {
   function lineaCalificacion(a) {
     const chip = Aviso.chipCalificacion(a, false);
     return chip ? h('span', { class: 'linea-calificacion' }, chip) : null;
+  }
+  function lineaSugerencia(a) {
+    const chip = chipSugerencia(a, false);
+    return chip ? h('span', { class: 'linea-calificacion linea-sugerencia' }, chip) : null;
   }
   // Cada encabezado abre el filtro de su columna (diseno.md 0.21 §8.6 y §10.18), salvo Aviso.
   let filtroAbierto = null;
@@ -289,6 +319,7 @@ Terna.pagina('postulaciones', async (ctx) => {
     const llega = Aviso.llega(a, umbral);
     const linea = Aviso.lineaEtapa(a, config);
     const calificacion = Aviso.chipCalificacion(a);
+    const sugerencia = chipSugerencia(a);  // "Tu puesto" o "Bajo tu umbral", debajo del puesto (diseno.md 0.25 §8.6)
     // El recorrido va en su columna y, cuando la caja no alcanza, arriba de la etapa (.apoyo-recorrido; diseno.md 0.17 §8.6).
     const recorrido = () => [Aviso.recorrido(a), oculto(T.postulaciones.recorridoAccesible(etiquetaEtapa(a))),
       h('div', { class: 'etapa-texto ' + Aviso.claseEtapa(a), 'aria-hidden': 'true', text: etiquetaEtapa(a) })];
@@ -296,7 +327,8 @@ Terna.pagina('postulaciones', async (ctx) => {
       h('td', { class: 'tabla-match' + (llega || a.match === null ? '' : ' bajo') }, h('span', { 'aria-hidden': 'true', text: a.match === null ? '—' : String(a.match) }),
         oculto(a.match === null ? T.avisos.sinMatch : T.avisos.matchAccesible(a.match, llega))),
       h('td', null, h('div', { class: 'aviso-puesto', text: a.puesto }), h('div', { class: 'atributos' },
-        a.empresa ? h('span', { class: 'apoyo-empresa', text: a.empresa + ' · ' }) : null, Aviso.lugar(a), a.modalidad ? ' · ' + T.avisos.modalidadMin[a.modalidad] : '')),
+        a.empresa ? h('span', { class: 'apoyo-empresa', text: a.empresa + ' · ' }) : null, Aviso.lugar(a), a.modalidad ? ' · ' + T.avisos.modalidadMin[a.modalidad] : ''),
+        sugerencia ? h('div', { class: 'linea-sugerencia' }, sugerencia) : null),
       h('td', { class: 'col-empresa', text: a.empresa || '' }),
       h('td', { class: 'col-requisitos' }, calificacion),
       h('td', { class: 'col-recorrido' }, recorrido()),
@@ -502,7 +534,10 @@ Terna.pagina('postulaciones', async (ctx) => {
   function seccionEtapa(a) {
     const sec = h('section', { class: 'ficha-seccion' });
     const chip = a.estado_postulacion === 'pendiente' ? h('span', { class: 'chip-texto', text: T.avisos.postulacion.pendiente }) : Aviso.chipPostulacion(a);
-    sec.append(h('div', { class: 'chips' }, chip), oculto(T.postulaciones.recorridoAccesible(etiquetaEtapa(a))));
+    sec.append(h('div', { class: 'chips' }, chip, chipSugerencia(a, false)), oculto(T.postulaciones.recorridoAccesible(etiquetaEtapa(a))));
+    // Por qué Terna te la sugiere aunque no llegue a tu umbral, o por qué ya no (diseno.md 0.25 §8.5).
+    const porQue = explicacionSugerencia(a);
+    if (porQue) sec.append(h('p', { class: 'etapa-nota', text: porQue }));
     const linea = Aviso.lineaEtapa(a, config);
     if (linea) sec.append(h('p', { text: linea }));
     if (a.estado_postulacion === 'a_mano') {

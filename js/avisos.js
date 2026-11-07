@@ -49,11 +49,10 @@ Terna.pagina('avisos', async (ctx) => {
   // Palabras del aviso que el CV no tiene (cv-ats.md 0.4 §3.13): el motor las guarda en el paquete desde paquete.v3.
   const faltanPor = new Map((rB.data || []).filter((p) => Array.isArray(p.terminos_faltantes)).map((p) => [p.match_id, p.terminos_faltantes]));
   const yaCorrio = (rC.data || []).length > 0;
-  // Priorizar mis puestos (0027): sin la columna vale Sí, como en el motor. Solo cuentan los puestos que no son generales.
-  const misPuestos = prefs.priorizar_puestos === false ? [] : (prefs.puestos_objetivo || []).filter((x) => x && !Puestos.general(x));
-  const priorizar = misPuestos.length > 0;
-  const puestoDe = new Map(priorizar
-    ? avisos.filter((a) => a.match !== null && a.match >= piso).map((a) => [a.match_id, Puestos.buscado(a.puesto, misPuestos)]) : []);
+  // Priorizar mis puestos (0027): sin la columna vale Sí, como en el motor. Solo cuentan los puestos que no son generales. La
+  // regla es la de Aviso.tuPuesto, la misma de Postulaciones e Inicio (diseno.md 0.25 §1.36).
+  const criterio = Aviso.criterio(prefs, piso);
+  const priorizar = criterio.puestos.length > 0;
   const bajoMinimo = (a) => prefs.salario_modo === 'rango' && !!a.paquete_id && conMinimo.has(a.match_id);
 
   /* ---------- Filtros y orden (diseno.md 0.11 §7.2; desde 0.21, también por columna) ----------
@@ -152,11 +151,11 @@ Terna.pagina('avisos', async (ctx) => {
   // Fuera de las preferencias (no del filtro): Terna no lo decide sola; la tarjeta ofrece "Pedir" como bajo el umbral.
   const fuera = (a) => Aviso.motivosFuera(a, busquedaPrefs);
   // De tus puestos, como lo toma el motor (pipeline.md 0.4.15 §4.9 punto 3c): desde el piso, con interés y dentro de las preferencias.
-  const esTuPuesto = (a) => !!puestoDe.get(a.match_id) && a.interes !== 'no_me_interesa' && !fuera(a).length;
+  const esTuPuesto = (a) => !!Aviso.tuPuesto(a, criterio);
   const decideSola = (a) => (Aviso.llega(a, umbral) || esTuPuesto(a)) && !fuera(a).length;
   function chipTuPuesto(a) {
     if (!esTuPuesto(a)) return null;
-    const explicacion = T.avisos.tuPuestoExplicacion(puestoDe.get(a.match_id), Aviso.llega(a, umbral));
+    const explicacion = T.avisos.tuPuestoExplicacion(Aviso.tuPuesto(a, criterio), Aviso.llega(a, umbral));
     return h('span', { class: 'chip-texto tinta tu-puesto', title: explicacion }, icono('i-foco', 'icono-14'), h('span', { text: T.avisos.tuPuesto }), oculto(': ' + explicacion));
   }
   const desc = (x, y) => (x === y ? 0 : (x === null || x === undefined) ? 1 : (y === null || y === undefined) ? -1 : (x < y ? 1 : -1));

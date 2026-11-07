@@ -410,7 +410,14 @@ window.T = (function () {
       titulo: 'Postulaciones',
       cuenta: (x) => plural(x, '1 postulación', n(x) + ' postulaciones'),
       etapa: 'Etapa',
-      etapas: { a_mano: 'Para postular a mano', para_revisar: 'Para revisar', en_cola: 'En cola', enviada: 'Enviadas por Terna', postulado: 'Postuladas', entrevista: 'Entrevistas', todas: 'Todas' },
+      etapas: { a_mano: 'Para postular a mano', para_revisar: 'Para revisar', en_cola: 'En cola', enviada: 'Enviadas por Terna', postulado: 'Postuladas', entrevista: 'Entrevistas', bajo_umbral: 'Bajo tu umbral', todas: 'Todas' },
+      // Lo que quedó a mano y Terna ya no te sugiere (brand.md 0.12 §6.5; diseno.md 0.25 §8.2): no llega a tu umbral, no es de tus
+      // puestos y no lo pediste. Lo demás de "Tu puesto" es el chip de Avisos (T.avisos.tuPuesto).
+      bajoUmbral: {
+        nota: (u, conPuestos) => 'Terna les armó el paquete y después quedaron debajo de tu umbral (' + u + ')' + (conPuestos ? ', sin ser de tus puestos' : '')
+          + ': subiste el umbral o Terna volvió a calcular el match. Por eso no te sugiere postularte ni las cuenta en Inicio. Si alguna te interesa, todo está listo para que postules vos; si no, marcá No me interesa.',
+        explicacion: (u, conPuestos) => 'No llega a tu umbral (' + u + ')' + (conPuestos ? ' ni es de tus puestos' : '') + ': Terna no te sugiere postularte. El paquete sigue listo si igual querés.',
+      },
       recorrido: ['Encontrado', 'Me interesa', 'Paquete', 'Enviada o Postulado', 'Entrevista'],
       recorridoAccesible: (etapa) => 'Recorrido: ' + etapa,
       linea: {
@@ -466,6 +473,7 @@ window.T = (function () {
       vacioEtapa: {
         a_mano: 'Nada para postular a mano.', para_revisar: 'Nada para revisar.', en_cola: 'Nada en cola.',
         enviada: 'Terna todavía no envió ninguna.', postulado: 'Todavía no marcaste ninguna como postulada.', entrevista: 'Todavía no marcaste ninguna entrevista.',
+        bajo_umbral: 'Nada bajo tu umbral.',
       },
       columnas: { match: 'Match', puesto: 'Puesto', empresa: 'Empresa', requisitos: 'Requisitos', recorrido: 'Recorrido', etapa: 'Etapa', fecha: 'Fecha', aviso: 'Aviso' },
     },

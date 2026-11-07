@@ -466,6 +466,11 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .etapa-accion { color: var(--accion-oscura); }
 .etapa-suave { color: var(--tinta-suave); }
 .traba { font-size: 13px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* Postulaciones, desde diseno.md 0.25 §8.2 y §8.5: por qué está en "Bajo tu umbral" (arriba de la lista y en la ficha) y la línea
+   de "Tu puesto" o "Bajo tu umbral" debajo del puesto en la tabla. */
+.etapa-nota { margin: 0 0 12px; max-width: 70ch; font-size: 14px; line-height: 1.45; color: var(--tinta-suave); }
+.ficha-seccion .etapa-nota { margin: 0; }
+.linea-sugerencia { margin-top: 2px; }
 
 /* Segmentado */
 .segmentado { display: inline-flex; border: 1px solid var(--borde-control); border-radius: 6px; overflow: hidden; max-width: 100%; }

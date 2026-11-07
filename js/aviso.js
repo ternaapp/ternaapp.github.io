@@ -140,6 +140,32 @@ window.Aviso = (function () {
     return m;
   }
 
+  /* ---------- Tus puestos y lo que Terna te sugiere (diseno.md 0.25 §1.36 y §8.2) ----------
+     Una sola regla para Avisos, Postulaciones e Inicio, la misma con que el motor elige qué armar (pipeline.md 0.4.15 §4.9:
+     lo pedido, lo que llega al umbral y, con "Priorizar mis puestos", los de tus puestos desde el piso). `criterio` junta lo que
+     hace falta de las preferencias del momento; el puesto de cada aviso se calcula una vez (el título no cambia en la página). */
+  function criterio(prefs, piso) {
+    const p = prefs || {};
+    const P = window.Puestos;
+    // Priorizar mis puestos (0027): sin la columna vale Sí, como en el motor. Un puesto muy general no cuenta.
+    const puestos = !P || p.priorizar_puestos === false ? [] : (p.puestos_objetivo || []).filter((x) => x && !P.general(x));
+    return { umbral: p.umbral, piso, puestos, busqueda: busquedaDe(p), cache: new Map() };
+  }
+  // El puesto de la persona que el título tiene entero, como lo escribió, o null: desde el piso, con interés y, si Terna lo
+  // decidiría sola (pendiente y sin pedido), dentro de las preferencias.
+  function tuPuesto(a, c) {
+    if (!c.puestos.length || a.match === null || a.match === undefined || a.match < c.piso) return null;
+    if (a.interes === 'no_me_interesa' || motivosFuera(a, c.busqueda).length) return null;
+    if (!c.cache.has(a.match_id)) c.cache.set(a.match_id, Puestos.buscado(a.puesto, c.puestos));
+    return c.cache.get(a.match_id);
+  }
+  // Lo que Terna te sugiere: lo pediste, llega a tu umbral o es de tus puestos. Una postulación a mano que no, quedó así
+  // después de armarse (subiste el umbral o un repuntaje la bajó): Inicio no la cuenta y Postulaciones la pone en "Bajo tu umbral".
+  function sugerida(a, c) {
+    return !!a.pedido_en || a.match === null || a.match === undefined || a.match >= c.umbral || !!tuPuesto(a, c);
+  }
+  function bajoUmbral(a, c) { return a.estado_postulacion === 'a_mano' && !sugerida(a, c); }
+
   /* ---------- Atributos, match ---------- */
   // Los portales que entran por alertas reenviadas (arquitectura.md §7.8): su nombre va en los atributos, porque el aviso
   // se abre y se postula ahí, con la cuenta de la persona.
@@ -677,6 +703,7 @@ window.Aviso = (function () {
     estadoPaquete, llega, chip, chipPaquete, chipPostulacion, chipInteres, chipFaltan, fecha, etiquetas,
     evaluacion, chipCalificacion, pedirMotivo, lineaMotivo, MOTIVOS, leerConEvaluacion,
     MODALIDADES, ALCANCES, NIVELES, JORNADAS, TODOS_BUSQUEDA, busquedaDe, pasaBusqueda, motivosFuera,
+    criterio, tuPuesto, sugerida, bajoUmbral,
     lugar, atributos, bloqueMatch, controlInteres, fichasPaquete, parsearNotas, textoSalario,
     recorrido, recorridoGrande, traba, lineaEtapa, claseEtapa, puedeVolverAProbar, seccionPostulacion, razones, abrirAviso, verAviso,
     ESTILO_POSTULACION, postulable, confirmarPedir, confirmarNoInteresa, marcarNoInteresa,
