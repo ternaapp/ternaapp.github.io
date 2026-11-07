@@ -1014,7 +1014,7 @@ window.T = (function () {
       uso: { fecha: 'Fecha', usuarios: 'Usuarios corridos', revisados: 'Avisos revisados', puntuados: 'Puntuados', paquetes: 'Paquetes', enviadas: 'Enviadas', aMano: 'A mano', tokens: 'Tokens', usd: 'US$ est.', tope: 'Tope', alcanzado: 'Alcanzado', no: 'No', total: (d) => d + ' días' },
       problemas: { fecha: 'Fecha', usuario: 'Usuario', aviso: 'Aviso', paso: 'Paso', error: 'Error', reintentos: 'Reintentos', marcar: 'Marcar todos como vistos', vacio: (d) => 'Sin problemas en los últimos ' + d + ' días.' },
       pasos: { buscar: 'Buscar', alertas: 'Alertas', leer_cv: 'Leer CV', puntuar: 'Puntuar', armar: 'Armar', responder: 'Responder', postular: 'Postular', subir: 'Subir', retencion: 'Retención', borrar: 'Borrar' },
-      // Admin › Empresas (brand.md 0.11 §6.9; datos.md 0.28, 0032): lo que ni el motor ni la búsqueda web diaria encontraron.
+      // Admin › Empresas (brand.md 0.11 §6.9; datos.md 0.29, 0033): lo que ni el motor ni la búsqueda web diaria encontraron.
       empresas: {
         porCompletar: (x) => x + ' por completar',
         intro: 'Empresas de avisos que llegan por alertas y que Terna no pudo ubicar: ni el motor ni la búsqueda diaria encontraron dónde publican sus búsquedas. Lo que cargues sirve para todos los avisos que vengan de esa empresa.',
