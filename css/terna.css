@@ -201,6 +201,18 @@ html { scroll-padding-top: 72px; }
 .chip-error { background: var(--error-tinte); color: var(--error-oscuro); }
 .chip-texto { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--tinta-suave); white-space: nowrap; }
 .chip-texto.tinta { color: var(--tinta); }
+/* Dónde se postula (diseno.md 0.23 §7.3, §7.5 y §7.6): las palabras con su ícono. Lo que te toca a vos ("A mano en…") en tinta;
+   lo que hace Terna, lo que falta saber y lo ya postulado, en tinta suave (la revisión del 06/11/2026: en verde y negrita, "Terna
+   puede postular" era lo que más resaltaba de cada fila y la flecha parecía un link). En la tarjeta va en su propio renglón; en
+   la ficha es la respuesta, en negrita. */
+.donde { display: inline-flex; align-items: flex-start; gap: 4px; font-size: 13px; line-height: 1.3; color: var(--tinta); }
+.donde .icono { flex: none; margin-top: 1px; color: var(--tinta-suave); }
+.donde-terna, .donde-confirmar, .donde-hecha { color: var(--tinta-suave); }
+.donde-linea { display: flex; margin-top: 4px; font-size: 14px; }
+.donde-linea.donde-easy_apply, .donde-linea.donde-empresa, .donde-linea.donde-portal { font-weight: 500; }
+.donde-ficha { margin-bottom: 2px; }
+.donde-ficha .donde { font-size: 15px; font-weight: 700; color: var(--tinta); }
+.donde-ficha .donde .icono { margin-top: 2px; }
 .chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 
 /* Chip de opción (filtros, modalidades, interés) */
@@ -813,6 +825,8 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .tabla-avisos .btn-fila { font-size: 12px; padding: 0 6px; }
   .tabla-avisos .interes { flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 4px; }
   .tabla-avisos .chip-opcion-cara { white-space: nowrap; }
+  /* Dónde se postula parte su palabra en dos renglones antes de ensanchar la tabla. */
+  .tabla-avisos td.col-donde { max-width: 120px; }
   .tabla .aviso-puesto { font-size: 14px; font-weight: 700; line-height: 1.35; }
   .lista-postulaciones.solo-celular, .pildoras-caja { display: none; }
   .post-layout { flex-direction: row; align-items: flex-start; gap: 20px; }
@@ -833,26 +847,31 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 }
 
 /* Tablas por el ancho de su caja (contenedor `tabla`), en este orden: Interés apila sus botones; Modalidad y Ubicación pasan a
-   la línea de apoyo; Publicado se oculta (la fecha está en la ficha); por último Empresa también pasa a la línea de apoyo.
-   Medido 31/10/2026: con todo a la vista Avisos necesita 1.046 px con los botones apilados y 1.182 en fila; 06/11/2026, con
-   las flechas de los encabezados y "Pedir" en Paquete, a 1280 px con el cajón (caja de 810) necesita 822 con 6 px de relleno y
-   los botones de la fila en 13 px, y menos de 790 con 4 px y en 12. */
-@container tabla (max-width: 1180px) {
+   la línea de apoyo; desde diseno.md 0.23, Dónde se postula también; Publicado se oculta (la fecha está en la ficha); por último
+   Empresa también pasa a la línea de apoyo. Cada corte es lo que necesita la tabla con lo que queda a la vista (Medido
+   06/11/2026, 0.23, con la columna Dónde se postula: todo y los botones en fila, 1.333 px; apilados, 1.235; sin Modalidad ni
+   Ubicación, 1.060; sin Dónde se postula, 929; sin Publicado y con 4 px de relleno, 779; sin Empresa, 704). Hasta 0.22: 1.180,
+   1.040, 900 y 760, con la tabla de diez columnas (a 900 y a 760 la tabla quedaba unos px más ancha que la caja). */
+@container tabla (max-width: 1340px) {
   .tabla-avisos .interes { flex-direction: column; align-items: stretch; }
 }
-@container tabla (max-width: 1040px) {
+@container tabla (max-width: 1240px) {
   .tabla-avisos .col-modalidad, .tabla-avisos .col-ubicacion { display: none; }
   .tabla-avisos .linea-apoyo { display: block; margin-top: 2px; }
-  .tabla-avisos .apoyo-empresa { display: none; }
+  .tabla-avisos .apoyo-empresa, .tabla-avisos .apoyo-donde { display: none; }
 }
-@container tabla (max-width: 900px) {
+@container tabla (max-width: 1060px) {
+  .tabla-avisos .col-donde { display: none; }
+  .tabla-avisos .apoyo-donde { display: inline; }
+}
+@container tabla (max-width: 930px) {
   .tabla-avisos .col-publicado { display: none; }
   /* Como en Postulaciones: las celdas pierden 2 px de relleno a cada lado (06/11/2026: con las flechas de los encabezados, a
      1280 px con el cajón la tabla necesitaba 822 px y la caja medía 810). */
   .tabla-avisos .tabla th, .tabla-avisos .tabla td { padding-left: 4px; padding-right: 4px; }
   .tabla-avisos .tabla th .th-filtro { margin: -6px -4px; padding: 6px 4px; }
 }
-@container tabla (max-width: 760px) {
+@container tabla (max-width: 780px) {
   .tabla-avisos .col-empresa { display: none; }
   .tabla-avisos .apoyo-empresa { display: inline; }
 }

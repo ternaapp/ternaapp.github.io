@@ -145,11 +145,12 @@ window.Aviso = (function () {
   // se abre y se postula ahí, con la cuenta de la persona.
   const DE_ALERTAS = new Set(['LinkedIn', 'Indeed', 'Bumeran', 'Zonajobs', 'Computrabajo']);
   function lugar(a) { return a.alcance === 'exterior' ? T.avisos.alcanceMin.exterior : (a.ubicacion || T.avisos.alcanceMin.local); }
+  // `fuente`: de dónde vino el aviso (la ficha); `donde`: dónde se postula (la tarjeta del celular, desde diseno.md 0.23).
   function atributos(a, opciones) {
     opciones = opciones || {};
     const partes = [[a.alcance === 'exterior' ? 'i-exterior' : 'i-local', lugar(a)]];
     if (a.modalidad) partes.push(['i-' + a.modalidad, T.avisos.modalidadMin[a.modalidad]]);
-    if (opciones.fuente || DE_ALERTAS.has(a.fuente)) partes.push([null, a.fuente]);
+    if (!opciones.sinFuente && (opciones.fuente || DE_ALERTAS.has(a.fuente))) partes.push([null, DE_ALERTAS.has(a.fuente) ? T.avisos.deAlerta(a.fuente) : a.fuente]);
     const nodo = h(opciones.tag || 'span', { class: 'atributos' });
     partes.forEach(([ic, tx], i) => {
       if (i) nodo.append(h('span', { 'aria-hidden': 'true', text: '·' }), oculto(', '));
@@ -332,11 +333,17 @@ window.Aviso = (function () {
   function puedeVolverAProbar(a, config) {
     return a.estado_postulacion === 'a_mano' && a.postulacion === 'formulario' && (a.intentos || 0) < ((config && config.max_reintentos_postulacion) || 3);
   }
-  // La sección "Postulación" de la ficha del aviso: chip, línea y el link a la ficha de la postulación.
-  function seccionPostulacion(a, config) {
+  // La sección "Postulación" de la ficha del aviso: dónde se postula (diseno.md 0.23 §7.5), chip, línea y el link a la ficha de la
+  // postulación.
+  function seccionPostulacion(a, config, prefs) {
     const sec = h('section', { class: 'ficha-seccion' }, h('h3', { text: T.avisos.ficha.postulacion }));
+    const d = donde(a, prefs);
+    // Dónde se postula, como respuesta: las palabras en negrita y, mientras no hay una etapa que lo explique, por qué (con la
+    // postulación a mano el motivo es la línea de la etapa; lo postulado no lo repite).
+    if (!d.hecha) sec.append(h('p', { class: 'donde-ficha' }, etiquetaDonde(d)));
+    if (!d.hecha && a.estado_postulacion !== 'a_mano') sec.append(h('p', { class: 'suave', text: explicacionDonde(a, d, prefs) }));
     const hay = a.estado_postulacion !== 'pendiente' || a.paquete_id;
-    if (!hay) { sec.append(h('p', { class: 'suave', text: T.avisos.postulacion.pendiente })); return sec; }
+    if (!hay) return sec;
     sec.append(h('div', { class: 'chips' }, chipPostulacion(a)));
     const linea = lineaEtapa(a, config);
     if (linea) sec.append(h('p', { text: linea }));
@@ -490,6 +497,91 @@ window.Aviso = (function () {
   const ATS_POSTULABLES = ['greenhouse', 'lever', 'ashby', 'workable'];
   // Terna puede postular sola en este aviso: formulario abierto de uno de los cuatro ATS (la misma regla que seleccion.postulable).
   function postulable(a) { return a.postulacion === 'formulario' && ATS_POSTULABLES.includes(a.ats_formulario); }
+
+  /* ---------- Dónde se postula (brand.md 0.10 §6.4; diseno.md 0.23 §7.5 y §7.6; datos.md 0.27, 0031) ----------
+     Francisco, 06/11/2026: "que diga Easy Apply de LinkedIn, o una columna nueva que diga dónde se debe aplicar". Sale de lo que la
+     vista ya traía (postulacion, ats_formulario, url, url_postulacion, fuente) y, desde 0031, de linkedin_postulacion: lo que dice la
+     página pública del aviso de LinkedIn. Cinco respuestas: Postula Terna (un formulario de los cuatro ATS), y a mano: Easy Apply de
+     LinkedIn, el sitio de la empresa (otro formulario, con o sin cuenta) o un portal de empleo (con la cuenta de la persona); y
+     LinkedIn, a confirmar, mientras Terna no leyó la página del aviso. */
+  const DONDES = ['terna', 'easy_apply', 'empresa', 'portal', 'confirmar'];
+  const PORTALES = [['linkedin.com', 'LinkedIn'], ['lnkd.in', 'LinkedIn'], ['indeed.com', 'Indeed'], ['indeed.com.ar', 'Indeed'], ['bumeran.com.ar', 'Bumeran'],
+    ['bumeran.com', 'Bumeran'], ['zonajobs.com.ar', 'Zonajobs'], ['zonajobs.com', 'Zonajobs'], ['computrabajo.com', 'Computrabajo'],
+    ['computrabajo.com.ar', 'Computrabajo'], ['getonbrd.com', 'Get on Board'], ['glassdoor.com', 'Glassdoor'], ['glassdoor.com.ar', 'Glassdoor']];
+  const FUENTES_PORTAL = new Set([...DE_ALERTAS, 'Get on Board']);
+  function hostDe(u) {
+    try { return new URL(u).hostname.toLowerCase().replace(/^www\./, ''); } catch (e) { return ''; }
+  }
+  function portalDe(u) {
+    const host = hostDe(u);
+    const p = PORTALES.find(([dominio]) => host === dominio || host.endsWith('.' + dominio));
+    return p ? p[1] : null;
+  }
+  // Lo que ya está postulado: la tarjeta y la ficha no dicen dónde (lo dice la etapa) y la celda de la tabla lo dice apagado.
+  const HECHAS = new Set(['enviada', 'postulado', 'entrevista']);
+  // { clave, nombre (del portal), url (adónde se postula, si no es la página del aviso), cuenta (el sitio pide cuenta),
+  //   viaLinkedin, ternaNo / ternaNoPudo (Terna sabe completarlo pero lo hace la persona), hecha }.
+  // Revisión de usuaria del 06/11/2026 (diseno.md 0.23 §1.35): "Terna puede postular" al lado de "Para postular a mano" se
+  // contradecía; con "Terna postula por vos" en No o con la postulación a mano, el formulario de Terna lo completa la persona.
+  function donde(a, prefs) {
+    const u = a.url_postulacion;
+    const otro = !!u && !!hostDe(u) && hostDe(u) !== hostDe(a.url);
+    const hecha = HECHAS.has(a.estado_postulacion);
+    if (postulable(a)) {
+      const no = !!prefs && prefs.postular_sola === false;
+      if (!hecha && (no || a.estado_postulacion === 'a_mano')) return { clave: 'empresa', url: otro ? u : null, ternaNo: no, ternaNoPudo: !no, hecha };
+      return { clave: 'terna', url: otro ? u : null, hecha };
+    }
+    if (a.linkedin_postulacion === 'easy_apply') return { clave: 'easy_apply', url: null, hecha };
+    if (otro) {
+      const p = portalDe(u);
+      return p ? { clave: 'portal', nombre: p, url: u, hecha } : { clave: 'empresa', url: u, cuenta: a.postulacion === 'requiere_cuenta', hecha };
+    }
+    if (a.linkedin_postulacion === 'externa') return { clave: 'empresa', url: null, viaLinkedin: true, hecha };
+    // LinkedIn sin leer: Terna lee su página en las próximas corridas. Sin 0031 no se sabe; si el texto vino de la página, ya se leyó.
+    if (a.fuente === 'LinkedIn' && !a.linkedin_postulacion && a.texto_origen !== 'fuente') return { clave: 'confirmar', url: null, hecha };
+    if (FUENTES_PORTAL.has(a.fuente)) return { clave: 'portal', nombre: a.fuente, url: null, hecha };
+    return { clave: 'empresa', url: null, cuenta: a.postulacion === 'requiere_cuenta', hecha };
+  }
+  function textoDonde(d) {
+    const D = T.avisos.donde;
+    if (d.clave === 'portal') return D.portal(d.nombre);
+    return d.clave === 'empresa' && d.cuenta ? D.empresaCuenta : D[d.clave];
+  }
+  // La explicación de la ficha y del título de la celda: quién lo hace, dónde y, si es a mano, por qué.
+  function explicacionDonde(a, d, prefs) {
+    const E = T.avisos.dondeExplicacion;
+    switch (d.clave) {
+      case 'terna': return prefs && prefs.revisar_antes_de_enviar ? E.ternaRevisa : E.terna;
+      case 'easy_apply': return E.easy_apply;
+      case 'confirmar': return E.confirmar(!a.tiene_texto);
+      case 'portal': return d.nombre === 'LinkedIn' && !d.url ? E.linkedin : E.portal(d.nombre);
+      default:
+        if (d.ternaNo) return E.ternaNo;
+        if (d.ternaNoPudo) return E.ternaNoPudo;
+        if (d.viaLinkedin) return E.empresaViaLinkedin;
+        return d.cuenta ? E.empresaCuenta : E.empresa;
+    }
+  }
+  // Ícono: el avión de "Enviada por Terna" si postula Terna, el lápiz de "Para postular a mano" si lo hacés vos, la pregunta si
+  // falta saberlo. El tono lo pone el CSS: lo de Terna y lo hecho, apagados; lo que te toca, en tinta.
+  const ICONO_DONDE = { terna: 'i-enviada', easy_apply: 'i-a-mano', empresa: 'i-a-mano', portal: 'i-a-mano', confirmar: 'i-preguntar' };
+  function etiquetaDonde(d, clase) {
+    return h('span', { class: 'donde donde-' + d.clave + (d.hecha ? ' donde-hecha' : '') + (clase ? ' ' + clase : '') },
+      icono(ICONO_DONDE[d.clave], 'icono-16'), h('span', { text: textoDonde(d) }));
+  }
+  // La celda de la tabla de Avisos: las palabras cortas y, en el título, la explicación.
+  function celdaDonde(a, prefs) {
+    const d = donde(a, prefs);
+    const cont = etiquetaDonde(d);
+    cont.title = explicacionDonde(a, d, prefs);
+    return cont;
+  }
+  // La línea propia de la tarjeta del celular, debajo de los atributos; nada si ya está postulado.
+  function lineaDonde(a, prefs) {
+    const d = donde(a, prefs);
+    return d.hecha ? null : etiquetaDonde(d, 'donde-linea');
+  }
   const lineaAviso = (a) => h('p', { class: 'dialogo-aviso', text: a.puesto + (a.empresa ? ' · ' + a.empresa : '') });
 
   // Pedir paquete: en qué lugar de los próximos paquetes queda y cuándo se arma; si después Terna postula, también. true o false.
@@ -535,25 +627,47 @@ window.Aviso = (function () {
     return null;
   }
 
-  function abrirAviso(a, clase) {
-    return h('a', { class: clase || 'btn btn-primario btn-ancho', href: a.url, target: '_blank', rel: 'noopener noreferrer',
+  // El botón de la ficha va adonde se postula: el sitio de la empresa o el portal cuando el aviso lleva ahí (diseno.md 0.23 §7.5);
+  // si no, a la página del aviso. `verAviso` es el link a la página del aviso cuando el botón va a otro lado.
+  function abrirAviso(a, clase, prefs) {
+    const d = donde(a, prefs);
+    const clases = clase || 'btn btn-primario btn-ancho';
+    if (d.url && d.clave === 'empresa') {
+      return h('a', { class: clases, href: d.url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnEmpresaAccesible },
+        T.avisos.abrirEnEmpresa, icono('i-abrir'));
+    }
+    if (d.url && d.clave === 'portal') {
+      return h('a', { class: clases, href: d.url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(d.nombre) },
+        T.avisos.abrirEn(d.nombre), icono('i-abrir'));
+    }
+    return h('a', { class: clases, href: a.url, target: '_blank', rel: 'noopener noreferrer',
       'aria-label': T.avisos.abrirEnAccesible(a.fuente) }, T.avisos.abrirEn(a.fuente), icono('i-abrir'));
   }
+  function verAviso(a, prefs) {
+    const d = donde(a, prefs);
+    if (!d.url || (d.clave !== 'empresa' && d.clave !== 'portal')) return null;
+    return h('a', { class: 'btn btn-texto', href: a.url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(a.fuente) },
+      T.avisos.verEnFuente(a.fuente), icono('i-abrir', 'icono-16'));
+  }
 
-  /* ---------- Leer mis_avisos con las columnas de 0025, o sin ellas ----------
-     Mientras el proyecto no tenga 0025, pedir `evaluacion` o `motivo_no_interesa` da 42703 (la columna no existe): se vuelve a
-     pedir sin ellas y la página anda como hasta 0.4.18, sin veredicto ni motivo. `armar(columnas)` devuelve la consulta. */
+  /* ---------- Leer mis_avisos con las columnas de 0025 y 0031, o sin ellas ----------
+     Mientras el proyecto no tenga una migración, pedir sus columnas da 42703 (la columna no existe): se vuelve a pedir sin las de
+     la última (0031: `linkedin_postulacion`) y, si tampoco, sin las de 0025 (`evaluacion`, `motivo_no_interesa`), y la página anda
+     con lo que haya: sin Easy Apply, sin veredicto ni motivo. `armar(columnas)` devuelve la consulta. */
   const COLUMNAS_0025 = 'evaluacion, motivo_no_interesa';
+  const COLUMNAS_0031 = 'linkedin_postulacion';
   function faltaColumna(error) {
     const texto = String((error && (error.message || '')) || '') + ' ' + String((error && error.details) || '');
     return Boolean(error) && (error.code === '42703' || error.code === 'PGRST204' || /does not exist|Could not find/i.test(texto));
   }
   async function leerConEvaluacion(armar, columnas) {
-    const r = await armar(columnas + ', ' + COLUMNAS_0025);
-    if (!r.error) return { data: r.data, error: null, conEvaluacion: true };
-    if (!faltaColumna(r.error)) return { data: null, error: r.error, conEvaluacion: false };
-    const r2 = await armar(columnas);
-    return { data: r2.data, error: r2.error, conEvaluacion: false };
+    const intentos = [columnas + ', ' + COLUMNAS_0025 + ', ' + COLUMNAS_0031, columnas + ', ' + COLUMNAS_0025, columnas];
+    for (let i = 0; i < intentos.length; i++) {
+      const r = await armar(intentos[i]);
+      if (!r.error) return { data: r.data, error: null, conEvaluacion: i < 2, conDonde: i === 0 };
+      if (!faltaColumna(r.error) || i === intentos.length - 1) return { data: null, error: r.error, conEvaluacion: false, conDonde: false };
+    }
+    return { data: null, error: null, conEvaluacion: false, conDonde: false };
   }
 
   return {
@@ -561,7 +675,8 @@ window.Aviso = (function () {
     evaluacion, chipCalificacion, pedirMotivo, lineaMotivo, MOTIVOS, leerConEvaluacion,
     MODALIDADES, ALCANCES, NIVELES, JORNADAS, TODOS_BUSQUEDA, busquedaDe, pasaBusqueda, motivosFuera,
     lugar, atributos, bloqueMatch, controlInteres, fichasPaquete, parsearNotas, textoSalario,
-    recorrido, recorridoGrande, traba, lineaEtapa, claseEtapa, puedeVolverAProbar, seccionPostulacion, razones, abrirAviso,
+    recorrido, recorridoGrande, traba, lineaEtapa, claseEtapa, puedeVolverAProbar, seccionPostulacion, razones, abrirAviso, verAviso,
     ESTILO_POSTULACION, postulable, confirmarPedir, confirmarNoInteresa, marcarNoInteresa,
+    DONDES, donde, textoDonde, explicacionDonde, celdaDonde, etiquetaDonde, lineaDonde,
   };
 })();

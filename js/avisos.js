@@ -23,7 +23,7 @@ Terna.pagina('avisos', async (ctx) => {
   const cajaFiltros = document.getElementById('filtros');
   const cajaProximos = document.getElementById('proximos');
   const cuenta = document.getElementById('cuenta');
-  const COLUMNAS = 'match_id, aviso_id, puesto, empresa, ubicacion, pais, modalidad, alcance, url, fuente, postulacion, ats_formulario, dudoso, publicado_en, visto_en, tiene_texto, texto_origen, match, razones, requisitos_faltantes, interes, estado_paquete, pedido_en, creado_en, nuevo, paquete_id, paquete_idioma, cv_path, carta_path, salario_monto, salario_moneda, salario_periodo, salario_motivo, notas, estado_postulacion, motivo_a_mano, traba_detalle, intentos, en_cola_en, enviada_en, postulado_en, entrevista_en, nivel, jornada';
+  const COLUMNAS = 'match_id, aviso_id, puesto, empresa, ubicacion, pais, modalidad, alcance, url, url_postulacion, fuente, postulacion, ats_formulario, dudoso, publicado_en, visto_en, tiene_texto, texto_origen, match, razones, requisitos_faltantes, interes, estado_paquete, pedido_en, creado_en, nuevo, paquete_id, paquete_idioma, cv_path, carta_path, salario_monto, salario_moneda, salario_periodo, salario_motivo, notas, estado_postulacion, motivo_a_mano, traba_detalle, intentos, en_cola_en, enviada_en, postulado_en, entrevista_en, nivel, jornada';
 
   const parar = Terna.cargando(lista);
   const [rA, rP, rB, rC] = await Promise.all([
@@ -67,15 +67,16 @@ Terna.pagina('avisos', async (ctx) => {
   const INTERESES = ['me_interesa', 'por_decidir', 'no_me_interesa'];
   const PAQUETES = ['armado', 'sin_armar', 'pedido', 'no_se_pudo_armar', 'sin_texto', 'por_puntuar'];
   const POSTULACIONES = ['pendiente', 'en_cola', 'para_revisar', 'enviada', 'a_mano', 'postulado', 'entrevista'];
+  const DONDES = Aviso.DONDES;  // diseno.md 0.23 §7.6: Postula Terna; a mano en LinkedIn, en el sitio de la empresa o en un portal; LinkedIn, a confirmar
   const BUSQUEDA = ['modalidad', 'alcance', 'nivel', 'jornada'];
   const DE_COLUMNA = ['puesto', 'empresa', 'ubicacion', 'publicado'];
-  const CLAVES = ['modalidad', 'alcance', 'nivel', 'jornada', 'match', 'interes', 'paquete', 'postulacion', ...DE_COLUMNA];
+  const CLAVES = ['modalidad', 'alcance', 'nivel', 'jornada', 'match', 'interes', 'paquete', 'postulacion', 'donde', ...DE_COLUMNA];
   const TODOS = Object.assign({ interes: INTERESES }, Aviso.TODOS_BUSQUEDA);
   const busquedaPrefs = Aviso.busquedaDe(prefs);
   const huella = JSON.stringify([busquedaPrefs, umbral]);
   const INTERES_INICIAL = ['me_interesa', 'por_decidir'];
   const inicial = () => ({ modalidad: null, alcance: null, nivel: null, jornada: null, matchMin: null, bajoUmbral: false,
-    interes: INTERES_INICIAL.slice(), paquete: null, postulacion: null, puesto: '', empresa: '', ubicacion: null, publicado: null });
+    interes: INTERES_INICIAL.slice(), paquete: null, postulacion: null, donde: null, puesto: '', empresa: '', ubicacion: null, publicado: null });
   const mismos = (x, y) => x.length === y.length && x.every((v) => y.includes(v));
   const deLista = (v, todos) => { if (!Array.isArray(v)) return null; const l = todos.filter((x) => v.includes(x)); return l.length ? l : null; };
   // Un filtro de búsqueda igual a las preferencias se guarda como null: "según tus preferencias".
@@ -88,6 +89,7 @@ Terna.pagina('avisos', async (ctx) => {
     r.interes = deLista(f.interes, INTERESES) || r.interes;
     r.paquete = unoOVarios(f.paquete, PAQUETES);
     r.postulacion = unoOVarios(f.postulacion, POSTULACIONES);
+    r.donde = Filtros.listaValida(f.donde, DONDES);
     r.puesto = Filtros.textoValido(f.puesto);
     r.empresa = Filtros.textoValido(f.empresa);
     r.ubicacion = Filtros.listaValida(f.ubicacion, null);
@@ -138,6 +140,7 @@ Terna.pagina('avisos', async (ctx) => {
     if (excepto !== 'interes' && !filtros.interes.includes(a.interes)) return false;
     if (excepto !== 'paquete' && filtros.paquete && !filtros.paquete.includes(Aviso.estadoPaquete(a))) return false;
     if (excepto !== 'postulacion' && filtros.postulacion && !filtros.postulacion.includes(a.estado_postulacion)) return false;
+    if (excepto !== 'donde' && filtros.donde && !filtros.donde.includes(Aviso.donde(a, prefs).clave)) return false;
     if (!Aviso.pasaBusqueda(a, busquedaHoy)) return false;
     if (a.match !== null && a.match < minimo() && !esTuPuesto(a)) return false;
     if (excepto !== 'puesto' && !Filtros.contiene(a.puesto, filtros.puesto)) return false;
@@ -170,7 +173,7 @@ Terna.pagina('avisos', async (ctx) => {
     if (k === 'match') return minimo() !== umbral;
     if (k === 'interes') return !mismos(filtros.interes, INTERES_INICIAL);
     if (k === 'puesto' || k === 'empresa') return Filtros.hayTexto(filtros[k]);
-    return filtros[k] !== null;  // paquete, postulación, ubicación, publicado
+    return filtros[k] !== null;  // paquete, postulación, dónde se postula, ubicación, publicado
   }
   const algoCambiado = () => CLAVES.some(cambiado);
   const F = T.avisos.filtros;
@@ -187,6 +190,7 @@ Terna.pagina('avisos', async (ctx) => {
     if (k === 'match') return priorizar ? F.matchResumenPuestos(minimo()) : F.matchResumen(minimo());
     if (k === 'paquete') return Filtros.resumenLista(filtros.paquete, PAQUETES, (v) => T.avisos.paquete[v], F.todos);
     if (k === 'postulacion') return Filtros.resumenLista(filtros.postulacion, POSTULACIONES, (v) => T.avisos.postulacion[v], F.todas);
+    if (k === 'donde') return Filtros.resumenLista(filtros.donde, DONDES, (v) => T.avisos.dondeFiltro[v], F.todosColumna.donde);
     if (k === 'puesto' || k === 'empresa') return Filtros.resumenTexto(filtros[k], F.todosColumna[k]);
     if (k === 'ubicacion') return Filtros.resumenLista(filtros.ubicacion, todasUbicaciones(), (v) => v, F.todosColumna.ubicacion);
     if (k === 'publicado') return Filtros.resumenFecha(filtros.publicado, F.todosColumna.publicado);
@@ -324,7 +328,8 @@ Terna.pagina('avisos', async (ctx) => {
       h('span', { class: 'aviso-datos' },
         h('span', { class: 'aviso-puesto', text: a.puesto }),
         a.empresa ? h('span', { class: 'aviso-empresa', text: a.empresa }) : null,
-        Aviso.atributos(a),
+        Aviso.atributos(a, { sinFuente: true }),
+        Aviso.lineaDonde(a, prefs),
         Aviso.etiquetas(a, bajoMinimo(a), false, fuera(a))),
       Aviso.bloqueMatch(a, umbral));
     const bajo = a.match !== null && !Aviso.llega(a, umbral);
@@ -346,18 +351,22 @@ Terna.pagina('avisos', async (ctx) => {
     const thead = h('thead', null, h('tr', null,
       th(C.puesto, 'puesto', 'col-puesto'), th(C.empresa, 'empresa', 'col-empresa'), th(C.modalidad, 'modalidad', 'col-modalidad'),
       th(C.ubicacion, 'ubicacion', 'col-ubicacion'), th(C.match, 'match', 'der', orden === 'match' ? 'descending' : 'none'), th(C.paquete, 'paquete', 'col-paquete'),
-      th(C.postulacion, 'postulacion', 'col-postulacion'), th(C.interes, 'interes', 'col-interes'), th(C.publicado, 'publicado', 'col-publicado', orden === 'nuevos' ? 'descending' : 'none'),
+      th(C.postulacion, 'postulacion', 'col-postulacion'), th(C.donde, 'donde', 'col-donde'), th(C.interes, 'interes', 'col-interes'),
+      th(C.publicado, 'publicado', 'col-publicado', orden === 'nuevos' ? 'descending' : 'none'),
       h('th', { scope: 'col', text: C.aviso })));
     // Sin filas (los filtros no dejan ver ninguna), una sola celda con el aviso de vacío, debajo de los encabezados.
-    const tbody = vacio ? h('tbody', null, h('tr', null, h('td', { class: 'tabla-vacia', colspan: '10' }, vacio))) : h('tbody', null, vis.map(fila));
+    const tbody = vacio ? h('tbody', null, h('tr', null, h('td', { class: 'tabla-vacia', colspan: '11' }, vacio))) : h('tbody', null, vis.map(fila));
     return h('div', { class: 'tabla-caja tabla-avisos' }, h('table', { class: 'tabla' }, thead, tbody));
   }
   // Lo que dicen las columnas que la tabla esconde cuando no le alcanza el ancho (diseno.md 0.8 §7.6): empresa, lugar y
-  // modalidad debajo del puesto, como en la fila de Postulaciones. Oculta mientras las columnas se ven.
+  // modalidad debajo del puesto, como en la fila de Postulaciones, y desde 0.23 dónde se postula, solo si te toca a vos (lo que
+  // postula Terna y lo ya postulado no suman ruido: están en la ficha). Oculta mientras las columnas se ven.
   function lineaApoyo(a) {
+    const d = Aviso.donde(a, prefs);
     return h('div', { class: 'atributos linea-apoyo' },
       a.empresa ? h('span', { class: 'apoyo-empresa', text: a.empresa + ' · ' }) : null,
-      h('span', { text: Aviso.lugar(a) }), a.modalidad ? h('span', { text: ' · ' + T.avisos.modalidadMin[a.modalidad] }) : null);
+      h('span', { text: Aviso.lugar(a) }), a.modalidad ? h('span', { text: ' · ' + T.avisos.modalidadMin[a.modalidad] }) : null,
+      d.clave === 'terna' || d.hecha ? null : h('span', { class: 'apoyo-donde', text: ' · ' + Aviso.textoDonde(d) }));
   }
   function fila(a) {
     const bajo = a.match !== null && !Aviso.llega(a, umbral);
@@ -375,6 +384,7 @@ Terna.pagina('avisos', async (ctx) => {
       h('td', { class: 'col-paquete' }, h('div', { class: 'celda-paquete' }, Aviso.chipPaquete(a), accionPaquete(a, true),
         bajo && !tuyo ? h('span', { class: 'chip-texto', text: T.avisos.bajoUmbral }) : null)),
       h('td', { class: 'col-postulacion' }, Aviso.chipInteres(a, config), Aviso.chipPostulacion(a)),
+      h('td', { class: 'col-donde' }, Aviso.celdaDonde(a, prefs)),
       h('td', { class: 'col-interes' }, accionesAviso(a, 'tabla')),
       h('td', { class: 'col-publicado' }, Aviso.fecha(a)),
       h('td', null, h('a', { class: 'btn btn-texto btn-chico', href: a.url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(a.fuente) }, icono('i-abrir'))));
@@ -687,7 +697,7 @@ Terna.pagina('avisos', async (ctx) => {
       if (desdeEncabezado) cuerpo.prepend(Filtros.botonOrden(F.ordenar.nuevos, orden === 'nuevos', () => cambiarOrden('nuevos')));
       return cuerpo;
     }
-    if (k === 'paquete' || k === 'postulacion' || k === 'ubicacion') {
+    if (k === 'paquete' || k === 'postulacion' || k === 'donde' || k === 'ubicacion') {
       let opciones;
       if (k === 'ubicacion') {
         // Las que hay en la lista con los demás filtros, y las elegidas aunque ya no haya ninguna; de la más usada a la menos.
@@ -697,6 +707,7 @@ Terna.pagina('avisos', async (ctx) => {
         opciones = valores.map((v) => ({ valor: v, texto: v, n: base.filter((a) => Aviso.lugar(a) === v).length }))
           .sort((x, y) => (y.n - x.n) || x.texto.localeCompare(y.texto, 'es'));
       } else if (k === 'paquete') opciones = opcionesDe('paquete', PAQUETES, (v) => T.avisos.paquete[v], Aviso.estadoPaquete);
+      else if (k === 'donde') opciones = opcionesDe('donde', DONDES, (v) => T.avisos.dondeFiltro[v], (a) => Aviso.donde(a, prefs).clave);
       else opciones = opcionesDe('postulacion', POSTULACIONES, (v) => T.avisos.postulacion[v], (a) => a.estado_postulacion);
       return Filtros.cuerpoValores({ nombre: nombreFiltro(k), opciones, elegidos: filtros[k], todosTexto: F.todosColumna[k], buscador: k === 'ubicacion',
         alCambiar: (v) => { filtros[k] = v; aplicarFiltro(); } });
@@ -807,11 +818,11 @@ Terna.pagina('avisos', async (ctx) => {
     ];
     if (a.match !== null && a.tiene_texto) partes.push(accionesAviso(a, 'ficha'));
     if (conMotivo && a.interes === 'no_me_interesa') partes.push(Aviso.lineaMotivo(a, () => refrescar(a)));
-    partes.push(...Aviso.razones(a, false), seccionPaquete(a), Aviso.seccionPostulacion(a, config));
+    partes.push(...Aviso.razones(a, false), seccionPaquete(a), Aviso.seccionPostulacion(a, config, prefs));
     return partes;
   }
   function accionesFicha(a) {
-    const b = h('div', { class: 'botones' }, Aviso.abrirAviso(a));
+    const b = h('div', { class: 'botones' }, Aviso.abrirAviso(a, null, prefs), Aviso.verAviso(a, prefs));
     if (a.interes === 'me_interesa') {
       b.append(h('button', { class: 'btn btn-texto', type: 'button', onclick: () => cambiarInteres(a, 'no_me_interesa') }, T.avisos.interes.no_me_interesa));
     }
