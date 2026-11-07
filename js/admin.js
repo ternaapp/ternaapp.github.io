@@ -1,7 +1,8 @@
 /* Terna · js/admin.js
-   Admin (brand.md §6.9), solo Francisco: Usuarios (con Borrar), Invitaciones (abrir o cerrar), Uso y Problemas.
-   Tres poderes y nada más; la pausa del motor no está acá. Lee y escribe solo por las funciones admin_* y
-   config.invitaciones_abiertas (datos.md §14). Pensada primero para escritorio: en celular las tablas se desplazan. */
+   Admin (brand.md §6.9), solo Francisco: Usuarios (con Borrar), Invitaciones (abrir o cerrar), Uso, Problemas y, desde
+   brand.md 0.11, Empresas: las que ni el motor ni la búsqueda web diaria ubicaron, para que pegue dónde se postula (datos.md 0.28,
+   0032). La pausa del motor no está acá. Lee y escribe solo por las funciones admin_* y config.invitaciones_abiertas (datos.md §14).
+   Pensada primero para escritorio: en celular las tablas se desplazan. */
 'use strict';
 
 Terna.pagina('admin', async (ctx) => {
@@ -10,20 +11,29 @@ Terna.pagina('admin', async (ctx) => {
   const A = T.admin;
   const raiz = document.getElementById('admin');
   const sub = document.getElementById('subpestanas');
-  const SECCIONES = ['usuarios', 'invitaciones', 'uso', 'problemas'];
+  const SECCIONES = ['usuarios', 'invitaciones', 'uso', 'problemas', 'empresas'];
   let seccion = SECCIONES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'uso';
   const dias = { uso: Terna.leerLocal('admin.uso', 7) === 30 ? 30 : 7, problemas: Terna.leerLocal('admin.problemas', 7) === 30 ? 30 : 7 };
   let sinVer = 0;
+  // Empresas (0032): sin la migración la función no existe y la subpestaña no se muestra.
+  let empresas = null;
 
   async function contarSinVer() {
     const { data } = await sb.rpc('admin_problemas', { p_dias: 30 });
     sinVer = (data || []).filter((p) => !p.visto_en).length;
   }
+  async function leerEmpresas() {
+    const { data, error } = await sb.rpc('admin_empresas_para_completar');
+    empresas = error ? null : (data || []);
+    return error;
+  }
   function dibujarSub() {
     Terna.vaciar(sub);
     for (const s of SECCIONES) {
+      if (s === 'empresas' && empresas === null) continue;
+      const chip = s === 'problemas' && sinVer ? A.sinVer(sinVer) : (s === 'empresas' && empresas.length ? A.empresas.porCompletar(empresas.length) : null);
       sub.append(h('a', { href: '#' + s, 'aria-current': s === seccion ? 'true' : null, onclick: (e) => { e.preventDefault(); ir(s); } },
-        A.secciones[s], s === 'problemas' && sinVer ? h('span', { class: 'chip chip-espera', text: A.sinVer(sinVer) }) : null));
+        A.secciones[s], chip ? h('span', { class: 'chip chip-espera', text: chip }) : null));
     }
   }
   function ir(s) {
@@ -136,17 +146,81 @@ Terna.pagina('admin', async (ctx) => {
       td(A.pasos[p.paso] || p.paso), td(p.error), td(Terna.numero(Number(p.reintentos)), true)))));
   }
 
+  /* ---------- Empresas (brand.md 0.11 §6.9; diseno.md 0.24 §9.6) ----------
+     Una tarjeta por empresa: cuántos avisos abiertos tiene, qué dijo la búsqueda web, un aviso de ejemplo para abrirlo con la
+     cuenta de Francisco y tocar "Postularse", y el link donde se postula. La base valida (https, nunca un portal de empleo) y el
+     motor lo verifica en la corrida siguiente antes de usarlo. */
+  async function empresasSeccion(foco) {
+    const error = await leerEmpresas();
+    dibujarSub();
+    if (error) { Terna.errorDeCarga(raiz, error); return; }
+    const E = A.empresas;
+    Terna.vaciar(raiz);
+    raiz.append(h('p', { class: 'seccion-intro', text: E.intro }), h('p', { class: 'campo-ayuda', text: E.como }));
+    if (!empresas.length) { raiz.append(h('p', { class: 'vacio', text: E.vacio })); return; }
+    const lista = h('div', { class: 'empresas-lista' });
+    empresas.forEach((e, i) => lista.append(tarjetaEmpresa(e, i)));
+    raiz.append(lista);
+    const destino = foco !== undefined ? lista.querySelectorAll('.empresa-tarjeta h2')[Math.min(foco, empresas.length - 1)] : null;
+    if (destino) destino.focus();
+  }
+  function tarjetaEmpresa(e, i) {
+    const E = A.empresas;
+    const id = 'empresa-' + i;
+    const input = h('input', { class: 'control', id: id + '-link', type: 'url', inputmode: 'url', autocomplete: 'off', spellcheck: 'false',
+      maxlength: '2048', placeholder: 'https://', 'aria-describedby': id + '-ayuda ' + id + '-error' });
+    const error = h('p', { class: 'campo-error', id: id + '-error' });
+    const marcar = (texto) => { error.textContent = texto; input.setAttribute('aria-invalid', 'true'); input.focus(); };
+    input.addEventListener('input', () => { if (error.textContent) { error.textContent = ''; input.removeAttribute('aria-invalid'); } });
+    const enviar = async (resultado, boton) => {
+      const url = input.value.trim();
+      if (resultado === 'url' && !/^https:\/\/[^\s/$.?#][^\s]*$/i.test(url)) { marcar(E.errorUrl); return; }
+      boton.disabled = true;
+      const { error: err } = await sb.rpc('admin_completar_empresa', { p_empresa: e.empresa, p_resultado: resultado,
+        p_url: resultado === 'url' ? url : null, p_aviso: resultado === 'url' ? e.aviso_id : null });
+      boton.disabled = false;
+      if (err) {
+        if (Terna.siSesionVencida(err)) return;
+        const msg = String(err.message || '');
+        if (msg.includes('url_de_portal')) { marcar(E.errorPortal); return; }
+        if (msg.includes('url_invalida')) { marcar(E.errorUrl); return; }
+        Terna.avisoBreve(T.errores.guardar, { error: true });
+        return;
+      }
+      Terna.avisoBreve(resultado === 'url' ? E.guardado : (resultado === 'sin_sitio' ? E.sinSitioHecho : E.omitida));
+      await empresasSeccion(i);
+    };
+    const bGuardar = h('button', { class: 'btn btn-primario', type: 'button', onclick: () => enviar('url', bGuardar) }, E.guardar);
+    const bSinSitio = h('button', { class: 'btn', type: 'button', onclick: () => enviar('sin_sitio', bSinSitio) }, E.sinSitio);
+    const bOmitir = h('button', { class: 'btn btn-texto', type: 'button', onclick: () => enviar('omitir', bOmitir) }, E.omitir);
+    input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); enviar('url', bGuardar); } });
+    const titulo = h('h2', { class: 'tarjeta-titulo', id: id + '-titulo', tabindex: '-1', text: e.nombre || e.empresa });
+    return h('section', { class: 'tarjeta seccion empresa-tarjeta', 'aria-labelledby': id + '-titulo' },
+      titulo,
+      h('p', { class: 'empresa-meta' }, h('span', { text: E.avisos(Number(e.avisos_abiertos) || 0) }), h('span', { 'aria-hidden': 'true', text: ' · ' }),
+        h('span', { text: E.estados[e.estado] || '' })),
+      e.nota ? h('p', { class: 'campo-ayuda', text: e.nota }) : null,
+      h('p', { class: 'empresa-ejemplo' }, h('span', { text: E.ejemplo(e.puesto || '') + ' ' }),
+        e.aviso_url ? h('a', { href: e.aviso_url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': E.abrirAccesible(e.fuente || 'LinkedIn') },
+          E.abrir(e.fuente || 'LinkedIn'), icono('i-abrir', 'icono-16')) : null),
+      e.linkedin_postulacion === 'externa' ? h('p', { class: 'campo-ayuda', text: E.lleva }) : null,
+      h('div', { class: 'campo' }, h('label', { for: id + '-link', text: E.link }), input, h('p', { class: 'campo-ayuda', id: id + '-ayuda', text: E.linkAyuda }), error),
+      h('div', { class: 'botones' }, bGuardar, bSinSitio, bOmitir));
+  }
+
   async function cargar() {
     const parar = Terna.cargando(raiz);
     try {
       if (seccion === 'usuarios') await usuarios();
       else if (seccion === 'invitaciones') invitaciones();
       else if (seccion === 'uso') await uso();
+      else if (seccion === 'empresas') await empresasSeccion();
       else await problemas();
     } finally { parar(); }
   }
 
-  await contarSinVer();
+  await Promise.all([contarSinVer(), leerEmpresas()]);
+  if (seccion === 'empresas' && empresas === null) seccion = 'uso';
   dibujarSub();
   await cargar();
 }, { admin: true });

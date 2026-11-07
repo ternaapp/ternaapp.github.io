@@ -1000,7 +1000,7 @@ window.T = (function () {
 
     admin: {
       titulo: 'Admin',
-      secciones: { usuarios: 'Usuarios', invitaciones: 'Invitaciones', uso: 'Uso', problemas: 'Problemas' },
+      secciones: { usuarios: 'Usuarios', invitaciones: 'Invitaciones', uso: 'Uso', problemas: 'Problemas', empresas: 'Empresas' },
       sinVer: (x) => x + ' sin ver',
       usuarios: { mail: 'Mail', alta: 'Alta', ultima: 'Última entrada', estado: 'Estado', avisos: 'Avisos (7 días)', paquetes: 'Paquetes (7 días)', borrar: 'Borrar' },
       estados: { activo: 'Activo', pausado: 'Pausado' },
@@ -1014,6 +1014,34 @@ window.T = (function () {
       uso: { fecha: 'Fecha', usuarios: 'Usuarios corridos', revisados: 'Avisos revisados', puntuados: 'Puntuados', paquetes: 'Paquetes', enviadas: 'Enviadas', aMano: 'A mano', tokens: 'Tokens', usd: 'US$ est.', tope: 'Tope', alcanzado: 'Alcanzado', no: 'No', total: (d) => d + ' días' },
       problemas: { fecha: 'Fecha', usuario: 'Usuario', aviso: 'Aviso', paso: 'Paso', error: 'Error', reintentos: 'Reintentos', marcar: 'Marcar todos como vistos', vacio: (d) => 'Sin problemas en los últimos ' + d + ' días.' },
       pasos: { buscar: 'Buscar', alertas: 'Alertas', leer_cv: 'Leer CV', puntuar: 'Puntuar', armar: 'Armar', responder: 'Responder', postular: 'Postular', subir: 'Subir', retencion: 'Retención', borrar: 'Borrar' },
+      // Admin › Empresas (brand.md 0.11 §6.9; datos.md 0.28, 0032): lo que ni el motor ni la búsqueda web diaria encontraron.
+      empresas: {
+        porCompletar: (x) => x + ' por completar',
+        intro: 'Empresas de avisos que llegan por alertas y que Terna no pudo ubicar: ni el motor ni la búsqueda diaria encontraron dónde publican sus búsquedas. Lo que cargues sirve para todos los avisos que vengan de esa empresa.',
+        como: 'Abrí el aviso con tu cuenta, tocá "Postularse" y copiá el link de la página a la que te lleva.',
+        vacio: 'No hay empresas para completar.',
+        avisos: (x) => (x === 1 ? '1 aviso abierto' : x + ' avisos abiertos'),
+        estados: {
+          no_encontrado: 'La búsqueda no la encontró.',
+          solo_portales: 'La búsqueda solo la encontró en portales de empleo.',
+          error: 'La búsqueda falló tres veces.',
+          encontrado: 'El link que encontró la búsqueda no anduvo.',
+        },
+        ejemplo: (puesto) => 'Aviso de ejemplo: ' + puesto,
+        abrir: (fuente) => 'Abrir el aviso en ' + fuente,
+        abrirAccesible: (fuente) => 'Abrir el aviso en ' + fuente + ', abre en otra pestaña',
+        lleva: 'En LinkedIn, su botón "Postularse" lleva al sitio de la empresa.',
+        link: 'Link donde se postula',
+        linkAyuda: 'El del aviso o el de la página de empleos de la empresa, con https://.',
+        guardar: 'Guardar',
+        sinSitio: 'No tiene página propia',
+        omitir: 'Omitir',
+        guardado: 'Guardado. Terna lo verifica en la próxima corrida.',
+        sinSitioHecho: 'Listo: Terna deja de buscarla.',
+        omitida: 'Omitida.',
+        errorUrl: 'Pegá un link que empiece con https://.',
+        errorPortal: 'Ese link es de un portal de empleo. Pegá el de la página de la empresa o el de su sistema de postulación.',
+      },
     },
 
     // brand.md §6.10: cada chip lleva su explicación como texto accesible y como tooltip.

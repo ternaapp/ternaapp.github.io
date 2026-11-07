@@ -521,6 +521,13 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .tarjeta-plana { padding: 0 12px; }
 .seccion { display: flex; flex-direction: column; gap: 12px; }
 .seccion > h2 { font-size: 17px; font-weight: 700; line-height: 1.3; }
+/* Admin › Empresas (diseno.md 0.24 §9.6): una tarjeta por empresa, en una columna de hasta 720 px. */
+.seccion-intro { max-width: 720px; font-size: 15px; line-height: 1.45; }
+.empresas-lista { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; max-width: 720px; }
+.empresa-tarjeta { gap: 8px; }
+.empresa-meta { font-size: 14px; color: var(--tinta-suave); }
+.empresa-ejemplo { font-size: 15px; line-height: 1.45; }
+.empresa-ejemplo a { display: inline-flex; align-items: center; gap: 4px; }
 
 /* ---------- 5. Páginas ---------- */
 .cabecera-pagina { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
