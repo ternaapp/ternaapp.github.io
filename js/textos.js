@@ -146,6 +146,7 @@ window.T = (function () {
         estaSemana: 'Esta semana',
         anterior: (x) => n(x) + ' la semana anterior',
         verTabla: 'Ver como tabla', verGrafico: 'Ver como gráfico',
+        tabla: 'Semana a semana, en tabla',
         semana: 'Semana',
         rango: (d1, d2) => d1 + ' al ' + d2,
         valor: (rango, x) => rango + ': ' + n(x),

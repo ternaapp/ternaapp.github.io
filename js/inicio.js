@@ -365,7 +365,7 @@ Terna.pagina('inicio', async (ctx) => {
         h('span', { class: 'semana-grafico' }, columnas, dato)));
     });
     // La tabla: lo mismo, con cada número escrito (la versión para teclado y lector de pantalla), de esta semana para atrás.
-    const tabla = h('div', { class: 'tabla-caja semanas-tabla', hidden: true, tabindex: '0', role: 'region', 'aria-label': S.titulo },
+    const tabla = h('div', { class: 'tabla-caja semanas-tabla', hidden: true, tabindex: '0', role: 'region', 'aria-label': S.tabla },
       h('table', { class: 'tabla' },
         h('caption', { class: 'oculto-visual', text: S.titulo }),
         h('thead', null, h('tr', null, h('th', { scope: 'col', text: S.semana }), SERIES.map(([, nombre]) => h('th', { scope: 'col', class: 'der', text: nombre })))),
