@@ -51,8 +51,12 @@ Terna.pagina('avisos', async (ctx) => {
   const yaCorrio = (rC.data || []).length > 0;
   // Priorizar mis puestos (0027): sin la columna vale Sí, como en el motor. Solo cuentan los puestos que no son generales. La
   // regla es la de Aviso.tuPuesto, la misma de Postulaciones e Inicio (diseno.md 0.25 §1.36).
-  const criterio = Aviso.criterio(prefs, piso);
-  const priorizar = criterio.puestos.length > 0;
+  // Desde 0034 también las empresas que seguís (diseno.md 0.26 §7.2): `js/lista.js` arma lo tuyo y los filtros Empresa y Puesto
+  // con la regla que usa Inicio para contar, así lo que dice Inicio es lo que muestra esta lista.
+  const seguidas = Lista.seguidasDe(rP.data);
+  const loTuyo = Lista.crear(avisos, { prefs, piso, seguidas: seguidas.filas });
+  const criterio = loTuyo.criterio;
+  const priorizar = criterio.puestos.length > 0 || criterio.empresas.length > 0;
   const bajoMinimo = (a) => prefs.salario_modo === 'rango' && !!a.paquete_id && conMinimo.has(a.match_id);
 
   /* ---------- Filtros y orden (diseno.md 0.11 §7.2; desde 0.21, también por columna) ----------
@@ -75,7 +79,8 @@ Terna.pagina('avisos', async (ctx) => {
   const huella = JSON.stringify([busquedaPrefs, umbral]);
   const INTERES_INICIAL = ['me_interesa', 'por_decidir'];
   const inicial = () => ({ modalidad: null, alcance: null, nivel: null, jornada: null, matchMin: null, bajoUmbral: false,
-    interes: INTERES_INICIAL.slice(), paquete: null, postulacion: null, donde: null, puesto: '', empresa: '', ubicacion: null, publicado: null });
+    interes: INTERES_INICIAL.slice(), paquete: null, postulacion: null, donde: null, puesto: '', empresa: '', ubicacion: null, publicado: null,
+    puestoExacto: false, empresaExacta: false });
   const mismos = (x, y) => x.length === y.length && x.every((v) => y.includes(v));
   const deLista = (v, todos) => { if (!Array.isArray(v)) return null; const l = todos.filter((x) => v.includes(x)); return l.length ? l : null; };
   // Un filtro de búsqueda igual a las preferencias se guarda como null: "según tus preferencias".
@@ -91,6 +96,9 @@ Terna.pagina('avisos', async (ctx) => {
     r.donde = Filtros.listaValida(f.donde, DONDES);
     r.puesto = Filtros.textoValido(f.puesto);
     r.empresa = Filtros.textoValido(f.empresa);
+    // Desde un link de Inicio (diseno.md 0.26 §6), Puesto y Empresa son exactos: la regla del motor, sin el texto contenido.
+    r.puestoExacto = f.puestoExacto === true && !!r.puesto;
+    r.empresaExacta = f.empresaExacta === true && !!r.empresa;
     r.ubicacion = Filtros.listaValida(f.ubicacion, null);
     r.publicado = Filtros.fechaValida(f.publicado);
     // Los filtros guardados antes de la barra (sin `v`) conservan el match: significaba lo mismo. Modalidad y Alcance
@@ -111,6 +119,10 @@ Terna.pagina('avisos', async (ctx) => {
   const q = new URLSearchParams(location.search);
   if (q.get('interes') === 'por_decidir') filtros = Object.assign(inicial(), { interes: ['por_decidir'] });
   if (q.get('paquete') === 'sin_texto') filtros = Object.assign(inicial(), { paquete: ['sin_texto'] });
+  // Los links del tablero de Inicio (diseno.md 0.26 §6): una empresa, un puesto o dónde se postula, sobre la lista de entrada.
+  if (q.get('empresa')) filtros = Object.assign(inicial(), { empresa: Filtros.textoValido(q.get('empresa')), empresaExacta: true });
+  if (q.get('puesto')) filtros = Object.assign(inicial(), { puesto: Filtros.textoValido(q.get('puesto')), puestoExacto: true });
+  if (DONDES.includes(q.get('donde'))) filtros = Object.assign(inicial(), { donde: [q.get('donde')] });
   // El orden elegido se recuerda mientras "Priorizar mis puestos" siga igual (diseno.md 0.18 §7.2): al prenderlo, "Tus puestos
   // primero"; al apagarlo, lo que la persona había elegido. Hasta 0.18 se guardaba solo el texto del orden.
   const ORDENES = priorizar ? ['puestos', 'match', 'nuevos'] : ['match', 'nuevos'];
@@ -141,9 +153,9 @@ Terna.pagina('avisos', async (ctx) => {
     if (excepto !== 'postulacion' && filtros.postulacion && !filtros.postulacion.includes(a.estado_postulacion)) return false;
     if (excepto !== 'donde' && filtros.donde && !filtros.donde.includes(Aviso.donde(a, prefs).clave)) return false;
     if (!Aviso.pasaBusqueda(a, busquedaHoy)) return false;
-    if (a.match !== null && a.match < minimo() && !esTuPuesto(a)) return false;
-    if (excepto !== 'puesto' && !Filtros.contiene(a.puesto, filtros.puesto)) return false;
-    if (excepto !== 'empresa' && !Filtros.contiene(a.empresa, filtros.empresa)) return false;
+    if (a.match !== null && a.match < minimo() && !loTuyo.prioritario(a)) return false;
+    if (excepto !== 'puesto' && !(filtros.puestoExacto ? loTuyo.esElPuesto(a, filtros.puesto) : loTuyo.dePuesto(a, filtros.puesto))) return false;
+    if (excepto !== 'empresa' && !(filtros.empresaExacta ? loTuyo.esLaEmpresa(a, filtros.empresa) : loTuyo.deEmpresa(a, filtros.empresa))) return false;
     if (excepto !== 'ubicacion' && filtros.ubicacion && !filtros.ubicacion.includes(Aviso.lugar(a))) return false;
     if (excepto !== 'publicado' && !Filtros.pasaFecha(fechaDe(a), filtros.publicado)) return false;
     return true;
@@ -154,14 +166,23 @@ Terna.pagina('avisos', async (ctx) => {
   const esTuPuesto = (a) => !!Aviso.tuPuesto(a, criterio);
   const decideSola = (a) => (Aviso.llega(a, umbral) || esTuPuesto(a)) && !fuera(a).length;
   function chipTuPuesto(a) {
-    if (!esTuPuesto(a)) return null;
-    const explicacion = T.avisos.tuPuestoExplicacion(Aviso.tuPuesto(a, criterio), Aviso.llega(a, umbral));
-    return h('span', { class: 'chip-texto tinta tu-puesto', title: explicacion }, icono('i-foco', 'icono-14'), h('span', { text: T.avisos.tuPuesto }), oculto(': ' + explicacion));
+    // "Tu puesto" y, desde 0034, "Tu empresa" (brand.md 0.13 §6.4): null, un chip o los dos.
+    const chips = [];
+    if (esTuPuesto(a)) {
+      const explicacion = T.avisos.tuPuestoExplicacion(Aviso.tuPuesto(a, criterio), Aviso.llega(a, umbral));
+      chips.push(h('span', { class: 'chip-texto tinta tu-puesto', title: explicacion }, icono('i-foco', 'icono-14'), h('span', { text: T.avisos.tuPuesto }), oculto(': ' + explicacion)));
+    }
+    const empresa = Aviso.tuEmpresa(a, criterio);
+    if (empresa) {
+      const explicacion = T.avisos.tuEmpresaExplicacion(empresa, Aviso.llega(a, umbral));
+      chips.push(h('span', { class: 'chip-texto tinta tu-empresa', title: explicacion }, icono('i-empresa', 'icono-14'), h('span', { text: T.avisos.tuEmpresa }), oculto(': ' + explicacion)));
+    }
+    return chips.length ? (chips.length === 1 ? chips[0] : chips) : null;
   }
   const desc = (x, y) => (x === y ? 0 : (x === null || x === undefined) ? 1 : (y === null || y === undefined) ? -1 : (x < y ? 1 : -1));
   function comparar(a, b) {
     if (orden === 'nuevos') return desc(a.publicado_en, b.publicado_en) || desc(a.visto_en, b.visto_en);
-    if (orden === 'puestos' && esTuPuesto(a) !== esTuPuesto(b)) return esTuPuesto(a) ? -1 : 1;
+    if (orden === 'puestos' && loTuyo.prioritario(a) !== loTuyo.prioritario(b)) return loTuyo.prioritario(a) ? -1 : 1;
     return desc(a.match, b.match) || (a.dudoso === b.dudoso ? 0 : a.dudoso ? 1 : -1)
       || desc(a.publicado_en, b.publicado_en) || desc(a.creado_en, b.creado_en);
   }
@@ -186,7 +207,7 @@ Terna.pagina('avisos', async (ctx) => {
   function resumenLista(k, l) { return Filtros.resumenLista(l, TODOS[k], (v) => nombreDe(k, v), F.todosDe[k]); }
   const todasUbicaciones = () => Array.from(new Set(avisos.map(Aviso.lugar))).sort((x, y) => x.localeCompare(y, 'es'));
   function resumen(k) {
-    if (k === 'match') return priorizar ? F.matchResumenPuestos(minimo()) : F.matchResumen(minimo());
+    if (k === 'match') return priorizar ? F.matchResumenTuyos(minimo(), criterio.puestos.length > 0, criterio.empresas.length > 0) : F.matchResumen(minimo());
     if (k === 'paquete') return Filtros.resumenLista(filtros.paquete, PAQUETES, (v) => T.avisos.paquete[v], F.todos);
     if (k === 'postulacion') return Filtros.resumenLista(filtros.postulacion, POSTULACIONES, (v) => T.avisos.postulacion[v], F.todas);
     if (k === 'donde') return Filtros.resumenLista(filtros.donde, DONDES, (v) => T.avisos.dondeFiltro[v], F.todosColumna.donde);
@@ -207,7 +228,7 @@ Terna.pagina('avisos', async (ctx) => {
   }
   function dibujarHerramientas() {
     Terna.vaciar(herramientas);
-    const nombres = { puestos: T.avisos.ordenPuestos, match: T.avisos.ordenMatch, nuevos: T.avisos.ordenNuevos };
+    const nombres = { puestos: T.avisos.ordenTuyos(criterio.puestos.length > 0, criterio.empresas.length > 0), match: T.avisos.ordenMatch, nuevos: T.avisos.ordenNuevos };
     const sel = h('select', { class: 'control', id: 'orden' }, ORDENES.map((x) => h('option', { value: x, text: nombres[x], selected: orden === x })));
     sel.addEventListener('change', () => { orden = sel.value; guardarOrden(); dibujarLista(); });
     herramientas.append(h('span', { class: 'orden' }, icono('i-ordenar', 'icono-16'), h('label', { for: 'orden', text: T.avisos.ordenarPor + ':' }), sel));
@@ -689,7 +710,7 @@ Terna.pagina('avisos', async (ctx) => {
   }
   function cuerpoFiltro(k, desdeEncabezado) {
     if (k === 'puesto' || k === 'empresa') {
-      return Filtros.cuerpoTexto({ valor: filtros[k], alCambiar: (v) => { filtros[k] = v; aplicarFiltro(); } });
+      return Filtros.cuerpoTexto({ valor: filtros[k], alCambiar: (v) => { filtros[k] = v; filtros.puestoExacto = filtros.puestoExacto && k !== 'puesto'; filtros.empresaExacta = filtros.empresaExacta && k !== 'empresa'; aplicarFiltro(); } });
     }
     if (k === 'publicado') {
       const cuerpo = Filtros.cuerpoFecha({ valor: filtros.publicado, alCambiar: (v) => { filtros.publicado = v; aplicarFiltro(); } });
@@ -721,6 +742,8 @@ Terna.pagina('avisos', async (ctx) => {
       if (cambiado(k)) {
         prefsLinea.append(h('button', { class: 'btn btn-texto btn-chico', type: 'button', onclick: () => {
           if (k === 'match') { filtros.matchMin = null; filtros.bajoUmbral = false; } else filtros[k] = null;
+          if (k === 'puesto') filtros.puestoExacto = false;
+          if (k === 'empresa') filtros.empresaExacta = false;
           aplicarFiltro();
           Terna.reemplazarCuerpoHoja(cuerpoFiltro(k, desdeEncabezado));
           const primero = document.querySelector('dialog.hoja[open] .filtro-cuerpo input');
@@ -764,7 +787,7 @@ Terna.pagina('avisos', async (ctx) => {
       cuerpo.append(h('div', { class: 'campo' },
         h('div', { class: 'interruptor-fila' }, h('label', { class: 'campo-etiqueta', for: idRango, text: F.matchMinimo }), valor),
         rango, h('label', { class: 'casilla' }, casilla, h('span', { text: F.mostrarBajo })),
-        priorizar ? h('p', { class: 'campo-ayuda', text: F.matchPuestos(piso) }) : null));
+        priorizar ? h('p', { class: 'campo-ayuda', text: F.matchTuyos(piso, criterio.puestos.length > 0, criterio.empresas.length > 0) }) : null));
     }
     pintarPrefs();
     cuerpo.append(prefsLinea);

@@ -55,6 +55,8 @@
     'i-deshacer': P('M4 10h10a5 5 0 0 1 0 10H9M4 10l4-4M4 10l4 4'),
     // 0.3: notas para la entrevista y etiquetas del aviso (mock "Propuestas 0.3", aprobadas el 22/10/2026)
     'i-foco': '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+    // Empresas que seguís (diseno.md 0.26 §11.2): un edificio con ventanas, para el chip "Tu empresa" y su lista en Inicio.
+    'i-empresa': P('M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M3 21h18M8 8h3M8 12h3M8 16h3'),
     'i-hablar': P('M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'),
     'i-preguntar': '<circle cx="12" cy="12" r="9"/>' + P('M9.5 9a2.5 2.5 0 0 1 5 0c0 1.7-2.5 2.2-2.5 4M12 17h.01'),
     'i-viejo': P('M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2'),

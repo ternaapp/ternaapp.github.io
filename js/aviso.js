@@ -144,12 +144,16 @@ window.Aviso = (function () {
      Una sola regla para Avisos, Postulaciones e Inicio, la misma con que el motor elige qué armar (pipeline.md 0.4.15 §4.9:
      lo pedido, lo que llega al umbral y, con "Priorizar mis puestos", los de tus puestos desde el piso). `criterio` junta lo que
      hace falta de las preferencias del momento; el puesto de cada aviso se calcula una vez (el título no cambia en la página). */
-  function criterio(prefs, piso) {
+  // `seguidas` (desde 0034): las empresas que sigue la persona, como filas { nombre, alias } o nombres.
+  function criterio(prefs, piso, seguidas) {
     const p = prefs || {};
     const P = window.Puestos;
     // Priorizar mis puestos (0027): sin la columna vale Sí, como en el motor. Un puesto muy general no cuenta.
     const puestos = !P || p.priorizar_puestos === false ? [] : (p.puestos_objetivo || []).filter((x) => x && !P.general(x));
-    return { umbral: p.umbral, piso, puestos, busqueda: busquedaDe(p), cache: new Map() };
+    // Priorizar mis empresas (0034), igual: sin la columna vale Sí.
+    const filas = (seguidas || []).map((s) => (s && typeof s === 'object' ? s : { nombre: s, alias: null })).filter((f) => f.nombre && String(f.nombre).trim());
+    const empresas = !window.Empresas || p.priorizar_empresas === false ? [] : filas;
+    return { umbral: p.umbral, piso, puestos, empresas, busqueda: busquedaDe(p), cache: new Map(), cacheEmpresas: new Map() };
   }
   // El puesto de la persona que el título tiene entero, como lo escribió, o null: desde el piso, con interés y, si Terna lo
   // decidiría sola (pendiente y sin pedido), dentro de las preferencias.
@@ -158,6 +162,15 @@ window.Aviso = (function () {
     if (a.interes === 'no_me_interesa' || motivosFuera(a, c.busqueda).length) return null;
     if (!c.cache.has(a.match_id)) c.cache.set(a.match_id, Puestos.buscado(a.puesto, c.puestos));
     return c.cache.get(a.match_id);
+  }
+  // La empresa que la persona sigue y es la del aviso, como la escribió, o null (diseno.md 0.26 §7.3): desde el piso, con interés
+  // y dentro de las preferencias, como tu puesto. En la versión 1 solo se ve y va primero: Terna no la arma sola debajo del umbral
+  // (por eso no entra en `sugerida`).
+  function tuEmpresa(a, c) {
+    if (!c.empresas || !c.empresas.length || a.match === null || a.match === undefined || a.match < c.piso) return null;
+    if (a.interes === 'no_me_interesa' || motivosFuera(a, c.busqueda).length) return null;
+    if (!c.cacheEmpresas.has(a.match_id)) c.cacheEmpresas.set(a.match_id, Empresas.seguida(a.empresa, c.empresas));
+    return c.cacheEmpresas.get(a.match_id);
   }
   // Lo que Terna te sugiere: lo pediste, llega a tu umbral o es de tus puestos. Una postulación a mano que no, quedó así
   // después de armarse (subiste el umbral o un repuntaje la bajó): Inicio no la cuenta y Postulaciones la pone en "Bajo tu umbral".
@@ -703,7 +716,7 @@ window.Aviso = (function () {
     estadoPaquete, llega, chip, chipPaquete, chipPostulacion, chipInteres, chipFaltan, fecha, etiquetas,
     evaluacion, chipCalificacion, pedirMotivo, lineaMotivo, MOTIVOS, leerConEvaluacion,
     MODALIDADES, ALCANCES, NIVELES, JORNADAS, TODOS_BUSQUEDA, busquedaDe, pasaBusqueda, motivosFuera,
-    criterio, tuPuesto, sugerida, bajoUmbral,
+    criterio, tuPuesto, tuEmpresa, sugerida, bajoUmbral,
     lugar, atributos, bloqueMatch, controlInteres, fichasPaquete, parsearNotas, textoSalario,
     recorrido, recorridoGrande, traba, lineaEtapa, claseEtapa, puedeVolverAProbar, seccionPostulacion, razones, abrirAviso, verAviso,
     ESTILO_POSTULACION, postulable, confirmarPedir, confirmarNoInteresa, marcarNoInteresa,

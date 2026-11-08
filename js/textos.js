@@ -99,6 +99,55 @@ window.T = (function () {
       asi2a: 'Lo que no puede hacer te lo deja listo en ',
       asi2b: ', con el link y los documentos, para que lo termines vos.',
       asi3: 'Nunca entra con tus cuentas, nunca resuelve captchas y nunca inventa una respuesta.',
+      // El tablero (brand.md 0.13 §6.3; diseno.md 0.26 §6): pedido de Francisco del 07/11/2026, "más dashboard". Todo se cuenta en
+      // el navegador con lo que la página ya puede leer: cero tokens.
+      queHayAhora: 'Lo que está pendiente ahora, sin importar el período.',
+      empresas: {
+        titulo: 'Empresas que seguís',
+        editar: 'Editar', editarAccesible: 'Editar las empresas que seguís',
+        // "Nuevo" es lo mismo que en Avisos: llegó en la última corrida (mis_avisos.nuevo).
+        nuevos: (x) => plural(x, '1 aviso nuevo en la última corrida', n(x) + ' avisos nuevos en la última corrida'),
+        enLista: (x) => (x === 0 ? 'Ningún aviso en tu lista' : plural(x, '1 aviso en tu lista', n(x) + ' avisos en tu lista')),
+        nuevosCorto: (x) => plural(x, '1 nuevo', n(x) + ' nuevos'),
+        vacio: 'Todavía no seguís ninguna empresa.',
+        vacioAyuda: 'Escribí las que te interesan y Terna marca sus avisos cuando llegan, aunque no lleguen a tu umbral.',
+        seguir: 'Seguir una empresa',
+        apagado: 'Priorizar mis empresas está en No: Terna marca sus avisos, pero no los pone primero.',
+      },
+      puestos: {
+        titulo: 'Puestos que buscás',
+        editar: 'Editar', editarAccesible: 'Editar los puestos que buscás',
+        mejor: 'Mejor match',
+        vacio: 'Todavía no escribiste los puestos que buscás.',
+        vacioAyuda: 'Con ellos, Terna pone primero los avisos de esos puestos.',
+        escribir: 'Escribir puestos',
+        apagado: 'Priorizar mis puestos está en No: Terna los cuenta, pero no los pone primero.',
+      },
+      lista: {
+        titulo: 'Tu lista hoy',
+        intro: 'Lo que ves en Avisos con tus preferencias, sin otros filtros.',
+        vacia: 'Tu lista está vacía por ahora. Terna la llena en la próxima corrida.',
+        franjas: 'Por match',
+        franjasNota: (piso) => 'Cuenta también los que no llegan a tu umbral, desde ' + piso + '.',
+        cambiarUmbral: 'Cambiar el umbral',
+        donde: 'Dónde se postula',
+        porcentaje: (x) => x + ' %',
+        empresasTop: 'Empresas con más avisos',
+        seguir: 'Seguir', seguirAccesible: (e) => 'Seguir ' + e,
+        laSeguis: 'La seguís',
+        siguiendo: (e) => 'Ahora seguís a ' + e + '.',
+        dejaste: (e) => 'Dejaste de seguir a ' + e + '.',
+        avisos: (x) => plural(x, '1 aviso', n(x) + ' avisos'),
+      },
+      semanas: {
+        titulo: 'Semana a semana',
+        intro: 'Las últimas 8 semanas. La barra oscura es esta semana.',
+        estaSemana: 'Esta semana',
+        verTabla: 'Ver como tabla', verGrafico: 'Ver como gráfico',
+        semana: 'Semana',
+        rango: (d1, d2) => d1 + ' al ' + d2,
+        valor: (rango, x) => rango + ': ' + n(x),
+      },
     },
 
     avisos: {
@@ -110,6 +159,11 @@ window.T = (function () {
       ordenMatch: 'Match', ordenNuevos: 'Más nuevos',
       // Priorizar mis puestos (brand.md 0.5.4 §6.4; diseno.md 0.18 §7.2 y §7.3; datos.md 0.22, 0027)
       ordenPuestos: 'Tus puestos primero',
+      // Desde 0034, las empresas que seguís (brand.md 0.13 §6.4): el orden y el chip nombran lo que la persona tiene.
+      ordenTuyos: (puestos, empresas) => (puestos && empresas ? 'Tus puestos y empresas primero' : empresas ? 'Tus empresas primero' : 'Tus puestos primero'),
+      tuEmpresa: 'Tu empresa',
+      tuEmpresaExplicacion: (empresa, llega) => 'Es de una empresa que seguís ("' + empresa + '"). Terna lo pone primero para el paquete y la postulación'
+        + (llega ? '.' : ', aunque no llegue a tu umbral.'),
       tuPuesto: 'Tu puesto',
       tuPuestoExplicacion: (puesto, llega) => 'Está en tus puestos ("' + puesto + '"). Terna lo pone primero para el paquete y la postulación'
         + (llega ? '.' : ', aunque no llegue a tu umbral.'),
@@ -131,6 +185,9 @@ window.T = (function () {
         matchResumen: (x) => x + ' o más',
         matchResumenPuestos: (x) => x + ' o más y tus puestos',
         matchPuestos: (piso) => 'Tus puestos se ven desde ' + piso + ', aunque no lleguen a este número.',
+        matchResumenTuyos: (x, puestos, empresas) => x + ' o más y ' + (puestos && empresas ? 'lo tuyo' : empresas ? 'tus empresas' : 'tus puestos'),
+        matchTuyos: (piso, puestos, empresas) => (puestos && empresas ? 'Tus puestos y los avisos de tus empresas' : empresas ? 'Los avisos de tus empresas' : 'Tus puestos')
+          + ' se ven desde ' + piso + ', aunque no lleguen a este número.',
         cambiadoAccesible: ', cambiado',
         segunPreferencias: 'Según tus preferencias.',
         cambiarPreferencias: 'Cambiarlas',
@@ -661,6 +718,21 @@ window.T = (function () {
       puestoPrimero: 'Por ejemplo, Sales Operations',
       puestoOtro: 'Agregar otro puesto',
       quitarPuesto: (x) => 'Quitar ' + x,
+      // Empresas que seguís (brand.md 0.13 §6.7; diseno.md 0.26 §9.3; datos.md 0.30, 0034): dentro de Búsqueda, debajo de los puestos,
+      // con la misma forma. Solo nombres: Terna no las busca (Francisco, 07/11/2026).
+      empresas: {
+        titulo: 'Empresas que seguís',
+        cuenta: (n, max) => n + ' de ' + max,
+        ayuda: 'Una por casilla, hasta 10, escrita como aparece en los avisos. Terna marca con "Tu empresa" los avisos de estas empresas que llegan por las fuentes que ya lee; no las busca en otros sitios.',
+        empresa: (n) => 'Empresa ' + n,
+        empresaPrimera: 'Por ejemplo, Mercado Libre',
+        empresaOtra: 'Agregar otra empresa',
+        quitar: (x) => 'Quitar ' + x,
+        general: (e) => '"' + e + '" es muy general: solo cuentan los avisos de una empresa que se llame exactamente así.',
+        priorizar: 'Priorizar mis empresas',
+        priorizarAyuda: (piso) => 'En Sí, sus avisos se ven aunque no lleguen a tu umbral (desde ' + piso + ') y van primero; entre los que llegan a tu umbral, '
+          + 'Terna les arma el paquete antes. Debajo de tu umbral no arma sola: si te interesa uno, pedí el paquete.',
+      },
       // Priorizar mis puestos (brand.md 0.5.4 §6.7; datos.md 0.22, 0027): solo con algún puesto escrito; en Sí por defecto.
       priorizar: 'Priorizar mis puestos',
       priorizarAyuda: (piso) => 'En Sí, Terna arma y postula primero los avisos de estos puestos, aunque no lleguen a tu umbral (desde ' + piso + '). '
@@ -1080,6 +1152,9 @@ window.T = (function () {
     },
 
     errores: {
+      // Empresas que seguís (datos.md 0.30 §11, 0034).
+      empresasDemasiadas: (max) => 'Hasta ' + max + ' empresas. Para sumar otra, quitá una.',
+      empresaNombre: 'Cada empresa, de 2 a 80 caracteres.',
       completa: 'Completá este campo.',
       mailInvalido: 'Ese mail no parece válido.',
       contrasenaCorta: 'La contraseña tiene que tener al menos 8 caracteres.',
@@ -1167,6 +1242,7 @@ window.T = (function () {
         postulacion_enviada: e.enviada, no_postulable: e.noPostulable,
         intentos_agotados: e.agotados(c.max_reintentos_postulacion || 3),
         no_se_puede_borrar_admin: e.borrarUsuario, usuario_no_existe: e.borrarUsuario,
+        empresas_demasiadas: e.empresasDemasiadas(c.max_empresas_seguidas || 10), empresa_nombre_invalido: e.empresaNombre,
       };
       return mapa[clave] || e.general;
     },

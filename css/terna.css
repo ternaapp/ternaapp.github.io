@@ -19,6 +19,11 @@
   --fuente-titulos: "Bitter", Georgia, serif;
   --velo: rgb(31 37 34 / 0.45);
   --mov: 150ms;
+  /* Datos del tablero de Inicio (diseno.md 0.26 §12.1): una sola tinta para lo que cuenta y un gris del mismo tono para el
+     contexto (lo que no llegó al umbral, las semanas anteriores). Validado con el validador de la skill dataviz (ordinal: un tono,
+     luz monótona, el gris a 3,8:1 sobre hoja). Ningún color de significado: verde es acción, ámbar espera, azul enviado. */
+  --dato: var(--tinta);
+  --dato-suave: var(--borde-control);
 }
 
 /* ---------- 2. Base ---------- */
@@ -242,14 +247,22 @@ html { scroll-padding-top: 72px; }
   border: 0; border-radius: 6px; background: transparent; color: inherit; padding: 0;
 }
 
-/* Cifras de Inicio */
-.cifras { list-style: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 12px 8px; }
-.cifra { text-align: center; }
-.cifra-numero { font-family: var(--fuente-titulos); font-weight: 700; font-size: 22px; line-height: 1.1; font-variant-numeric: tabular-nums; }
-.cifra-etiqueta, .cifra-nota { color: var(--tinta-suave); font-size: 11px; line-height: 1.2; }
-.cifra-nota { margin-top: 2px; }
-/* A menos de 360 px las cinco no entran en una fila ("Entrevistas" no cabe en 50 px; QA 22/10/2026 a 320): tres y dos. */
-@media (max-width: 359px) { .cifras { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 12px; } }
+/* Cifras de Inicio (diseno.md 0.26 §10.14): cinco trazos que se angostan, como los tres de la marca. La etiqueta arriba a la
+   izquierda en 15 px, el número a la derecha en Atkinson 700 proporcional (el match es el único número en Bitter, decisión 13) y
+   la barra debajo, de 10 px, recta en la base y redonda en la punta. Hasta 0.24 eran cinco columnas con etiquetas de 11 px que a
+   390 px ocupaban cuatro líneas (§16, punto 7). */
+.cifras { display: flex; flex-direction: column; gap: 14px; padding: 16px; margin: 0; }
+.etapa { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nombre numero" "barra barra" "nota nota"; column-gap: 12px; row-gap: 6px; align-items: baseline; }
+.etapa dd { margin: 0; }
+.cifra-etiqueta { grid-area: nombre; font-size: 15px; line-height: 1.3; }
+.cifra-numero { grid-area: numero; font-weight: 700; font-size: 22px; line-height: 1; }
+.cifra-nota { grid-area: nota; color: var(--tinta-suave); font-size: 13px; line-height: 1.3; }
+.etapa-barra { grid-area: barra; display: flex; gap: 2px; height: 10px; min-width: 0; }
+.etapa-relleno, .etapa-resto { display: block; flex: none; height: 100%; width: calc(var(--cuenta, 0) * 1%); border-radius: 0 5px 5px 0; }
+.etapa-relleno { background: var(--dato); min-width: 6px; }
+.etapa-relleno:has(+ .etapa-resto) { border-radius: 0; }
+.etapa-resto { background: var(--dato-suave); min-width: 4px; }
+.recargando { opacity: 0.5; transition: opacity var(--mov); }
 
 /* Campos */
 .campo { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -540,14 +553,99 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .cabecera-pagina .cuenta-avisos { font-family: var(--fuente); font-weight: 400; font-size: 14px; color: var(--tinta-suave); margin-left: 6px; }
 .intro { color: var(--tinta-suave); font-size: 14px; line-height: 1.45; max-width: 70ch; }
 
-/* Inicio */
-#inicio { display: flex; flex-direction: column; gap: 12px; }
-#inicio > .inicio-cols { margin-top: 8px; }
+/* Inicio: el tablero (diseno.md 0.26 §6). Una columna en el celular; desde 768, una grilla de doce. */
+#inicio { display: flex; flex-direction: column; gap: 14px; }
 .umbral-linea { font-size: 14px; }
 .inicio-corrida { color: var(--tinta-suave); font-size: 15px; }
 .inicio-corrida p + p { font-size: 14px; margin-top: 2px; }
-.inicio-cols { display: flex; flex-direction: column; gap: 14px; }
+.tablero { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.tablero-seccion, .tablero-tarjeta { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.tablero-tarjeta { padding: 14px 16px; }
+.tablero-cabecera { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.tablero-cabecera h2 { font-size: 17px; font-weight: 700; line-height: 1.3; }
+.tablero-cabecera .btn-texto { margin-right: -8px; }
+.tablero-intro { font-size: 14px; line-height: 1.45; margin-top: -4px; }
+.tablero-nota { font-size: 13px; line-height: 1.45; }
+.tablero-destacado { font-size: 15px; font-weight: 700; }
+.tablero-vacio { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.tablero-vacio .btn { margin-top: 6px; }
+.nada-pendiente { padding: 14px 16px; }
 .asi-funciona { display: none; }
+
+/* Un aviso en una línea (Empresas que seguís): el match en Bitter, el puesto y la empresa. */
+.avisos-mini { list-style: none; padding: 0; margin: 0; border: 1px solid var(--linea); border-radius: 10px; }
+.avisos-mini li + li { border-top: 1px solid var(--linea); }
+.aviso-mini { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 6px 12px; color: var(--tinta); text-decoration: none; }
+.aviso-mini:hover { background: var(--seleccion); color: var(--tinta); }
+.aviso-mini:hover .aviso-mini-puesto { text-decoration: underline; text-underline-offset: 2px; }
+.aviso-mini-match { flex: none; min-width: 2.2ch; font-family: var(--fuente-titulos); font-weight: 700; font-size: 20px; line-height: 1; }
+.aviso-mini-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.aviso-mini-puesto { font-size: 15px; font-weight: 500; line-height: 1.3; overflow-wrap: anywhere; }
+.aviso-mini-empresa { font-size: 13px; color: var(--tinta-suave); line-height: 1.3; }
+.aviso-mini .i-adelante, .tuya .i-adelante { flex: none; color: var(--tinta-suave); }
+
+/* Lo tuyo: una fila por empresa o puesto, con su cuenta y, en los puestos, el mejor match. */
+.tuyas { list-style: none; padding: 0; margin: 0; }
+.tuyas li + li { border-top: 1px solid var(--linea); }
+.tuya { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 6px 0; color: var(--tinta); text-decoration: none; }
+a.tuya:hover { color: var(--tinta); }
+a.tuya:hover .tuya-nombre { text-decoration: underline; text-underline-offset: 2px; }
+.tuya-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.tuya-nombre { font-size: 15px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+.tuya-cuenta, .tuya-linea { font-size: 13px; color: var(--tinta-suave); line-height: 1.35; }
+.tuya-match { flex: none; display: flex; flex-direction: column; align-items: flex-end; }
+.tuya-match-numero { font-family: var(--fuente-titulos); font-weight: 700; font-size: 20px; line-height: 1; }
+.tuya-match-etiqueta { font-size: 11px; color: var(--tinta-suave); line-height: 1.3; }
+
+/* Tu lista hoy: paneles con listas de barras. Una tinta, el número escrito; las barras son decorativas. */
+.tablero-paneles { display: grid; grid-template-columns: minmax(0, 1fr); padding: 0 16px; }
+.tablero-panel { display: flex; flex-direction: column; gap: 8px; padding: 14px 0 16px; min-width: 0; }
+.tablero-panel + .tablero-panel { border-top: 1px solid var(--linea); }
+.tablero-panel-titulo { font-size: 15px; font-weight: 700; line-height: 1.3; }
+.barras { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+.barra-fila { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; gap: 8px; }
+.barra-fila.con-accion { grid-template-columns: minmax(0, 1fr) auto; }
+.barra-link {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nombre cuenta" "barra barra";
+  column-gap: 12px; row-gap: 4px; padding: 7px 0; color: var(--tinta); text-decoration: none; min-height: 44px;
+}
+a.barra-link:hover { color: var(--tinta); }
+a.barra-link:hover .barra-nombre > span { text-decoration: underline; text-underline-offset: 2px; }
+.barra-nombre { grid-area: nombre; display: flex; align-items: center; gap: 6px; font-size: 14px; line-height: 1.35; min-width: 0; overflow-wrap: anywhere; }
+.barra-nombre .icono { color: var(--tinta-suave); }
+.barra-cuenta { grid-area: cuenta; font-size: 14px; font-weight: 700; white-space: nowrap; }
+.barra-pct { font-weight: 400; color: var(--tinta-suave); margin-left: 6px; }
+.barra-pista { grid-area: barra; display: flex; gap: 2px; height: 8px; min-width: 0; }
+.barra-relleno, .barra-resto { display: block; flex: none; height: 100%; width: calc(var(--cuenta, 0) * 1%); border-radius: 0 4px 4px 0; }
+.barra-relleno { background: var(--dato); min-width: 4px; }
+.barra-relleno:has(+ .barra-resto) { border-radius: 0; }
+.barra-resto { background: var(--dato-suave); min-width: 4px; }
+.barra-fila.fuera .barra-nombre, .barra-fila.fuera .barra-cuenta { color: var(--tinta-suave); }
+.la-seguis { white-space: nowrap; }
+/* La marca del umbral entre dos franjas: la misma pastilla que la guía de Preferencias, sobre una línea de 2 px en tinta. */
+.franjas-umbral { display: flex; align-items: center; gap: 8px; border-top: 2px solid var(--tinta); padding-top: 6px; margin: 4px 0 2px; font-size: 13px; }
+
+/* Semana a semana: un mosaico por cifra, con la de esta semana y ocho columnas (la última, esta semana, en tinta). */
+.semanas-tarjeta { padding: 14px 16px; }
+.semanas-mosaicos { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 16px; }
+.semana-mosaico { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.semana-nombre { font-size: 13px; color: var(--tinta-suave); line-height: 1.3; min-height: 2.6em; }
+.semana-valor { display: flex; align-items: baseline; gap: 6px; }
+.semana-numero { font-weight: 700; font-size: 24px; line-height: 1; }
+.semana-cuando { font-size: 12px; color: var(--tinta-suave); }
+.semana-grafico { position: relative; display: block; }
+.semana-columnas { display: flex; align-items: flex-end; gap: 3px; height: 44px; border-bottom: 1px solid var(--linea); }
+.semana-col { flex: 1; height: 100%; display: flex; align-items: flex-end; min-width: 0; }
+.semana-barra { display: block; width: 100%; max-width: 24px; margin: 0 auto; height: calc(var(--cuenta, 0) * 1%); min-height: 2px; background: var(--dato-suave); border-radius: 3px 3px 0 0; }
+.semana-col.actual .semana-barra { background: var(--dato); }
+.semana-dato {
+  position: absolute; bottom: calc(100% + 4px); left: calc(var(--x, 50) * 1%); transform: translateX(-50%); z-index: 2;
+  padding: 3px 8px; border-radius: 6px; background: var(--tinta); color: var(--hoja); font-size: 12px; line-height: 1.4; white-space: nowrap; pointer-events: none;
+}
+.semana-dato[hidden] { display: none; }
+.semanas-tabla { overflow-x: auto; }
+.semanas-tabla .der { text-align: right; }
+.semanas-mosaicos[hidden], .semanas-tabla[hidden] { display: none; }
 
 /* Avisos: barra de filtros (diseno.md 0.11 §7.2). Un botón por filtro con su valor; el que la persona cambió
    respecto de sus preferencias, en acción tinte con un punto adelante (no solo color). En celular, una fila que se desplaza
@@ -702,7 +800,8 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 .umbral-tabla .fuera .franja-que, .umbral-tabla .fuera .franja-numero { color: var(--tinta-suave); }
 .umbral-tabla .fuera .franja-barra > span { background: var(--tinta-suave); }
 .umbral-tabla .umbral-marca td { padding: 0; }
-.umbral-linea {
+/* Acotada a su tabla desde 0.26: suelta, pisaba "Umbral actual" de Inicio con una raya de 2 px (las dos se llaman igual). */
+.umbral-tabla .umbral-linea {
   display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 6px 0;
   border-top: 2px solid var(--tinta); border-bottom: 1px solid var(--linea); font-size: 13px;
 }
@@ -785,6 +884,9 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .pestana { flex-direction: row; gap: 6px; min-width: 0; height: 56px; padding: 0 2px; font-size: 14px; }
   .cuenta { position: static; height: auto; gap: 8px; }
   .cuenta-nombre { display: inline; }
+  /* Cómo viene en escritorio: la etiqueta, la barra y el número en una fila; la nota debajo de la etiqueta. */
+  .etapa { grid-template-columns: minmax(150px, 34%) minmax(0, 1fr) 52px; grid-template-areas: "nombre barra numero" "nota . ."; row-gap: 2px; align-items: center; }
+  .cifra-numero { text-align: right; }
 }
 
 @media (min-width: 768px) {
@@ -815,15 +917,22 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .hoja.panel[open] { animation: aparecer var(--mov) ease-out; }
   .hoja.panel::backdrop { background: rgb(31 37 34 / 0.12); }
   .dialogo .botones { flex-wrap: nowrap; }
-  .cifras { padding: 24px 20px; gap: 12px; }
-  .cifra + .cifra { border-left: 1px solid var(--linea); }
-  .cifra-numero { font-size: 32px; }
-  .cifra-etiqueta { font-size: 13px; margin-top: 4px; }
-  .cifra-nota { font-size: 13px; }
-  .inicio-cols { flex-direction: row; align-items: flex-start; gap: 20px; }
-  .inicio-cols > .seccion { flex: 1 1 480px; min-width: 0; }
-  .asi-funciona { display: flex; flex: 0 1 380px; min-width: 260px; flex-direction: column; gap: 10px; padding: 18px 20px; }
-  .asi-funciona p { font-size: 15px; }
+  .cifras { padding: 20px; gap: 16px; }
+  .cifra-numero { font-size: 26px; }
+  .tablero { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 28px 20px; align-items: start; }
+  .tablero > .como-viene { grid-column: span 7; }
+  .tablero > .que-hay { grid-column: span 5; }
+  .tablero > .seguidas, .tablero > .buscados { grid-column: span 6; }
+  .tablero:not(:has(> .seguidas)) > .buscados { grid-column: span 12; }
+  .tablero > .tu-lista, .tablero > .semanas, .tablero > .asi-funciona, .tablero > .tablero-error { grid-column: 1 / -1; }
+  .tablero-tarjeta { padding: 16px 20px; }
+  .tablero-paneles { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; padding: 4px 20px 8px; }
+  .tablero-panel + .tablero-panel { border-top: 0; }
+  .tablero-panel:nth-child(n + 3) { border-top: 1px solid var(--linea); }
+  .semanas-tarjeta { padding: 18px 20px; }
+  .semanas-mosaicos { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px; }
+  .asi-funciona { display: flex; flex-direction: column; gap: 10px; padding: 18px 20px; }
+  .asi-funciona p { font-size: 15px; max-width: 70ch; }
   .lista-tarjetas.solo-celular { display: none; }
   .tabla-avisos, .tabla-postulaciones { display: block; }
   /* Próximos paquetes: una lista corta, que no se estira a lo ancho de la página. */
@@ -1000,3 +1109,15 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 
 /* Al final, para ganarle a cualquier display de un componente con la misma especificidad. */
 [hidden] { display: none; }
+
+/* Tu lista hoy desde 1200: los tres paneles en una fila (va al final para ganarle a la grilla de dos de 768). */
+@media (min-width: 1200px) {
+  .tablero-paneles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tablero-panel:nth-child(n + 3) { border-top: 0; }
+}
+
+/* Con colores forzados (Windows en alto contraste) los fondos desaparecen: las barras del tablero toman los colores del sistema. */
+@media (forced-colors: active) {
+  .etapa-relleno, .barra-relleno, .semana-col.actual .semana-barra { forced-color-adjust: none; background: CanvasText; }
+  .etapa-resto, .barra-resto, .semana-barra { forced-color-adjust: none; background: GrayText; }
+}

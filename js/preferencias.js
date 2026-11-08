@@ -39,7 +39,7 @@ Terna.pagina('preferencias', async (ctx) => {
     sb.from('alertas_mail').select('portal, recibido_en, procesado_en, avisos_detectados').eq('usuario_id', uid).order('procesado_en', { ascending: false }).limit(200),
     // La guía del umbral (diseno.md 0.15 §9.3; datos.md 0.21.2 §14): el match de los avisos propios; la vista trae solo los
     // visibles y RLS, solo los de la persona. Se cuenta en el navegador. Si la lectura falla, la guía va sin cuentas.
-    sb.from('mis_avisos').select('match, interes, creado_en, puesto').limit(1000),
+    sb.from('mis_avisos').select('match, interes, creado_en, puesto, empresa').limit(1000),
   ]);
   parar();
   // Las alertas que llegaron (0019; la retención las borra a los 7 días). Si no se pueden leer, los portales van sin estado.
@@ -309,6 +309,114 @@ Terna.pagina('preferencias', async (ctx) => {
   const sPue = h('div', { class: 'subbloque', role: 'group', 'aria-labelledby': idPue },
     h('div', { class: 'interruptor-fila' }, h('h3', { id: idPue, class: 'tarjeta-titulo', text: P.puestos }), cuentaPue),
     listaPue, h('p', { class: 'campo-ayuda', id: 'ayuda-puestos', text: P.puestosAyuda }), error('err-puestos'), sPri);
+  /* ---------- Empresas que seguís (0034; brand.md 0.13 §6.7; diseno.md 0.26 §9.3; datos.md 0.30) ----------
+     Dentro de Búsqueda, debajo de los puestos y con la misma forma: una casilla por empresa, numeradas, hasta 10, y se guarda con
+     "Guardar preferencias". Solo nombres (Francisco, 07/11/2026: sin links, "si no está, que se joda"): Terna no sale a buscarlas,
+     marca sus avisos cuando llegan por sus fuentes. Al escribir sugiere las empresas de los avisos de la persona. Sin 0034 (sin la
+     columna empresas_seguidas), no está. */
+  const conEmpresas = Object.prototype.hasOwnProperty.call(data, 'empresas_seguidas');
+  const MAX_EMPRESAS = 10;  // config.max_empresas_seguidas (0034); la base lo hace cumplir
+  const MAX_LARGO_EMPRESA = 80;
+  let sEmp = null;
+  let leerEmpresas = () => [];
+  if (conEmpresas) {
+    const E = P.empresas;
+    v.empresas_seguidas = (data.empresas_seguidas || []).slice();
+    v.priorizar_empresas = data.priorizar_empresas !== false;
+    const idEmp = id('empresas');
+    const idLista = id('empresas-sugeridas');
+    const listaEmp = h('ol', { class: 'puestos empresas' });
+    const cuentaEmp = h('span', { class: 'puestos-cuenta num' });
+    const generalesEmp = h('p', { class: 'campo-nota', hidden: true });
+    const filasEmp = () => Array.from(listaEmp.children);
+    // Igual que validar_empresas_seguidas (0034): sin espacios de más, sin vacías y sin repetidas (por el nombre simple), en orden.
+    const simple = (x) => x.normalize('NFKD').replace(/\p{Mn}/gu, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    leerEmpresas = () => {
+      const vistas = new Set();
+      return filasEmp().map((li) => inputDe(li).value.trim().replace(/\s+/g, ' ')).filter((x) => {
+        const k = simple(x);
+        if (!x || !k || vistas.has(k)) return false;
+        vistas.add(k);
+        return true;
+      });
+    };
+    // Las empresas de los avisos de la persona, para sugerir el nombre como aparece (un <datalist>: el navegador las filtra).
+    const sugeridas = Array.from(new Set((lecturaAvisos.data || []).map((a) => (a.empresa || '').trim()).filter(Boolean))).sort((x, y) => x.localeCompare(y, 'es'));
+    const datalist = h('datalist', { id: idLista }, sugeridas.slice(0, 300).map((e) => h('option', { value: e })));
+    function filaEmpresa(valor) {
+      const input = h('input', { class: 'control', type: 'text', maxlength: String(MAX_LARGO_EMPRESA), autocomplete: 'off', spellcheck: 'false',
+        list: idLista, value: valor || '', 'aria-describedby': 'ayuda-empresas err-empresas' });
+      const quitar = h('button', { type: 'button' }, icono('i-cerrar'));
+      const numero = h('span', { class: 'puesto-numero num', 'aria-hidden': 'true' });
+      const li = h('li', { class: 'puesto' }, numero, h('div', { class: 'control-con-boton' }, input, quitar));
+      input.addEventListener('input', () => { if (li === filasEmp()[filasEmp().length - 1] && input.value.trim()) ordenarEmpresas(); else contarEmpresas(); limpiar('err-empresas'); });
+      input.addEventListener('keydown', (e) => {
+        const filas = filasEmp();
+        const i = filas.indexOf(li);
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (filas[i + 1]) inputDe(filas[i + 1]).focus();
+        } else if (e.key === 'Backspace' && !input.value && i > 0) {
+          e.preventDefault();
+          const anterior = inputDe(filas[i - 1]);
+          if (i < filas.length - 1) { li.remove(); ordenarEmpresas(); }
+          anterior.focus();
+          anterior.setSelectionRange(anterior.value.length, anterior.value.length);
+        }
+      });
+      input.addEventListener('blur', () => {
+        if (!input.value.trim() && li.nextElementSibling && li.isConnected) { input.value = ''; li.remove(); ordenarEmpresas(); }
+      });
+      quitar.addEventListener('click', () => {
+        const siguiente = li.nextElementSibling || li.previousElementSibling;
+        li.remove();
+        ordenarEmpresas();
+        inputDe(siguiente && siguiente.isConnected ? siguiente : filasEmp()[filasEmp().length - 1]).focus();
+        limpiar('err-empresas');
+      });
+      return li;
+    }
+    function contarEmpresas() {
+      v.empresas_seguidas = leerEmpresas();
+      cuentaEmp.textContent = E.cuenta(v.empresas_seguidas.length, MAX_EMPRESAS);
+      const muy = v.empresas_seguidas.filter((x) => window.Empresas && Empresas.general(x));
+      generalesEmp.hidden = !muy.length;
+      generalesEmp.textContent = muy.map((x) => E.general(x)).join(' ');
+      sPriE.hidden = !v.empresas_seguidas.length;
+    }
+    // Numera, deja una sola casilla vacía al final (si hay lugar), muestra "Quitar" solo donde hay texto y cuenta.
+    function ordenarEmpresas() {
+      let filas = filasEmp();
+      const ultima = filas[filas.length - 1];
+      if (filas.length < MAX_EMPRESAS && (!ultima || inputDe(ultima).value.trim())) listaEmp.append(filaEmpresa(''));
+      filas = filasEmp();
+      filas.forEach((li, i) => {
+        const input = inputDe(li);
+        const texto = input.value.trim();
+        const vacia = !texto && i === filas.length - 1;
+        li.querySelector('.puesto-numero').textContent = (i + 1) + '.';
+        li.classList.toggle('puesto-nuevo', vacia);
+        input.setAttribute('aria-label', E.empresa(i + 1));
+        input.placeholder = vacia ? (i === 0 ? E.empresaPrimera : E.empresaOtra) : '';
+        const quitar = li.querySelector('button');
+        quitar.hidden = !texto;
+        quitar.setAttribute('aria-label', E.quitar(texto || E.empresa(i + 1)));
+      });
+      contarEmpresas();
+    }
+    const idPriE = id('priorizar-empresas');
+    const idPriEA = id('priorizar-empresas-ayuda');
+    const sPriE = h('div', { class: 'seccion priorizar priorizar-empresas', dataset: { titulo: idPriE } });
+    const botonPriE = interruptor(sPriE, v.priorizar_empresas, (x) => { v.priorizar_empresas = x; });
+    botonPriE.setAttribute('aria-describedby', idPriEA);
+    sPriE.append(h('div', { class: 'interruptor-fila' }, h('span', { id: idPriE, class: 'campo-etiqueta', text: E.priorizar }), botonPriE),
+      h('p', { class: 'campo-ayuda', id: idPriEA, text: E.priorizarAyuda(config.piso_match || 50) }));
+    v.empresas_seguidas.slice(0, MAX_EMPRESAS).forEach((x) => listaEmp.append(filaEmpresa(x)));
+    ordenarEmpresas();
+    sEmp = h('div', { class: 'subbloque empresas-seguidas', role: 'group', 'aria-labelledby': idEmp },
+      h('div', { class: 'interruptor-fila' }, h('h3', { id: idEmp, class: 'tarjeta-titulo', text: E.titulo }), cuentaEmp),
+      listaEmp, datalist, h('p', { class: 'campo-ayuda', id: 'ayuda-empresas', text: E.ayuda }), generalesEmp, error('err-empresas'), sPriE);
+  }
   // Un grupo de casillas en chips, como Modalidades: al menos una.
   function grupoChips(titulo, clave, valores, etiquetas, ayuda, idErr) {
     const idT = id('t');
@@ -544,8 +652,13 @@ Terna.pagina('preferencias', async (ctx) => {
   }
   bGuardar.addEventListener('click', async () => {
     banda.hidden = true;
-    ['err-umbral', 'err-mod', 'err-sal', 'err-puestos', 'err-niv', 'err-jor', 'err-claves'].forEach((x) => marcar(x, ''));
+    ['err-umbral', 'err-mod', 'err-sal', 'err-puestos', 'err-empresas', 'err-niv', 'err-jor', 'err-claves'].forEach((x) => marcar(x, ''));
     let ok = true;
+    if (conEmpresas) {
+      v.empresas_seguidas = leerEmpresas();
+      if (v.empresas_seguidas.length > MAX_EMPRESAS) { marcar('err-empresas', T.errores.empresasDemasiadas(MAX_EMPRESAS)); ok = false; }
+      else if (v.empresas_seguidas.some((x) => x.length < 2 || x.length > MAX_LARGO_EMPRESA)) { marcar('err-empresas', T.errores.empresaNombre); ok = false; }
+    }
     v.puestos_objetivo = leerPuestos();
     if (v.puestos_objetivo.length > MAX_PUESTOS) { marcar('err-puestos', T.errores.puestosDemasiados(MAX_PUESTOS)); ok = false; }
     else if (v.puestos_objetivo.some((x) => x.length > MAX_LARGO_PUESTO)) { marcar('err-puestos', T.errores.puestoLargo(MAX_LARGO_PUESTO)); ok = false; }
@@ -581,6 +694,10 @@ Terna.pagina('preferencias', async (ctx) => {
       if (conAviso) fila.palabras_clave_aviso = !!v.palabras_clave_aviso;
     }
     if (conPriorizar) fila.priorizar_puestos = !!v.priorizar_puestos;
+    if (conEmpresas) {
+      fila.empresas_seguidas = v.empresas_seguidas;
+      fila.priorizar_empresas = !!v.priorizar_empresas;
+    }
     const { error: e } = await sb.from('preferencias').update(fila).eq('usuario_id', uid);
     bGuardar.removeAttribute('aria-disabled');
     if (e) {
@@ -588,7 +705,8 @@ Terna.pagina('preferencias', async (ctx) => {
       const clave = String(e.message || '').trim();
       const destino = { umbral_fuera_de_rango: 'err-umbral', modalidades_vacias: 'err-mod', salario_incompleto: 'err-sal', salario_rango_invalido: 'err-sal',
         niveles_vacios: 'err-niv', jornadas_vacias: 'err-jor', puestos_demasiados: 'err-puestos', puesto_largo: 'err-puestos',
-        palabras_clave_demasiadas: 'err-claves', palabra_clave_larga: 'err-claves' }[clave];
+        palabras_clave_demasiadas: 'err-claves', palabra_clave_larga: 'err-claves',
+        empresas_demasiadas: 'err-empresas', empresa_nombre_invalido: 'err-empresas' }[clave];
       if (destino) { marcar(destino, Terna.textoError(e)); mostrarBanda(T.errores.guardarCampos); } else mostrarBanda(T.errores.guardar);
       return;
     }
@@ -598,7 +716,11 @@ Terna.pagina('preferencias', async (ctx) => {
 
   /* ---------- Página ---------- */
   Terna.vaciar(raiz);
-  bloques.bloque('busqueda', P.grupos.busqueda, [sPue, sNiv, sJor, sMod, sAlc, sUmbral, sSal]);
+  // Desde 0.26, con dos subtemas en el carril: los puestos y, con 0034, las empresas (#puestos y #empresas, los links de Inicio).
+  bloques.bloque('busqueda', P.grupos.busqueda, [sPue, sEmp, sNiv, sJor, sMod, sAlc, sUmbral, sSal].filter(Boolean), { temas: [
+    { hash: 'puestos', titulo: P.puestos, nodo: sPue },
+    sEmp ? { hash: 'empresas', titulo: P.empresas.titulo, nodo: sEmp } : null,
+  ].filter(Boolean) });
   // Paquetes es el principio del bloque: usa su mismo hash, así #paquetes (el link "Ir a mis palabras clave" de la ficha y los de
   // antes) sigue llevando al bloque, que arranca en él. Postulación tiene el suyo.
   bloques.bloque('paquetes', P.grupos.paquetes, [temaPaquetes, temaPostulacion], { temas: [
