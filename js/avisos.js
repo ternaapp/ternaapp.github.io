@@ -56,7 +56,10 @@ Terna.pagina('avisos', async (ctx) => {
   const seguidas = Lista.seguidasDe(rP.data);
   const loTuyo = Lista.crear(avisos, { prefs, piso, seguidas: seguidas.filas });
   const criterio = loTuyo.criterio;
-  const priorizar = criterio.puestos.length > 0 || criterio.empresas.length > 0;
+  // El orden "Tus puestos primero" es solo de los puestos: los paquetes de las empresas que seguís van por match, como la tabla
+  // (Francisco, 07/11/2026). Lo tuyo (puestos y empresas) se ve desde el piso.
+  const priorizar = criterio.puestos.length > 0;
+  const conTuyos = criterio.puestos.length > 0 || criterio.empresas.length > 0;
   const bajoMinimo = (a) => prefs.salario_modo === 'rango' && !!a.paquete_id && conMinimo.has(a.match_id);
 
   /* ---------- Filtros y orden (diseno.md 0.11 §7.2; desde 0.21, también por columna) ----------
@@ -182,7 +185,7 @@ Terna.pagina('avisos', async (ctx) => {
   const desc = (x, y) => (x === y ? 0 : (x === null || x === undefined) ? 1 : (y === null || y === undefined) ? -1 : (x < y ? 1 : -1));
   function comparar(a, b) {
     if (orden === 'nuevos') return desc(a.publicado_en, b.publicado_en) || desc(a.visto_en, b.visto_en);
-    if (orden === 'puestos' && loTuyo.prioritario(a) !== loTuyo.prioritario(b)) return loTuyo.prioritario(a) ? -1 : 1;
+    if (orden === 'puestos' && esTuPuesto(a) !== esTuPuesto(b)) return esTuPuesto(a) ? -1 : 1;
     return desc(a.match, b.match) || (a.dudoso === b.dudoso ? 0 : a.dudoso ? 1 : -1)
       || desc(a.publicado_en, b.publicado_en) || desc(a.creado_en, b.creado_en);
   }
@@ -207,7 +210,7 @@ Terna.pagina('avisos', async (ctx) => {
   function resumenLista(k, l) { return Filtros.resumenLista(l, TODOS[k], (v) => nombreDe(k, v), F.todosDe[k]); }
   const todasUbicaciones = () => Array.from(new Set(avisos.map(Aviso.lugar))).sort((x, y) => x.localeCompare(y, 'es'));
   function resumen(k) {
-    if (k === 'match') return priorizar ? F.matchResumenTuyos(minimo(), criterio.puestos.length > 0, criterio.empresas.length > 0) : F.matchResumen(minimo());
+    if (k === 'match') return conTuyos ? F.matchResumenTuyos(minimo(), criterio.puestos.length > 0, criterio.empresas.length > 0) : F.matchResumen(minimo());
     if (k === 'paquete') return Filtros.resumenLista(filtros.paquete, PAQUETES, (v) => T.avisos.paquete[v], F.todos);
     if (k === 'postulacion') return Filtros.resumenLista(filtros.postulacion, POSTULACIONES, (v) => T.avisos.postulacion[v], F.todas);
     if (k === 'donde') return Filtros.resumenLista(filtros.donde, DONDES, (v) => T.avisos.dondeFiltro[v], F.todosColumna.donde);
@@ -228,7 +231,7 @@ Terna.pagina('avisos', async (ctx) => {
   }
   function dibujarHerramientas() {
     Terna.vaciar(herramientas);
-    const nombres = { puestos: T.avisos.ordenTuyos(criterio.puestos.length > 0, criterio.empresas.length > 0), match: T.avisos.ordenMatch, nuevos: T.avisos.ordenNuevos };
+    const nombres = { puestos: T.avisos.ordenPuestos, match: T.avisos.ordenMatch, nuevos: T.avisos.ordenNuevos };
     const sel = h('select', { class: 'control', id: 'orden' }, ORDENES.map((x) => h('option', { value: x, text: nombres[x], selected: orden === x })));
     sel.addEventListener('change', () => { orden = sel.value; guardarOrden(); dibujarLista(); });
     herramientas.append(h('span', { class: 'orden' }, icono('i-ordenar', 'icono-16'), h('label', { for: 'orden', text: T.avisos.ordenarPor + ':' }), sel));
@@ -787,7 +790,7 @@ Terna.pagina('avisos', async (ctx) => {
       cuerpo.append(h('div', { class: 'campo' },
         h('div', { class: 'interruptor-fila' }, h('label', { class: 'campo-etiqueta', for: idRango, text: F.matchMinimo }), valor),
         rango, h('label', { class: 'casilla' }, casilla, h('span', { text: F.mostrarBajo })),
-        priorizar ? h('p', { class: 'campo-ayuda', text: F.matchTuyos(piso, criterio.puestos.length > 0, criterio.empresas.length > 0) }) : null));
+        conTuyos ? h('p', { class: 'campo-ayuda', text: F.matchTuyos(piso, criterio.puestos.length > 0, criterio.empresas.length > 0) }) : null));
     }
     pintarPrefs();
     cuerpo.append(prefsLinea);

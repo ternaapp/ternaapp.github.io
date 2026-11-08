@@ -113,7 +113,7 @@ window.T = (function () {
         vacio: 'Todavía no seguís ninguna empresa.',
         vacioAyuda: 'Escribí las que te interesan y Terna marca sus avisos cuando llegan, aunque no lleguen a tu umbral.',
         seguir: 'Seguir una empresa',
-        apagado: 'Priorizar mis empresas está en No: Terna marca sus avisos, pero no los pone primero.',
+        apagado: 'Priorizar mis empresas está en No: ves sus avisos solo si llegan a tu umbral.',
       },
       puestos: {
         titulo: 'Puestos que buscás',
@@ -162,13 +162,12 @@ window.T = (function () {
       ordenMatch: 'Match', ordenNuevos: 'Más nuevos',
       // Priorizar mis puestos (brand.md 0.5.4 §6.4; diseno.md 0.18 §7.2 y §7.3; datos.md 0.22, 0027)
       ordenPuestos: 'Tus puestos primero',
-      // Desde 0034, las empresas que seguís (brand.md 0.13 §6.4): el orden y el chip nombran lo que la persona tiene.
-      ordenTuyos: (puestos, empresas) => (puestos && empresas ? 'Tus puestos y empresas primero' : empresas ? 'Tus empresas primero' : 'Tus puestos primero'),
+      // Desde 0034, las empresas que seguís (brand.md 0.13 §6.4): el chip; el orden no cambia (sus paquetes van por match).
       // "Empresa que seguís" y no "Tu empresa", que se lee como dónde trabajás (revisión de UX del 07/11/2026). Debajo del umbral Terna no
       // la arma sola (versión 1): la explicación lo dice.
       tuEmpresa: 'Empresa que seguís',
-      tuEmpresaExplicacion: (empresa, llega) => 'Es de una empresa que seguís ("' + empresa + '"). '
-        + (llega ? 'Terna lo pone primero para el paquete y la postulación.' : 'No llega a tu umbral: Terna no le arma el paquete sola. Si te interesa, pedilo.'),
+      tuEmpresaExplicacion: (empresa, llega) => 'Es de una empresa que seguís ("' + empresa + '").'
+        + (llega ? ' Terna le arma el paquete por su match, como a los demás.' : ' No llega a tu umbral: Terna no le arma el paquete sola. Si te interesa, pedilo.'),
       tuPuesto: 'Tu puesto',
       tuPuestoExplicacion: (puesto, llega) => 'Está en tus puestos ("' + puesto + '"). Terna lo pone primero para el paquete y la postulación'
         + (llega ? '.' : ', aunque no llegue a tu umbral.'),
@@ -737,8 +736,8 @@ window.T = (function () {
         quitar: (x) => 'Quitar ' + x,
         general: (e) => '"' + e + '" es muy general: solo cuentan los avisos de una empresa que se llame exactamente así.',
         priorizar: 'Priorizar mis empresas',
-        priorizarAyuda: (piso) => 'En Sí, sus avisos se ven aunque no lleguen a tu umbral (desde ' + piso + ') y van primero; entre los que llegan a tu umbral, '
-          + 'Terna les arma el paquete antes. Debajo de tu umbral no arma sola: si te interesa uno, pedí el paquete.',
+        priorizarAyuda: (piso) => 'En Sí, sus avisos se ven aunque no lleguen a tu umbral (desde ' + piso + ') y Terna los puntúa primero. '
+          + 'Los paquetes siguen igual: los 3 del día, de mayor a menor match, primero lo que pediste. Si te interesa uno, pedí el paquete.',
       },
       // Priorizar mis puestos (brand.md 0.5.4 §6.7; datos.md 0.22, 0027): solo con algún puesto escrito; en Sí por defecto.
       priorizar: 'Priorizar mis puestos',
