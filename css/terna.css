@@ -493,6 +493,8 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .segmentado label + label span { border-left: 1px solid var(--borde-control); }
 .segmentado input:checked + span { background: var(--tinta); color: var(--hoja); }
 .segmentado input:focus-visible + span { outline: 2px solid var(--accion); outline-offset: -4px; }
+/* La opción elegida es oscura: ahí el anillo va en hoja (el verde sobre tinta daba 2,4:1; revisión de UX del 07/11/2026). */
+.segmentado input:checked:focus-visible + span { outline-color: var(--hoja); }
 
 /* Tabla */
 /* position: relative para que los textos ocultos (absolutos) de las celdas que quedan fuera de vista se recorten con la caja
@@ -610,6 +612,9 @@ a.tuya:hover .tuya-nombre { text-decoration: underline; text-underline-offset: 2
   column-gap: 12px; row-gap: 4px; padding: 7px 0; color: var(--tinta); text-decoration: none; min-height: 44px;
 }
 a.barra-link:hover { color: var(--tinta); }
+/* Las filas que abren Avisos llevan el chevrón, como las de Qué hay para hacer: en una pantalla táctil no hay hover que las delate. */
+.barra-link.con-chevron { grid-template-columns: minmax(0, 1fr) auto 20px; grid-template-areas: "nombre cuenta chev" "barra barra chev"; }
+.barra-link.con-chevron > .i-adelante { grid-area: chev; align-self: center; color: var(--tinta-suave); }
 a.barra-link:hover .barra-nombre > span { text-decoration: underline; text-underline-offset: 2px; }
 .barra-nombre { grid-area: nombre; display: flex; align-items: center; gap: 6px; font-size: 14px; line-height: 1.35; min-width: 0; overflow-wrap: anywhere; }
 .barra-nombre .icono { color: var(--tinta-suave); }
@@ -920,8 +925,9 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .cifras { padding: 20px; gap: 16px; }
   .cifra-numero { font-size: 26px; }
   .tablero { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 28px 20px; align-items: start; }
-  .tablero > .como-viene { grid-column: span 7; }
-  .tablero > .que-hay { grid-column: span 5; }
+  /* En el DOM va primero Qué hay para hacer (arriba en el celular); en la grilla, a la derecha de Cómo viene. */
+  .tablero > .como-viene { grid-column: 1 / span 7; grid-row: 1; }
+  .tablero > .que-hay { grid-column: 8 / span 5; grid-row: 1; }
   .tablero > .seguidas, .tablero > .buscados { grid-column: span 6; }
   .tablero:not(:has(> .seguidas)) > .buscados { grid-column: span 12; }
   .tablero > .tu-lista, .tablero > .semanas, .tablero > .asi-funciona, .tablero > .tablero-error { grid-column: 1 / -1; }
@@ -1109,6 +1115,10 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 
 /* Al final, para ganarle a cualquier display de un componente con la misma especificidad. */
 [hidden] { display: none; }
+
+/* Preferencias › Empresas que seguís: debajo de cada casilla, si el nombre ya encuentra algo en tus avisos. */
+.empresa-coincide { grid-column: 2; margin-top: -4px; font-size: 13px; color: var(--tinta-suave); line-height: 1.4; }
+.empresa-coincide:empty { display: none; }
 
 /* Tu lista hoy desde 1200: los tres paneles en una fila (va al final para ganarle a la grilla de dos de 768). */
 @media (min-width: 1200px) {

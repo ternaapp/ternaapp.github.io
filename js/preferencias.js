@@ -327,7 +327,11 @@ Terna.pagina('preferencias', async (ctx) => {
     const idLista = id('empresas-sugeridas');
     const listaEmp = h('ol', { class: 'puestos empresas' });
     const cuentaEmp = h('span', { class: 'puestos-cuenta num' });
-    const generalesEmp = h('p', { class: 'campo-nota', hidden: true });
+    const generalesEmp = h('p', { class: 'campo-nota', hidden: true, role: 'status' });
+    // Las empresas de los avisos de la persona (sin los que no le interesan), para decir debajo de cada casilla si el nombre ya encuentra
+    // algo, con la regla del motor (revisión de UX: la persona no sabía si el nombre servía).
+    const empresasAvisos = (lecturaAvisos.data || []).filter((a) => a.interes !== 'no_me_interesa').map((a) => a.empresa || '');
+    const coincidencias = (nombre) => (window.Empresas ? empresasAvisos.filter((e) => Empresas.misma(e, nombre)).length : 0);
     const filasEmp = () => Array.from(listaEmp.children);
     // Igual que validar_empresas_seguidas (0034): sin espacios de más, sin vacías y sin repetidas (por el nombre simple), en orden.
     const simple = (x) => x.normalize('NFKD').replace(/\p{Mn}/gu, '').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -348,7 +352,10 @@ Terna.pagina('preferencias', async (ctx) => {
         list: idLista, value: valor || '', 'aria-describedby': 'ayuda-empresas err-empresas' });
       const quitar = h('button', { type: 'button' }, icono('i-cerrar'));
       const numero = h('span', { class: 'puesto-numero num', 'aria-hidden': 'true' });
-      const li = h('li', { class: 'puesto' }, numero, h('div', { class: 'control-con-boton' }, input, quitar));
+      const idCoincide = id('emp-coincide');
+      const coincide = h('p', { class: 'empresa-coincide', id: idCoincide });
+      input.setAttribute('aria-describedby', idCoincide + ' ayuda-empresas err-empresas');
+      const li = h('li', { class: 'puesto' }, numero, h('div', { class: 'control-con-boton' }, input, quitar), coincide);
       input.addEventListener('input', () => { if (li === filasEmp()[filasEmp().length - 1] && input.value.trim()) ordenarEmpresas(); else contarEmpresas(); limpiar('err-empresas'); });
       input.addEventListener('keydown', (e) => {
         const filas = filasEmp();
@@ -377,6 +384,10 @@ Terna.pagina('preferencias', async (ctx) => {
       return li;
     }
     function contarEmpresas() {
+      filasEmp().forEach((li) => {
+        const texto = inputDe(li).value.trim();
+        li.querySelector('.empresa-coincide').textContent = texto.length >= 2 ? E.coincide(coincidencias(texto)) : '';
+      });
       v.empresas_seguidas = leerEmpresas();
       cuentaEmp.textContent = E.cuenta(v.empresas_seguidas.length, MAX_EMPRESAS);
       const muy = v.empresas_seguidas.filter((x) => window.Empresas && Empresas.general(x));

@@ -70,7 +70,9 @@ window.T = (function () {
     inicio: {
       titulo: 'Inicio',
       periodo: 'Período',
-      periodos: { semana: 'Esta semana', mes: 'Este mes', todo: 'Desde el inicio' },
+      // Desde brand.md 0.13: días corridos (revisión de UX del 07/11/2026: del 1 al 7 de cada mes "Esta semana" y "Este mes" daban
+      // lo mismo y el control parecía roto). Las claves siguen siendo las de antes, así el período guardado se respeta.
+      periodos: { semana: '7 días', mes: '30 días', todo: 'Desde el inicio' },
       corrioHoy: (h) => 'Terna corrió hoy a las ' + h + '.',
       corrioAyer: (h) => 'Terna corrió ayer a las ' + h + '.',
       corrioEl: (f, h) => 'Terna corrió el ' + f + ' a las ' + h + '.',
@@ -101,7 +103,6 @@ window.T = (function () {
       asi3: 'Nunca entra con tus cuentas, nunca resuelve captchas y nunca inventa una respuesta.',
       // El tablero (brand.md 0.13 §6.3; diseno.md 0.26 §6): pedido de Francisco del 07/11/2026, "más dashboard". Todo se cuenta en
       // el navegador con lo que la página ya puede leer: cero tokens.
-      queHayAhora: 'Lo que está pendiente ahora, sin importar el período.',
       empresas: {
         titulo: 'Empresas que seguís',
         editar: 'Editar', editarAccesible: 'Editar las empresas que seguís',
@@ -141,8 +142,9 @@ window.T = (function () {
       },
       semanas: {
         titulo: 'Semana a semana',
-        intro: 'Las últimas 8 semanas. La barra oscura es esta semana.',
+        intro: 'Las últimas 8 semanas, de 7 días cada una. La barra oscura es la de ahora.',
         estaSemana: 'Esta semana',
+        anterior: (x) => n(x) + ' la semana anterior',
         verTabla: 'Ver como tabla', verGrafico: 'Ver como gráfico',
         semana: 'Semana',
         rango: (d1, d2) => d1 + ' al ' + d2,
@@ -161,9 +163,11 @@ window.T = (function () {
       ordenPuestos: 'Tus puestos primero',
       // Desde 0034, las empresas que seguís (brand.md 0.13 §6.4): el orden y el chip nombran lo que la persona tiene.
       ordenTuyos: (puestos, empresas) => (puestos && empresas ? 'Tus puestos y empresas primero' : empresas ? 'Tus empresas primero' : 'Tus puestos primero'),
-      tuEmpresa: 'Tu empresa',
-      tuEmpresaExplicacion: (empresa, llega) => 'Es de una empresa que seguís ("' + empresa + '"). Terna lo pone primero para el paquete y la postulación'
-        + (llega ? '.' : ', aunque no llegue a tu umbral.'),
+      // "Empresa que seguís" y no "Tu empresa", que se lee como dónde trabajás (revisión de UX del 07/11/2026). Debajo del umbral Terna no
+      // la arma sola (versión 1): la explicación lo dice.
+      tuEmpresa: 'Empresa que seguís',
+      tuEmpresaExplicacion: (empresa, llega) => 'Es de una empresa que seguís ("' + empresa + '"). '
+        + (llega ? 'Terna lo pone primero para el paquete y la postulación.' : 'No llega a tu umbral: Terna no le arma el paquete sola. Si te interesa, pedilo.'),
       tuPuesto: 'Tu puesto',
       tuPuestoExplicacion: (puesto, llega) => 'Está en tus puestos ("' + puesto + '"). Terna lo pone primero para el paquete y la postulación'
         + (llega ? '.' : ', aunque no llegue a tu umbral.'),
@@ -723,7 +727,9 @@ window.T = (function () {
       empresas: {
         titulo: 'Empresas que seguís',
         cuenta: (n, max) => n + ' de ' + max,
-        ayuda: 'Una por casilla, hasta 10, escrita como aparece en los avisos. Terna marca con "Tu empresa" los avisos de estas empresas que llegan por las fuentes que ya lee; no las busca en otros sitios.',
+        ayuda: 'Una por casilla, hasta 10. Escribí el nombre completo; no importan mayúsculas, tildes ni "S.A.". Terna marca sus avisos cuando llegan por las fuentes que ya lee; no sale a buscarlos.',
+        // Debajo de cada casilla: si el nombre ya encuentra algo en tus avisos (con la regla del motor).
+        coincide: (x) => (x === 0 ? 'Todavía ningún aviso con ese nombre.' : x === 1 ? 'Coincide con 1 de tus avisos.' : 'Coincide con ' + n(x) + ' de tus avisos.'),
         empresa: (n) => 'Empresa ' + n,
         empresaPrimera: 'Por ejemplo, Mercado Libre',
         empresaOtra: 'Agregar otra empresa',

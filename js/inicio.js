@@ -36,7 +36,7 @@ Terna.pagina('inicio', async (ctx) => {
   function desde() {
     const hoy = Terna.hoy();
     if (periodo === 'semana') return Terna.sumarDias(hoy, -6);
-    if (periodo === 'mes') return hoy.slice(0, 8) + '01';
+    if (periodo === 'mes') return Terna.sumarDias(hoy, -29);
     return null;
   }
 
@@ -52,7 +52,9 @@ Terna.pagina('inicio', async (ctx) => {
   const comoViene = h('section', { class: 'tablero-seccion como-viene', 'aria-labelledby': 'h-como-viene' },
     h('div', { class: 'tablero-cabecera' }, h('h2', { id: 'h-como-viene', text: I.comoViene }), seg), cifras);
   const queHay = h('section', { class: 'tablero-seccion que-hay', 'aria-labelledby': 'h-que-hay' });
-  const tablero = h('div', { class: 'tablero' }, comoViene, queHay);
+  // Qué hay para hacer va primero: en el celular arriba de todo (revisión de UX: "qué le toca" en la primera pantalla); en escritorio,
+  // a la derecha de Cómo viene, por la grilla.
+  const tablero = h('div', { class: 'tablero' }, queHay, comoViene);
 
   function lineaCorrida(r) {
     Terna.vaciar(corrida);
@@ -70,8 +72,9 @@ Terna.pagina('inicio', async (ctx) => {
     }
   }
 
-  // Cómo viene (diseno.md 0.26 §10.14): las cinco cifras como trazos que se angostan, como los tres de la marca. Una sola escala;
-  // la primera lleva en gris lo que llegó y no pasó tu umbral ("17 en total"). Las barras son decorativas: el número va escrito.
+  // Cómo viene (diseno.md 0.26 §10.14): las cinco cifras en filas. Solo la primera lleva barra, porque es la única que es una parte de
+  // un todo: lo que pasó tu umbral, en tinta, de lo que llegó, con el gris. Las otras cuentan lo que pasó en el período y no son un
+  // embudo (un paquete de hoy puede ser de un aviso de la semana pasada): con barras se leían como "6 de 17" (revisión de UX).
   function dibujarCifras(r) {
     const C = I.cifras;
     const total = num(r.avisos_nuevos);
@@ -83,10 +86,10 @@ Terna.pagina('inicio', async (ctx) => {
       { clave: 'a-mano', valor: num(r.postulados_a_mano), etiqueta: C.aMano },
       { clave: 'entrevistas', valor: num(r.entrevistas), etiqueta: C.entrevistas },
     ];
-    const max = Math.max(1, ...filas.map((f) => f.valor + (f.resto || 0)));
+    const max = Math.max(1, total, sobre);
     const dl = h('dl', { class: 'cifras etapas' });
     for (const f of filas) {
-      const barra = h('dd', { class: 'etapa-barra', 'aria-hidden': 'true' },
+      const barra = f.clave !== 'nuevos' ? null : h('dd', { class: 'etapa-barra', 'aria-hidden': 'true' },
         f.valor ? conCuenta(h('span', { class: 'etapa-relleno' }), pct(f.valor, max)) : null,
         f.resto ? conCuenta(h('span', { class: 'etapa-resto' }), pct(f.resto, max)) : null);
       dl.append(h('div', { class: 'etapa', dataset: { etapa: f.clave } },
@@ -232,8 +235,8 @@ Terna.pagina('inicio', async (ctx) => {
         partes[1] ? conCuenta(h('span', { class: 'barra-resto' }), pct(partes[1], max)) : null);
       const cuerpo = [h('span', { class: 'barra-nombre' }, f.icono ? icono(f.icono, 'icono-16') : null, h('span', { text: f.nombre })),
         h('span', { class: 'barra-cuenta' }, h('span', { class: 'num', text: Terna.numero(f.valor) }), f.pct ? h('span', { class: 'barra-pct num', text: f.pct }) : null), barra];
-      const li = h('li', { class: 'barra-fila' + (f.fuera ? ' fuera' : '') + (f.accion ? ' con-accion' : '') },
-        f.href ? h('a', { class: 'barra-link', href: f.href }, cuerpo) : h('div', { class: 'barra-link' }, cuerpo), f.accion || null);
+      const li = h('li', { class: 'barra-fila' + (f.fuera ? ' fuera' : '') + (f.accion ? ' con-accion' : ''), dataset: { nombre: f.nombre } },
+        f.href ? h('a', { class: 'barra-link con-chevron', href: f.href }, cuerpo, icono('i-adelante', 'i-adelante')) : h('div', { class: 'barra-link' }, cuerpo), f.accion || null);
       if (f.marcaDespues) ul.append(li, f.marcaDespues); else ul.append(li);
     }
     if (opciones && opciones.etiqueta) ul.setAttribute('aria-label', opciones.etiqueta);
@@ -262,11 +265,11 @@ Terna.pagina('inicio', async (ctx) => {
     const filasF = franjas.map((f) => {
       const de = conMatch.filter((a) => a.match >= f.desde && a.match <= f.hasta);
       const llegan = de.filter((a) => a.match >= u).length;
-      return { nombre: f.nombre, valor: de.length, partes: [llegan, de.length - llegan], fuera: llegan === 0, f };
+      return { nombre: f.nombre, valor: de.length, partes: [llegan, de.length - llegan], fuera: f.hasta < u, f };
     });
     // La marca del umbral va debajo de la franja donde cae (o de la última que llega entera).
     const iMarca = filasF.findIndex((x) => x.f.desde <= u);
-    if (iMarca >= 0) filasF[iMarca].marcaDespues = h('li', { class: 'franjas-umbral', 'aria-hidden': 'true' }, h('span', { class: 'umbral-pastilla num', text: G.marca(u) }));
+    if (iMarca >= 0) filasF[iMarca].marcaDespues = h('li', { class: 'franjas-umbral' }, h('span', { class: 'umbral-pastilla num', text: G.marca(u) }));
     paneles.append(panel(LI.franjas, 'h-franjas', barras(filasF, { etiqueta: LI.franjas }),
       h('p', { class: 'tablero-nota' }, h('span', { class: 'suave', text: LI.franjasNota(piso) + ' ' }), h('a', { href: 'preferencias.html#busqueda', text: LI.cambiarUmbral }))));
 
@@ -297,9 +300,11 @@ Terna.pagina('inicio', async (ctx) => {
         const ids = enLista.filter((a) => L.esLaEmpresa(a, nombre)).map((a) => a.match_id);
         if (!ids.length || ids.some((id) => usados.has(id))) continue;
         ids.forEach((id) => usados.add(id));
-        top.push({ nombre, n: ids.length });
+        const mejor = enLista.filter((a) => L.esLaEmpresa(a, nombre)).reduce((m, a) => Math.max(m, num(a.match)), 0);
+        top.push({ nombre, n: ids.length, mejor });
       }
-      top.sort((x, y) => y.n - x.n).splice(5);
+      // A igual cantidad, la de mejor match: el orden dice algo aunque empaten (revisión de UX).
+      top.sort((x, y) => (y.n - x.n) || (y.mejor - x.mejor) || x.nombre.localeCompare(y.nombre, 'es')).splice(5);
       if (top.length) {
         const max = (ctx.config && ctx.config.max_empresas_seguidas) || 10;
         const filasE = top.map((g) => {
@@ -339,7 +344,7 @@ Terna.pagina('inicio', async (ctx) => {
     const mosaicos = h('ul', { class: 'semanas-mosaicos', role: 'list' });
     SERIES.forEach(([campo, nombre], i) => {
       const v = valores[i];
-      const max = Math.max(1, ...v);
+      const max = Math.max(5, ...v);  // un piso: con 1 la columna no se llena como con 11 (revisión de UX)
       const dato = h('span', { class: 'semana-dato', 'aria-hidden': 'true', hidden: true });
       const columnas = h('span', { class: 'semana-columnas', 'aria-hidden': 'true' });
       v.forEach((x, j) => {
@@ -356,22 +361,23 @@ Terna.pagina('inicio', async (ctx) => {
       });
       mosaicos.append(h('li', { class: 'semana-mosaico', dataset: { serie: campo } },
         h('span', { class: 'semana-nombre', text: nombre }),
-        h('span', { class: 'semana-valor' }, h('span', { class: 'semana-numero', text: Terna.numero(v[7]) }), h('span', { class: 'semana-cuando', text: S.estaSemana })),
+        h('span', { class: 'semana-valor' }, h('span', { class: 'semana-numero', text: Terna.numero(v[7]) }), h('span', { class: 'semana-cuando', text: S.anterior(v[6]) })),
         h('span', { class: 'semana-grafico' }, columnas, dato)));
     });
     // La tabla: lo mismo, con cada número escrito (la versión para teclado y lector de pantalla), de esta semana para atrás.
-    const tabla = h('div', { class: 'tabla-caja semanas-tabla', hidden: true },
+    const tabla = h('div', { class: 'tabla-caja semanas-tabla', hidden: true, tabindex: '0', role: 'region', 'aria-label': S.titulo },
       h('table', { class: 'tabla' },
         h('caption', { class: 'oculto-visual', text: S.titulo }),
         h('thead', null, h('tr', null, h('th', { scope: 'col', text: S.semana }), SERIES.map(([, nombre]) => h('th', { scope: 'col', class: 'der', text: nombre })))),
         h('tbody', null, semanas.map((s, j) => j).reverse().map((j) => h('tr', null,
           h('th', { scope: 'row', text: j === 7 ? S.estaSemana : rango(semanas[j]) }),
           valores.map((v) => h('td', { class: 'der num', text: Terna.numero(v[j]) })))))));
-    const cambiar = h('button', { type: 'button', class: 'btn btn-texto btn-chico', 'aria-pressed': 'false', text: S.verTabla, onclick: () => {
+    // El botón dice lo que hace ("Ver como tabla" / "Ver como gráfico"), sin aria-pressed: con los dos, el lector decía "Ver como
+    // gráfico, presionado".
+    const cambiar = h('button', { type: 'button', class: 'btn btn-texto btn-chico', text: S.verTabla, onclick: () => {
       const verTabla = tabla.hidden;
       tabla.hidden = !verTabla;
       mosaicos.hidden = verTabla;
-      cambiar.setAttribute('aria-pressed', verTabla ? 'true' : 'false');
       cambiar.textContent = verTabla ? S.verGrafico : S.verTabla;
     } });
     sec.append(h('div', { class: 'tablero-cabecera' }, h('h2', { id: 'h-semanas', text: S.titulo }), cambiar),
@@ -439,9 +445,10 @@ Terna.pagina('inicio', async (ctx) => {
     const antes = seguidas.nombres.slice();
     const error = await guardarSeguidas([...antes, nombre]);
     if (error) { boton.removeAttribute('aria-disabled'); Terna.avisoBreve(Terna.textoError(error), { error: true }); return; }
-    // El botón ya no está: el foco va al título de "Empresas que seguís", donde aparece la empresa nueva.
-    const foco = document.getElementById('h-empresas');
-    if (foco) { foco.setAttribute('tabindex', '-1'); foco.focus(); }
+    // El botón ya no está: el foco se queda en la misma fila, en su link (revisión de UX: ir al título dejaba al lector 1.500 px arriba).
+    const fila = Array.from(document.querySelectorAll('.tu-lista .barra-fila')).find((li) => li.dataset.nombre === nombre);
+    const foco = fila && fila.querySelector('a.barra-link');
+    if (foco) foco.focus();
     Terna.avisoBreve(I.lista.siguiendo(nombre), { deshacer: async () => {
       const e2 = await guardarSeguidas(antes);
       if (e2) { Terna.avisoBreve(Terna.textoError(e2), { error: true }); return; }
