@@ -1103,16 +1103,16 @@ window.T = (function () {
       problemas: { fecha: 'Fecha', usuario: 'Usuario', aviso: 'Aviso', paso: 'Paso', error: 'Error', reintentos: 'Reintentos', marcar: 'Marcar todos como vistos', vacio: (d) => 'Sin problemas en los últimos ' + d + ' días.' },
       pasos: { buscar: 'Buscar', alertas: 'Alertas', leer_cv: 'Leer CV', puntuar: 'Puntuar', armar: 'Armar', responder: 'Responder', postular: 'Postular', subir: 'Subir', retencion: 'Retención', borrar: 'Borrar' },
       // Admin › Empresas (brand.md 0.11 §6.9; datos.md 0.28, 0032): lo que ni el motor ni la búsqueda web diaria encontraron.
-      // Desde brand.md 0.15 (datos.md 0.31, 0035): sin Easy Apply ni avisos por leer, "Ya no está abierto" y el link de un portal.
+      // Desde brand.md 0.15 (datos.md 0.31, 0035): sin Easy Apply ni avisos por leer, "Ya no está abierto" y el link de un portal;
+      // desde brand.md 0.16, tampoco las empresas que la búsqueda solo encontró en portales (y sale su estado).
       empresas: {
         porCompletar: (x) => x + ' por completar',
-        intro: 'Empresas de avisos que llegan por alertas y que Terna no pudo ubicar: ni el motor ni la búsqueda diaria encontraron dónde publican sus búsquedas. Lo que cargues sirve para todos los avisos que vengan de esa empresa. No cuentan los avisos Easy Apply ni los de LinkedIn cuya página Terna todavía no leyó.',
+        intro: 'Empresas de avisos que llegan por alertas y que Terna no pudo ubicar: ni el motor ni la búsqueda diaria encontraron dónde publican sus búsquedas. Lo que cargues sirve para todos los avisos que vengan de esa empresa. No cuentan las empresas que la búsqueda solo encontró en portales de empleo, ni los avisos Easy Apply ni los de LinkedIn cuya página Terna todavía no leyó.',
         como: 'Abrí el aviso con tu cuenta, tocá "Postularse" y copiá el link de la página a la que te lleva, aunque sea de un portal de empleo. Si el aviso ya cerró, tocá "Ya no está abierto".',
         vacio: 'No hay empresas para completar.',
         avisos: (x) => (x === 1 ? '1 aviso abierto' : x + ' avisos abiertos'),
         estados: {
           no_encontrado: 'La búsqueda no la encontró.',
-          solo_portales: 'La búsqueda solo la encontró en portales de empleo.',
           error: 'La búsqueda falló tres veces.',
           encontrado: 'El link que encontró la búsqueda no anduvo.',
         },
