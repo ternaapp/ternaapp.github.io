@@ -10,7 +10,9 @@
    "Guardar preferencias" escribe todo; las palabras clave (0026; datos.md 0.23; brand.md 0.6 §6.7), solo si cambiaron en la
    página, así una pestaña abierta antes no las pisa. Desde 0027 (datos.md 0.22; brand.md 0.5.4 §6.7; diseno.md 0.18
    §9.3), "Priorizar mis puestos" va debajo de "Puestos que buscás" y solo con algún puesto escrito; sin la columna no se muestra
-   y vale Sí, como en el motor. La regla de qué aviso es de tus puestos está en js/puestos.js. */
+   y vale Sí, como en el motor. La regla de qué aviso es de tus puestos está en js/puestos.js.
+   Desde diseno.md 0.27 (§1.38; brand.md 0.14 §6.7), "Salario" va en Paquetes, al final: es una de las cuatro partes del paquete
+   (CV, carta, notas y salario) y no filtra avisos; hasta 0.26 era el último ítem de Búsqueda. Lee y escribe lo mismo. */
 'use strict';
 
 // Respuestas para formularios y Tu cuenta están en Mi perfil desde 0.19: los links de antes (preferencias.html#respuestas, el de
@@ -88,7 +90,7 @@ Terna.pagina('preferencias', async (ctx) => {
   }
   const limpiar = (idE) => { const e = document.getElementById(idE); if (e && e.textContent) marcar(idE, ''); };
 
-  /* ---------- Búsqueda: umbral (con su guía), modalidades, alcance y salario ---------- */
+  /* ---------- Búsqueda: umbral (con su guía), modalidades y alcance ---------- */
   /* La guía del umbral (diseno.md 0.15 §9.3; brand.md 0.5.1 §6.7). Arriba del deslizador, el cuadro de cinco franjas con lo que
      suele haber en cada una según match.v2 y cuántos avisos de la lista caen ahí, y la línea del umbral; debajo, la cuenta de lo
      que llega con el número elegido, que es la descripción del deslizador. Cambia con el deslizador, con los botones de las
@@ -451,24 +453,9 @@ Terna.pagina('preferencias', async (ctx) => {
 
   const sAlc = grupoRadios(P.alcance, 'alcance', [['local', P.local, P.localAyuda], ['exterior', P.exterior, P.exteriorAyuda], ['ambos', P.ambos]], v.alcance, (x) => { v.alcance = x; });
 
-  const sSal = grupoRadios(P.salario, 'salario', [['sugerir', P.sugerir], ['rango', P.rango]], v.salario_modo, (x) => { v.salario_modo = x; camposRango.hidden = x !== 'rango'; limpiar('err-sal'); });
-  const numeroCampo = (clave, etiqueta) => {
-    const idC = id(clave);
-    const input = h('input', { class: 'control num', id: idC, type: 'number', min: '0', step: '1', inputmode: 'numeric', value: v[clave] === null || v[clave] === undefined ? '' : String(Number(v[clave])), 'aria-describedby': 'err-sal' });
-    input.addEventListener('input', () => { v[clave] = input.value === '' ? null : Number(input.value); limpiar('err-sal'); });
-    return h('div', { class: 'campo' }, h('label', { for: idC, text: etiqueta }), input);
-  };
-  const idMoneda = id('moneda');
-  const moneda = h('select', { class: 'control', id: idMoneda, 'aria-describedby': 'err-sal' },
-    h('option', { value: '', text: '' }), ['ARS', 'USD'].map((m) => h('option', { value: m, text: m, selected: v.salario_moneda === m })));
-  moneda.addEventListener('change', () => { v.salario_moneda = moneda.value || null; limpiar('err-sal'); });
-  const camposRango = h('div', { class: 'seccion', hidden: v.salario_modo !== 'rango' },
-    h('div', { class: 'dos' }, numeroCampo('salario_min', P.minimo), numeroCampo('salario_max', P.maximo)),
-    h('div', { class: 'campo' }, h('label', { for: idMoneda, text: P.moneda }), moneda));
-  sSal.append(camposRango, h('p', { class: 'campo-ayuda', text: P.salarioAyuda }), error('err-sal'));
-
   /* ---------- Paquetes y postulación, en dos subtemas (diseno.md 0.20 §9.3; brand.md 0.7.1 §6.7) ----------
-     Paquetes: qué avisos te interesan, armar (3 por día), el idioma y las palabras clave. Postulación: postular y revisar. */
+     Paquetes: qué avisos te interesan, armar (3 por día), el idioma, las palabras clave y, desde 0.27, el salario.
+     Postulación: postular y revisar. */
   const sInt = enTema.conInterruptor(P.interesDefecto, P.interesDefectoAyuda, v.interes_por_defecto, (x) => { v.interes_por_defecto = x; });
   const sArm = enTema.conInterruptor(P.armar, P.armarAyuda(defectoPaquetes), v.armar_paquetes, (x) => { v.armar_paquetes = x; atenuar(); });
   const sIdi = enTema.grupoRadios(P.idiomaDocs, 'idioma', [['aviso', P.idiomaAviso], ['espanol', P.idiomaEspanol]], v.idioma_documentos, (x) => { v.idioma_documentos = x; });
@@ -603,9 +590,28 @@ Terna.pagina('preferencias', async (ctx) => {
   const sCla = conClaves ? enTema.conInterruptor(P.recomendado(P.palabrasClave), P.palabrasClaveAyuda, v.usar_palabras_clave,
     (x) => { v.usar_palabras_clave = x; verPersonalizadas(); limpiar('err-claves'); }) : null;
   if (sCla) { sCla.append(apagadoCla, subRec, subCla); verPersonalizadas(); }
+  /* Salario (diseno.md 0.27 §1.38 y §9.3; brand.md 0.14 §6.7): el último ítem de Paquetes, como el salario es la última de las
+     cuatro fichas del paquete (CV, Carta, Notas, Salario; diseno.md §10.12), y justo antes de Postulación, porque su ayuda
+     termina en lo que Terna responde en un formulario. Hasta 0.26, al final de Búsqueda; no se atenúa con Armar paquetes en No,
+     como el idioma y las palabras clave. Su error sigue siendo #err-sal y ahora marca este bloque. */
+  const sSal = enTema.grupoRadios(P.salario, 'salario', [['sugerir', P.sugerir], ['rango', P.rango]], v.salario_modo, (x) => { v.salario_modo = x; camposRango.hidden = x !== 'rango'; limpiar('err-sal'); });
+  const numeroCampo = (clave, etiqueta) => {
+    const idC = enTema.id(clave);
+    const input = h('input', { class: 'control num', id: idC, type: 'number', min: '0', step: '1', inputmode: 'numeric', value: v[clave] === null || v[clave] === undefined ? '' : String(Number(v[clave])), 'aria-describedby': 'err-sal' });
+    input.addEventListener('input', () => { v[clave] = input.value === '' ? null : Number(input.value); limpiar('err-sal'); });
+    return h('div', { class: 'campo' }, h('label', { for: idC, text: etiqueta }), input);
+  };
+  const idMoneda = enTema.id('moneda');
+  const moneda = h('select', { class: 'control', id: idMoneda, 'aria-describedby': 'err-sal' },
+    h('option', { value: '', text: '' }), ['ARS', 'USD'].map((m) => h('option', { value: m, text: m, selected: v.salario_moneda === m })));
+  moneda.addEventListener('change', () => { v.salario_moneda = moneda.value || null; limpiar('err-sal'); });
+  const camposRango = h('div', { class: 'seccion', hidden: v.salario_modo !== 'rango' },
+    h('div', { class: 'dos' }, numeroCampo('salario_min', P.minimo), numeroCampo('salario_max', P.maximo)),
+    h('div', { class: 'campo' }, h('label', { for: idMoneda, text: P.moneda }), moneda));
+  sSal.append(camposRango, h('p', { class: 'campo-ayuda', text: P.salarioAyuda }), error('err-sal'));
   const sPos = enTema.conInterruptor(P.postularSola, P.postularSolaAyuda, v.postular_sola, (x) => { v.postular_sola = x; atenuar(); });
   const sRev = enTema.conInterruptor(P.revisar, P.revisarAyuda, v.revisar_antes_de_enviar, (x) => { v.revisar_antes_de_enviar = x; });
-  const temaPaquetes = Terna.subtema(P.temas.paquetes, null, [sInt, sArm, sIdi, sAvisoCla, sCla].filter(Boolean));
+  const temaPaquetes = Terna.subtema(P.temas.paquetes, null, [sInt, sArm, sIdi, sAvisoCla, sCla, sSal].filter(Boolean));
   const temaPostulacion = Terna.subtema(P.temas.postulacion, null, sPos, sRev);
   // Atenuar (diseno.md §9.3): el ítem sigue visible y legible; sus controles quedan inactivos hasta que vuelva a aplicar.
   function atenuar() {
@@ -728,7 +734,7 @@ Terna.pagina('preferencias', async (ctx) => {
   /* ---------- Página ---------- */
   Terna.vaciar(raiz);
   // Desde 0.26, con dos subtemas en el carril: los puestos y, con 0034, las empresas (#puestos y #empresas, los links de Inicio).
-  bloques.bloque('busqueda', P.grupos.busqueda, [sPue, sEmp, sNiv, sJor, sMod, sAlc, sUmbral, sSal].filter(Boolean), { temas: [
+  bloques.bloque('busqueda', P.grupos.busqueda, [sPue, sEmp, sNiv, sJor, sMod, sAlc, sUmbral].filter(Boolean), { temas: [
     { hash: 'puestos', titulo: P.puestos, nodo: sPue },
     sEmp ? { hash: 'empresas', titulo: P.empresas.titulo, nodo: sEmp } : null,
   ].filter(Boolean) });

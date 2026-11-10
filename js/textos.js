@@ -757,7 +757,9 @@ window.T = (function () {
       jornadasAyuda: 'Si un aviso no dice la jornada, igual te aparece.',
       alcance: 'Alcance', local: 'Local', localAyuda: 'Tu ciudad y alrededores', exterior: 'Exterior', exteriorAyuda: 'Remoto para el exterior', ambos: 'Ambos',
       salario: 'Salario', sugerir: 'Que lo sugiera Terna', rango: 'Entre un mínimo y un máximo', minimo: 'Mínimo', maximo: 'Máximo', moneda: 'Moneda',
-      salarioAyuda: 'Terna sugiere un salario por aviso y explica por qué. Nunca sugiere menos que tu mínimo; si un aviso paga menos, te lo marca. Tu máximo no recorta: si un aviso paga más, la sugerencia es la del aviso. Si un formulario lo pregunta, responde con ese salario o con tu rango.',
+      // Desde brand.md 0.14 (Francisco, 07/11/2026): el máximo es tope, como dice cv-ats.md 0.2.7 §6.4 y hace el motor (salario.py).
+      // Hasta 0.13 decía "Tu máximo no recorta: si un aviso paga más, la sugerencia es la del aviso.", que no era cierto.
+      salarioAyuda: 'Terna sugiere un salario por aviso y explica por qué. Nunca sugiere menos que tu mínimo ni más que tu máximo: si un aviso paga menos, te lo marca, y si paga más, lo dice al explicar el salario. Si un formulario lo pregunta, responde con ese salario o con tu rango.',
       idiomaDocs: 'Idioma de los documentos', idiomaAviso: 'El del aviso; si no está claro, inglés', idiomaEspanol: 'Siempre español',
       // Palabras clave a la vista (brand.md 0.6 §6.7; datos.md 0.23, 0026): las del aviso arrancan en Sí; las personalizadas, en No
       // y recomendadas, con las 15 que calcula el motor cada mañana.
