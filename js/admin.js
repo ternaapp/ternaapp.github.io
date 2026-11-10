@@ -1,7 +1,8 @@
 /* Terna · js/admin.js
    Admin (brand.md §6.9), solo Francisco: Usuarios (con Borrar), Invitaciones (abrir o cerrar), Uso, Problemas y, desde
    brand.md 0.11, Empresas: las que ni el motor ni la búsqueda web diaria ubicaron, para que pegue dónde se postula (datos.md 0.28,
-   0032). La pausa del motor no está acá. Lee y escribe solo por las funciones admin_* y config.invitaciones_abiertas (datos.md §14).
+   0032; desde 0.31, 0035, también un portal y "Ya no está abierto"). La pausa del motor no está acá. Lee y escribe solo por las
+   funciones admin_* y config.invitaciones_abiertas (datos.md §14).
    Pensada primero para escritorio: en celular las tablas se desplazan. */
 'use strict';
 
@@ -146,10 +147,11 @@ Terna.pagina('admin', async (ctx) => {
       td(A.pasos[p.paso] || p.paso), td(p.error), td(Terna.numero(Number(p.reintentos)), true)))));
   }
 
-  /* ---------- Empresas (brand.md 0.11 §6.9; diseno.md 0.24 §9.6) ----------
+  /* ---------- Empresas (brand.md 0.11 §6.9; diseno.md 0.24 §9.6; desde brand.md 0.15 y diseno.md 0.28, datos.md 0.31, 0035) ----------
      Una tarjeta por empresa: cuántos avisos abiertos tiene, qué dijo la búsqueda web, un aviso de ejemplo para abrirlo con la
-     cuenta de Francisco y tocar "Postularse", y el link donde se postula. La base valida (https, nunca un portal de empleo) y el
-     motor lo verifica en la corrida siguiente antes de usarlo. */
+     cuenta de Francisco y tocar "Postularse", y el link donde se postula. La base valida (https; un portal de empleo se anota como
+     portal) y el motor lo verifica en la corrida siguiente antes de usarlo. La lista ya viene sin los avisos Easy Apply ni los de
+     LinkedIn por leer; "Ya no está abierto" cierra el aviso de ejemplo. */
   async function empresasSeccion(foco) {
     const error = await leerEmpresas();
     dibujarSub();
@@ -174,26 +176,49 @@ Terna.pagina('admin', async (ctx) => {
     const error = h('p', { class: 'campo-error', id: id + '-error' });
     const marcar = (texto) => { error.textContent = texto; input.setAttribute('aria-invalid', 'true'); input.focus(); };
     input.addEventListener('input', () => { if (error.textContent) { error.textContent = ''; input.removeAttribute('aria-invalid'); } });
+    const completar = (resultado, url) => sb.rpc('admin_completar_empresa', { p_empresa: e.empresa, p_resultado: resultado,
+      p_url: url, p_aviso: url ? e.aviso_id : null });
     const enviar = async (resultado, boton) => {
       const url = input.value.trim();
       if (resultado === 'url' && !/^https:\/\/[^\s/$.?#][^\s]*$/i.test(url)) { marcar(E.errorUrl); return; }
       boton.disabled = true;
-      const { error: err } = await sb.rpc('admin_completar_empresa', { p_empresa: e.empresa, p_resultado: resultado,
-        p_url: resultado === 'url' ? url : null, p_aviso: resultado === 'url' ? e.aviso_id : null });
+      let hecho = resultado;
+      let { error: err } = await completar(resultado, resultado === 'url' ? url : null);
+      // 0035: el link de un portal de empleo se guarda igual: la empresa queda en "solo portales" y no vuelve a la lista. La base
+      // decide qué es un portal (es_portal_de_empleo) y rechaza uno de LinkedIn, que casi siempre es el del aviso mismo.
+      if (err && resultado === 'url' && String(err.message || '').includes('url_de_portal')) {
+        hecho = 'portal';
+        ({ error: err } = await completar('portal', url));
+      }
       boton.disabled = false;
       if (err) {
         if (Terna.siSesionVencida(err)) return;
         const msg = String(err.message || '');
-        if (msg.includes('url_de_portal')) { marcar(E.errorPortal); return; }
+        if (msg.includes('url_de_linkedin')) { marcar(E.errorLinkedin); return; }
         if (msg.includes('url_invalida')) { marcar(E.errorUrl); return; }
         Terna.avisoBreve(T.errores.guardar, { error: true });
         return;
       }
-      Terna.avisoBreve(resultado === 'url' ? E.guardado : (resultado === 'sin_sitio' ? E.sinSitioHecho : E.omitida));
+      Terna.avisoBreve({ url: E.guardado, portal: E.portalHecho, sin_sitio: E.sinSitioHecho }[hecho] || E.omitida);
+      await empresasSeccion(i);
+    };
+    // 0035: el aviso de ejemplo ya no está abierto. Lo cierra para todos, como el motor cuando la página de LinkedIn lo dice; si
+    // falla (el motor lo cerró mientras tanto), la lista se vuelve a leer igual.
+    const cerrar = async (boton) => {
+      boton.disabled = true;
+      const { error: err } = await sb.rpc('admin_cerrar_aviso', { p_aviso: e.aviso_id });
+      boton.disabled = false;
+      if (err) {
+        if (Terna.siSesionVencida(err)) return;
+        Terna.avisoBreve(T.errores.guardar, { error: true });
+      } else {
+        Terna.avisoBreve(E.cerrado);
+      }
       await empresasSeccion(i);
     };
     const bGuardar = h('button', { class: 'btn btn-primario', type: 'button', onclick: () => enviar('url', bGuardar) }, E.guardar);
     const bSinSitio = h('button', { class: 'btn', type: 'button', onclick: () => enviar('sin_sitio', bSinSitio) }, E.sinSitio);
+    const bCerrar = h('button', { class: 'btn', type: 'button', 'aria-label': E.cerrarAccesible(e.puesto || ''), onclick: () => cerrar(bCerrar) }, E.cerrar);
     const bOmitir = h('button', { class: 'btn btn-texto', type: 'button', onclick: () => enviar('omitir', bOmitir) }, E.omitir);
     input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); enviar('url', bGuardar); } });
     const titulo = h('h2', { class: 'tarjeta-titulo', id: id + '-titulo', tabindex: '-1', text: e.nombre || e.empresa });
@@ -207,7 +232,7 @@ Terna.pagina('admin', async (ctx) => {
           E.abrir(e.fuente || 'LinkedIn'), icono('i-abrir', 'icono-16')) : null),
       e.linkedin_postulacion === 'externa' ? h('p', { class: 'campo-ayuda', text: E.lleva }) : null,
       h('div', { class: 'campo' }, h('label', { for: id + '-link', text: E.link }), input, h('p', { class: 'campo-ayuda', id: id + '-ayuda', text: E.linkAyuda }), error),
-      h('div', { class: 'botones' }, bGuardar, bSinSitio, bOmitir));
+      h('div', { class: 'botones' }, bGuardar, bSinSitio, bCerrar, bOmitir));
   }
 
   async function cargar() {

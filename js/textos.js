@@ -1103,10 +1103,11 @@ window.T = (function () {
       problemas: { fecha: 'Fecha', usuario: 'Usuario', aviso: 'Aviso', paso: 'Paso', error: 'Error', reintentos: 'Reintentos', marcar: 'Marcar todos como vistos', vacio: (d) => 'Sin problemas en los últimos ' + d + ' días.' },
       pasos: { buscar: 'Buscar', alertas: 'Alertas', leer_cv: 'Leer CV', puntuar: 'Puntuar', armar: 'Armar', responder: 'Responder', postular: 'Postular', subir: 'Subir', retencion: 'Retención', borrar: 'Borrar' },
       // Admin › Empresas (brand.md 0.11 §6.9; datos.md 0.28, 0032): lo que ni el motor ni la búsqueda web diaria encontraron.
+      // Desde brand.md 0.15 (datos.md 0.31, 0035): sin Easy Apply ni avisos por leer, "Ya no está abierto" y el link de un portal.
       empresas: {
         porCompletar: (x) => x + ' por completar',
-        intro: 'Empresas de avisos que llegan por alertas y que Terna no pudo ubicar: ni el motor ni la búsqueda diaria encontraron dónde publican sus búsquedas. Lo que cargues sirve para todos los avisos que vengan de esa empresa.',
-        como: 'Abrí el aviso con tu cuenta, tocá "Postularse" y copiá el link de la página a la que te lleva.',
+        intro: 'Empresas de avisos que llegan por alertas y que Terna no pudo ubicar: ni el motor ni la búsqueda diaria encontraron dónde publican sus búsquedas. Lo que cargues sirve para todos los avisos que vengan de esa empresa. No cuentan los avisos Easy Apply ni los de LinkedIn cuya página Terna todavía no leyó.',
+        como: 'Abrí el aviso con tu cuenta, tocá "Postularse" y copiá el link de la página a la que te lleva, aunque sea de un portal de empleo. Si el aviso ya cerró, tocá "Ya no está abierto".',
         vacio: 'No hay empresas para completar.',
         avisos: (x) => (x === 1 ? '1 aviso abierto' : x + ' avisos abiertos'),
         estados: {
@@ -1120,15 +1121,19 @@ window.T = (function () {
         abrirAccesible: (fuente) => 'Abrir el aviso en ' + fuente + ', abre en otra pestaña',
         lleva: 'En LinkedIn, su botón "Postularse" lleva al sitio de la empresa.',
         link: 'Link donde se postula',
-        linkAyuda: 'El del aviso o el de la página de empleos de la empresa, con https://.',
+        linkAyuda: 'El del aviso o el de la página de empleos de la empresa, con https://. Si es de un portal de empleo, Terna lo anota y no te la vuelve a mostrar.',
         guardar: 'Guardar',
         sinSitio: 'No tiene página propia',
+        cerrar: 'Ya no está abierto',
+        cerrarAccesible: (puesto) => 'Ya no está abierto: ' + puesto,
         omitir: 'Omitir',
         guardado: 'Guardado. Terna lo verifica en la próxima corrida.',
+        portalHecho: 'Listo: se postula en un portal de empleo. Terna deja de buscarla.',
         sinSitioHecho: 'Listo: Terna deja de buscarla.',
+        cerrado: 'Listo: Terna da el aviso por cerrado.',
         omitida: 'Omitida.',
         errorUrl: 'Pegá un link que empiece con https://.',
-        errorPortal: 'Ese link es de un portal de empleo. Pegá el de la página de la empresa o el de su sistema de postulación.',
+        errorLinkedin: 'Ese link es de LinkedIn. Tocá "Postularse" en el aviso y pegá el de la página a la que te lleva. Si es Easy Apply, tocá "No tiene página propia".',
       },
     },
 
