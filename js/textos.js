@@ -19,6 +19,8 @@ window.T = (function () {
       pestanas: { inicio: 'Inicio', avisos: 'Avisos', postulaciones: 'Postulaciones', perfil: 'Mi perfil', preferencias: 'Preferencias', invitaciones: 'Invitaciones', admin: 'Admin', alertas: 'Guías de alertas' },
       navegacion: 'Secciones',
       salir: 'Salir',
+      // El botón del sol o la luna (brand.md 0.17 §6.1): su nombre dice a qué modo pasa.
+      tema: { aOscuro: 'Pasar a modo oscuro', aClaro: 'Pasar a modo claro' },
       guardar: 'Guardar', cancelar: 'Cancelar', cerrar: 'Cerrar', volver: 'Volver', probarDeNuevo: 'Probar de nuevo',
       entendido: 'Entendido', deshacer: 'Deshacer', copiar: 'Copiar',
       // El estado de un interruptor (Preferencias y Mi perfil; diseno.md §10.6).
@@ -58,6 +60,15 @@ window.T = (function () {
       crear: 'Crear cuenta',
       crearNota: 'Terna guarda tu perfil y tus documentos para armar postulaciones. Solo los ves vos.',
       cuentaCreada: 'Cuenta creada. Ahora cargá tu perfil.',
+      // Elegir el modo, una vez, después de Crear cuenta (brand.md 0.17 §6.2).
+      modoTitulo: '¿Cómo querés ver Terna?',
+      modoAyuda: 'Lo podés cambiar cuando quieras con el sol o la luna de arriba.',
+      modoGrupo: 'Modo',
+      modoDispositivo: 'Igual que tu dispositivo',
+      modoDispositivoAhora: (oscuro) => (oscuro ? 'Ahora está en oscuro.' : 'Ahora está en claro.'),
+      modoClaro: 'Claro',
+      modoOscuro: 'Oscuro',
+      modoSeguir: 'Seguir',
       cambiarTitulo: 'Cambiar la contraseña',
       mandarLink: 'Mandar el link',
       linkMandado: 'Si ese mail tiene cuenta, te llega un link para cambiar la contraseña. Fijate también en correo no deseado.',

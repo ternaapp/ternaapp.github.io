@@ -8,6 +8,7 @@ La web de Terna: HTML, CSS y JS planos, sin build, publicados con GitHub Pages d
 - `css/terna.css`: tokens de diseno.md §12, componentes, y los cortes 768 (contenido de escritorio), 1024 (barra única) y 1200 (cajón en línea).
 - `js/textos.js`: todos los textos (copiados de brand.md) y el mapa de claves de error de datos.md §11. El código no escribe textos propios.
 - `js/no-enmarcar.js`: el primer script de cada página; si la página está dentro de un marco ajeno, la oculta y trata de salir (clickjacking: GitHub Pages no deja mandar `X-Frame-Options` ni `frame-ancestors`; informe de seguridad del 06/11/2026, H2).
+- `js/tema.js`: el modo claro u oscuro (diseno.md 0.30 §12.6). El segundo script de cada página y el único sin `defer`: pone `data-tema` en `<html>` antes de que se pinte, con el modo del dispositivo o el que la persona eligió en ese navegador (`localStorage`, nada en la base). `css/terna.css` tiene las mismas fichas con otros valores bajo `:root[data-tema="oscuro"]`; un color nuevo va siempre en una ficha, con su valor en los dos modos.
 - `js/iconos.js`: el sprite de diseno.md §11.2. `js/comun.js`: cliente de Supabase, sesión, barra, bandas, avisos breves, hojas, diálogos, links firmados. `js/aviso.js`: piezas comunes de Avisos y Postulaciones. `js/filtros.js`: los filtros de columna de las tablas de Avisos y Postulaciones (el encabezado que filtra y los cuerpos de texto, valores y fecha; diseno.md 0.21 §10.18). `js/puestos.js`: qué aviso es de tus puestos ("Priorizar mis puestos"), con la misma regla que el motor (`que_buscas.puesto_buscado`; el banco compara las dos), para Avisos y Preferencias. `js/empresas.js`: qué aviso es de una empresa que seguís, con la misma regla de nombres que el motor (`seguidas.py`; el banco compara las dos). `js/lista.js`: la lista de Avisos con sus reglas (interés, preferencias, umbral, lo tuyo), para que cada número de Inicio dé lo mismo que Avisos al tocarlo (diseno.md 0.26 §6). Un `js/{pagina}.js` por página.
 
 ## Reglas que no se negocian
@@ -25,7 +26,7 @@ En `terna-motor/pruebas_web/` (qa.md §2.6; necesita PostgreSQL local, Python co
 
 ```
 PGHOST=localhost PGPORT=5432 PGUSER=postgres pruebas_web/preparar.sh   # base local terna_web con A, B y un admin
-python pruebas_web/probar_web.py        # 82 casos con aserciones (o -k avisos, -k puestos, -k alta, -k admin, -k seguridad…)
+python pruebas_web/probar_web.py        # 84 casos con aserciones (o -k avisos, -k puestos, -k alta, -k admin, -k tema, -k seguridad…)
 python pruebas_web/recorrido.py         # capturas de cada página a 390, 320, 768, 1024 y 1280 px
 ```
 

@@ -15,6 +15,10 @@
     'i-sobre': '<rect x="3" y="5" width="18" height="14" rx="2"/>' + P('M3 7l9 6 9-6'),
     'i-admin': P('M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'),
     'i-salir': P('M9 21H5V3h4M16 17l5-5-5-5M21 12H9'),
+    // El modo (diseno.md 0.30 §11.2): el sol lleva a claro, la luna a oscuro, y el dispositivo es "igual que tu dispositivo".
+    'i-sol': '<circle cx="12" cy="12" r="4"/>' + P('M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4'),
+    'i-luna': P('M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z'),
+    'i-dispositivo': '<rect x="2" y="4" width="14" height="10" rx="1.5"/><rect x="15" y="9" width="7" height="11" rx="1.5"/>' + P('M6 18h6M9 14v4'),
     'i-abrir': P('M7 17L17 7M8 7h9v9'),
     'i-descargar': P('M12 4v12M7 11l5 5 5-5M5 20h14'),
     'i-subir': P('M12 16V4M7 9l5-5 5 5M4 20h16'),

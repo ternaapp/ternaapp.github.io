@@ -4,26 +4,48 @@
 
 /* ---------- 1. Tokens ---------- */
 :root {
-  --papel: #F5F6F3;        --hoja: #FFFFFF;
-  --tinta: #1F2522;        --tinta-suave: #596560;
-  --linea: #D7DCD8;        --borde-control: #7A857F;   --seleccion: #EEF1EF;
+  --papel: #F2F4EE;        --hoja: #FFFFFF;
+  --tinta: #17201C;        --tinta-suave: #56635C;
+  --linea: #D5DBD2;        --borde-control: #76827A;   --seleccion: #EBEFE8;
   /* Separadores que tienen que verse (diseno.md 0.19 §12.1): entre ítems de un bloque, en la franja de un subtema y en el
      borde de cada caja de una lista (un trabajo, un estudio, un idioma). 2,1:1 sobre hoja; decorativo, como la línea. */
-  --linea-fuerte: #ADB6B0;
-  --accion: #1F6A4E;       --accion-oscura: #17543E;   --accion-tinte: #DDEFE6;
-  --espera-tinte: #F5E9C9; --espera-oscuro: #5C4409;
+  --linea-fuerte: #A8B2AA;
+  --accion: #0F3B2D;       --accion-oscura: #0A2B21;   --accion-tinte: #DCEBDF;
+  --espera-tinte: #FFF0CC; --espera-oscuro: #5C4409;
   --azul-tinte: #DCE8F3;   --azul-oscuro: #1E3F5E;
-  --chip-neutro: #E8EBE8;
+  --chip-neutro: #E6EAE4;
   --error: #B4251D;        --error-tinte: #FBE4E1;     --error-oscuro: #8A1A14;
   --fuente: "Atkinson Hyperlegible Next", system-ui, sans-serif;
   --fuente-titulos: "Bitter", Georgia, serif;
-  --velo: rgb(31 37 34 / 0.45);
+  --velo: rgb(15 32 26 / 0.5);
   --mov: 150ms;
+  /* La cáscara (el encabezado y las pestañas) y su acento, iguales en claro y en oscuro (brand.md 0.17 §5.1). */
+  --cascara: #0F3B2D;      --cascara-fuerte: #17503D;  --cascara-linea: #1E5241;
+  --cascara-tinta: #F1F5EE; --cascara-suave: #A9C4B5;
+  --acento: #BEF27A;
+  color-scheme: light;
   /* Datos del tablero de Inicio (diseno.md 0.26 §12.1): una sola tinta para lo que cuenta y un gris del mismo tono para el
      contexto (lo que no llegó al umbral, las semanas anteriores). Validado con el validador de la skill dataviz (ordinal: un tono,
      luz monótona, el gris a 3,8:1 sobre hoja). Ningún color de significado: verde es acción, ámbar espera, azul enviado. */
   --dato: var(--tinta);
   --dato-suave: var(--borde-control);
+}
+/* Modo oscuro (brand.md 0.17 §5.5; diseno.md 0.30 §12.6). js/tema.js pone data-tema en <html> antes de pintar: el que la
+   persona eligió en este navegador o, si no eligió, el de su dispositivo. Son las mismas fichas con otros valores: el fondo
+   casi negro, la letra casi blanca y el color de acción pasa a ser el lima, con letra oscura (la letra sobre un botón
+   primario es --hoja en los dos modos). La cáscara no cambia. */
+:root[data-tema="oscuro"] {
+  --papel: #0B1210;        --hoja: #131C18;
+  --tinta: #F1F5EE;        --tinta-suave: #A9B8AE;
+  --linea: #26332C;        --borde-control: #7C8B82;   --seleccion: #1B2621;
+  --linea-fuerte: #4A5A50;
+  --accion: #BEF27A;       --accion-oscura: #D4F7A6;   --accion-tinte: #1C3324;
+  --espera-tinte: #3A2E10; --espera-oscuro: #FFD98A;
+  --azul-tinte: #14283F;   --azul-oscuro: #A8CCF5;
+  --chip-neutro: #222C27;
+  --error: #FF9C92;        --error-tinte: #3B1A17;     --error-oscuro: #FFB4AB;
+  --velo: rgb(0 0 0 / 0.6);
+  color-scheme: dark;
 }
 
 /* ---------- 2. Base ---------- */
@@ -67,7 +89,9 @@ img { max-width: 100%; display: block; }
 /* ---------- 3. Encabezado, pestañas, bandas, pie ---------- */
 /* El encabezado entero es el elemento fijo: un sticky no puede salirse de su contenedor, y #barra mide lo mismo que
    lo que tiene adentro. En celular sube 56 px (se va el logo) y quedan las pestañas; desde 1024, la barra única entera. */
-#barra { min-height: 114px; position: sticky; top: -56px; z-index: 20; }
+#barra { min-height: 114px; position: sticky; top: -56px; z-index: 20; background: var(--cascara); }
+/* Sobre la cáscara el foco va en el acento: el color de acción en claro es el mismo bosque y no se vería. */
+#barra :focus-visible { outline-color: var(--acento); }
 html { scroll-padding-top: 72px; }
 .barra { display: contents; }
 .logo {
@@ -76,23 +100,30 @@ html { scroll-padding-top: 72px; }
 }
 .logo:hover { color: var(--tinta); }
 .logo-marca { width: 24px; height: 24px; stroke-width: 2.5; }
+#barra .logo, #barra .logo:hover { color: var(--cascara-tinta); }
+#barra .logo-marca { color: var(--acento); }
 .logo-palabra { font-family: var(--fuente-titulos); font-weight: 600; font-size: 28px; line-height: 1; }
 .cuenta { position: absolute; top: 0; right: 8px; height: 56px; display: flex; align-items: center; gap: 4px; }
-.cuenta-nombre { display: none; color: var(--tinta-suave); font-size: 15px; }
+.cuenta-nombre { display: none; color: var(--cascara-suave); font-size: 15px; }
+#barra .btn-barra { color: var(--cascara-tinta); }
+#barra .btn-barra:hover { background: var(--cascara-fuerte); color: var(--cascara-tinta); }
+/* El sol o la luna (diseno.md 0.30 §10.19): un botón de solo ícono, con su nombre para el lector de pantalla. */
+.btn-tema { padding: 0; width: 44px; }
+.btn-acceso-tema { position: absolute; top: 8px; right: 8px; }
 .pestanas {
   position: sticky; top: 0; z-index: 20; display: flex; gap: 4px; padding: 0 8px;
-  background: var(--hoja); border-bottom: 1px solid var(--linea);
+  background: var(--cascara); border-bottom: 1px solid var(--cascara-linea);
   overflow-x: auto; scrollbar-width: none;
 }
 .pestanas::-webkit-scrollbar { display: none; }
 .pestana {
   flex: none; min-width: 56px; height: 58px; padding: 0 12px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-  color: var(--tinta-suave); font-size: 11px; font-weight: 500; line-height: 1.2; white-space: nowrap;
+  color: var(--cascara-suave); font-size: 11px; font-weight: 500; line-height: 1.2; white-space: nowrap;
   text-decoration: none; border-bottom: 2px solid transparent;
 }
-.pestana:hover { color: var(--tinta); }
-.pestana[aria-current="page"], .pestana[aria-current="true"] { color: var(--tinta); border-bottom-color: var(--accion); }
+.pestana:hover { color: var(--cascara-tinta); }
+.pestana[aria-current="page"], .pestana[aria-current="true"] { color: var(--acento); border-bottom-color: var(--acento); }
 
 #bandas:empty { display: none; }
 .banda {
@@ -122,6 +153,22 @@ html { scroll-padding-top: 72px; }
 .acceso .pie { text-align: center; padding: 32px 0 24px; margin-top: auto; }
 .acceso-form { display: flex; flex-direction: column; gap: 16px; }
 .acceso-descripcion { color: var(--tinta-suave); font-size: 14px; line-height: 1.5; }
+/* Elegir el modo al crear la cuenta (diseno.md 0.30 §9.1): tres opciones de una línea, la del dispositivo primero. */
+.modos { display: flex; flex-direction: column; gap: 8px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.modo {
+  display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 14px;
+  border: 1px solid var(--borde-control); border-radius: 10px; background: var(--hoja); cursor: pointer;
+}
+.modo:hover { background: var(--seleccion); }
+.modo:has(input:checked) { border-color: var(--accion); box-shadow: inset 0 0 0 1px var(--accion); }
+.modo:has(input:focus-visible) { outline: 2px solid var(--accion); outline-offset: 2px; }
+.modo input { flex: none; width: 20px; height: 20px; margin: 0; accent-color: var(--accion); }
+.modo input:focus-visible { outline: none; }
+.modo .icono { color: var(--tinta-suave); }
+.modo-texto { display: flex; flex-direction: column; min-width: 0; font-weight: 500; line-height: 1.35; }
+.modo-texto small { font-weight: 400; font-size: 14px; color: var(--tinta-suave); }
+/* El título de ese paso recibe el foco por código, para que el lector de pantalla lo anuncie: sin anillo, no es un control. */
+.acceso-form .titulo:focus { outline: none; }
 
 /* ---------- 4. Componentes (por orden alfabético) ---------- */
 
@@ -879,16 +926,18 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 @media (min-width: 1024px) {
   #barra { min-height: 56px; top: 0; }
   .barra {
-    display: flex; align-items: center; gap: 20px; position: sticky; top: 0; z-index: 20; height: 56px; padding: 0 16px 0 0;
-    background: var(--hoja); border-bottom: 1px solid var(--linea);
+    display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 20; height: 56px; padding: 0 16px 0 0;
+    background: var(--cascara); border-bottom: 1px solid var(--cascara-linea);
   }
   .logo { padding: 0 0 0 20px; }
   .logo-marca { width: 26px; height: 26px; }
   .logo-palabra { font-size: 32px; }
-  .pestanas { position: static; flex: 1; gap: 16px; padding: 0; border-bottom: 0; background: transparent; height: 56px; overflow: visible; }
+  /* Entre 1024 y 1199 la barra queda justa con las siete pestañas del admin (QA 11/11/2026, con el botón del modo: 1.068 px
+     en 1.024): los espacios van más apretados y el nombre se corta; desde 1200 recuperan el aire. */
+  .pestanas { position: static; flex: 1; gap: 12px; padding: 0; border-bottom: 0; background: transparent; height: 56px; overflow: visible; }
   .pestana { flex-direction: row; gap: 6px; min-width: 0; height: 56px; padding: 0 2px; font-size: 14px; }
-  .cuenta { position: static; height: auto; gap: 8px; }
-  .cuenta-nombre { display: inline; }
+  .cuenta { position: static; height: auto; gap: 4px; }
+  .cuenta-nombre { display: inline-block; max-width: 12ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
   /* Cómo viene en escritorio: la etiqueta, la barra y el número en una fila; la nota debajo de la etiqueta. */
   .etapa { grid-template-columns: minmax(150px, 34%) minmax(0, 1fr) 52px; grid-template-areas: "nombre barra numero" "nota . ."; row-gap: 2px; align-items: center; }
   .cifra-numero { text-align: right; }
@@ -901,6 +950,7 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .cabecera-pagina > .herramientas { flex: 0 1 auto; justify-content: flex-end; }
   .post-principal > .herramientas { justify-content: flex-end; }
   .btn-barra { min-height: 40px; }
+  .btn-tema.btn-barra { width: 36px; }
   .filtros-caja { margin: 0; }
   .filtros-caja::after { display: none; }
   .filtros-barra { flex-wrap: wrap; overflow: visible; padding: 2px 0 0; }
@@ -1032,8 +1082,12 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
      conserva su ancho en vez de achicarse a 760 px (31/10/2026, a 1.903 px de ventana sobraban 670 px). */
   .contenido-ancho { max-width: 1680px; }
   body:has(.contenido-ancho) .pie { max-width: 1680px; }
+  .barra { gap: 20px; }
   .pestanas { gap: 20px; }
   .pestana { font-size: 15px; }
+  .cuenta { gap: 8px; }
+  .cuenta-nombre { max-width: 24ch; }
+  .btn-tema.btn-barra { width: 40px; }
   .con-cajon.abierto { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 20px; align-items: start; }
   /* Cajón en línea: el <aside> solo se queda fijo; el marco redondeado se desplaza por dentro y la cruz va centrada
      sobre su esquina de arriba a la derecha (reglas junto al panel, en el corte de 768), así no se va al bajar.
@@ -1106,7 +1160,8 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 
 /* ---------- 9. Preferencias del sistema ---------- */
 @media (prefers-contrast: more) {
-  :root { --linea: #1F2522; --borde-control: #1F2522; --linea-fuerte: #1F2522; }
+  :root { --linea: #17201C; --borde-control: #17201C; --linea-fuerte: #17201C; }
+  :root[data-tema="oscuro"] { --linea: #F1F5EE; --borde-control: #F1F5EE; --linea-fuerte: #F1F5EE; }
 }
 @media (prefers-reduced-motion: reduce) {
   :root { --mov: 0ms; }

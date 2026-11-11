@@ -186,11 +186,29 @@ window.Terna = (function () {
       h('a', { class: 'logo', href: 'index.html', 'aria-label': T.comun.logo },
         icono('i-marca', 'logo-marca'), h('span', { class: 'logo-palabra', 'aria-hidden': 'true', text: 'terna' })),
       nav,
-      h('div', { class: 'cuenta' }, nombre,
+      h('div', { class: 'cuenta' }, botonTema('btn-barra'), nombre,
         h('button', { class: 'btn btn-texto btn-barra', type: 'button', onclick: salir }, icono('i-salir'), T.comun.salir)));
     cont.append(barra);
     centrarPestana(nav);
   }
+  /* El sol o la luna (diseno.md 0.30 §10.19): muestra el modo al que pasa y lo dice en su nombre. El modo lo guarda y lo
+     aplica js/tema.js; acá solo está el botón, que se repinta cuando el modo cambia (por este botón, por otra pestaña o
+     porque cambió el dispositivo). */
+  function pintarTema(b) {
+    const oscuro = !!window.TernaTema && window.TernaTema.actual() === 'oscuro';
+    const nombre = oscuro ? T.comun.tema.aClaro : T.comun.tema.aOscuro;
+    vaciar(b);
+    b.append(icono(oscuro ? 'i-sol' : 'i-luna'));
+    b.setAttribute('aria-label', nombre);
+    b.setAttribute('title', nombre);
+  }
+  function botonTema(clase) {
+    const b = h('button', { class: 'btn btn-texto btn-tema' + (clase ? ' ' + clase : ''), type: 'button',
+      onclick: () => { if (window.TernaTema) window.TernaTema.alternar(); } });
+    pintarTema(b);
+    return b;
+  }
+  document.addEventListener('terna:tema', () => { for (const b of document.querySelectorAll('.btn-tema')) pintarTema(b); });
   function pestana(clave, pagina) {
     const actual = clave === pagina ? 'page' : (clave === PESTANA_DE[pagina] ? 'true' : null);
     return h('a', { class: 'pestana', href: PAGINAS[clave], 'aria-current': actual, dataset: { pestana: clave } },
@@ -859,7 +877,7 @@ window.Terna = (function () {
     CONFIG, sb, estado, hashInicial, h, agregar, vaciar, icono, oculto, idUnico,
     hoy, sumarDias, diasEntre, aFechaLocal, fechaCorta, fechaLarga, hora, relativa, numero, decimal,
     leerLocal, guardarLocal, textoError, siSesionVencida, esErrorDeSesion,
-    irAEntrar, volverValido, salir, token, dibujarPie, listaFaltantes, cambiarEstadoCuenta, bandas,
+    irAEntrar, volverValido, salir, token, dibujarPie, botonTema, listaFaltantes, cambiarEstadoCuenta, bandas,
     avisoBreve, cerrarBreve, cargando, errorDeCarga, dialogo, confirmar, devolverFoco,
     abrirHoja, cerrarHoja, hojaAbierta, reemplazarCuerpoHoja, anchoLinea, anchoEscritorio,
     copiar, urlExterna, nombreDescarga, urlFirmada, linkFirmado, leerConfig, pagina, actualizarFaltantes, actualizarPerfil, porBloques,

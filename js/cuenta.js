@@ -47,6 +47,38 @@
     return E.general;
   }
 
+  /* ---------- Elegir el modo, una vez, después de Crear cuenta (diseno.md 0.30 §9.1) ----------
+     Tres opciones; la primera, la del dispositivo, viene marcada. Cada una se ve en el acto. "Seguir" deja fija la elegida en
+     este navegador (o ninguna, si es la del dispositivo) y entra a Mi perfil. La marca de sessionStorage es para que recargar
+     esta pantalla no muestre el error de la invitación ya usada. */
+  const PASO_MODO = 'terna.alta.modo';
+  const marcaModo = (poner) => { try { if (poner) sessionStorage.setItem(PASO_MODO, '1'); else sessionStorage.removeItem(PASO_MODO); } catch (e) { /* sin almacenamiento */ } };
+  const hayMarcaModo = () => { try { return sessionStorage.getItem(PASO_MODO) === '1'; } catch (e) { return false; } };
+  function elegirModo(cont) {
+    const tema = window.TernaTema;
+    const seguir = () => { marcaModo(false); location.replace('perfil.html?bienvenida=1'); };
+    if (!tema) { seguir(); return; }
+    marcaModo(true);
+    Terna.vaciar(cont);
+    const opcion = (valor, iconoId, texto, ayuda) => {
+      const input = h('input', { type: 'radio', name: 'modo', value: valor, checked: (tema.elegido() || 'dispositivo') === valor });
+      input.addEventListener('change', () => { if (input.checked) tema.elegir(valor); });
+      return h('label', { class: 'modo' }, input, icono(iconoId),
+        h('span', { class: 'modo-texto' }, h('span', { text: texto }), ayuda ? h('small', { text: ayuda }) : null));
+    };
+    const titulo = h('h1', { class: 'titulo', tabindex: '-1', text: C.modoTitulo });
+    const form = h('form', { class: 'acceso-form', novalidate: true },
+      h('div', null, titulo, h('p', { text: C.modoAyuda })),
+      h('fieldset', { class: 'modos' }, h('legend', { class: 'oculto-visual', text: C.modoGrupo }),
+        opcion('dispositivo', 'i-dispositivo', C.modoDispositivo, C.modoDispositivoAhora(tema.delDispositivo() === 'oscuro')),
+        opcion('claro', 'i-sol', C.modoClaro),
+        opcion('oscuro', 'i-luna', C.modoOscuro)),
+      h('button', { class: 'btn btn-primario btn-ancho', type: 'submit' }, C.modoSeguir));
+    form.addEventListener('submit', (e) => { e.preventDefault(); seguir(); });
+    cont.append(form);
+    titulo.focus();
+  }
+
   /* ---------- Entrar ---------- */
   async function entrar() {
     const q = new URLSearchParams(location.search);
@@ -100,6 +132,12 @@
     // Un link nuevo pegado en esta misma pestaña cambia solo lo que va después de # y el navegador no vuelve a cargar la
     // página: se recarga a mano para leerlo (el salto "Ir al contenido" también cambia el #, pero sin token, y no recarga).
     window.addEventListener('hashchange', () => { if (/(?:^#|&)token=/.test(location.hash)) location.reload(); });
+    // Recargó en el paso de elegir el modo, con la cuenta ya creada y la sesión abierta: vuelve a ese paso.
+    if (!token && hayMarcaModo()) {
+      const { data: s } = await sb.auth.getSession();
+      if (s && s.session) { elegirModo(cont); return; }
+      marcaModo(false);
+    }
     const titulo = h('h1', { class: 'titulo', text: C.crearTitulo });
     const fin = (texto) => { cont.append(titulo, banda(texto, true)); };
     if (!/^[a-f0-9]{32}$/.test(token)) { fin(E.invNoExiste); return; }
@@ -141,7 +179,7 @@
         b.focus();
         return;
       }
-      location.replace('perfil.html?bienvenida=1');
+      elegirModo(cont);
     });
     cont.append(form);
   }
@@ -206,6 +244,8 @@
   }
 
   function correr() {
+    const acceso = document.querySelector('.acceso');
+    if (acceso && window.TernaTema) acceso.prepend(Terna.botonTema('btn-acceso-tema'));
     if (archivo === 'crear-cuenta.html') crearCuenta();
     else if (archivo === 'contrasena.html') contrasena();
     else entrar();
