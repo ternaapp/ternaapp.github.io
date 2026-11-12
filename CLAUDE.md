@@ -26,7 +26,7 @@ En `terna-motor/pruebas_web/` (qa.md §2.6; necesita PostgreSQL local, Python co
 
 ```
 PGHOST=localhost PGPORT=5432 PGUSER=postgres pruebas_web/preparar.sh   # base local terna_web con A, B y un admin
-python pruebas_web/probar_web.py        # 89 casos con aserciones (o -k avisos, -k puestos, -k alta, -k admin, -k tema, -k seguridad, -k cuentas_…)
+python pruebas_web/probar_web.py        # 93 casos con aserciones (o -k avisos, -k puestos, -k alta, -k admin, -k tema, -k seguridad, -k cuentas_…)
 python pruebas_web/recorrido.py         # capturas de cada página a 390, 320, 768, 1024 y 1280 px
 ```
 
