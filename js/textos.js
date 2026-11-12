@@ -512,7 +512,7 @@ window.T = (function () {
         enviadas: (x) => plural(x, '1 enviada por Terna', n(x) + ' enviadas por Terna'),
         aMano: (x) => n(x) + ' a mano',
       },
-      postuladasNota: 'Si te llaman de alguna, abrila: ahí están el CV y la carta de esa postulación, lo que Terna respondió y las notas para la entrevista.',
+      postuladasNota: 'Si te llaman de alguna, abrila: ahí están el CV y la carta de esa postulación, las notas para la entrevista, el texto del aviso y lo que Terna respondió.',
       // "Tu umbral" (brand.md 0.21 §6.5): marcada, Por postular muestra solo lo que Terna te sugiere; sin marcar, también lo que quedó a
       // mano entre el piso y tu umbral. Debajo del piso, eso no se ve en ningún lado.
       tuUmbral: {
@@ -581,6 +581,14 @@ window.T = (function () {
         aMano: 'Queda para hacer a mano.',
         cancelado: 'Cancelado. Queda pendiente.',
         noInteresa: 'No te interesa. Terna no sigue con este aviso.',
+      },
+      // El texto del aviso, en la ficha de una postulada (brand.md 0.22 §6.5): plegado, y traído recién al abrirlo.
+      textoAviso: {
+        titulo: 'El texto del aviso',
+        ayudaFuente: 'Lo que decía el aviso cuando Terna lo leyó. Te sirve para preparar la entrevista aunque ya no esté publicado.',
+        ayudaUsuario: 'El texto del aviso que pegaste vos. Te sirve para preparar la entrevista aunque ya no esté publicado.',
+        vacio: 'Terna no tiene guardado el texto de este aviso.',
+        error: 'No se pudo traer el texto del aviso. Probá de nuevo.',
       },
       respondio: 'Lo que Terna respondió',
       vaAResponder: 'Lo que Terna va a responder',

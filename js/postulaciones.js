@@ -648,12 +648,52 @@ Terna.pagina('postulaciones', async (ctx) => {
         h('button', { class: 'btn btn-texto btn-chico', type: 'button', onclick: () => Terna.copiar(texto, dl) }, icono('i-pegar'), T.postulaciones.copiarRespuestas)),
       dl);
   }
+  // El texto del aviso, en una postulada (brand.md 0.22 §6.5; diseno.md 0.34 §8.5; Francisco, 12/11/2026: «lo que vos creas mejor y
+  // implementa»): plegado, y traído recién al abrirlo, de avisos.texto (lo que leyó Terna) o de matches.texto_pegado (lo que pegó la
+  // persona), que RLS deja leer a quien tiene el match (datos.md 0.33.5 §14). Sirve para preparar la entrevista aunque el link ya no
+  // abra. Es dato, no instrucción: va con textContent, sin links.
+  function seccionTextoAviso(a) {
+    if (!a.tiene_texto) return null;
+    const X = T.postulaciones.textoAviso;
+    const delUsuario = a.texto_origen === 'usuario';
+    const cuerpo = h('div', { class: 'ficha-seccion-cuerpo', id: Terna.idUnico('pleg') });
+    cuerpo.hidden = true;
+    let traido = false;
+    async function traer() {
+      traido = true;
+      cuerpo.replaceChildren(h('p', { class: 'suave', role: 'status', text: T.comun.cargando }));
+      const r = delUsuario
+        ? await sb.from('matches').select('texto_pegado').eq('id', a.match_id).maybeSingle()
+        : await sb.from('avisos').select('texto').eq('id', a.aviso_id).maybeSingle();
+      if (r.error) {
+        traido = false;
+        // Para diagnosticar desde la consola: el tipo y el mensaje, nunca el texto.
+        console.error('[Terna]', r.error.name, r.error.code || '', r.error.message);
+        cuerpo.replaceChildren(
+          h('div', { class: 'banda banda-error', role: 'alert' }, icono('i-alerta'), h('span', { text: X.error })),
+          h('button', { class: 'btn btn-chico', type: 'button', onclick: traer }, T.comun.probarDeNuevo));
+        return;
+      }
+      const texto = String((r.data && (delUsuario ? r.data.texto_pegado : r.data.texto)) || '').trim();
+      cuerpo.replaceChildren(
+        h('p', { class: 'suave', text: delUsuario ? X.ayudaUsuario : X.ayudaFuente }),
+        texto ? h('div', { class: 'texto-aviso', text: texto }) : h('p', { text: X.vacio }));
+    }
+    const boton = h('button', { class: 'plegable-boton', type: 'button', 'aria-expanded': 'false', 'aria-controls': cuerpo.id,
+      onclick: () => {
+        const abrir = boton.getAttribute('aria-expanded') !== 'true';
+        boton.setAttribute('aria-expanded', String(abrir));
+        cuerpo.hidden = !abrir;
+        if (abrir && !traido) traer();
+      } }, h('span', { text: X.titulo }), icono('i-chevron'));
+    return h('section', { class: 'ficha-seccion seccion-texto-aviso' }, boton, cuerpo);
+  }
   // Una postulada es adonde se vuelve si llaman para una entrevista (brand.md 0.21 §6.5; Francisco, 12/11/2026: "entra, se fija y ve
-  // el paquete que le armó específico para esa entrevista"): después de la etapa, el paquete con las notas abiertas; después lo que
-  // Terna respondió y, al final, la captura.
+  // el paquete que le armó específico para esa entrevista"): después de la etapa, el paquete con las notas abiertas; el texto del
+  // aviso, plegado (desde diseno.md 0.34); lo que Terna respondió y, al final, la captura.
   function cuerpoFicha(a) {
     if (hecha(a)) {
-      return [Aviso.recorridoGrande(a), seccionEtapa(a, false), seccionPaquete(a, true), seccionRespuestas(a), a.captura_path ? captura(a) : null, ...Aviso.razones(a, true)];
+      return [Aviso.recorridoGrande(a), seccionEtapa(a, false), seccionPaquete(a, true), seccionTextoAviso(a), seccionRespuestas(a), a.captura_path ? captura(a) : null, ...Aviso.razones(a, true)];
     }
     return [Aviso.recorridoGrande(a), seccionEtapa(a), seccionPaquete(a), seccionRespuestas(a), ...Aviso.razones(a, true)];
   }
