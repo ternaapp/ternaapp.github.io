@@ -455,7 +455,16 @@ window.Terna = (function () {
       el.style.setProperty('--alto-acciones', (barra ? barra.offsetHeight : 0) + 'px');
     }
     fichaAbierta = { el, linea: !!linea, origen, alCerrar: opciones.alCerrar, clave: opciones.clave || null };
-    if (linea) ajustarLinea();
+    if (linea) {
+      ajustarLinea();
+      // Lo que el cajón tiene arriba puede cambiar de alto con él abierto: se vuelve a medir (ajustarLinea).
+      if (vigiaLinea) {
+        vigiaLinea.disconnect();
+        const principal = document.getElementById('contenido');
+        if (linea.parentElement) vigiaLinea.observe(linea.parentElement);
+        if (principal) vigiaLinea.observe(principal);
+      }
+    }
     return el;
   }
   // porUsuario: true cuando la cierra la persona (cruz, Esc, fuera); avisa a la página para que limpie el hash.
@@ -463,8 +472,10 @@ window.Terna = (function () {
     if (!fichaAbierta) return;
     const f = fichaAbierta;
     fichaAbierta = null;
-    if (f.linea) { vaciar(f.el); f.el.hidden = true; if (f.el.parentElement) f.el.parentElement.classList.remove('abierto'); }
-    else {
+    if (f.linea) {
+      if (vigiaLinea) vigiaLinea.disconnect();
+      vaciar(f.el); f.el.hidden = true; if (f.el.parentElement) f.el.parentElement.classList.remove('abierto');
+    } else {
       // Un aviso breve que estaba en la hoja (con su Deshacer) pasa a la página antes de que la hoja se vaya.
       if (breve && f.el.contains(breve.caja)) contenedorCuerpo().append(breve.caja);
       if (f.el.open) f.el.close();
@@ -486,7 +497,13 @@ window.Terna = (function () {
   // Cajón en línea: el alto es el que queda de pantalla debajo de donde se pega (80 px), menos lo que la página tiene
   // después de la lista (el pie). Así entra entero entre la barra y el final de la página: con pocas filas la página no
   // se alarga por el cajón, y con muchas, al llegar al final, el contenedor no lo empuja hacia arriba ni se lleva la
-  // cruz (diseno.md 0.7 §10.7). Se mide al abrir y al cambiar el tamaño de la ventana.
+  // cruz (diseno.md 0.7 §10.7).
+  // Desde diseno.md 0.32, además, nunca más alto que lo que se ve (Francisco, 12/11/2026: "se me entrecorta… ver aviso en la
+  // empresa… o hacer clic en no me interesa"). Con la página arriba el cajón todavía no llegó a donde se pega: empieza donde
+  // empieza la lista, debajo del título y de los filtros, y con el alto de arriba se salía de la pantalla por abajo, con sus
+  // botones cortados. Ahora termina a 16 px del borde de abajo y crece a medida que la página baja, hasta el alto de siempre.
+  // Se mide al abrir, al cambiar el tamaño de la ventana, al desplazar la página y cuando cambia de alto lo que tiene arriba
+  // (la barra de filtros, que al abrirse el cajón suma botones y puede pasar a dos renglones).
   function ajustarLinea() {
     if (!fichaAbierta || !fichaAbierta.linea) return;
     const aside = fichaAbierta.el;
@@ -494,11 +511,23 @@ window.Terna = (function () {
     const pie = document.querySelector('.pie');
     if (!marco || !aside.parentElement) return;
     const pegado = parseFloat(getComputedStyle(aside).top) || 80;
-    const contAbajo = aside.parentElement.getBoundingClientRect().bottom;
-    const despues = Math.max(16, (pie ? pie.getBoundingClientRect().bottom : contAbajo) - contAbajo);
-    marco.style.setProperty('max-height', Math.max(320, window.innerHeight - pegado - despues) + 'px');
+    const cont = aside.parentElement.getBoundingClientRect();
+    const despues = Math.max(16, (pie ? pie.getBoundingClientRect().bottom : cont.bottom) - cont.bottom);
+    const yaPegado = Math.max(320, window.innerHeight - pegado - despues);
+    const aLaVista = window.innerHeight - Math.max(pegado, cont.top) - 16;
+    const alto = Math.round(Math.max(240, Math.min(yaPegado, aLaVista))) + 'px';
+    if (marco.style.getPropertyValue('max-height') !== alto) marco.style.setProperty('max-height', alto);
   }
-  addEventListener('resize', () => requestAnimationFrame(ajustarLinea));
+  // Una sola medida por cuadro, y solo con un cajón en línea abierto.
+  let ajustePedido = false;
+  function pedirAjuste() {
+    if (ajustePedido || !fichaAbierta || !fichaAbierta.linea) return;
+    ajustePedido = true;
+    requestAnimationFrame(() => { ajustePedido = false; ajustarLinea(); });
+  }
+  addEventListener('resize', pedirAjuste);
+  addEventListener('scroll', pedirAjuste, { passive: true });
+  const vigiaLinea = 'ResizeObserver' in window ? new ResizeObserver(pedirAjuste) : null;
   // Si cambia el ancho con una ficha abierta, la página la vuelve a abrir en el modo que corresponde.
   anchoLinea.addEventListener('change', () => { if (fichaAbierta) document.dispatchEvent(new CustomEvent('terna:cambio-ancho')); });
   anchoEscritorio.addEventListener('change', () => document.dispatchEvent(new CustomEvent('terna:cambio-diseno')));

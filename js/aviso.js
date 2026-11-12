@@ -79,6 +79,16 @@ window.Aviso = (function () {
     return h('span', { class: 'chip-texto calificacion' + (ev.calificacion === 'cumple' ? '' : ' tinta'), title: explicacion, dataset: { calificacion: ev.calificacion } },
       icono(ICONO_CALIFICACION[ev.calificacion], 'icono-14'), h('span', { text: textoCalificacion(ev) }), conExplicacion ? oculto(': ' + explicacion) : null);
   }
+  // El veredicto como valor del filtro Requisitos de Avisos (desde diseno.md 0.32 §7.2), con la regla del de Postulaciones
+  // (diseno.md 0.21 §8.1; `postulaciones.js` tiene su copia): el de match.v2 o, en un match de antes, "falta" si tenía
+  // faltantes; sin evaluación ni faltantes (un match de antes que cumplía todo, un aviso sin texto o por puntuar), "sin_dato",
+  // que el filtro llama "Sin veredicto".
+  const REQUISITOS = ['cumple', 'a_confirmar', 'falta', 'sobra_nivel', 'falta_nivel', 'sin_dato'];
+  function categoriaRequisitos(a) {
+    const ev = evaluacion(a);
+    if (ev) return ev.calificacion;
+    return (a.requisitos_faltantes || []).length ? 'falta' : 'sin_dato';
+  }
   function fecha(a) {
     return h('span', { class: 'fecha-aviso' }, Terna.relativa(a.publicado_en || a.visto_en),
       a.nuevo ? [' · ', h('b', { text: T.avisos.nuevo })] : null);
@@ -725,7 +735,7 @@ window.Aviso = (function () {
 
   return {
     estadoPaquete, llega, chip, chipPaquete, chipPostulacion, chipInteres, chipFaltan, fecha, etiquetas,
-    evaluacion, chipCalificacion, pedirMotivo, lineaMotivo, MOTIVOS, leerConEvaluacion,
+    evaluacion, chipCalificacion, REQUISITOS, categoriaRequisitos, pedirMotivo, lineaMotivo, MOTIVOS, leerConEvaluacion,
     MODALIDADES, ALCANCES, NIVELES, JORNADAS, TODOS_BUSQUEDA, busquedaDe, pasaBusqueda, motivosFuera,
     criterio, tuPuesto, tuEmpresa, sugerida,
     lugar, atributos, bloqueMatch, controlInteres, fichasPaquete, parsearNotas, textoSalario,

@@ -737,6 +737,8 @@ a.barra-link:hover .barra-nombre > span { text-decoration: underline; text-under
 .control-fecha { max-width: 200px; }
 .filtro-prefs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
 .filtro-prefs .btn { margin-left: -8px; }
+/* "Tu puesto" y "Empresa que seguís" debajo del puesto, en la tabla: un aviso puede llevar los dos, y quedaban pegados. */
+.linea-tuya { display: flex; flex-wrap: wrap; gap: 0 12px; }
 
 /* Avisos: barra de herramientas y tarjetas */
 .herramientas { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
@@ -986,6 +988,10 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .hoja.panel .hoja-cabecera, .cajon-linea .hoja-cabecera { padding: 20px 20px 8px; }
   .hoja.panel .hoja-cuerpo, .cajon-linea .hoja-cuerpo { padding: 4px 20px 16px; }
   .hoja.panel .hoja-acciones, .cajon-linea .hoja-acciones { padding: 12px 20px 16px; }
+  /* Las tres opciones de Match según el umbral (diseno.md 0.32 §7.2), en el panel: en el tamaño chico de las opciones de la
+     tabla, para que entren en un renglón de los 320 px del panel. Con Próximos paquetes arriba de la tabla el panel tiene unos
+     410 px, y en dos renglones la última línea del filtro ("Umbral actual" y "Usar mis preferencias") quedaba cortada. */
+  .hoja.panel .chips-modos .chip-opcion-cara { min-height: 32px; font-size: 12px; padding: 0 6px; }
   .hoja.panel[open] { animation: aparecer var(--mov) ease-out; }
   .hoja.panel::backdrop { background: rgb(31 37 34 / 0.12); }
   .dialogo .botones { flex-wrap: nowrap; }

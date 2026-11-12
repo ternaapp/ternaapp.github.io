@@ -194,13 +194,21 @@ window.T = (function () {
       filtros: {
         interes: 'Interés', paquete: 'Paquete', postulacion: 'Postulación', modalidad: 'Modalidad', alcance: 'Alcance',
         matchMinimo: 'Match mínimo', matchMinimoChip: (x) => 'Match mínimo: ' + x,
-        mostrarBajo: 'Mostrar también los que no llegan a mi umbral',
+        // Match elige entre tres según el umbral (brand.md 0.20 §6.4; diseno.md 0.32 §7.2; Francisco, 12/11/2026: un filtro para
+        // "Bajo tu umbral"): los que llegan, los que quedan debajo o todos (`mostrarBajo`: hasta brand.md 0.19, la casilla
+        // "Mostrar también los que no llegan a mi umbral"). Con "Bajo mi umbral", el botón dice "Bajo tu umbral"
+        // (T.avisos.bajoUmbral), como cada aviso de esa lista; si además se subió el mínimo, "60 a 69".
+        mostrarGrupo: 'Mostrar',
+        mostrarLlegan: 'Llegan a mi umbral',
+        mostrarSoloBajo: 'Bajo mi umbral',
+        mostrarBajo: 'Todos',
+        matchResumenSolo: (desde, hasta) => (desde === hasta ? String(desde) : desde + ' a ' + hasta),
         aplicar: 'Aplicar filtros', limpiar: 'Limpiar', limpiarFiltros: 'Limpiar filtros',
         quitar: (x) => 'Quitar el filtro ' + x,
         todos: 'Todos', todas: 'Todas',
         // La barra de filtros de Avisos (brand.md 0.4.10 §6.4): un botón por filtro, que arranca en las preferencias.
         barra: 'Filtros',
-        nombres: { modalidad: 'Modalidad', alcance: 'Alcance', nivel: 'Nivel', jornada: 'Jornada', match: 'Match', interes: 'Interés', paquete: 'Paquete', postulacion: 'Postulación', donde: 'Dónde se postula' },
+        nombres: { modalidad: 'Modalidad', alcance: 'Alcance', nivel: 'Nivel', jornada: 'Jornada', match: 'Match', interes: 'Interés', paquete: 'Paquete', postulacion: 'Postulación', donde: 'Dónde se postula', prioridad: 'Prioridad' },
         boton: (nombre, valor) => nombre + ': ' + valor,
         todosDe: { modalidad: 'Todas', alcance: 'Ambos', nivel: 'Todos', jornada: 'Ambas', interes: 'Todos' },
         yY: (x, y) => x + ' y ' + y,
@@ -230,7 +238,7 @@ window.T = (function () {
           puesto: 'Puesto', empresa: 'Empresa', ubicacion: 'Ubicación', publicado: 'Publicado',
           requisitos: 'Requisitos', recorrido: 'Recorrido', etapa: 'Etapa', fecha: 'Fecha',
         },
-        todosColumna: { puesto: 'Todos', empresa: 'Todas', ubicacion: 'Todas', publicado: 'Todos', requisitos: 'Todos', recorrido: 'Todas', etapa: 'Todas', fecha: 'Todas', paquete: 'Todos', postulacion: 'Todas', donde: 'Todos' },
+        todosColumna: { puesto: 'Todos', empresa: 'Todas', ubicacion: 'Todas', publicado: 'Todos', requisitos: 'Todos', recorrido: 'Todas', etapa: 'Todas', fecha: 'Todas', paquete: 'Todos', postulacion: 'Todas', donde: 'Todos', prioridad: 'Todas' },
         filtradoAccesible: ', filtrado',
         texto: {
           etiqueta: 'Contiene',
@@ -254,6 +262,11 @@ window.T = (function () {
           cumple: 'Cumplís los requisitos', a_confirmar: 'Requisitos a confirmar', falta: 'Faltan requisitos',
           sobra_nivel: 'Nivel más bajo que el tuyo', falta_nivel: 'Nivel más alto que el tuyo', sin_dato: 'Sin veredicto',
         },
+        // Prioridad, en Avisos (brand.md 0.20 §6.4; diseno.md 0.32 §1.40; Francisco, 12/11/2026: un filtro para "Tu puesto", con
+        // el nombre que eligió): lo que la persona le pidió a Terna que priorice. Los dos primeros son los chips del aviso.
+        prioridad: { tu_puesto: 'Tu puesto', empresa: 'Empresa que seguís', demas: 'Los demás' },
+        prioridadAyuda: (puestos, empresas) => 'Es lo que le pediste a Terna que priorice en Preferencias › Búsqueda: '
+          + (puestos && empresas ? 'tus puestos y las empresas que seguís' : empresas ? 'las empresas que seguís' : 'tus puestos') + '.',
         ordenar: { match: 'Ordenar por match', nuevos: 'Ordenar por más nuevos' },
       },
       interes: { me_interesa: 'Me interesa', por_decidir: 'Por decidir', no_me_interesa: 'No me interesa' },

@@ -74,14 +74,21 @@ Terna.pagina('avisos', async (ctx) => {
   const PAQUETES = ['armado', 'sin_armar', 'pedido', 'no_se_pudo_armar', 'sin_texto', 'por_puntuar'];
   const POSTULACIONES = ['pendiente', 'en_cola', 'para_revisar', 'enviada', 'a_mano', 'postulado'];
   const DONDES = Aviso.DONDES;  // diseno.md 0.23 §7.6: Postula Terna; a mano en LinkedIn, en el sitio de la empresa o en un portal; LinkedIn, a confirmar
+  // Desde diseno.md 0.32 (Francisco, 12/11/2026: filtrar por lo que va escrito debajo del puesto), dos filtros más, los dos en la
+  // barra porque no tienen columna (§1.34): Requisitos, con el veredicto, como en Postulaciones; y Prioridad, con lo que la persona
+  // le pidió a Terna que priorice (sus puestos, las empresas que sigue) y "Los demás". Prioridad va solo si hay algo priorizado.
+  // "Bajo tu umbral" es del umbral y se elige en Match (`soloBajo`).
+  const REQUISITOS = Aviso.REQUISITOS;
+  const PRIORIDADES = [...(criterio.puestos.length ? ['tu_puesto'] : []), ...(criterio.empresas.length ? ['empresa'] : []), 'demas'];
   const BUSQUEDA = ['modalidad', 'alcance', 'nivel', 'jornada'];
   const DE_COLUMNA = ['puesto', 'empresa', 'ubicacion', 'publicado'];
-  const CLAVES = ['modalidad', 'alcance', 'nivel', 'jornada', 'match', 'interes', 'paquete', 'postulacion', 'donde', ...DE_COLUMNA];
+  const CLAVES = ['modalidad', 'alcance', 'nivel', 'jornada', 'match', 'requisitos', ...(conTuyos ? ['prioridad'] : []), 'interes', 'paquete', 'postulacion', 'donde', ...DE_COLUMNA];
   const TODOS = Object.assign({ interes: INTERESES }, Aviso.TODOS_BUSQUEDA);
   const busquedaPrefs = Aviso.busquedaDe(prefs);
   const huella = JSON.stringify([busquedaPrefs, umbral]);
   const INTERES_INICIAL = ['me_interesa', 'por_decidir'];
-  const inicial = () => ({ modalidad: null, alcance: null, nivel: null, jornada: null, matchMin: null, bajoUmbral: false,
+  const inicial = () => ({ modalidad: null, alcance: null, nivel: null, jornada: null, matchMin: null, bajoUmbral: false, soloBajo: false,
+    requisitos: null, prioridad: null,
     interes: INTERES_INICIAL.slice(), paquete: null, postulacion: null, donde: null, puesto: '', empresa: '', ubicacion: null, publicado: null,
     puestoExacto: false, empresaExacta: false });
   const mismos = (x, y) => x.length === y.length && x.every((v) => y.includes(v));
@@ -97,6 +104,9 @@ Terna.pagina('avisos', async (ctx) => {
     r.paquete = unoOVarios(f.paquete, PAQUETES);
     r.postulacion = unoOVarios(f.postulacion, POSTULACIONES);
     r.donde = Filtros.listaValida(f.donde, DONDES);
+    r.requisitos = Filtros.listaValida(f.requisitos, REQUISITOS);
+    // Una prioridad guardada que ya no existe (la persona dejó de seguir empresas o apagó "Priorizar mis puestos") no cuenta.
+    r.prioridad = conTuyos ? Filtros.listaValida(f.prioridad, PRIORIDADES) : null;
     r.puesto = Filtros.textoValido(f.puesto);
     r.empresa = Filtros.textoValido(f.empresa);
     // Desde un link de Inicio (diseno.md 0.26 §6), Puesto y Empresa son exactos: la regla del motor, sin el texto contenido.
@@ -109,7 +119,8 @@ Terna.pagina('avisos', async (ctx) => {
     const legado = !(f.v >= 2);
     if (legado || f.huella === huella) {
       r.matchMin = Number.isInteger(f.matchMin) ? f.matchMin : null;
-      r.bajoUmbral = f.bajoUmbral === true;
+      r.soloBajo = f.soloBajo === true;
+      r.bajoUmbral = f.bajoUmbral === true && !r.soloBajo;
     }
     if (!legado && f.huella === huella) for (const k of BUSQUEDA) r[k] = propio(k, deLista(f[k], TODOS[k]));
     return r;
@@ -143,10 +154,25 @@ Terna.pagina('avisos', async (ctx) => {
 
   const efectiva = (k) => filtros[k] || busquedaPrefs[k];
   function busqueda() { return { modalidad: efectiva('modalidad'), alcance: efectiva('alcance'), nivel: efectiva('nivel'), jornada: efectiva('jornada') }; }
+  // Match según el umbral (diseno.md 0.32 §7.2): los que llegan (lo de siempre, con lo tuyo desde el piso), también los que no
+  // llegan, o solo los que no llegan: los que la lista marca "Bajo tu umbral" y lo tuyo que tampoco llega. `topeBajo` es el match
+  // más alto que no llega al umbral.
+  const modoUmbral = () => (filtros.soloBajo ? 'solo' : filtros.bajoUmbral ? 'tambien' : 'llegan');
+  const topeBajo = Math.max(piso, umbral - 1);
   function minimo() {
+    if (filtros.soloBajo) return Math.max(piso, Math.min(filtros.matchMin === null ? piso : filtros.matchMin, topeBajo));
     const m = filtros.matchMin === null ? umbral : filtros.matchMin;
     return filtros.bajoUmbral ? Math.max(piso, Math.min(m, 100)) : Math.max(m, umbral);
   }
+  // Un aviso sin match no llega ni deja de llegar: se ve siempre, salvo cuando se piden solo los que no llegan.
+  function pasaMatch(a) {
+    if (a.match === null || a.match === undefined) return !filtros.soloBajo;
+    if (filtros.soloBajo) return a.match >= minimo() && a.match < umbral;
+    return a.match >= minimo() || loTuyo.prioritario(a);
+  }
+  // Prioridad: un aviso puede ser de tus puestos y de una empresa que seguís a la vez; "Los demás" son los que no son ni lo uno
+  // ni lo otro.
+  const enPrioridad = (a, v) => (v === 'tu_puesto' ? loTuyo.esTuPuesto(a) : v === 'empresa' ? loTuyo.esTuEmpresa(a) : !loTuyo.prioritario(a));
   const fechaDe = (a) => a.publicado_en || a.visto_en;
   let busquedaHoy = busqueda();
   // `excepto`: todos los filtros menos ese (para contar las opciones de un filtro con lo que dejan pasar los demás).
@@ -156,7 +182,9 @@ Terna.pagina('avisos', async (ctx) => {
     if (excepto !== 'postulacion' && filtros.postulacion && !filtros.postulacion.includes(a.estado_postulacion)) return false;
     if (excepto !== 'donde' && filtros.donde && !filtros.donde.includes(Aviso.donde(a, prefs).clave)) return false;
     if (!Aviso.pasaBusqueda(a, busquedaHoy)) return false;
-    if (a.match !== null && a.match < minimo() && !loTuyo.prioritario(a)) return false;
+    if (!pasaMatch(a)) return false;
+    if (excepto !== 'requisitos' && filtros.requisitos && !filtros.requisitos.includes(Aviso.categoriaRequisitos(a))) return false;
+    if (excepto !== 'prioridad' && filtros.prioridad && !filtros.prioridad.some((v) => enPrioridad(a, v))) return false;
     if (excepto !== 'puesto' && !(filtros.puestoExacto ? loTuyo.esElPuesto(a, filtros.puesto) : loTuyo.dePuesto(a, filtros.puesto))) return false;
     if (excepto !== 'empresa' && !(filtros.empresaExacta ? loTuyo.esLaEmpresa(a, filtros.empresa) : loTuyo.deEmpresa(a, filtros.empresa))) return false;
     if (excepto !== 'ubicacion' && filtros.ubicacion && !filtros.ubicacion.includes(Aviso.lugar(a))) return false;
@@ -193,10 +221,10 @@ Terna.pagina('avisos', async (ctx) => {
 
   function cambiado(k) {
     if (BUSQUEDA.includes(k)) return filtros[k] !== null;
-    if (k === 'match') return minimo() !== umbral;
+    if (k === 'match') return filtros.soloBajo || minimo() !== umbral;
     if (k === 'interes') return !mismos(filtros.interes, INTERES_INICIAL);
     if (k === 'puesto' || k === 'empresa') return Filtros.hayTexto(filtros[k]);
-    return filtros[k] !== null;  // paquete, postulación, dónde se postula, ubicación, publicado
+    return filtros[k] !== null;  // requisitos, prioridad, paquete, postulación, dónde se postula, ubicación, publicado
   }
   const algoCambiado = () => CLAVES.some(cambiado);
   const F = T.avisos.filtros;
@@ -210,7 +238,13 @@ Terna.pagina('avisos', async (ctx) => {
   function resumenLista(k, l) { return Filtros.resumenLista(l, TODOS[k], (v) => nombreDe(k, v), F.todosDe[k]); }
   const todasUbicaciones = () => Array.from(new Set(avisos.map(Aviso.lugar))).sort((x, y) => x.localeCompare(y, 'es'));
   function resumen(k) {
-    if (k === 'match') return conTuyos ? F.matchResumenTuyos(minimo(), criterio.puestos.length > 0, criterio.empresas.length > 0) : F.matchResumen(minimo());
+    if (k === 'match') {
+      // Solo los que no llegan: "Bajo tu umbral", lo mismo que dice cada aviso de esa lista; con el mínimo subido, "60 a 69".
+      if (filtros.soloBajo) return minimo() <= piso ? T.avisos.bajoUmbral : F.matchResumenSolo(minimo(), topeBajo);
+      return conTuyos ? F.matchResumenTuyos(minimo(), criterio.puestos.length > 0, criterio.empresas.length > 0) : F.matchResumen(minimo());
+    }
+    if (k === 'requisitos') return Filtros.resumenLista(filtros.requisitos, REQUISITOS, (v) => F.requisitos[v], F.todosColumna.requisitos);
+    if (k === 'prioridad') return Filtros.resumenLista(filtros.prioridad, PRIORIDADES, (v) => F.prioridad[v], F.todosColumna.prioridad);
     if (k === 'paquete') return Filtros.resumenLista(filtros.paquete, PAQUETES, (v) => T.avisos.paquete[v], F.todos);
     if (k === 'postulacion') return Filtros.resumenLista(filtros.postulacion, POSTULACIONES, (v) => T.avisos.postulacion[v], F.todas);
     if (k === 'donde') return Filtros.resumenLista(filtros.donde, DONDES, (v) => T.avisos.dondeFiltro[v], F.todosColumna.donde);
@@ -397,7 +431,7 @@ Terna.pagina('avisos', async (ctx) => {
     const tuyo = chipTuPuesto(a);
     const tr = h('tr', { tabindex: '0', dataset: { match: a.match_id, control: 'abrir' } },
       h('td', { class: 'col-puesto' }, h('div', { class: 'aviso-puesto', text: a.puesto }), lineaApoyo(a), Aviso.etiquetas(a, bajoMinimo(a), false, fuera(a)), faltan ? h('div', null, faltan) : null,
-        tuyo ? h('div', null, tuyo) : null),
+        tuyo ? h('div', { class: 'linea-tuya' }, tuyo) : null),
       h('td', { class: 'col-empresa', text: a.empresa || '' }),
       h('td', { class: 'col-modalidad' }, a.modalidad ? h('span', { class: 'atributos' }, icono('i-' + a.modalidad, 'icono-16'), T.avisos.modalidadMin[a.modalidad]) : null),
       h('td', { class: 'col-ubicacion' }, h('span', { class: 'atributos' }, icono(a.alcance === 'exterior' ? 'i-exterior' : 'i-local', 'icono-16'), Aviso.lugar(a))),
@@ -720,7 +754,18 @@ Terna.pagina('avisos', async (ctx) => {
       if (desdeEncabezado) cuerpo.prepend(Filtros.botonOrden(F.ordenar.nuevos, orden === 'nuevos', () => cambiarOrden('nuevos')));
       return cuerpo;
     }
-    if (k === 'paquete' || k === 'postulacion' || k === 'donde' || k === 'ubicacion') {
+    if (k === 'prioridad') {
+      // Con cuántos avisos tiene cada una junto con los demás filtros. Un aviso de tus puestos que además es de una empresa que
+      // seguís cuenta en las dos; elegirlas todas es "Todas".
+      busquedaHoy = busqueda();
+      const base = avisos.filter((a) => pasa(a, 'prioridad'));
+      const opciones = PRIORIDADES.map((v) => ({ valor: v, texto: F.prioridad[v], n: base.filter((a) => enPrioridad(a, v)).length }));
+      const cuerpo = Filtros.cuerpoValores({ nombre: nombreFiltro(k), opciones, elegidos: filtros.prioridad, todosTexto: F.todosColumna.prioridad,
+        alCambiar: (v) => { filtros.prioridad = v; aplicarFiltro(); } });
+      cuerpo.append(h('p', { class: 'campo-ayuda', text: F.prioridadAyuda(criterio.puestos.length > 0, criterio.empresas.length > 0) }));
+      return cuerpo;
+    }
+    if (k === 'paquete' || k === 'postulacion' || k === 'donde' || k === 'ubicacion' || k === 'requisitos') {
       let opciones;
       if (k === 'ubicacion') {
         // Las que hay en la lista con los demás filtros, y las elegidas aunque ya no haya ninguna; de la más usada a la menos.
@@ -731,6 +776,7 @@ Terna.pagina('avisos', async (ctx) => {
           .sort((x, y) => (y.n - x.n) || x.texto.localeCompare(y.texto, 'es'));
       } else if (k === 'paquete') opciones = opcionesDe('paquete', PAQUETES, (v) => T.avisos.paquete[v], Aviso.estadoPaquete);
       else if (k === 'donde') opciones = opcionesDe('donde', DONDES, (v) => T.avisos.dondeFiltro[v], (a) => Aviso.donde(a, prefs).clave);
+      else if (k === 'requisitos') opciones = opcionesDe('requisitos', REQUISITOS, (v) => F.requisitos[v], Aviso.categoriaRequisitos);
       else opciones = opcionesDe('postulacion', POSTULACIONES, (v) => T.avisos.postulacion[v], (a) => a.estado_postulacion);
       return Filtros.cuerpoValores({ nombre: nombreFiltro(k), opciones, elegidos: filtros[k], todosTexto: F.todosColumna[k], buscador: k === 'ubicacion',
         alCambiar: (v) => { filtros[k] = v; aplicarFiltro(); } });
@@ -744,7 +790,7 @@ Terna.pagina('avisos', async (ctx) => {
       prefsLinea.append(h('p', { class: 'campo-ayuda', text: k === 'match' ? T.inicio.umbralActual(umbral) : F.enPreferencias(resumenLista(k, busquedaPrefs[k])) }));
       if (cambiado(k)) {
         prefsLinea.append(h('button', { class: 'btn btn-texto btn-chico', type: 'button', onclick: () => {
-          if (k === 'match') { filtros.matchMin = null; filtros.bajoUmbral = false; } else filtros[k] = null;
+          if (k === 'match') { filtros.matchMin = null; filtros.bajoUmbral = false; filtros.soloBajo = false; } else filtros[k] = null;
           if (k === 'puesto') filtros.puestoExacto = false;
           if (k === 'empresa') filtros.empresaExacta = false;
           aplicarFiltro();
@@ -768,29 +814,49 @@ Terna.pagina('avisos', async (ctx) => {
       cuerpo.append(h('fieldset', { class: 'campo' }, h('legend', { class: 'oculto-visual', text: F.nombres[k] }), grupo), aviso);
       if (F.sinDato[k]) cuerpo.append(h('p', { class: 'campo-ayuda', text: F.sinDato[k] }));
     } else {
+      // Match: desde diseno.md 0.32, primero qué avisos según el umbral, con tres opciones de una sola elección en lugar de la
+      // casilla (como Desde, Hasta y El día en un filtro de fecha): los que llegan, los que quedan debajo (así se filtra "Bajo tu
+      // umbral") o todos (la casilla de antes); y debajo el mínimo, que se mueve dentro de lo que cada opción deja ver: del umbral
+      // a 100, del piso al último que no llega o del piso a 100. Van arriba porque deciden entre qué números se mueve el mínimo, y
+      // porque así se ven las tres sin bajar en el panel de escritorio, que es corto; ahí van además en el tamaño chico de la tabla
+      // (`.chips-modos`, terna.css), para que entren en un renglón y el filtro entero se vea sin bajar dentro del panel.
       const idRango = Terna.idUnico('match');
-      const rango = h('input', { type: 'range', id: idRango, name: 'match', min: String(filtros.bajoUmbral ? piso : umbral), max: '100', step: '1', value: String(minimo()) });
+      const limites = () => ({ llegan: [umbral, 100], tambien: [piso, 100], solo: [piso, topeBajo] })[modoUmbral()];
+      const rango = h('input', { type: 'range', id: idRango, name: 'match', min: String(limites()[0]), max: String(limites()[1]), step: '1', value: String(minimo()) });
       const valor = h('output', { class: 'umbral-valor', for: idRango, text: String(minimo()) });
-      const casilla = h('input', { type: 'checkbox', name: 'bajo', checked: filtros.bajoUmbral });
+      const nombreModos = Terna.idUnico('mostrar');
+      const opcionModo = (modo, texto) => opcion('radio', nombreModos, modo, texto, modoUmbral() === modo);
+      // Con el umbral en el piso no queda ningún aviso debajo: no hay qué elegir.
+      const modos = umbral <= piso ? null : h('fieldset', { class: 'campo' }, h('legend', { class: 'oculto-visual', text: F.mostrarGrupo }),
+        h('div', { class: 'chips chips-modos' }, opcionModo('llegan', F.mostrarLlegan), opcionModo('solo', F.mostrarSoloBajo), opcionModo('tambien', F.mostrarBajo)));
+      // "Lo tuyo se ve desde el piso" no dice nada cuando se ven solo los que no llegan: todo se ve desde el piso.
+      const ayudaTuyos = conTuyos ? h('p', { class: 'campo-ayuda', hidden: filtros.soloBajo, text: F.matchTuyos(piso, criterio.puestos.length > 0, criterio.empresas.length > 0) }) : null;
       const aplicarMatch = () => {
-        filtros.bajoUmbral = casilla.checked;
-        filtros.matchMin = !casilla.checked && Number(rango.value) === umbral ? null : Number(rango.value);
+        const v = Number(rango.value);
+        filtros.matchMin = modoUmbral() === 'llegan' && v === umbral ? null : v;
         aplicarFiltro();
         pintarPrefs();
       };
       rango.addEventListener('input', () => { valor.textContent = rango.value; });
       rango.addEventListener('change', aplicarMatch);
-      casilla.addEventListener('change', () => {
-        if (casilla.checked) { rango.min = String(piso); rango.value = String(piso); }
-        else { rango.min = String(umbral); if (Number(rango.value) < umbral) rango.value = String(umbral); }
+      if (modos) modos.addEventListener('change', (e) => {
+        const modo = e.target.value;
+        filtros.bajoUmbral = modo === 'tambien';
+        filtros.soloBajo = modo === 'solo';
+        const [min, max] = limites();
+        const antes = Number(rango.value);
+        rango.min = String(min);
+        rango.max = String(max);
+        // Al pasar a ver los que no llegan, el mínimo baja al piso; al volver a los que llegan, sube al umbral si estaba debajo.
+        rango.value = String(modo === 'llegan' ? Math.max(antes, umbral) : piso);
         valor.textContent = rango.value;
+        if (ayudaTuyos) ayudaTuyos.hidden = filtros.soloBajo;
         aplicarMatch();
       });
       if (desdeEncabezado) cuerpo.append(Filtros.botonOrden(F.ordenar.match, orden === 'match', () => cambiarOrden('match')));
-      cuerpo.append(h('div', { class: 'campo' },
+      Terna.agregar(cuerpo, [modos, h('div', { class: 'campo' },
         h('div', { class: 'interruptor-fila' }, h('label', { class: 'campo-etiqueta', for: idRango, text: F.matchMinimo }), valor),
-        rango, h('label', { class: 'casilla' }, casilla, h('span', { text: F.mostrarBajo })),
-        conTuyos ? h('p', { class: 'campo-ayuda', text: F.matchTuyos(piso, criterio.puestos.length > 0, criterio.empresas.length > 0) }) : null));
+        rango, ayudaTuyos)]);
     }
     pintarPrefs();
     cuerpo.append(prefsLinea);
