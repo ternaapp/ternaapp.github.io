@@ -174,7 +174,7 @@ window.Aviso = (function () {
   }
   // Lo que Terna te sugiere: lo pediste, llega a tu umbral o es de tus puestos. Una postulación a mano que no, quedó así
   // después de armarse (subiste el umbral o un repuntaje la bajó): Inicio no la cuenta y Postulaciones la muestra solo sin
-  // "Tu umbral", desde el piso (diseno.md 0.32 §1.40; hasta 0.31, en la etapa "Bajo tu umbral").
+  // "Tu umbral", desde el piso (diseno.md 0.33 §1.41; hasta 0.32, en la etapa "Bajo tu umbral").
   function sugerida(a, c) {
     return !!a.pedido_en || a.match === null || a.match === undefined || a.match >= c.umbral || !!tuPuesto(a, c);
   }
@@ -278,7 +278,7 @@ window.Aviso = (function () {
   }
 
   // Las cuatro fichas: CV y Carta son links firmados (se descargan con el nombre de cv-ats.md §3.12);
-  // Notas y Salario despliegan su texto debajo, uno a la vez, y arrancan cerrados (decisión 9 del chat 8). Desde brand.md 0.20, con
+  // Notas y Salario despliegan su texto debajo, uno a la vez, y arrancan cerrados (decisión 9 del chat 8). Desde brand.md 0.21, con
   // `notasAbiertas`, las notas arrancan abiertas: la ficha de una postulada, que es adonde se vuelve para preparar la entrevista.
   function fichasPaquete(a, opciones) {
     const idioma = a.paquete_idioma === 'en' ? 'en' : 'es';
@@ -317,7 +317,7 @@ window.Aviso = (function () {
   }
 
   /* ---------- Recorrido (§10.13) ----------
-     Desde diseno.md 0.32, cuatro puntos (Encontrado, Me interesa, Paquete, Enviada o Postulada), sin Entrevista, y solo en la ficha. */
+     Desde diseno.md 0.33, cuatro puntos (Encontrado, Me interesa, Paquete, Enviada o Postulada), sin Entrevista, y solo en la ficha. */
   function puntos(a) {
     const e = a.estado_postulacion;
     const p = [
@@ -360,7 +360,7 @@ window.Aviso = (function () {
       default: return a.paquete_id ? L.pendiente : '';
     }
   }
-  // La línea corta, debajo del chip de la etapa en la tabla y en la fila de Postulaciones (brand.md 0.20 §6.5): la misma, sin el
+  // La línea corta, debajo del chip de la etapa en la tabla y en la fila de Postulaciones (brand.md 0.21 §6.5): la misma, sin el
   // nombre de la etapa adelante.
   function lineaCorta(a, config) {
     const L = T.postulaciones.lineaCorta;
@@ -706,7 +706,7 @@ window.Aviso = (function () {
     const texto = String((error && (error.message || '')) || '') + ' ' + String((error && error.details) || '');
     return Boolean(error) && (error.code === '42703' || error.code === 'PGRST204' || /does not exist|Could not find/i.test(texto));
   }
-  // Desde brand.md 0.20 la web no tiene la etapa Entrevista ("Marcar entrevista" salió): una postulación que quedó marcada así se ve
+  // Desde brand.md 0.21 la web no tiene la etapa Entrevista ("Marcar entrevista" salió): una postulación que quedó marcada así se ve
   // como lo que es, postulada: por Terna si la envió, a mano si no. La base no cambia (datos.md §5.13): desde `entrevista` se puede
   // volver a pendiente, como desde `postulado`.
   function sinEntrevista(filas) {

@@ -490,7 +490,7 @@ window.T = (function () {
     postulaciones: {
       titulo: 'Postulaciones',
       cuenta: (x) => plural(x, '1 postulación', n(x) + ' postulaciones'),
-      // Dos pestañas (brand.md 0.20 §6.5; diseno.md 0.32 §1.40): lo que falta postular y lo ya postulado, cada una con de qué está hecha.
+      // Dos pestañas (brand.md 0.21 §6.5; diseno.md 0.33 §1.41): lo que falta postular y lo ya postulado, cada una con de qué está hecha.
       mostrar: 'Mostrar',
       vistas: { por_postular: 'Por postular', postuladas: 'Postuladas' },
       partes: {
@@ -500,7 +500,7 @@ window.T = (function () {
         aMano: (x) => n(x) + ' a mano',
       },
       postuladasNota: 'Si te llaman de alguna, abrila: ahí están el CV y la carta de esa postulación, lo que Terna respondió y las notas para la entrevista.',
-      // "Tu umbral" (brand.md 0.20 §6.5): marcada, Por postular muestra solo lo que Terna te sugiere; sin marcar, también lo que quedó a
+      // "Tu umbral" (brand.md 0.21 §6.5): marcada, Por postular muestra solo lo que Terna te sugiere; sin marcar, también lo que quedó a
       // mano entre el piso y tu umbral. Debajo del piso, eso no se ve en ningún lado.
       tuUmbral: {
         etiqueta: (u) => 'Tu umbral: ' + u,
@@ -509,7 +509,7 @@ window.T = (function () {
         hayMas: (x) => plural(x, '1 más bajo tu umbral.', n(x) + ' más bajo tu umbral.'),
         vesTambien: (x) => 'Ves también ' + n(x) + ' bajo tu umbral: Terna no te sugiere postularte.',
       },
-      // "Por qué" (brand.md 0.20 §6.5): por qué esa postulación está en tu lista. "Tu puesto" lleva la explicación de Avisos
+      // "Por qué" (brand.md 0.21 §6.5): por qué esa postulación está en tu lista. "Tu puesto" lleva la explicación de Avisos
       // (T.avisos.tuPuestoExplicacion).
       porQue: {
         nombre: 'Por qué', todos: 'Todos',
@@ -519,7 +519,7 @@ window.T = (function () {
         bajoUmbral: (u, conPuestos) => 'No llega a tu umbral (' + u + ')' + (conPuestos ? ' ni es de tus puestos' : '') + ': Terna no te sugiere postularte. El paquete sigue listo si igual querés.',
         bajoUmbralHecha: (u, conPuestos) => 'Hoy no llega a tu umbral (' + u + ')' + (conPuestos ? ' ni es de tus puestos' : '') + ': el match se volvió a calcular o cambiaste el umbral después.',
       },
-      // Desde brand.md 0.20, cuatro puntos, sin Entrevista, y solo en la ficha.
+      // Desde brand.md 0.21, cuatro puntos, sin Entrevista, y solo en la ficha.
       recorrido: ['Encontrado', 'Me interesa', 'Paquete', 'Enviada o Postulada'],
       recorridoAccesible: (etapa) => 'Recorrido: ' + etapa,
       linea: {

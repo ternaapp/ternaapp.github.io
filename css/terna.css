@@ -231,7 +231,7 @@ html { scroll-padding-top: 72px; }
 /* Un botón de solo ícono (Subir, Bajar, Cancelar pedido): 44 px en celular, 36 desde 768. Su nombre va en aria-label y title. */
 .btn-icono { width: 44px; min-height: 44px; padding: 0; justify-content: center; }
 
-/* Carril de bloques de Mi perfil y Preferencias (escritorio; diseno.md §10.17). Hasta 0.31, también el de las etapas de Postulaciones. */
+/* Carril de bloques de Mi perfil y Preferencias (escritorio; diseno.md §10.17). Hasta 0.32, también el de las etapas de Postulaciones. */
 .carril { display: none; }
 
 /* Casillas y radios nativos */
@@ -480,8 +480,8 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .interruptor[aria-checked="true"] .interruptor-pista { background: var(--accion); border-color: var(--accion); }
 .interruptor[aria-checked="true"] .interruptor-pista::after { transform: translateX(18px); border-color: var(--accion); }
 
-/* Las dos pestañas de Postulaciones y "Tu umbral" (diseno.md 0.32 §8.2 y §10.11): dos botones de radio con cara de pestaña, iguales
-   en celular y en escritorio, y al lado la casilla con forma de chip (.chip-opcion). Hasta 0.31, píldoras en celular y un carril. */
+/* Las dos pestañas de Postulaciones y "Tu umbral" (diseno.md 0.33 §8.2 y §10.11): dos botones de radio con cara de pestaña, iguales
+   en celular y en escritorio, y al lado la casilla con forma de chip (.chip-opcion). Hasta 0.32, píldoras en celular y un carril. */
 .vistas-caja { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 14px; }
 .vistas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; flex: 1 1 100%; }
 .vista { position: relative; display: flex; }
@@ -503,7 +503,7 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .tu-umbral-nota { font-size: 14px; color: var(--tinta-suave); }
 .tu-umbral-nota:empty { display: none; }
 
-/* Recorrido (desde diseno.md 0.32, solo en la ficha y de cuatro puntos) */
+/* Recorrido (desde diseno.md 0.33, solo en la ficha y de cuatro puntos) */
 .punto { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--borde-control); background: var(--hoja); flex: none; }
 .punto-tinta { border-color: var(--tinta); background: var(--tinta); }
 .punto-accion { border-color: var(--accion); background: var(--accion); }
@@ -521,7 +521,7 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .recorrido-grande .punto { width: 12px; height: 12px; }
 .recorrido-paso small { font-size: 12px; line-height: 1.2; text-align: center; color: var(--tinta-suave); }
 .traba { font-size: 13px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-/* Postulaciones: la nota de arriba de Postuladas y, en la ficha, por qué está en tu lista (diseno.md 0.32 §8.2 y §8.5); la línea
+/* Postulaciones: la nota de arriba de Postuladas y, en la ficha, por qué está en tu lista (diseno.md 0.33 §8.2 y §8.5); la línea
    de "Por qué" en la fila de celular y, cuando la tabla no tiene ancho para su columna, debajo del puesto (.apoyo-porque). */
 .etapa-nota { margin: 0 0 12px; max-width: 70ch; font-size: 14px; line-height: 1.45; color: var(--tinta-suave); }
 .ficha-seccion .etapa-nota { margin: 0; }
@@ -1065,8 +1065,8 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .tabla-avisos .col-empresa { display: none; }
   .tabla-avisos .apoyo-empresa { display: inline; }
 }
-/* Postulaciones (diseno.md 0.17 y 0.32 §8.6): Requisitos y Fecha se ven siempre (lo pidió Francisco). Cuando la caja no alcanza se
-   acomoda lo demás: hasta 940 px Empresa pasa a los atributos del puesto, "Por qué" baja a una línea debajo del puesto (hasta 0.31
+/* Postulaciones (diseno.md 0.17 y 0.33 §8.6): Requisitos y Fecha se ven siempre (lo pidió Francisco). Cuando la caja no alcanza se
+   acomoda lo demás: hasta 940 px Empresa pasa a los atributos del puesto, "Por qué" baja a una línea debajo del puesto (hasta 0.32
    era el recorrido el que pasaba arriba de la etapa, y el corte estaba en 880), las celdas pierden 4 px de relleno a cada lado y
    Puesto se queda con el 40 % del ancho (sin eso la etapa, que es larga en las trabas, se lleva el lugar y el puesto se parte en
    cinco renglones); hasta 650 el veredicto y la fecha pueden partirse en varias líneas. Medido 12/11/2026 en el banco: con todo a

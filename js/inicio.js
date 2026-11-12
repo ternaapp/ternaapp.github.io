@@ -72,7 +72,7 @@ Terna.pagina('inicio', async (ctx) => {
     }
   }
 
-  // Cómo viene (diseno.md 0.26 §10.14; desde 0.32, sin Entrevistas): las cuatro cifras en filas. Solo la primera lleva barra, porque es la única que es una parte de
+  // Cómo viene (diseno.md 0.26 §10.14; desde 0.33, sin Entrevistas): las cuatro cifras en filas. Solo la primera lleva barra, porque es la única que es una parte de
   // un todo: lo que pasó tu umbral, en tinta, de lo que llegó, con el gris. Las otras cuentan lo que pasó en el período y no son un
   // embudo (un paquete de hoy puede ser de un aviso de la semana pasada): con barras se leían como "6 de 17" (revisión de UX).
   function dibujarCifras(r) {

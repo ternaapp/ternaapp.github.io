@@ -1,9 +1,9 @@
 /* Terna · js/postulaciones.js
-   Postulaciones (diseno.md 0.32 §8): todo lo que tiene paquete, en dos pestañas, "Por postular" y "Postuladas" (§1.40; hasta 0.31,
+   Postulaciones (diseno.md 0.33 §8): todo lo que tiene paquete, en dos pestañas, "Por postular" y "Postuladas" (§1.41; hasta 0.32,
    ocho etapas en píldoras y en un carril); "Tu umbral", que deja en Por postular solo lo que Terna te sugiere; en cada fila, por qué
    está en tu lista y en qué etapa; el veredicto de requisitos; la ficha con la traba, la captura, el paquete y lo que Terna
    respondió (en una postulada, con el paquete y las notas primero: es adonde se vuelve para preparar la entrevista); y los botones
-   de cada etapa (brand.md 0.20 §6.5).
+   de cada etapa (brand.md 0.21 §6.5).
    Escribe con un upsert de { match_id, usuario_id, estado } (el disparador valida la transición) y marcar_interes. La ficha
    lista las palabras del aviso que el CV no tiene, sin botón: se suman en Preferencias (datos.md 0.23 §14).
    Deshacer: la base no deja volver de postulado a a mano ni de en cola a para revisar o a mano (datos.md §5.13), así
@@ -42,7 +42,7 @@ Terna.pagina('postulaciones', async (ctx) => {
   const umbral = prefs.umbral;
   // El filtro Match arranca en 0, "Todos" (diseno.md 0.24.3 §8.1): lo ya postulado y lo que Terna tiene en marcha se ve aunque un
   // repuntaje lo baje del piso (pipeline.md 0.4.10 §12). El piso sirve para leer los filtros guardados hasta `v: 3`, donde valía
-  // "Todos", y, desde 0.32, para lo que quedó a mano y Terna ya no sugiere: debajo del piso no se muestra (más abajo).
+  // "Todos", y, desde 0.33, para lo que quedó a mano y Terna ya no sugiere: debajo del piso no se muestra (más abajo).
   const piso = config.piso_match || 50;
   const MATCH_TODOS = 0;
   // Lo que Terna te sugiere (diseno.md 0.25 §1.36): la regla de Aviso.sugerida, la misma de Inicio y con la que el motor elige qué
@@ -58,7 +58,7 @@ Terna.pagina('postulaciones', async (ctx) => {
   // la ficha lo dice: Terna no lo postula por su cuenta (diseno.md 0.11 §8.5; pipeline.md 0.3.15 §4.12).
   const busquedaPrefs = Aviso.busquedaDe(prefs);
 
-  /* ---------- Las dos pestañas y "Tu umbral" (diseno.md 0.32 §1.40 y §8.2; brand.md 0.20 §6.5) ----------
+  /* ---------- Las dos pestañas y "Tu umbral" (diseno.md 0.33 §1.41 y §8.2; brand.md 0.21 §6.5) ----------
      Por postular: lo que tiene paquete y todavía no se postuló (a mano, para revisar, en cola o con el paquete armado). Postuladas:
      lo que envió Terna y lo que la persona marcó. La etapa de cada una va en su fila, en un chip.
      "Tu umbral" (Francisco, 12/11/2026: "las de abajo de 50 ni siquiera quiero que figuren en ningún lado… un botón que esté cliqueado
@@ -68,7 +68,7 @@ Terna.pagina('postulaciones', async (ctx) => {
   const VISTAS = ['por_postular', 'postuladas'];
   const URGENCIA = { a_mano: 0, para_revisar: 1, en_cola: 2, enviada: 3, postulado: 4, pendiente: 5 };
   const HASH = { por_postular: 'por-postular', postuladas: 'postuladas' };
-  // Los hash de las etapas de antes (hasta 0.31), que siguen en los links de Inicio y en lo que alguien haya guardado.
+  // Los hash de las etapas de antes (hasta 0.32), que siguen en los links de Inicio y en lo que alguien haya guardado.
   const DE_HASH = { 'por-postular': 'por_postular', postuladas: 'postuladas', todas: 'por_postular', 'a-mano': 'por_postular', 'para-revisar': 'por_postular',
     'en-cola': 'por_postular', 'bajo-umbral': 'por_postular', enviadas: 'postuladas', entrevistas: 'postuladas' };
   let vista = 'por_postular';
@@ -85,7 +85,7 @@ Terna.pagina('postulaciones', async (ctx) => {
   const mostrables = () => postulaciones.filter((a) => !quedo(a) || !bajoPiso(a));
   const fechaEtapa = (a) => ({ enviada: a.enviada_en, postulado: a.postulado_en, en_cola: a.en_cola_en, a_mano: a.captura_en || a.armado_en || a.creado_en })[a.estado_postulacion] || a.armado_en || a.creado_en;
 
-  /* ---------- Por qué está en tu lista (brand.md 0.20 §6.5; diseno.md 0.32 §8.6) ----------
+  /* ---------- Por qué está en tu lista (brand.md 0.21 §6.5; diseno.md 0.33 §8.6) ----------
      Una sola por postulación: la pediste, es de tus puestos, llega a tu umbral o no llega. Sin match, nada. */
   const POR_QUE = ['pedida', 'tu_puesto', 'sobre_umbral', 'bajo_umbral'];
   function porQue(a) {
@@ -121,7 +121,7 @@ Terna.pagina('postulaciones', async (ctx) => {
      Desde diseno.md 0.21, también por columna (Francisco, 06/11/2026: hizo clic en "Requisitos" para filtrar): Puesto, Empresa y
      Etapa con texto, Requisitos y Por qué con lo que hay, Fecha con Desde, Hasta o El día. Desde 0.22 cada filtro está en un solo
      lugar: en el encabezado de su columna, si la tabla lo muestra, o en la barra (Modalidad, Alcance, Nivel, Jornada y Paquete, que no
-     tienen columna; los de una columna que la tabla oculta por ancho; todos en el celular). Hasta 0.31 había uno más, Recorrido, que
+     tienen columna; los de una columna que la tabla oculta por ancho; todos en el celular). Hasta 0.32 había uno más, Recorrido, que
      elegía etapas: salió con su columna, y lo que filtraba lo separan ahora las pestañas y lo busca Etapa. */
   const PAQUETES = ['armado', 'sin_armar', 'pedido', 'no_se_pudo_armar', 'sin_texto', 'por_puntuar'];
   const REQUISITOS = ['cumple', 'a_confirmar', 'falta', 'sobra_nivel', 'falta_nivel', 'sin_dato'];
@@ -320,7 +320,7 @@ Terna.pagina('postulaciones', async (ctx) => {
       ubicarFiltros();
       return;
     }
-    // Arriba de Postuladas, para qué sirve volver (brand.md 0.20 §6.5).
+    // Arriba de Postuladas, para qué sirve volver (brand.md 0.21 §6.5).
     if (vista === 'postuladas') lista.append(h('p', { class: 'etapa-nota', text: T.postulaciones.postuladasNota }));
     if (Terna.anchoEscritorio.matches) lista.append(tabla(vis));
     else lista.append(h('ul', { class: 'lista-postulaciones', role: 'list' }, vis.map((a) => h('li', null, filaCelular(a)))));
@@ -376,7 +376,7 @@ Terna.pagina('postulaciones', async (ctx) => {
         oculto(a.match === null ? T.avisos.sinMatch : T.avisos.matchAccesible(a.match, llega))),
       h('td', null, h('div', { class: 'aviso-puesto', text: a.puesto }), h('div', { class: 'atributos' },
         a.empresa ? h('span', { class: 'apoyo-empresa', text: a.empresa + ' · ' }) : null, Aviso.lugar(a), a.modalidad ? ' · ' + T.avisos.modalidadMin[a.modalidad] : ''),
-        // Cuando la caja no alcanza para la columna, "Por qué" baja acá (.apoyo-porque; diseno.md 0.32 §8.6).
+        // Cuando la caja no alcanza para la columna, "Por qué" baja acá (.apoyo-porque; diseno.md 0.33 §8.6).
         porQue(a) ? h('div', { class: 'linea-sugerencia apoyo-porque' }, chipPorQue(a)) : null),
       h('td', { class: 'col-empresa', text: a.empresa || '' }),
       h('td', { class: 'col-porque' }, chipPorQue(a)),
@@ -583,7 +583,7 @@ Terna.pagina('postulaciones', async (ctx) => {
   function seccionEtapa(a, conCaptura) {
     const sec = h('section', { class: 'ficha-seccion' });
     sec.append(h('div', { class: 'chips' }, chipEtapa(a), chipPorQue(a, false)), oculto(T.postulaciones.recorridoAccesible(etiquetaEtapa(a))));
-    // Por qué está en tu lista, cuando no es lo de siempre: es de tus puestos, la pediste o quedó bajo tu umbral (diseno.md 0.32 §8.5).
+    // Por qué está en tu lista, cuando no es lo de siempre: es de tus puestos, la pediste o quedó bajo tu umbral (diseno.md 0.33 §8.5).
     const k = porQue(a);
     if (k && k !== 'sobre_umbral') sec.append(h('p', { class: 'etapa-nota', text: explicacionPorQue(a, k) }));
     const linea = Aviso.lineaEtapa(a, config);
@@ -648,7 +648,7 @@ Terna.pagina('postulaciones', async (ctx) => {
         h('button', { class: 'btn btn-texto btn-chico', type: 'button', onclick: () => Terna.copiar(texto, dl) }, icono('i-pegar'), T.postulaciones.copiarRespuestas)),
       dl);
   }
-  // Una postulada es adonde se vuelve si llaman para una entrevista (brand.md 0.20 §6.5; Francisco, 12/11/2026: "entra, se fija y ve
+  // Una postulada es adonde se vuelve si llaman para una entrevista (brand.md 0.21 §6.5; Francisco, 12/11/2026: "entra, se fija y ve
   // el paquete que le armó específico para esa entrevista"): después de la etapa, el paquete con las notas abiertas; después lo que
   // Terna respondió y, al final, la captura.
   function cuerpoFicha(a) {
