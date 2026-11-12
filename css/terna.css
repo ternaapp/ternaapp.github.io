@@ -607,6 +607,14 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .umbral-linea { font-size: 14px; }
 .inicio-corrida { color: var(--tinta-suave); font-size: 15px; }
 .inicio-corrida p + p { font-size: 14px; margin-top: 2px; }
+/* La pregunta de las cuentas (diseno.md 0.29 §6, 1b): una tarjeta a todo el ancho, arriba de Qué hay para hacer; al responder
+   queda su línea de confirmación en 15 px tinta suave. */
+.pregunta-cuentas { display: flex; flex-direction: column; gap: 10px; }
+.pregunta-cuentas p { max-width: 720px; font-size: 15px; line-height: 1.45; }
+.pregunta-cuentas-botones { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.pregunta-cuentas-botones a { margin-left: 4px; font-size: 15px; }
+.pregunta-listo { font-size: 15px; color: var(--tinta-suave); }
+.pregunta-listo:focus { outline: none; }
 .tablero { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
 .tablero-seccion, .tablero-tarjeta { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tablero-tarjeta { padding: 14px 16px; }
@@ -864,6 +872,18 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 .direccion { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .direccion code { flex: 1 1 220px; min-width: 0; padding: 10px 12px; border: 1px solid var(--linea); border-radius: 6px; background: var(--papel); font-size: 14px; overflow-wrap: anywhere; }
 .pasos { display: flex; flex-direction: column; gap: 4px; font-size: 15px; }
+/* "¿Terna crea cuentas por vos?" (Preferencias › Postulación; diseno.md 0.29 §9.3): la pregunta con su contexto en 15 px, la
+   contraseña de los sitios en un campo de solo lectura con sus dos botones, y los sitios, uno por renglón y sin chevrón. */
+.cuentas > p:not([class]) { font-size: 15px; line-height: 1.45; }
+.cuentas-detalle { display: flex; flex-direction: column; gap: 12px; }
+.contrasena-sitios { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* El campo va en su renglón en el celular, con los dos botones debajo; con lugar, los tres en el mismo. */
+.contrasena-sitios .control { flex: 1 1 100%; max-width: 340px; min-width: 0; font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 16px; }
+.sitios { list-style: none; margin: 0; padding: 0 12px; border: 1px solid var(--linea); border-radius: 10px; background: var(--hoja); }
+.sitios li { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; min-height: 48px; padding: 8px 0; font-size: 15px; line-height: 1.35; }
+.sitios li + li { border-top: 1px solid var(--linea); }
+.sitio-nombre { min-width: 0; overflow-wrap: anywhere; }
+.sitio-estado { color: var(--tinta-suave); }
 /* Alertas por mail (Preferencias): un renglón por portal con su estado, que lleva a su guía (diseno.md 0.12 §9.3). */
 .portales { list-style: none; margin: 0; padding: 0; border: 1px solid var(--linea); border-radius: 10px; background: var(--hoja); }
 .portales li + li { border-top: 1px solid var(--linea); }
@@ -1108,6 +1128,8 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
 .subbloque + .subbloque { border-top: 1px solid var(--linea-fuerte); padding-top: 16px; margin-top: 4px; }
 .subbloque .tarjeta-titulo { font-size: 15px; }
 .campo-ayuda + .subbloque { margin-top: 6px; }
+/* La dirección (Mi perfil › Identificación; diseno.md 0.29 §9.2): un ítem después de tres campos sueltos, con su línea arriba. */
+.subbloque.direccion-postal { border-top: 1px solid var(--linea-fuerte); padding-top: 16px; margin-top: 4px; }
 /* Subtemas (Mi perfil › Datos y CV; diseno.md 0.19 §10.17): cuando un bloque junta temas distintos, cada uno arranca con una
    franja de papel que corta la tarjeta de lado a lado, con la línea fuerte arriba y abajo y el título adentro. */
 .subtema { display: flex; flex-direction: column; gap: 12px; }

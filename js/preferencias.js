@@ -12,7 +12,10 @@
    §9.3), "Priorizar mis puestos" va debajo de "Puestos que buscás" y solo con algún puesto escrito; sin la columna no se muestra
    y vale Sí, como en el motor. La regla de qué aviso es de tus puestos está en js/puestos.js.
    Desde diseno.md 0.27 (§1.38; brand.md 0.14 §6.7), "Salario" va en Paquetes, al final: es una de las cuatro partes del paquete
-   (CV, carta, notas y salario) y no filtra avisos; hasta 0.26 era el último ítem de Búsqueda. Lee y escribe lo mismo. */
+   (CV, carta, notas y salario) y no filtra avisos; hasta 0.26 era el último ítem de Búsqueda. Lee y escribe lo mismo.
+   Desde diseno.md 0.29 (§9.3; brand.md 0.16 §6.7; datos.md 0.32, 0036), "¿Terna crea cuentas por vos?" va en Postulación, justo
+   debajo de "Terna postula por vos" y solo con su Sí: una pregunta que escribe en el acto, con la contraseña de los sitios y la
+   lista de sitios donde Terna creó una cuenta. A quién se le muestra y la cuenta del último mes, en js/cuentas.js. */
 'use strict';
 
 // Respuestas para formularios y Tu cuenta están en Mi perfil desde 0.19: los links de antes (preferencias.html#respuestas, el de
@@ -609,10 +612,153 @@ Terna.pagina('preferencias', async (ctx) => {
     h('div', { class: 'dos' }, numeroCampo('salario_min', P.minimo), numeroCampo('salario_max', P.maximo)),
     h('div', { class: 'campo' }, h('label', { for: idMoneda, text: P.moneda }), moneda));
   sSal.append(camposRango, h('p', { class: 'campo-ayuda', text: P.salarioAyuda }), error('err-sal'));
-  const sPos = enTema.conInterruptor(P.postularSola, P.postularSolaAyuda, v.postular_sola, (x) => { v.postular_sola = x; atenuar(); });
+  const sPos = enTema.conInterruptor(P.postularSola, P.postularSolaAyuda, v.postular_sola, (x) => {
+    const antes = v.postular_sola;
+    v.postular_sola = x;
+    atenuar();
+    // Al pasar de No a Sí la pregunta de las cuentas aparece debajo y recibe el foco; con No no se muestra (diseno.md 0.29 §9.3).
+    if (cuentas) cuentas.mostrar(x, x && !antes);
+  });
   const sRev = enTema.conInterruptor(P.revisar, P.revisarAyuda, v.revisar_antes_de_enviar, (x) => { v.revisar_antes_de_enviar = x; });
+
+  /* ---------- ¿Terna crea cuentas por vos? (diseno.md 0.29 §9.3; brand.md 0.16 §6.7; datos.md 0.32, 0036) ----------
+     No es un interruptor suelto sino una pregunta con su contexto: nace sin respuesta (ninguno de los dos marcado, y eso es No),
+     escribe en el acto como Pausar mi cuenta, y no espera a "Guardar preferencias". Con Sí, debajo: la contraseña de los sitios,
+     que se pide recién cuando ese bloque está por verse y vive solo en su campo, y los sitios donde Terna creó una cuenta. */
+  function preguntaCuentas() {
+    const C = P.cuentas;
+    const titulo = h('h4', { id: 'cuentas-titulo', class: 'tarjeta-titulo', tabindex: '-1', text: C.titulo });
+    // El número del último mes llega después (una lectura aparte) y va en peso 700, pegado al primer párrafo.
+    const numero = h('strong', { id: 'cuentas-numero', hidden: true });
+    const err = h('p', { class: 'campo-error', id: 'err-cuentas', role: 'alert' });
+    let valor = v.crear_cuentas === true ? 'si' : (v.crear_cuentas === false ? 'no' : '');
+    const radio = (val, texto) => h('label', { class: 'casilla' },
+      h('input', { type: 'radio', name: 'crear-cuentas', value: val, checked: valor === val, 'aria-describedby': 'err-cuentas', onchange: () => responder(val) }),
+      h('span', { text: texto }));
+    const opciones = h('div', { class: 'opciones' }, radio('si', C.si), radio('no', C.no));
+
+    // La contraseña: tapada, de solo lectura, con "Ver" / "Ocultar" y "Copiar". No queda en ninguna variable: solo en el campo.
+    const idClave = 'cuentas-contrasena';
+    const campoClave = h('input', { class: 'control', id: idClave, type: 'password', readOnly: true, autocomplete: 'off', spellcheck: 'false',
+      'aria-describedby': 'cuentas-contrasena-ayuda cuentas-contrasena-error' });
+    const bVer = h('button', { class: 'btn', type: 'button', id: 'cuentas-ver', text: C.ver });
+    const bCopiar = h('button', { class: 'btn', type: 'button', id: 'cuentas-copiar' }, icono('i-pegar'), C.copiar);
+    const tapar = () => { campoClave.type = 'password'; bVer.textContent = C.ver; };
+    bVer.addEventListener('click', () => {
+      if (campoClave.type === 'password') { campoClave.type = 'text'; bVer.textContent = C.ocultar; } else tapar();
+    });
+    bCopiar.addEventListener('click', async () => {
+      if (!campoClave.value) return;
+      try {
+        await navigator.clipboard.writeText(campoClave.value);
+        Terna.avisoBreve(C.copiada);
+      } catch (e) {
+        // Sin permiso para el portapapeles: queda a la vista y seleccionada, para copiarla a mano.
+        campoClave.type = 'text';
+        bVer.textContent = C.ocultar;
+        campoClave.focus();
+        campoClave.select();
+        Terna.avisoBreve(T.comun.copiarFallo);
+      }
+    });
+    const errClave = h('p', { class: 'campo-error', id: 'cuentas-contrasena-error', role: 'alert' });
+    const listaSitios = h('ul', { class: 'sitios', id: 'cuentas-sitios', 'aria-labelledby': 'cuentas-sitios-titulo' });
+    const sinSitios = h('p', { class: 'suave', id: 'cuentas-sin-sitios', text: C.ninguna, hidden: true });
+    const errSitios = h('p', { class: 'campo-error', id: 'cuentas-sitios-error', role: 'alert' });
+    const detalle = h('div', { class: 'cuentas-detalle', id: 'cuentas-detalle', hidden: true },
+      h('div', { class: 'campo' }, h('label', { for: idClave, text: C.contrasena }),
+        h('div', { class: 'contrasena-sitios' }, campoClave, bVer, bCopiar),
+        h('p', { class: 'campo-ayuda', id: 'cuentas-contrasena-ayuda', text: C.contrasenaAyuda }), errClave),
+      h('div', { class: 'campo' }, h('span', { class: 'campo-etiqueta', id: 'cuentas-sitios-titulo', text: C.sitios }), listaSitios, sinSitios, errSitios));
+
+    const estadoSitio = (s) => {
+      const e = C.estado[s.estado];
+      return typeof e === 'function' ? e(Terna.fechaCorta(s.creada_en)) : (e || '');
+    };
+    let pedido = false;
+    let observador = null;
+    async function pedirDetalle() {
+      if (pedido) return;
+      pedido = true;
+      const [rClave, rSitios] = await Promise.all([
+        sb.rpc('leer_contrasena_sitios'),
+        sb.from('cuentas_sitios').select('sitio, estado, creada_en, confirmada_en').order('creada_en', { ascending: false }),
+      ]);
+      // Mientras llegaba, la persona pudo decir que no: entonces no se escribe nada.
+      if (!pedido) return;
+      if (rClave.error) { if (!Terna.siSesionVencida(rClave.error)) errClave.textContent = Terna.textoError(rClave.error); }
+      else campoClave.value = typeof rClave.data === 'string' ? rClave.data : '';
+      bVer.disabled = bCopiar.disabled = !campoClave.value;
+      Terna.vaciar(listaSitios);
+      // Si la lista no se pudo leer, lo dice: "Todavía ninguna" es solo cuando de verdad no hay.
+      const sitios = rSitios.error ? [] : (rSitios.data || []);
+      for (const s of sitios) listaSitios.append(h('li', null, h('span', { class: 'sitio-nombre', text: s.sitio }), h('span', { class: 'sitio-estado', text: '· ' + estadoSitio(s) })));
+      listaSitios.hidden = !sitios.length;
+      sinSitios.hidden = !!sitios.length || !!rSitios.error;
+      errSitios.textContent = rSitios.error && !Terna.esErrorDeSesion(rSitios.error) ? Terna.textoError(rSitios.error) : '';
+    }
+    function verDetalle(ver) {
+      detalle.hidden = !ver;
+      if (observador) { observador.disconnect(); observador = null; }
+      if (!ver) {
+        // Con No (o con la pregunta oculta) la contraseña no queda en la página.
+        pedido = false;
+        campoClave.value = '';
+        errClave.textContent = '';
+        errSitios.textContent = '';
+        tapar();
+        return;
+      }
+      if (pedido) return;
+      bVer.disabled = bCopiar.disabled = true;
+      if ('IntersectionObserver' in window) {
+        observador = new IntersectionObserver((vistos) => { if (vistos.some((x) => x.isIntersecting)) { observador.disconnect(); observador = null; pedirDetalle(); } }, { rootMargin: '200px 0px' });
+        observador.observe(detalle);
+      } else pedirDetalle();
+    }
+
+    async function responder(val) {
+      const antes = valor;
+      err.textContent = '';
+      const inputs = Array.from(opciones.querySelectorAll('input'));
+      inputs.forEach((x) => { x.disabled = true; });
+      const e = await Cuentas.responder(sb, uid, val === 'si');
+      inputs.forEach((x) => { x.disabled = nodo.classList.contains('atenuado'); });
+      if (e) {
+        // No se escribió: los botones vuelven a como estaban y el error queda junto a ellos.
+        inputs.forEach((x) => { x.checked = x.value === antes; });
+        if (!Terna.siSesionVencida(e)) { err.textContent = T.errores.guardar; bloques.marcarErrores(); }
+        return;
+      }
+      valor = val;
+      v.crear_cuentas = val === 'si';
+      verDetalle(val === 'si' && !nodo.hidden);
+      Terna.avisoBreve(T.comun.guardado);
+    }
+
+    const nodo = h('div', { class: 'subbloque cuentas', id: 'cuentas', role: 'group', 'aria-labelledby': 'cuentas-titulo', hidden: !v.postular_sola },
+      titulo, h('p', null, C.porQue, ' ', numero), h('p', { text: C.queHace }), h('p', { text: C.saber }),
+      h('p', { class: 'campo-ayuda', text: C.guiaEnCamino }), opciones, err, detalle);
+    nodo.dataset.titulo = 'cuentas-titulo';
+
+    // Con "Terna postula por vos" en No la pregunta no se muestra (no se atenúa: sin postular no hay nada que preguntar).
+    function mostrar(si, conFoco) {
+      nodo.hidden = !si;
+      verDetalle(si && valor === 'si');
+      if (si && conFoco) titulo.focus();
+    }
+    // El número del último mes, si lo hay: las postulaciones que hoy quedan a mano porque el sitio pide una cuenta.
+    Cuentas.leerAMano(sb).then((r) => {
+      const cuantas = r.error ? 0 : Cuentas.delUltimoMes(r.data, v);
+      if (cuantas) { numero.textContent = C.ultimoMes(cuantas); numero.hidden = false; }
+    }, () => {});
+    verDetalle(!nodo.hidden && valor === 'si');
+    return { nodo, mostrar };
+  }
+  const cuentas = Cuentas.seOfrecen(ctx.usuario, data) ? preguntaCuentas() : null;
+
   const temaPaquetes = Terna.subtema(P.temas.paquetes, null, [sInt, sArm, sIdi, sAvisoCla, sCla, sSal].filter(Boolean));
-  const temaPostulacion = Terna.subtema(P.temas.postulacion, null, sPos, sRev);
+  const temaPostulacion = Terna.subtema(P.temas.postulacion, null, [sPos, cuentas ? cuentas.nodo : null, sRev].filter(Boolean));
   // Atenuar (diseno.md §9.3): el ítem sigue visible y legible; sus controles quedan inactivos hasta que vuelva a aplicar.
   function atenuar() {
     const poner = (sec, off) => {
@@ -620,6 +766,11 @@ Terna.pagina('preferencias', async (ctx) => {
       sec.querySelectorAll('input, button[role="switch"]').forEach((x) => { x.disabled = off; });
     };
     poner(sPos, !v.armar_paquetes);
+    // La pregunta de las cuentas se atenúa con "Terna postula por vos": sin paquetes Terna no postula.
+    if (cuentas) {
+      cuentas.nodo.classList.toggle('atenuado', !v.armar_paquetes);
+      cuentas.nodo.querySelectorAll('input[type="radio"]').forEach((x) => { x.disabled = !v.armar_paquetes; });
+    }
     poner(sRev, !v.postular_sola || !v.armar_paquetes);
     // La línea y la cuenta de la guía del umbral dicen qué hace Terna para arriba (diseno.md 0.15 §9.3).
     guia.actualizar();

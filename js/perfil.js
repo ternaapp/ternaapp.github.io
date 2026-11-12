@@ -77,6 +77,13 @@ Terna.pagina('perfil', async (ctx) => {
   let leidoEn = perfil.cv_original_leido_en || null;
   let faltantes = ctx.faltantes.slice();
   const formularios = { cargado: false, dni: '', cuil: '', fecha: '', original: null };
+  // La dirección (0036; diseno.md 0.29 §9.2; brand.md 0.16 §6.6): calle y número, código postal y provincia, cifrados como el DNI.
+  // `guardada` dice si la base tiene una, para mostrar "Borrar dirección". A quién se le muestra, en js/cuentas.js.
+  const direccion = { cargada: false, calle: '', cp: '', provincia: '', original: null, guardada: false };
+  const firmaDireccion = () => JSON.stringify([direccion.calle.trim(), direccion.cp.trim(), direccion.provincia]);
+  // Como la guarda la base: la calle con los espacios juntados; el código postal sin espacios ni guiones y en mayúscula.
+  const calleLimpia = () => direccion.calle.trim().replace(/\s+/g, ' ');
+  const cpLimpio = () => direccion.cp.replace(/[\s-]/g, '').toUpperCase();
 
   function foto() {
     const limpiar = (o, campos) => campos.map((k) => o[k] === undefined ? null : o[k]);
@@ -89,11 +96,11 @@ Terna.pagina('perfil', async (ctx) => {
   }
 
   /* ---------- Piezas de formulario ---------- */
-  function campo({ id, etiqueta, valor, ayuda, max, tipo, autocomplete, readonly, inputmode, alCambiar, area, list }) {
+  function campo({ id, etiqueta, valor, ayuda, max, tipo, autocomplete, readonly, inputmode, alCambiar, area, list, ejemplo }) {
     const idAyuda = ayuda ? id + '-ayuda' : null;
     const idError = id + '-error';
     const props = { class: 'control', id, value: valor === null || valor === undefined ? '' : String(valor), maxlength: max ? String(max) : null,
-      autocomplete: autocomplete || null, readOnly: !!readonly, inputmode: inputmode || null, list: list || null,
+      autocomplete: autocomplete || null, readOnly: !!readonly, inputmode: inputmode || null, list: list || null, placeholder: ejemplo || null,
       'aria-describedby': [idAyuda, idError].filter(Boolean).join(' ') };
     const control = area ? h('textarea', Object.assign(props, { rows: '4' })) : h('input', Object.assign(props, { type: tipo || 'text' }));
     if (area) control.value = props.value;
@@ -198,7 +205,12 @@ Terna.pagina('perfil', async (ctx) => {
       if (formularios.cargado || pidiendo) return;
       pidiendo = true;
       const parar2 = Terna.cargando(campos);
-      const { data, error } = await sb.rpc('leer_datos_formularios');
+      // La dirección se descifra con el resto de Identificación. Si no se puede leer (sin 0036, o a quien todavía no se le
+      // muestra), el subtema queda como antes, sin ella.
+      const [{ data, error }, rDir] = await Promise.all([
+        sb.rpc('leer_datos_formularios'),
+        Cuentas.abiertas(ctx.usuario) ? sb.rpc('leer_direccion') : Promise.resolve(null),
+      ]);
       parar2();
       pidiendo = false;
       if (error) { Terna.errorDeCarga(campos, error); return; }
@@ -211,6 +223,7 @@ Terna.pagina('perfil', async (ctx) => {
           campo({ id: 'form-dni', etiqueta: P.dni, valor: formularios.dni, max: 10, inputmode: 'numeric', autocomplete: 'off', alCambiar: (x) => { formularios.dni = x; } }),
           campo({ id: 'form-cuil', etiqueta: P.cuil, valor: formularios.cuil, max: 13, inputmode: 'numeric', autocomplete: 'off', alCambiar: (x) => { formularios.cuil = x; } })),
         campo({ id: 'form-fecha', etiqueta: P.nacimiento, valor: formularios.fecha, tipo: 'date', autocomplete: 'bday', alCambiar: (x) => { formularios.fecha = x; } }));
+      if (rDir && !rDir.error) campos.append(bloqueDireccion((Array.isArray(rDir.data) ? rDir.data[0] : rDir.data) || {}));
     };
     const tema = Terna.subtema(P.identificacion, P.identificacionAyuda, campos);
     if ('IntersectionObserver' in window) {
@@ -218,6 +231,42 @@ Terna.pagina('perfil', async (ctx) => {
       io.observe(tema);
     } else cargarIdentificacion = cargar;
     return tema;
+  }
+
+  /* Dirección (diseno.md 0.29 §9.2; brand.md 0.16 §6.6): debajo de la fecha de nacimiento, con su <h4>, su ayuda y tres campos que
+     van juntos. Se guarda con el "Guardar" de la página, solo si cambió; "Borrar dirección" la saca en el acto y aparece solo
+     si hay una guardada. El error de los tres juntos va arriba de los tres; los otros, junto a su campo. */
+  function bloqueDireccion(fila) {
+    Object.assign(direccion, { cargada: true, calle: fila.calle || '', cp: fila.codigo_postal || '', provincia: fila.provincia || '' });
+    direccion.original = firmaDireccion();
+    direccion.guardada = !!(direccion.calle || direccion.cp || direccion.provincia);
+    const pzD = Terna.piezas({ prefijo: 'dir', nivel: 'h4' });
+    const alCambiar = (k) => (x) => { direccion[k] = x; limpiarError('dir'); };
+    const bBorrar = boton(P.borrarDireccion, 'i-quitar', async () => {
+      if (bBorrar.getAttribute('aria-disabled') === 'true') return;
+      bBorrar.setAttribute('aria-disabled', 'true');
+      const { error } = await sb.rpc('borrar_direccion');
+      bBorrar.removeAttribute('aria-disabled');
+      if (error) { if (!Terna.siSesionVencida(error)) Terna.avisoBreve(Terna.textoError(error), { error: true }); return; }
+      Object.assign(direccion, { calle: '', cp: '', provincia: '', guardada: false });
+      direccion.original = firmaDireccion();
+      for (const [idC, v] of [['dir-calle', ''], ['dir-cp', ''], ['dir-provincia', '']]) { document.getElementById(idC).value = v; limpiarError(idC); }
+      limpiarError('dir');
+      bBorrar.hidden = true;
+      enfocar('dir-calle');
+      Terna.avisoBreve(T.comun.guardado);
+    }, null, { id: 'dir-borrar', hidden: !direccion.guardada });
+    const nodo = pzD.item(P.direccion,
+      h('p', { class: 'campo-ayuda', text: P.direccionAyuda }),
+      h('p', { class: 'campo-error', id: 'dir-error' }),
+      campo({ id: 'dir-calle', etiqueta: P.calle, valor: direccion.calle, max: 120, autocomplete: 'street-address', ejemplo: P.calleEjemplo, alCambiar: alCambiar('calle') }),
+      h('div', { class: 'dos dos-apilable' },
+        campo({ id: 'dir-cp', etiqueta: P.codigoPostal, valor: direccion.cp, max: 12, autocomplete: 'postal-code', inputmode: 'text', ejemplo: P.codigoPostalEjemplo, alCambiar: alCambiar('cp') }),
+        seleccion({ id: 'dir-provincia', etiqueta: P.provincia, valor: direccion.provincia, opciones: P.provincias.map((x) => [x, x]), vacio: P.provinciaVacia, alCambiar: alCambiar('provincia') })),
+      h('div', null, bBorrar));
+    // Una línea arriba, como entre dos ítems de un subtema: viene después de tres campos sueltos.
+    nodo.classList.add('direccion-postal');
+    return nodo;
   }
 
   function enfocar(id) { const el = document.getElementById(id); if (el) el.focus(); }
@@ -575,6 +624,18 @@ Terna.pagina('perfil', async (ctx) => {
       const cuil = formularios.cuil.replace(/\D/g, '');
       if (cuil && !/^\d{11}$/.test(cuil)) { marcarError('form-cuil', T.errores.cuil); ok = false; }
     }
+    if (direccion.cargada) {
+      // Los tres juntos o ninguno (los tres vacíos la sacan); la base valida lo mismo (datos.md 0.32 §5.4b).
+      const calle = calleLimpia();
+      const cp = cpLimpio();
+      if (calle || cp || direccion.provincia) {
+        if (!calle || !cp || !direccion.provincia) { marcarError('dir', T.errores.direccionIncompleta); ok = false; }
+        else {
+          if (calle.length < 3 || calle.length > 120) { marcarError('dir-calle', T.errores.calle); ok = false; }
+          if (!/^(\d{4}|[A-Z]\d{4}[A-Z]{3})$/.test(cp)) { marcarError('dir-cp', T.errores.codigoPostal); ok = false; }
+        }
+      }
+    }
     if (!resp.validar()) ok = false;
     return ok;
   }
@@ -610,6 +671,22 @@ Terna.pagina('perfil', async (ctx) => {
         if (error) throw Object.assign(error, { _campo: true });
         formularios.original = JSON.stringify([formularios.dni, formularios.cuil, formularios.fecha]);
       }
+      // 3b. La dirección, solo si se descifró y cambió: los tres juntos, o ninguno para sacarla.
+      if (direccion.cargada && firmaDireccion() !== direccion.original) {
+        const calle = calleLimpia();
+        const cp = cpLimpio();
+        const vacia = !calle && !cp && !direccion.provincia;
+        const { error } = vacia ? await sb.rpc('borrar_direccion')
+          : await sb.rpc('guardar_direccion', { p_calle: calle, p_codigo_postal: cp, p_provincia: direccion.provincia });
+        if (error) throw Object.assign(error, { _campo: true });
+        // Quedan a la vista como se guardaron.
+        Object.assign(direccion, { calle, cp, guardada: !vacia });
+        direccion.original = firmaDireccion();
+        const [iCalle, iCp, bBorrar] = ['dir-calle', 'dir-cp', 'dir-borrar'].map((x) => document.getElementById(x));
+        if (iCalle) iCalle.value = calle;
+        if (iCp) iCp.value = cp;
+        if (bBorrar) bBorrar.hidden = vacia;
+      }
       // 4. Respuestas para formularios (columnas de preferencias), solo si cambiaron: así una pestaña de Preferencias abierta
       //    antes no se pisa con esta, ni esta con aquella (Preferencias ya no las escribe).
       const columnas = resp.columnas();
@@ -622,7 +699,8 @@ Terna.pagina('perfil', async (ctx) => {
       bGuardar.removeAttribute('aria-disabled');
       if (Terna.siSesionVencida(error)) return;
       const claveError = String(error.message || '').trim();
-      const campoForm = { dni_invalido: 'form-dni', cuil_invalido: 'form-cuil', fecha_nacimiento_invalida: 'form-fecha' }[claveError];
+      const campoForm = { dni_invalido: 'form-dni', cuil_invalido: 'form-cuil', fecha_nacimiento_invalida: 'form-fecha',
+        direccion_incompleta: 'dir', calle_invalida: 'dir-calle', codigo_postal_invalido: 'dir-cp', provincia_invalida: 'dir-provincia' }[claveError];
       if (campoForm) { marcarError(campoForm, Terna.textoError(error)); mostrarBanda(T.errores.guardarCampos); return; }
       if (error._item && ERROR_CAMPO[claveError]) { marcarError(error._item + ERROR_CAMPO[claveError][0], ERROR_CAMPO[claveError][1]); mostrarBanda(T.errores.guardarCampos); return; }
       mostrarBanda(['limite_experiencias', 'limite_estudios', 'limite_idiomas'].includes(claveError) ? Terna.textoError(error) : T.errores.guardar);

@@ -125,6 +125,47 @@ Terna.pagina('inicio', async (ctx) => {
     queHay.append(h('p', { class: 'suave umbral-linea' }, I.umbralActual(r.umbral_actual), ' ', h('a', { href: 'preferencias.html', text: T.comun.pestanas.preferencias })));
   }
 
+  /* La pregunta de las cuentas (diseno.md 0.29 §6, 1b; brand.md 0.16 §6.3; datos.md 0.32, 0036): una tarjeta a todo el ancho,
+     arriba de Qué hay para hacer, solo mientras la pregunta no tiene respuesta y "Terna postula por vos" está en Sí. "Terna postula
+     por vos" viene en Sí, así que casi nadie pasa por su interruptor en Preferencias: Inicio es donde todos llegan. Es la pregunta
+     de Preferencias, corta. Al responder escribe en el acto, la tarjeta se va y queda una línea hasta la próxima visita.
+     A quién se le muestra y la cuenta del último mes, en js/cuentas.js. */
+  function preguntaCuentas() {
+    const p = rPref.data;
+    if (!Cuentas.seOfrecen(ctx.usuario, p) || !Cuentas.sinResponder(p) || p.postular_sola === false) return null;
+    const C = I.cuentas;
+    const R = T.preferencias.cuentas;
+    const numero = h('strong', { id: 'pregunta-cuentas-numero', hidden: true });
+    const bSi = h('button', { class: 'btn btn-primario', type: 'button', text: R.si });
+    const bNo = h('button', { class: 'btn', type: 'button', text: R.no });
+    const sec = h('section', { class: 'tarjeta pregunta-cuentas', id: 'pregunta-cuentas', 'aria-labelledby': 'h-cuentas' },
+      h('h2', { id: 'h-cuentas', class: 'tarjeta-titulo', text: C.titulo }),
+      h('p', null, C.texto, ' ', numero),
+      h('div', { class: 'pregunta-cuentas-botones' }, bSi, bNo, h('a', { href: 'preferencias.html#postulacion', text: C.saber })));
+    async function responder(valor) {
+      if (bSi.getAttribute('aria-disabled') === 'true') return;
+      for (const b of [bSi, bNo]) b.setAttribute('aria-disabled', 'true');
+      const e = await Cuentas.responder(sb, ctx.usuario.id, valor);
+      if (e) {
+        for (const b of [bSi, bNo]) b.removeAttribute('aria-disabled');
+        if (!Terna.siSesionVencida(e)) Terna.avisoBreve(T.errores.guardar, { error: true });
+        return;
+      }
+      p.crear_cuentas = valor;
+      // La tarjeta se va y el foco queda en la línea que dice que quedó, para que no se pierda ni quede sin anunciar.
+      const listo = h('p', { class: 'pregunta-listo', id: 'pregunta-cuentas-listo', tabindex: '-1', text: C.listo });
+      sec.replaceWith(listo);
+      listo.focus();
+    }
+    bSi.addEventListener('click', () => responder(true));
+    bNo.addEventListener('click', () => responder(false));
+    Cuentas.leerAMano(sb).then((x) => {
+      const cuantas = x.error ? 0 : Cuentas.delUltimoMes(x.data, p);
+      if (cuantas) { numero.textContent = C.ultimoMes(cuantas); numero.hidden = false; }
+    }, () => {});
+    return sec;
+  }
+
   // Cambiar el período rehace solo "Cómo viene"; lo anterior queda a media luz mientras llega lo nuevo, sin saltos.
   async function recargarPeriodo() {
     cifras.classList.add('recargando');
@@ -402,7 +443,10 @@ Terna.pagina('inicio', async (ctx) => {
   lineaCorrida(r);
   dibujarCifras(r);
   dibujarQueHay(r);
-  cont.append(corrida, tablero);
+  cont.append(corrida);
+  const tarjetaCuentas = preguntaCuentas();
+  if (tarjetaCuentas) cont.append(tarjetaCuentas);
+  cont.append(tablero);
 
   const seguidas = Lista.seguidasDe(rPref.data);
   const [rA, secSemanas] = await Promise.all([leerAvisos(), seccionSemanas()]);

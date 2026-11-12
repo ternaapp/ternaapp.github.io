@@ -107,6 +107,15 @@ window.T = (function () {
       enCola: (x) => (x === 1 ? '1' : n(x)) + ' en cola: Terna postula en la próxima corrida',
       nadaPendiente: 'Nada pendiente. Terna sigue sola.',
       umbralActual: (u) => 'Umbral actual: ' + u + '.',
+      // La pregunta de las cuentas (brand.md 0.16 §6.3; diseno.md 0.29 §6, 1b): una tarjeta arriba de "Qué hay para hacer", solo
+      // mientras no tiene respuesta y "Terna postula por vos" está en Sí. Los botones son los de la pregunta de Preferencias.
+      cuentas: {
+        titulo: '¿Terna crea cuentas por vos?',
+        texto: 'Muchas empresas grandes (las que usan Workday, SuccessFactors u Oracle) piden crear una cuenta en su sitio para postular. Si querés, Terna la crea con tu mail y postula por vos.',
+        ultimoMes: (x) => plural(x, 'En el último mes te quedó 1 postulación a mano por eso.', 'En el último mes te quedaron ' + n(x) + ' postulaciones a mano por eso.'),
+        saber: 'Qué conviene saber',
+        listo: 'Listo. Lo cambiás cuando quieras en Preferencias › Postulación.',
+      },
       asiFunciona: 'Así funciona',
       asi1: 'Una vez por día Terna busca avisos que ajusten con tu perfil, arma el CV y la carta para los mejores y postula por vos donde el formulario es público y conocido.',
       asi2a: 'Lo que no puede hacer te lo deja listo en ',
@@ -622,6 +631,17 @@ window.T = (function () {
       identificacion: 'Identificación',
       dni: 'DNI', cuil: 'CUIL', nacimiento: 'Fecha de nacimiento',
       identificacionAyuda: 'Opcionales. Nunca van en el CV. Si un formulario los pide, Terna los escribe; si no los cargaste, esa postulación queda para hacer a mano. Se guardan cifrados.',
+      // Dirección (brand.md 0.16 §6.6; datos.md 0.32 §5.4b, 0036): debajo de la fecha de nacimiento, cifrada como el DNI. Las
+      // provincias, con el nombre con que las guarda la base (provincia_normalizada): la Ciudad y Buenos Aires primero.
+      direccion: 'Dirección',
+      direccionAyuda: 'Opcional. Algunos formularios, como los de Workday, la piden para postular. Nunca va en el CV. Si un formulario la pide, Terna la escribe; si no la cargaste, esa postulación queda para hacer a mano. Se guarda cifrada.',
+      calle: 'Calle y número', calleEjemplo: 'Av. Corrientes 1234, 5.º B',
+      codigoPostal: 'Código postal', codigoPostalEjemplo: '1414 o C1414ABC',
+      provincia: 'Provincia', provinciaVacia: 'Elegí una provincia',
+      provincias: ['Ciudad Autónoma de Buenos Aires', 'Buenos Aires', 'Catamarca', 'Chaco', 'Chubut', 'Córdoba', 'Corrientes', 'Entre Ríos', 'Formosa', 'Jujuy',
+        'La Pampa', 'La Rioja', 'Mendoza', 'Misiones', 'Neuquén', 'Río Negro', 'Salta', 'San Juan', 'San Luis', 'Santa Cruz', 'Santa Fe', 'Santiago del Estero',
+        'Tierra del Fuego', 'Tucumán'],
+      borrarDireccion: 'Borrar dirección',
       // Tu cuenta (desde brand.md 0.7 en Mi perfil; hasta 0.6, en Preferencias).
       cuenta: 'Tu cuenta',
       pausar: 'Pausar mi cuenta',
@@ -805,6 +825,25 @@ window.T = (function () {
       postularSola: 'Terna postula por vos',
       postularSolaAyuda: 'Terna postula sola en los avisos que te interesan y cuyo formulario es público y conocido. Llena el formulario con tu perfil, sube tu CV y tu carta y responde las preguntas con lo que tu perfil dice. Nunca entra con cuentas tuyas, nunca resuelve captchas y nunca inventa una respuesta. Lo que no puede hacer te lo deja listo para hacerlo a mano. Cada envío queda guardado con las respuestas y una captura.',
       cobertura: (x) => 'De cada 10 avisos, Terna puede postular en ' + x + '.',
+      // "¿Terna crea cuentas por vos?" (brand.md 0.16 §6.7; diseno.md 0.29 §9.3; datos.md 0.32, 0036): justo debajo de "Terna
+      // postula por vos" y solo con ese Sí. Una pregunta con su contexto, que nace sin respuesta: sin un Sí, Terna no crea nada.
+      cuentas: {
+        titulo: '¿Terna crea cuentas por vos?',
+        porQue: 'Muchas empresas grandes (las que usan Workday, SuccessFactors u Oracle) piden crear una cuenta en su sitio para postular. Hoy esas postulaciones te quedan para hacer a mano.',
+        ultimoMes: (x) => plural(x, 'En el último mes fue 1.', 'En el último mes fueron ' + n(x) + '.'),
+        queHace: 'Si decís que sí, Terna crea la cuenta con tu mail y una contraseña que genera para esos sitios, la misma en todos, y postula por vos. La contraseña la ves acá.',
+        saber: 'Algunas empresas mandan un mail para confirmar la cuenta: te explicamos cómo dejar que Terna lo vea sin darle tu correo. La empresa podría bloquear la cuenta si detecta que la creó un programa. Lo cambiás cuando quieras, y las cuentas que Terna creó siguen siendo tuyas.',
+        // brand.md 0.18 §6.7 y §9 (propuesta: falta el OK de Francisco al texto): mientras no exista la guía de los mails, esta línea lo dice.
+        guiaEnCamino: 'La guía para que Terna vea esos mails está en camino. Hasta que esté, si una empresa manda uno, confirmás la cuenta desde tu correo y Terna vuelve a probar cuando se lo pedís.',
+        si: 'Sí, creá las cuentas',
+        no: 'No, las hago yo',
+        contrasena: 'Tu contraseña para esos sitios',
+        ver: 'Ver', ocultar: 'Ocultar', copiar: 'Copiar', copiada: 'Copiada.',
+        contrasenaAyuda: 'Es solo para estos sitios: no es la de Terna ni la de tu mail. Si la cambiás en un sitio, cambiala solo ahí.',
+        sitios: 'Sitios donde Terna creó una cuenta',
+        estado: { creada: (fecha) => 'Creada el ' + fecha, confirmada: 'Confirmada', ya_existia: 'Ya tenías una cuenta: Terna no entró', fallo: 'No se pudo crear' },
+        ninguna: 'Todavía ninguna.',
+      },
       revisar: 'Revisar antes de enviar',
       revisarAyuda: 'En Sí, Terna llena el formulario y espera que lo apruebes desde Postulaciones. Se envía en la corrida siguiente.',
       // Alertas por mail (brand.md 0.4.11 §6.7): la dirección, los cinco portales con su estado y las guías de alertas.html.
@@ -1199,6 +1238,10 @@ window.T = (function () {
       // Desde 0028 la lista es una sola opción, {3}: "Paquetes por día: 3." (con más de una, "3 o 5").
       paquetes: (lista) => 'Paquetes por día: ' + (lista.length > 1 ? lista.slice(0, -1).join(', ') + ' o ' + lista[lista.length - 1] : lista[0]) + '.',
       dni: 'Ese DNI no parece válido.', cuil: 'Ese CUIL no parece válido.', nacimiento: 'Esa fecha de nacimiento no parece válida.',
+      direccionIncompleta: 'Completá calle y número, código postal y provincia, o dejá los tres vacíos.',
+      calle: 'Escribí la calle y el número, de 3 a 120 caracteres.',
+      codigoPostal: 'El código postal tiene 4 números (1425) o una letra, 4 números y 3 letras (C1425ABC).',
+      provincia: 'Elegí la provincia de la lista.',
       credenciales: 'Mail o contraseña incorrectos.',
       sesion: 'Tu sesión venció. Entrá de nuevo.',
       intentos: 'Demasiados intentos. Esperá unos minutos y probá de nuevo.',
@@ -1261,6 +1304,7 @@ window.T = (function () {
         aviso_con_texto: e.conTexto, aviso_sin_texto: e.sinTexto,
         paquete_ya_armado: e.yaArmado, paquete_ya_pedido: e.yaPedido, armar_desactivado: e.armarNo,
         dni_invalido: e.dni, cuil_invalido: e.cuil, fecha_nacimiento_invalida: e.nacimiento,
+        direccion_incompleta: e.direccionIncompleta, calle_invalida: e.calle, codigo_postal_invalido: e.codigoPostal, provincia_invalida: e.provincia,
         interes_invalido: e.marcar, transicion_invalida: e.marcar, motivo_sin_no_interesa: e.motivoSinNoInteresa,
         pedidos_cambiaron: e.pedidosCambiaron,
         postulacion_enviada: e.enviada, no_postulable: e.noPostulable,
