@@ -1,7 +1,7 @@
 /* Terna · js/aviso.js
    Las piezas de un aviso que comparten Avisos y Postulaciones (diseno.md §7.3 a §7.5, §8.3 a §8.5, §10.2,
    §10.12 y §10.13): chips, atributos, match, etiquetas, control de interés, paquete con sus cuatro fichas y sus dos
-   desplegables (notas y "Ver por qué"), recorrido de cinco puntos y la línea de cada etapa. */
+   desplegables (notas y "Ver por qué"), recorrido de cuatro puntos y la línea de cada etapa. */
 'use strict';
 
 window.Aviso = (function () {
@@ -19,9 +19,9 @@ window.Aviso = (function () {
     no_se_pudo_armar: ['chip-error', 'i-alerta'], sin_texto: ['chip-espera', 'i-sin-texto'], por_puntuar: ['chip-espera', 'i-pedido'],
   };
   const ESTILO_POSTULACION = {
-    en_cola: ['chip-espera', 'i-pedido', 'etapa-espera'], para_revisar: ['chip-espera', 'i-revisar', 'etapa-espera'],
-    enviada: ['chip-azul', 'i-enviada', 'etapa-azul'], a_mano: ['chip-espera', 'i-a-mano', 'etapa-espera'],
-    postulado: ['chip-azul', 'i-enviada', 'etapa-azul'], entrevista: ['chip-accion', 'i-entrevista', 'etapa-accion'],
+    en_cola: ['chip-espera', 'i-pedido'], para_revisar: ['chip-espera', 'i-revisar'],
+    enviada: ['chip-azul', 'i-enviada'], a_mano: ['chip-espera', 'i-a-mano'],
+    postulado: ['chip-azul', 'i-enviada'],
   };
   function llega(a, umbral) { return a.match !== null && a.match !== undefined && a.match >= umbral; }
 
@@ -173,11 +173,11 @@ window.Aviso = (function () {
     return c.cacheEmpresas.get(a.match_id);
   }
   // Lo que Terna te sugiere: lo pediste, llega a tu umbral o es de tus puestos. Una postulación a mano que no, quedó así
-  // después de armarse (subiste el umbral o un repuntaje la bajó): Inicio no la cuenta y Postulaciones la pone en "Bajo tu umbral".
+  // después de armarse (subiste el umbral o un repuntaje la bajó): Inicio no la cuenta y Postulaciones la muestra solo sin
+  // "Tu umbral", desde el piso (diseno.md 0.32 §1.40; hasta 0.31, en la etapa "Bajo tu umbral").
   function sugerida(a, c) {
     return !!a.pedido_en || a.match === null || a.match === undefined || a.match >= c.umbral || !!tuPuesto(a, c);
   }
-  function bajoUmbral(a, c) { return a.estado_postulacion === 'a_mano' && !sugerida(a, c); }
 
   /* ---------- Atributos, match ---------- */
   // Los portales que entran por alertas reenviadas (arquitectura.md §7.8): su nombre va en los atributos, porque el aviso
@@ -278,8 +278,9 @@ window.Aviso = (function () {
   }
 
   // Las cuatro fichas: CV y Carta son links firmados (se descargan con el nombre de cv-ats.md §3.12);
-  // Notas y Salario despliegan su texto debajo, uno a la vez, y arrancan cerrados (decisión 9 del chat 8).
-  function fichasPaquete(a) {
+  // Notas y Salario despliegan su texto debajo, uno a la vez, y arrancan cerrados (decisión 9 del chat 8). Desde brand.md 0.20, con
+  // `notasAbiertas`, las notas arrancan abiertas: la ficha de una postulada, que es adonde se vuelve para preparar la entrevista.
+  function fichasPaquete(a, opciones) {
     const idioma = a.paquete_idioma === 'en' ? 'en' : 'es';
     const idiomaTxt = T.avisos.ficha.idiomas[idioma];
     const idNotas = Terna.idUnico('notas');
@@ -307,6 +308,7 @@ window.Aviso = (function () {
     };
     bNotas.addEventListener('click', () => alternar(bNotas, pNotas, bSalario, pSalario));
     bSalario.addEventListener('click', () => alternar(bSalario, pSalario, bNotas, pNotas));
+    if (opciones && opciones.notasAbiertas && a.notas) { bNotas.setAttribute('aria-expanded', 'true'); pNotas.hidden = false; }
     return h('div', { class: 'ficha-seccion' },
       h('div', { class: 'fichas-paquete' }, cv, carta, a.notas ? bNotas : null, bSalario),
       pNotas, pSalario,
@@ -314,36 +316,27 @@ window.Aviso = (function () {
       palabrasFaltantes(a));
   }
 
-  /* ---------- Recorrido (§10.13) ---------- */
+  /* ---------- Recorrido (§10.13) ----------
+     Desde diseno.md 0.32, cuatro puntos (Encontrado, Me interesa, Paquete, Enviada o Postulada), sin Entrevista, y solo en la ficha. */
   function puntos(a) {
     const e = a.estado_postulacion;
     const p = [
       'punto-tinta',
       a.interes === 'me_interesa' ? 'punto-tinta' : '',
       a.paquete_id ? 'punto-accion' : (a.estado_paquete === 'pedido' ? 'punto-espera' : ''),
-      (e === 'enviada' || e === 'postulado' || e === 'entrevista') ? 'punto-azul'
+      (e === 'enviada' || e === 'postulado') ? 'punto-azul'
         : (e === 'en_cola' || e === 'para_revisar') ? 'punto-espera' : (e === 'a_mano' ? 'punto-mano' : ''),
-      e === 'entrevista' ? 'punto-entrevista' : '',
     ];
-    const lleno = (c) => c === 'punto-tinta' || c === 'punto-accion' || c === 'punto-azul' || c === 'punto-entrevista';
-    const tramos = [0, 1, 2, 3].map((i) => (lleno(p[i]) && lleno(p[i + 1]) ? ({ 'punto-tinta': 'tramo-tinta', 'punto-accion': 'tramo-accion', 'punto-azul': 'tramo-azul' })[p[i]] || '' : ''));
+    const lleno = (c) => c === 'punto-tinta' || c === 'punto-accion' || c === 'punto-azul';
+    const tramos = [0, 1, 2].map((i) => (lleno(p[i]) && lleno(p[i + 1]) ? ({ 'punto-tinta': 'tramo-tinta', 'punto-accion': 'tramo-accion', 'punto-azul': 'tramo-azul' })[p[i]] || '' : ''));
     return { p, tramos };
-  }
-  function recorrido(a) {
-    const { p, tramos } = puntos(a);
-    const nodo = h('span', { class: 'recorrido', 'aria-hidden': 'true' });
-    p.forEach((c, i) => {
-      if (i) nodo.append(h('span', { class: 'tramo ' + tramos[i - 1] }));
-      nodo.append(h('span', { class: 'punto ' + c }));
-    });
-    return nodo;
   }
   function recorridoGrande(a) {
     const { p, tramos } = puntos(a);
     const etiquetas = T.postulaciones.recorrido;
     return h('div', { class: 'recorrido-grande', 'aria-hidden': 'true' }, p.map((c, i) =>
       h('div', { class: 'recorrido-paso' },
-        h('div', { class: 'recorrido-pista' }, h('i', { class: i === 0 ? 'nada' : tramos[i - 1] }), h('span', { class: 'punto ' + c }), h('i', { class: i === 4 ? 'nada' : tramos[i] })),
+        h('div', { class: 'recorrido-pista' }, h('i', { class: i === 0 ? 'nada' : tramos[i - 1] }), h('span', { class: 'punto ' + c }), h('i', { class: i === p.length - 1 ? 'nada' : tramos[i] })),
         h('small', { text: etiquetas[i] }))));
   }
 
@@ -363,12 +356,23 @@ window.Aviso = (function () {
       case 'para_revisar': return L.para_revisar;
       case 'enviada': return L.enviada(Terna.fechaCorta(a.enviada_en), Terna.hora(a.enviada_en));
       case 'postulado': return L.postulado(Terna.fechaCorta(a.postulado_en));
-      case 'entrevista': return L.entrevista(Terna.fechaCorta(a.entrevista_en));
       case 'a_mano': return traba(a, config);
       default: return a.paquete_id ? L.pendiente : '';
     }
   }
-  function claseEtapa(a) { return (ESTILO_POSTULACION[a.estado_postulacion] || [null, null, 'etapa-suave'])[2]; }
+  // La línea corta, debajo del chip de la etapa en la tabla y en la fila de Postulaciones (brand.md 0.20 §6.5): la misma, sin el
+  // nombre de la etapa adelante.
+  function lineaCorta(a, config) {
+    const L = T.postulaciones.lineaCorta;
+    switch (a.estado_postulacion) {
+      case 'en_cola': return L.en_cola;
+      case 'para_revisar': return L.para_revisar;
+      case 'enviada': return L.enviada(Terna.fechaCorta(a.enviada_en), Terna.hora(a.enviada_en));
+      case 'postulado': return L.postulado(Terna.fechaCorta(a.postulado_en));
+      case 'a_mano': return traba(a, config);
+      default: return a.paquete_id ? L.pendiente : '';
+    }
+  }
   function puedeVolverAProbar(a, config) {
     return a.estado_postulacion === 'a_mano' && a.postulacion === 'formulario' && (a.intentos || 0) < ((config && config.max_reintentos_postulacion) || 3);
   }
@@ -702,11 +706,18 @@ window.Aviso = (function () {
     const texto = String((error && (error.message || '')) || '') + ' ' + String((error && error.details) || '');
     return Boolean(error) && (error.code === '42703' || error.code === 'PGRST204' || /does not exist|Could not find/i.test(texto));
   }
+  // Desde brand.md 0.20 la web no tiene la etapa Entrevista ("Marcar entrevista" salió): una postulación que quedó marcada así se ve
+  // como lo que es, postulada: por Terna si la envió, a mano si no. La base no cambia (datos.md §5.13): desde `entrevista` se puede
+  // volver a pendiente, como desde `postulado`.
+  function sinEntrevista(filas) {
+    for (const a of filas || []) if (a.estado_postulacion === 'entrevista') a.estado_postulacion = a.enviada_en ? 'enviada' : 'postulado';
+    return filas;
+  }
   async function leerConEvaluacion(armar, columnas) {
     const intentos = [columnas + ', ' + COLUMNAS_0025 + ', ' + COLUMNAS_0031, columnas + ', ' + COLUMNAS_0025, columnas];
     for (let i = 0; i < intentos.length; i++) {
       const r = await armar(intentos[i]);
-      if (!r.error) return { data: r.data, error: null, conEvaluacion: i < 2, conDonde: i === 0 };
+      if (!r.error) return { data: sinEntrevista(r.data), error: null, conEvaluacion: i < 2, conDonde: i === 0 };
       if (!faltaColumna(r.error) || i === intentos.length - 1) return { data: null, error: r.error, conEvaluacion: false, conDonde: false };
     }
     return { data: null, error: null, conEvaluacion: false, conDonde: false };
@@ -716,9 +727,9 @@ window.Aviso = (function () {
     estadoPaquete, llega, chip, chipPaquete, chipPostulacion, chipInteres, chipFaltan, fecha, etiquetas,
     evaluacion, chipCalificacion, pedirMotivo, lineaMotivo, MOTIVOS, leerConEvaluacion,
     MODALIDADES, ALCANCES, NIVELES, JORNADAS, TODOS_BUSQUEDA, busquedaDe, pasaBusqueda, motivosFuera,
-    criterio, tuPuesto, tuEmpresa, sugerida, bajoUmbral,
+    criterio, tuPuesto, tuEmpresa, sugerida,
     lugar, atributos, bloqueMatch, controlInteres, fichasPaquete, parsearNotas, textoSalario,
-    recorrido, recorridoGrande, traba, lineaEtapa, claseEtapa, puedeVolverAProbar, seccionPostulacion, razones, abrirAviso, verAviso,
+    recorridoGrande, traba, lineaEtapa, lineaCorta, puedeVolverAProbar, seccionPostulacion, razones, abrirAviso, verAviso,
     ESTILO_POSTULACION, postulable, confirmarPedir, confirmarNoInteresa, marcarNoInteresa,
     DONDES, donde, textoDonde, explicacionDonde, celdaDonde, etiquetaDonde, lineaDonde,
   };

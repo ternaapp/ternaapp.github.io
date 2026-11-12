@@ -231,7 +231,7 @@ html { scroll-padding-top: 72px; }
 /* Un botón de solo ícono (Subir, Bajar, Cancelar pedido): 44 px en celular, 36 desde 768. Su nombre va en aria-label y title. */
 .btn-icono { width: 44px; min-height: 44px; padding: 0; justify-content: center; }
 
-/* Carril de etapas (escritorio) */
+/* Carril de bloques de Mi perfil y Preferencias (escritorio; diseno.md §10.17). Hasta 0.31, también el de las etapas de Postulaciones. */
 .carril { display: none; }
 
 /* Casillas y radios nativos */
@@ -480,37 +480,37 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .interruptor[aria-checked="true"] .interruptor-pista { background: var(--accion); border-color: var(--accion); }
 .interruptor[aria-checked="true"] .interruptor-pista::after { transform: translateX(18px); border-color: var(--accion); }
 
-/* Píldoras de etapa (celular) */
-.pildoras-caja { position: relative; margin: 0 -16px; }
-.pildoras-caja::after {
-  content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 24px; pointer-events: none;
-  background: linear-gradient(to right, rgb(245 246 243 / 0), var(--papel));
+/* Las dos pestañas de Postulaciones y "Tu umbral" (diseno.md 0.32 §8.2 y §10.11): dos botones de radio con cara de pestaña, iguales
+   en celular y en escritorio, y al lado la casilla con forma de chip (.chip-opcion). Hasta 0.31, píldoras en celular y un carril. */
+.vistas-caja { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 14px; }
+.vistas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; flex: 1 1 100%; }
+.vista { position: relative; display: flex; }
+.vista input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.vista-cara {
+  flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2px; min-height: 60px; padding: 8px 12px;
+  border: 1px solid var(--borde-control); border-radius: 10px; background: var(--hoja); cursor: pointer;
 }
-.pildoras { position: relative; display: flex; gap: 8px; overflow-x: auto; padding: 2px 16px 6px; scrollbar-width: none; }
-.pildoras::-webkit-scrollbar { display: none; }
-.pildora { position: relative; flex: none; display: inline-flex; }
-.pildora input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
-.pildora span {
-  display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 18px;
-  border: 1px solid var(--borde-control); background: var(--hoja); font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer;
-}
-.pildora input:checked + span { background: var(--tinta); border-color: var(--tinta); color: var(--hoja); }
-.pildora input:focus-visible + span { outline: 2px solid var(--accion); outline-offset: 2px; }
+.vista-titulo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; font-size: 16px; font-weight: 500; line-height: 1.25; }
+.vista-titulo > span { white-space: nowrap; }
+.vista-n { font-size: 18px; font-weight: 700; }
+.vista-partes { font-size: 13px; line-height: 1.3; color: var(--tinta-suave); }
+.vista-partes:empty { display: none; }
+.vista-cara:hover { border-color: var(--accion); }
+.vista input:checked + .vista-cara { background: var(--accion-tinte); border-color: var(--accion); }
+.vista input:checked + .vista-cara .vista-titulo { font-weight: 700; color: var(--accion-oscura); }
+.vista input:focus-visible + .vista-cara { outline: 2px solid var(--accion); outline-offset: 2px; }
+.tu-umbral-caja { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.tu-umbral-nota { font-size: 14px; color: var(--tinta-suave); }
+.tu-umbral-nota:empty { display: none; }
 
-/* Recorrido */
-.recorrido { display: inline-flex; align-items: center; gap: 4px; flex: none; }
+/* Recorrido (desde diseno.md 0.32, solo en la ficha y de cuatro puntos) */
 .punto { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--borde-control); background: var(--hoja); flex: none; }
 .punto-tinta { border-color: var(--tinta); background: var(--tinta); }
 .punto-accion { border-color: var(--accion); background: var(--accion); }
 .punto-azul { border-color: var(--azul-oscuro); background: var(--azul-oscuro); }
-.punto-entrevista { border-color: var(--accion-oscura); background: var(--accion-oscura); }
 .punto-espera { border-color: var(--espera-oscuro); border-style: dashed; }
 .punto-mano { border-color: var(--espera-oscuro); }
-.tramo { width: 14px; height: 1.5px; background: var(--linea); flex: none; }
-.tramo-tinta { background: var(--tinta); }
-.tramo-accion { background: var(--accion); }
-.tramo-azul { background: var(--azul-oscuro); }
-.recorrido-grande { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.recorrido-grande { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .recorrido-paso { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .recorrido-pista { display: flex; align-items: center; width: 100%; }
 .recorrido-pista > i { flex: 1; height: 1.5px; background: var(--linea); }
@@ -520,17 +520,13 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .recorrido-pista > i.nada { background: transparent; }
 .recorrido-grande .punto { width: 12px; height: 12px; }
 .recorrido-paso small { font-size: 12px; line-height: 1.2; text-align: center; color: var(--tinta-suave); }
-.etapa-texto { font-size: 12px; font-weight: 500; }
-.etapa-espera { color: var(--espera-oscuro); }
-.etapa-azul { color: var(--azul-oscuro); }
-.etapa-accion { color: var(--accion-oscura); }
-.etapa-suave { color: var(--tinta-suave); }
 .traba { font-size: 13px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-/* Postulaciones, desde diseno.md 0.25 §8.2 y §8.5: por qué está en "Bajo tu umbral" (arriba de la lista y en la ficha) y la línea
-   de "Tu puesto" o "Bajo tu umbral" debajo del puesto en la tabla. */
+/* Postulaciones: la nota de arriba de Postuladas y, en la ficha, por qué está en tu lista (diseno.md 0.32 §8.2 y §8.5); la línea
+   de "Por qué" en la fila de celular y, cuando la tabla no tiene ancho para su columna, debajo del puesto (.apoyo-porque). */
 .etapa-nota { margin: 0 0 12px; max-width: 70ch; font-size: 14px; line-height: 1.45; color: var(--tinta-suave); }
 .ficha-seccion .etapa-nota { margin: 0; }
 .linea-sugerencia { margin-top: 2px; }
+.etapa-chip { margin-bottom: 4px; }
 
 /* Segmentado */
 .segmentado { display: inline-flex; border: 1px solid var(--borde-control); border-radius: 6px; overflow: hidden; max-width: 100%; }
@@ -550,7 +546,7 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 /* Las tablas de Avisos y Postulaciones se adaptan a su propio ancho, no al de la ventana (diseno.md 0.8 §7.6 y §8.6): con el
    cajón abierto o con el carril, lo que no entra pasa a la línea de apoyo debajo del puesto en vez de desplazarse. */
 .tabla-avisos, .tabla-postulaciones { container-type: inline-size; container-name: tabla; }
-.tabla-avisos .linea-apoyo, .tabla-postulaciones .apoyo-empresa, .tabla-postulaciones .apoyo-recorrido { display: none; }
+.tabla-avisos .linea-apoyo, .tabla-postulaciones .apoyo-empresa, .tabla-postulaciones .apoyo-porque { display: none; }
 .tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
 .tabla th {
   text-align: left; font-weight: 500; color: var(--tinta-suave); font-size: 13px; padding: 10px; white-space: nowrap;
@@ -794,7 +790,6 @@ a.barra-link:hover .barra-nombre > span { text-decoration: underline; text-under
 .fila-postulacion-datos .aviso-puesto { font-size: 16px; }
 .fila-postulacion-datos .atributos { font-size: 13px; }
 .linea-etapa { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
-.post-layout { display: flex; flex-direction: column; gap: 14px; }
 .post-principal { display: flex; flex-direction: column; gap: 12px; min-width: 0; flex: 1; }
 .tabla-postulaciones { display: none; }
 .captura { border: 1px solid var(--linea); border-radius: 10px; background: var(--hoja); overflow: hidden; }
@@ -969,6 +964,8 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .cabecera-pagina h1 { font-size: 28px; }
   .cabecera-pagina > .herramientas { flex: 0 1 auto; justify-content: flex-end; }
   .post-principal > .herramientas { justify-content: flex-end; }
+  /* Las pestañas de Postulaciones, a la izquierda y con ancho fijo; "Tu umbral", a su derecha. */
+  .vistas { flex: 0 1 460px; }
   .btn-barra { min-height: 40px; }
   .btn-tema.btn-barra { width: 36px; }
   .filtros-caja { margin: 0; }
@@ -1006,7 +1003,7 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .tablero-panel + .tablero-panel { border-top: 0; }
   .tablero-panel:nth-child(n + 3) { border-top: 1px solid var(--linea); }
   .semanas-tarjeta { padding: 18px 20px; }
-  .semanas-mosaicos { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px; }
+  .semanas-mosaicos { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
   .asi-funciona { display: flex; flex-direction: column; gap: 10px; padding: 18px 20px; }
   .asi-funciona p { font-size: 15px; max-width: 70ch; }
   .lista-tarjetas.solo-celular { display: none; }
@@ -1025,8 +1022,7 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   /* Dónde se postula parte su palabra en dos renglones antes de ensanchar la tabla. */
   .tabla-avisos td.col-donde { max-width: 120px; }
   .tabla .aviso-puesto { font-size: 14px; font-weight: 700; line-height: 1.35; }
-  .lista-postulaciones.solo-celular, .pildoras-caja { display: none; }
-  .post-layout { flex-direction: row; align-items: flex-start; gap: 20px; }
+  .lista-postulaciones.solo-celular { display: none; }
   .carril { display: flex; flex-direction: column; gap: 2px; width: 200px; flex: none; position: sticky; top: 72px; }
   .carril a {
     display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; border-radius: 6px;
@@ -1035,9 +1031,6 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .carril a[aria-current="true"] { background: var(--chip-neutro); font-weight: 700; }
   .carril a:hover { background: var(--seleccion); }
   .carril .n { margin-left: auto; color: var(--tinta-suave); font-variant-numeric: tabular-nums; }
-  .carril .punto { width: 10px; height: 10px; }
-  .carril-pie { margin-top: 12px; padding: 0 10px; font-size: 14px; color: var(--tinta-suave); }
-  .carril .carril-pie a { display: inline; min-height: 0; padding: 0; background: none; font-weight: 400; color: var(--accion); text-decoration: underline; text-underline-offset: 2px; }
   .guardar-fijo { position: static; margin: 0; padding: 0; background: transparent; border: 0; align-items: flex-start; }
   .guardar-fijo .btn { width: auto; }
   .formulario-angosto, .cabecera-pagina.angosta { max-width: 640px; }
@@ -1072,18 +1065,17 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .tabla-avisos .col-empresa { display: none; }
   .tabla-avisos .apoyo-empresa { display: inline; }
 }
-/* Postulaciones (diseno.md 0.17 §8.6): Requisitos y Fecha se ven siempre (lo pidió Francisco). Cuando la caja no alcanza se
-   acomoda lo demás: hasta 880 px Empresa pasa a los atributos del puesto, el recorrido pasa arriba de la etapa, en su misma
-   celda, las celdas pierden 4 px de relleno a cada lado y Puesto se queda con el 40 % del ancho (sin eso la etapa, que es larga
-   en las trabas, se lleva el lugar y el puesto se parte en cinco renglones); hasta 650 el veredicto y la fecha pueden partirse
-   en varias líneas. Dejarlos enteros, darle al veredicto un mínimo de 108 px o no cortar "hace 3" alarga las filas (el lugar se
-   lo sacan al puesto) y a 768 px deja la tabla sin margen. Medido 05/11/2026 en el banco: con todo a la vista la tabla necesita
-   834 px (850 con la etiqueta más larga, "Nivel más bajo que el tuyo"), acomodada 609 (625), con el veredicto partido 526 y
-   con la fecha también 481. */
-@container tabla (max-width: 880px) {
-  .tabla-postulaciones .col-empresa, .tabla-postulaciones .col-recorrido { display: none; }
+/* Postulaciones (diseno.md 0.17 y 0.32 §8.6): Requisitos y Fecha se ven siempre (lo pidió Francisco). Cuando la caja no alcanza se
+   acomoda lo demás: hasta 940 px Empresa pasa a los atributos del puesto, "Por qué" baja a una línea debajo del puesto (hasta 0.31
+   era el recorrido el que pasaba arriba de la etapa, y el corte estaba en 880), las celdas pierden 4 px de relleno a cada lado y
+   Puesto se queda con el 40 % del ancho (sin eso la etapa, que es larga en las trabas, se lleva el lugar y el puesto se parte en
+   cinco renglones); hasta 650 el veredicto y la fecha pueden partirse en varias líneas. Medido 12/11/2026 en el banco: con todo a
+   la vista la tabla necesita 891 px (unos 907 con la etiqueta más larga, "Nivel más bajo que el tuyo") y acomodada 646 (662). Sin
+   el carril, la caja mide 718 px a 768 de ventana y 810 a 1280 con el cajón: nunca baja de 650. */
+@container tabla (max-width: 940px) {
+  .tabla-postulaciones .col-empresa, .tabla-postulaciones .col-porque { display: none; }
   .tabla-postulaciones .apoyo-empresa { display: inline; }
-  .tabla-postulaciones .apoyo-recorrido { display: block; margin-bottom: 6px; }
+  .tabla-postulaciones .apoyo-porque { display: block; }
   .tabla-postulaciones .tabla th, .tabla-postulaciones .tabla td { padding-left: 6px; padding-right: 6px; }
   .tabla-postulaciones .col-puesto { width: 40%; }
 }

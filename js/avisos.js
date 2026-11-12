@@ -72,7 +72,7 @@ Terna.pagina('avisos', async (ctx) => {
      celular, que no tiene tabla). */
   const INTERESES = ['me_interesa', 'por_decidir', 'no_me_interesa'];
   const PAQUETES = ['armado', 'sin_armar', 'pedido', 'no_se_pudo_armar', 'sin_texto', 'por_puntuar'];
-  const POSTULACIONES = ['pendiente', 'en_cola', 'para_revisar', 'enviada', 'a_mano', 'postulado', 'entrevista'];
+  const POSTULACIONES = ['pendiente', 'en_cola', 'para_revisar', 'enviada', 'a_mano', 'postulado'];
   const DONDES = Aviso.DONDES;  // diseno.md 0.23 §7.6: Postula Terna; a mano en LinkedIn, en el sitio de la empresa o en un portal; LinkedIn, a confirmar
   const BUSQUEDA = ['modalidad', 'alcance', 'nivel', 'jornada'];
   const DE_COLUMNA = ['puesto', 'empresa', 'ubicacion', 'publicado'];

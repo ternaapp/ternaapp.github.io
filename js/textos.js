@@ -11,7 +11,7 @@ window.T = (function () {
     marca: 'Terna',
     lema: 'Pocos avisos, bien armados.',
     descripcionCorta: 'Terna: avisos de trabajo que ajustan con tu perfil, con el CV y la carta ya armados, y la postulación hecha donde se puede.',
-    descripcionLarga: 'Terna es una web privada, por invitación. Cargás tu perfil una vez y, todos los días, Terna busca avisos de trabajo nuevos, se queda con los que ajustan con vos, arma para los mejores el CV, la carta de presentación, un salario sugerido y notas para la entrevista, y postula por vos donde el formulario lo permite. Lo que no puede hacer te lo deja listo para hacerlo a mano. Vos entrás cuando querés, mirás cómo viene y marcás qué te interesa y cómo te fue.',
+    descripcionLarga: 'Terna es una web privada, por invitación. Cargás tu perfil una vez y, todos los días, Terna busca avisos de trabajo nuevos, se queda con los que ajustan con vos, arma para los mejores el CV, la carta de presentación, un salario sugerido y notas para la entrevista, y postula por vos donde el formulario lo permite. Lo que no puede hacer te lo deja listo para hacerlo a mano. Vos entrás cuando querés, mirás cómo viene y marcás qué te interesa y qué postulaste vos.',
 
     comun: {
       irAlContenido: 'Ir al contenido',
@@ -98,7 +98,7 @@ window.T = (function () {
         error: 'Terna no pudo terminar tu corrida. Mañana sigue.',
       },
       comoViene: 'Cómo viene',
-      cifras: { nuevos: 'Avisos nuevos sobre tu umbral', total: (x) => n(x) + ' en total', armados: 'Paquetes armados', enviadas: 'Enviadas por Terna', aMano: 'Postuladas a mano', entrevistas: 'Entrevistas' },
+      cifras: { nuevos: 'Avisos nuevos sobre tu umbral', total: (x) => n(x) + ' en total', armados: 'Paquetes armados', enviadas: 'Enviadas por Terna', aMano: 'Postuladas a mano' },
       queHay: 'Qué hay para hacer',
       aMano: (x) => plural(x, '1 postulación para hacer a mano', n(x) + ' postulaciones para hacer a mano'),
       paraRevisar: (x) => plural(x, '1 para revisar antes de enviar', n(x) + ' para revisar antes de enviar'),
@@ -259,7 +259,7 @@ window.T = (function () {
       interes: { me_interesa: 'Me interesa', por_decidir: 'Por decidir', no_me_interesa: 'No me interesa' },
       interesGrupo: (puesto) => 'Interés en ' + puesto,
       paquete: { sin_armar: 'Sin armar', pedido: 'Pedido', armado: 'Armado', no_se_pudo_armar: 'No se pudo armar', sin_texto: 'Sin texto', por_puntuar: 'Por puntuar' },
-      postulacion: { pendiente: 'Pendiente', en_cola: 'En cola', para_revisar: 'Para revisar', enviada: 'Enviada por Terna', a_mano: 'Para postular a mano', postulado: 'Postulado', entrevista: 'Entrevista' },
+      postulacion: { pendiente: 'Pendiente', en_cola: 'En cola', para_revisar: 'Para revisar', enviada: 'Enviada por Terna', a_mano: 'Para postular a mano', postulado: 'Postulada a mano' },
       modalidad: { remoto: 'Remoto', hibrido: 'Híbrido', presencial: 'Presencial' },
       modalidadMin: { remoto: 'remoto', hibrido: 'híbrido', presencial: 'presencial' },
       alcance: { local: 'Local', exterior: 'Exterior' },
@@ -490,25 +490,53 @@ window.T = (function () {
     postulaciones: {
       titulo: 'Postulaciones',
       cuenta: (x) => plural(x, '1 postulación', n(x) + ' postulaciones'),
-      etapa: 'Etapa',
-      etapas: { a_mano: 'Para postular a mano', para_revisar: 'Para revisar', en_cola: 'En cola', enviada: 'Enviadas por Terna', postulado: 'Postuladas', entrevista: 'Entrevistas', bajo_umbral: 'Bajo tu umbral', todas: 'Todas' },
-      // Lo que quedó a mano y Terna ya no te sugiere (brand.md 0.12 §6.5; diseno.md 0.25 §8.2): no llega a tu umbral, no es de tus
-      // puestos y no lo pediste. Lo demás de "Tu puesto" es el chip de Avisos (T.avisos.tuPuesto).
-      bajoUmbral: {
-        nota: (u, conPuestos) => 'Terna les armó el paquete y después quedaron debajo de tu umbral (' + u + ')' + (conPuestos ? ', sin ser de tus puestos' : '')
-          + ': subiste el umbral o Terna volvió a calcular el match. Por eso no te sugiere postularte ni las cuenta en Inicio. Si alguna te interesa, todo está listo para que postules vos; si no, marcá No me interesa.',
-        explicacion: (u, conPuestos) => 'No llega a tu umbral (' + u + ')' + (conPuestos ? ' ni es de tus puestos' : '') + ': Terna no te sugiere postularte. El paquete sigue listo si igual querés.',
+      // Dos pestañas (brand.md 0.20 §6.5; diseno.md 0.32 §1.40): lo que falta postular y lo ya postulado, cada una con de qué está hecha.
+      mostrar: 'Mostrar',
+      vistas: { por_postular: 'Por postular', postuladas: 'Postuladas' },
+      partes: {
+        tocan: (x) => plural(x, '1 te toca a vos', n(x) + ' te tocan a vos'),
+        terna: (x) => plural(x, '1 la tiene Terna', n(x) + ' las tiene Terna'),
+        enviadas: (x) => plural(x, '1 enviada por Terna', n(x) + ' enviadas por Terna'),
+        aMano: (x) => n(x) + ' a mano',
       },
-      recorrido: ['Encontrado', 'Me interesa', 'Paquete', 'Enviada o Postulado', 'Entrevista'],
+      postuladasNota: 'Si te llaman de alguna, abrila: ahí están el CV y la carta de esa postulación, lo que Terna respondió y las notas para la entrevista.',
+      // "Tu umbral" (brand.md 0.20 §6.5): marcada, Por postular muestra solo lo que Terna te sugiere; sin marcar, también lo que quedó a
+      // mano entre el piso y tu umbral. Debajo del piso, eso no se ve en ningún lado.
+      tuUmbral: {
+        etiqueta: (u) => 'Tu umbral: ' + u,
+        explicacion: (piso, conPuestos) => 'Marcada, ves lo que llega a tu umbral' + (conPuestos ? ', lo de tus puestos' : '') + ' y lo que pediste. Sin marcar, también lo que quedó entre '
+          + piso + ' y tu umbral.',
+        hayMas: (x) => plural(x, '1 más bajo tu umbral.', n(x) + ' más bajo tu umbral.'),
+        vesTambien: (x) => 'Ves también ' + n(x) + ' bajo tu umbral: Terna no te sugiere postularte.',
+      },
+      // "Por qué" (brand.md 0.20 §6.5): por qué esa postulación está en tu lista. "Tu puesto" lleva la explicación de Avisos
+      // (T.avisos.tuPuestoExplicacion).
+      porQue: {
+        nombre: 'Por qué', todos: 'Todos',
+        valores: { pedida: 'La pediste', tu_puesto: 'Tu puesto', sobre_umbral: 'Sobre tu umbral', bajo_umbral: 'Bajo tu umbral' },
+        pedida: 'Pediste el paquete de este aviso.',
+        sobreUmbral: (u) => 'Llega a tu umbral (' + u + ').',
+        bajoUmbral: (u, conPuestos) => 'No llega a tu umbral (' + u + ')' + (conPuestos ? ' ni es de tus puestos' : '') + ': Terna no te sugiere postularte. El paquete sigue listo si igual querés.',
+        bajoUmbralHecha: (u, conPuestos) => 'Hoy no llega a tu umbral (' + u + ')' + (conPuestos ? ' ni es de tus puestos' : '') + ': el match se volvió a calcular o cambiaste el umbral después.',
+      },
+      // Desde brand.md 0.20, cuatro puntos, sin Entrevista, y solo en la ficha.
+      recorrido: ['Encontrado', 'Me interesa', 'Paquete', 'Enviada o Postulada'],
       recorridoAccesible: (etapa) => 'Recorrido: ' + etapa,
       linea: {
         en_cola: 'En cola. Terna postula en la próxima corrida.',
         para_revisar: 'Para revisar. Terna llenó el formulario; mirá las respuestas y decidí.',
         enviada: (f, h) => 'Enviada por Terna el ' + f + ' a las ' + h + '.',
-        postulado: (f) => 'Postulado el ' + f + '.',
-        entrevista: (f) => 'Entrevista marcada el ' + f + '.',
+        postulado: (f) => 'Postulada a mano el ' + f + '.',
         pendiente: 'Paquete armado.',
         todoListo: 'Todo está listo: el link, el CV y la carta.',
+      },
+      // La línea corta, debajo del chip de la etapa en la tabla y en la fila: la misma, sin el nombre de la etapa adelante.
+      lineaCorta: {
+        en_cola: 'Terna postula en la próxima corrida.',
+        para_revisar: 'Terna llenó el formulario; mirá las respuestas y decidí.',
+        enviada: (f, h) => 'El ' + f + ' a las ' + h + '.',
+        postulado: (f) => 'La marcaste el ' + f + '.',
+        pendiente: 'Paquete armado.',
       },
       trabas: {
         no_postulable: (fuente) => 'Terna no postula en ' + fuente + '.',
@@ -529,12 +557,11 @@ window.T = (function () {
       botones: {
         marcarPostulado: 'Marcar postulado', volverAProbar: 'Volver a probar', noMeInteresa: 'No me interesa',
         enviar: 'Enviar', postularYo: 'Postular yo', cancelarEnvio: 'Cancelar envío',
-        marcarEntrevista: 'Marcar entrevista', volverAPendiente: 'Volver a pendiente',
+        volverAPendiente: 'Volver a pendiente',
       },
       confirmarProbar: { titulo: 'Volver a probar', texto: 'Si la postulación ya llegó, se va a mandar dos veces. Revisá primero en el sitio.', si: 'Volver a probar', no: 'Cancelar' },
       hecho: {
         postulado: 'Postulado.',
-        entrevista: 'Entrevista marcada.',
         pendiente: 'Pendiente.',
         probar: (i, max) => 'Terna vuelve a probar en la próxima corrida. Intento ' + i + ' de ' + max + '.',
         aprobada: 'Aprobada. Terna la envía en la próxima corrida.',
@@ -551,12 +578,11 @@ window.T = (function () {
       capturaAlt: (etapa) => 'Captura del intento de postular: ' + etapa,
       vacio: 'Todavía no hay postulaciones. Aparecen cuando Terna arma el primer paquete.',
       vacioFiltros: 'Ninguna postulación coincide con estos filtros.',
-      vacioEtapa: {
-        a_mano: 'Nada para postular a mano.', para_revisar: 'Nada para revisar.', en_cola: 'Nada en cola.',
-        enviada: 'Terna todavía no envió ninguna.', postulado: 'Todavía no marcaste ninguna como postulada.', entrevista: 'Todavía no marcaste ninguna entrevista.',
-        bajo_umbral: 'Nada bajo tu umbral.',
+      vacioVista: {
+        por_postular: 'Nada por postular.',
+        postuladas: 'Todavía no hay ninguna postulada. Acá quedan las que envía Terna y las que marcás como postuladas.',
       },
-      columnas: { match: 'Match', puesto: 'Puesto', empresa: 'Empresa', requisitos: 'Requisitos', recorrido: 'Recorrido', etapa: 'Etapa', fecha: 'Fecha', aviso: 'Aviso' },
+      columnas: { match: 'Match', puesto: 'Puesto', empresa: 'Empresa', porque: 'Por qué', requisitos: 'Requisitos', etapa: 'Etapa', fecha: 'Fecha', aviso: 'Aviso' },
     },
 
     perfil: {
@@ -1205,7 +1231,6 @@ window.T = (function () {
       enviada: 'Terna envió el formulario y el sitio lo confirmó.',
       a_mano: 'Terna no pudo o no corresponde. Todo está listo para que postules vos.',
       postulado: 'Marcaste que postulaste.',
-      entrevista: 'Marcaste que conseguiste entrevista.',
       // El veredicto de requisitos (brand.md 0.4.19 §6.10).
       cumple: 'Tu perfil muestra lo que el aviso pide como excluyente, y el nivel del puesto es cercano al tuyo.',
       a_confirmar: 'El aviso pide algo que tu perfil no menciona. Si lo tenés, sumalo a Mi perfil.',

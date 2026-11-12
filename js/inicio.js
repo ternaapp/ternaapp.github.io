@@ -72,7 +72,7 @@ Terna.pagina('inicio', async (ctx) => {
     }
   }
 
-  // Cómo viene (diseno.md 0.26 §10.14): las cinco cifras en filas. Solo la primera lleva barra, porque es la única que es una parte de
+  // Cómo viene (diseno.md 0.26 §10.14; desde 0.32, sin Entrevistas): las cuatro cifras en filas. Solo la primera lleva barra, porque es la única que es una parte de
   // un todo: lo que pasó tu umbral, en tinta, de lo que llegó, con el gris. Las otras cuentan lo que pasó en el período y no son un
   // embudo (un paquete de hoy puede ser de un aviso de la semana pasada): con barras se leían como "6 de 17" (revisión de UX).
   function dibujarCifras(r) {
@@ -84,7 +84,6 @@ Terna.pagina('inicio', async (ctx) => {
       { clave: 'armados', valor: num(r.paquetes_armados), etiqueta: C.armados },
       { clave: 'enviadas', valor: num(r.enviadas), etiqueta: C.enviadas },
       { clave: 'a-mano', valor: num(r.postulados_a_mano), etiqueta: C.aMano },
-      { clave: 'entrevistas', valor: num(r.entrevistas), etiqueta: C.entrevistas },
     ];
     const max = Math.max(1, total, sobre);
     const dl = h('dl', { class: 'cifras etapas' });
@@ -376,7 +375,7 @@ Terna.pagina('inicio', async (ctx) => {
     const rs = await Promise.all(desdes.map((d) => sb.rpc('mi_resumen', { p_desde: d })));
     if (rs.some((r) => r.error)) return null;
     const acum = rs.map((r) => (Array.isArray(r.data) ? r.data[0] : r.data) || {});
-    const SERIES = [['sobre_umbral', C.nuevos], ['paquetes_armados', C.armados], ['enviadas', C.enviadas], ['postulados_a_mano', C.aMano], ['entrevistas', C.entrevistas]];
+    const SERIES = [['sobre_umbral', C.nuevos], ['paquetes_armados', C.armados], ['enviadas', C.enviadas], ['postulados_a_mano', C.aMano]];
     // De la más vieja (índice 0) a esta semana (7).
     const semanas = desdes.map((d, k) => ({ desde: d, hasta: k === 0 ? hoy : Terna.sumarDias(d, 6) })).reverse();
     const rango = (s) => S.rango(Terna.fechaCorta(s.desde), Terna.fechaCorta(s.hasta));
