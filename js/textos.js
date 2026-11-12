@@ -631,10 +631,10 @@ window.T = (function () {
       identificacion: 'Identificación',
       dni: 'DNI', cuil: 'CUIL', nacimiento: 'Fecha de nacimiento',
       identificacionAyuda: 'Opcionales. Nunca van en el CV. Si un formulario los pide, Terna los escribe; si no los cargaste, esa postulación queda para hacer a mano. Se guardan cifrados.',
-      // Dirección (brand.md 0.16 §6.6; datos.md 0.32 §5.4b, 0036): debajo de la fecha de nacimiento, cifrada como el DNI. Las
+      // Dirección (brand.md 0.19 §6.6; datos.md 0.32 §5.4b, 0036): debajo de la fecha de nacimiento, cifrada como el DNI. Las
       // provincias, con el nombre con que las guarda la base (provincia_normalizada): la Ciudad y Buenos Aires primero.
-      direccion: 'Dirección',
-      direccionAyuda: 'Opcional. Algunos formularios, como los de Workday, la piden para postular. Nunca va en el CV. Si un formulario la pide, Terna la escribe; si no la cargaste, esa postulación queda para hacer a mano. Se guarda cifrada.',
+      direccion: 'Dirección (opcional)',
+      direccionAyuda: 'Algunos formularios, como los de Workday, la piden para postular. Nunca va en el CV. Si un formulario la pide, Terna la escribe; si no la cargaste, esa postulación queda para hacer a mano. Se guarda cifrada.',
       calle: 'Calle y número', calleEjemplo: 'Av. Corrientes 1234, 5.º B',
       codigoPostal: 'Código postal', codigoPostalEjemplo: '1414 o C1414ABC',
       provincia: 'Provincia', provinciaVacia: 'Elegí una provincia',
