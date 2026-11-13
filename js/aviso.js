@@ -358,7 +358,7 @@ window.Aviso = (function () {
     if (a.traba_detalle) return a.traba_detalle;
     const m = M[a.motivo_a_mano] || M.error;
     if (typeof m !== 'function') return m;
-    return a.motivo_a_mano === 'no_postulable' ? m(a.fuente) : m((config && config.max_reintentos_postulacion) || 3);
+    return a.motivo_a_mano === 'no_postulable' ? m(a.fuente) : m(Number(a.intentos) || (config && config.max_reintentos_postulacion) || 3);
   }
   function lineaEtapa(a, config) {
     const L = T.postulaciones.linea;
@@ -384,8 +384,15 @@ window.Aviso = (function () {
       default: return a.paquete_id ? L.pendiente : '';
     }
   }
+  // Sin tope de intentos desde 0041 (datos.md 0.37; Francisco, 13/11/2026: «sacale el límite de 3 intentos»): `max_reintentos_postulacion`
+  // en null. Si la base vuelve a tener un número, el tope rige otra vez, igual que en la base y en el motor.
+  function topeIntentos(config) {
+    const n = config ? config.max_reintentos_postulacion : null;
+    return n === null || n === undefined ? null : Number(n);
+  }
   function puedeVolverAProbar(a, config) {
-    return a.estado_postulacion === 'a_mano' && a.postulacion === 'formulario' && (a.intentos || 0) < ((config && config.max_reintentos_postulacion) || 3);
+    const tope = topeIntentos(config);
+    return a.estado_postulacion === 'a_mano' && a.postulacion === 'formulario' && (tope === null || (a.intentos || 0) < tope);
   }
   // La sección "Postulación" de la ficha del aviso: dónde se postula (diseno.md 0.23 §7.5), chip, línea y el link a la ficha de la
   // postulación.
@@ -743,7 +750,7 @@ window.Aviso = (function () {
     MODALIDADES, ALCANCES, NIVELES, JORNADAS, TODOS_BUSQUEDA, busquedaDe, pasaBusqueda, motivosFuera,
     criterio, tuPuesto, tuEmpresa, sugerida,
     lugar, atributos, bloqueMatch, controlInteres, fichasPaquete, parsearNotas, textoSalario,
-    recorridoGrande, traba, lineaEtapa, lineaCorta, puedeVolverAProbar, seccionPostulacion, razones, abrirAviso, verAviso,
+    recorridoGrande, traba, lineaEtapa, lineaCorta, topeIntentos, puedeVolverAProbar, seccionPostulacion, razones, abrirAviso, verAviso,
     ESTILO_POSTULACION, postulable, confirmarPedir, confirmarNoInteresa, marcarNoInteresa,
     DONDES, donde, textoDonde, explicacionDonde, celdaDonde, etiquetaDonde, lineaDonde,
   };

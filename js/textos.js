@@ -584,6 +584,8 @@ window.T = (function () {
       completarPreferencias: 'Completar Preferencias',
       completarPerfil: 'Completar Mi perfil',
       seVaATrabar: 'Se va a trabar en el mismo lugar: Terna no entra con cuentas.',
+      // Cuántas veces lo intentó Terna, en la ficha (brand.md 0.28 §6.5).
+      intentos: (n) => 'Terna lo intentó ' + n + (n === 1 ? ' vez.' : ' veces.'),
       botones: {
         marcarPostulado: 'Marcar postulado', volverAProbar: 'Volver a probar', noMeInteresa: 'No me interesa',
         enviar: 'Enviar', postularYo: 'Postular yo', cancelarEnvio: 'Cancelar envío',
@@ -593,7 +595,7 @@ window.T = (function () {
       hecho: {
         postulado: 'Postulado.',
         pendiente: 'Pendiente.',
-        probar: (i, max) => 'Terna vuelve a probar en la próxima corrida. Intento ' + i + ' de ' + max + '.',
+        probar: (i, max) => 'Terna vuelve a probar en la próxima corrida. ' + (max ? 'Intento ' + i + ' de ' + max + '.' : 'Va a ser el intento ' + i + '.'),
         aprobada: 'Aprobada. Terna la envía en la próxima corrida.',
         aMano: 'Queda para hacer a mano.',
         cancelado: 'Cancelado. Queda pendiente.',

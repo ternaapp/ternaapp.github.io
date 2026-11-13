@@ -53,7 +53,8 @@ Terna.pagina('postulaciones', async (ctx) => {
   // Palabras del aviso que el CV no tiene (cv-ats.md 0.4 §3.13): el motor las guarda en el paquete desde paquete.v3.
   const faltanPor = new Map((rB.data || []).filter((p) => Array.isArray(p.terminos_faltantes)).map((p) => [p.match_id, p.terminos_faltantes]));
   const bajoMinimo = (a) => prefs.salario_modo === 'rango' && !!a.paquete_id && conMinimo.has(a.match_id);
-  const maxIntentos = config.max_reintentos_postulacion || 3;
+  // null: sin tope (0041); con un número, "Intento 2 de 3".
+  const maxIntentos = Aviso.topeIntentos(config);
   // Lo que quedó fuera de las preferencias de búsqueda del momento no se esconde acá (es lo que la persona ya tiene), pero
   // la ficha lo dice: Terna no lo postula por su cuenta (diseno.md 0.11 §8.5; pipeline.md 0.3.15 §4.12).
   const busquedaPrefs = Aviso.busquedaDe(prefs);
@@ -588,6 +589,11 @@ Terna.pagina('postulaciones', async (ctx) => {
     if (k && k !== 'sobre_umbral') sec.append(h('p', { class: 'etapa-nota', text: explicacionPorQue(a, k) }));
     const linea = Aviso.lineaEtapa(a, config);
     if (linea) sec.append(h('p', { text: linea }));
+    // Cuántas veces lo intentó Terna (brand.md 0.28 §6.5; Francisco, 13/11/2026: «que los cuente en algún lado y diga la cantidad
+    // de veces que lleva intentando»). Los intentos los cuenta el motor; desde 0041 no tienen tope y cada uno después del primero lo
+    // pide la persona con "Volver a probar".
+    const intentos = Number(a.intentos) || 0;
+    if (intentos > 0) sec.append(h('p', { class: 'suave intentos', text: T.postulaciones.intentos(intentos) }));
     if (a.estado_postulacion === 'a_mano') {
       sec.append(h('p', { text: T.postulaciones.linea.todoListo }));
       const link = linkTraba(a);
