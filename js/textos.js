@@ -1024,12 +1024,12 @@ window.T = (function () {
           ['pasos', [
             '*Creá las alertas* en los portales que uses: una por cada puesto que buscás, diaria y por mail.',
             '*Armá en tu correo* una carpeta para las alertas y un filtro que se las reenvía solo a tu dirección de Terna. Se hace una vez, desde una computadora.',
-            '*Listo.* Al día siguiente de cada alerta, sus avisos aparecen en Avisos. Terna busca el texto completo de cada uno en la página de empleos de la empresa y, si es de LinkedIn, en la página pública del aviso, sin entrar con ninguna cuenta; si en unos días no lo consigue, se lo pasa a Francisco, que lo busca a mano, para darte el match.',
+            '*Listo.* Al día siguiente de cada alerta, sus avisos aparecen en Avisos. Terna busca el texto completo de cada uno en la página de empleos de la empresa y, si es de LinkedIn, en la página pública del aviso, sin entrar con ninguna cuenta; si intenta leer esa página tres veces y no puede, se lo pasa a Francisco, que lo busca a mano, para darte el match.',
           ], 'resto'],
           ['pasos', [
             '*Creá las alertas* en los portales que uses: una por cada puesto que buscás, diaria y por mail.',
             '*Armá en tu Gmail* un filtro que les ponga a tus alertas la etiqueta *Terna/Alertas*. Se hace una vez, desde una computadora.',
-            '*Listo.* Al día siguiente de cada alerta, sus avisos aparecen en Avisos. Terna busca el texto completo de cada uno en la página de empleos de la empresa y, si es de LinkedIn, en la página pública del aviso, sin entrar con ninguna cuenta; si en unos días no lo consigue, se lo pasa a Francisco, que lo busca a mano, para darte el match.',
+            '*Listo.* Al día siguiente de cada alerta, sus avisos aparecen en Avisos. Terna busca el texto completo de cada uno en la página de empleos de la empresa y, si es de LinkedIn, en la página pública del aviso, sin entrar con ninguna cuenta; si intenta leer esa página tres veces y no puede, se lo pasa a Francisco, que lo busca a mano, para darte el match.',
           ], 'dueno'],
           ['subtitulo', 'Tu dirección de Terna', 'resto'],
           ['p', 'Es la dirección de mail a la que le mandás tus alertas. Es solo tuya: por ella Terna sabe que esas alertas son tuyas. Lleva el nombre de Francisco porque llega a una casilla de Gmail suya, en una etiqueta aparte que lee Terna.', 'resto'],
@@ -1225,14 +1225,14 @@ window.T = (function () {
             'En Preferencias, *Alertas por mail* dice para cada portal cuándo llegó su última alerta. Si dice *Sin alertas en los últimos 7 días*, fijate que la alerta llegue a tu etiqueta o carpeta *Alertas de empleo* y que el filtro o la regla tenga tu dirección de Terna.',
             'En Gmail, si *Reenviarlo a* no muestra tu dirección de Terna, falta que Francisco confirme la parte 2: avisale.',
             'Si dice *Llegaron mails, pero sin avisos*, avisale a Francisco: puede ser que el portal haya cambiado la forma de sus mails.',
-            'Los avisos de una alerta llegan sin el texto completo. Terna lo busca en la página de empleos de la empresa y, en los de LinkedIn, en la página pública del aviso; mientras tanto, en Avisos dicen *Sin texto*. Si no lo consigue, lo busca Francisco a mano.',
+            'Los avisos de una alerta llegan sin el texto completo. Terna lo busca en la página de empleos de la empresa y, en los de LinkedIn, en la página pública del aviso; mientras tanto, en Avisos dicen *Sin texto*. Si intenta leer la página de LinkedIn tres veces y no puede, lo busca Francisco a mano.',
             'Para dejar de mandarle alertas a Terna, borrá el filtro (Gmail: *Filtros y direcciones bloqueadas*) o la regla (Outlook: *Reglas*), o la alerta en el portal.',
           ], 'resto'],
           ['lista', [
             '*Terna lee las alertas una vez por día*, a la mañana: lo que llega hoy aparece mañana.',
             'En Preferencias, *Alertas por mail* dice para cada portal cuándo llegó su última alerta. Si dice *Sin alertas en los últimos 7 días*, fijate en tu Gmail que la alerta tenga la etiqueta *Terna/Alertas*.',
             'Si dice *Llegaron mails, pero sin avisos*, puede ser que el portal haya cambiado la forma de sus mails y haya que ajustar cómo Terna los lee.',
-            'Los avisos de una alerta llegan sin el texto completo. Terna lo busca en la página de empleos de la empresa y, en los de LinkedIn, en la página pública del aviso; mientras tanto, en Avisos dicen *Sin texto*. Si no lo consigue, lo busca Francisco a mano.',
+            'Los avisos de una alerta llegan sin el texto completo. Terna lo busca en la página de empleos de la empresa y, en los de LinkedIn, en la página pública del aviso; mientras tanto, en Avisos dicen *Sin texto*. Si intenta leer la página de LinkedIn tres veces y no puede, lo busca Francisco a mano.',
             'Para que Terna deje de leer tus alertas, borrá el filtro (*Filtros y direcciones bloqueadas*) o la alerta en el portal.',
           ], 'dueno'],
           ['ir', ['Ver mis portales en Preferencias', 'preferencias.html#alertas']],
@@ -1310,14 +1310,16 @@ window.T = (function () {
         errorUrl: 'Pegá un link que empiece con https://.',
         errorLinkedin: 'Ese link es de LinkedIn. Tocá "Postularse" en el aviso y pegá el de la página a la que te lleva. Si es Easy Apply, tocá "No tiene página propia".',
       },
-      // Admin › Avisos sin texto (brand.md 0.23 §6.9; diseno.md 0.35 §9.7; datos.md 0.34, 0038; Francisco, 12/11/2026: si Terna no
-      // consigue el texto, "Fran lo va a sacar por vos"): los avisos de alertas cuyo texto Terna ya no espera, para que pegue el texto.
+      // Admin › Avisos sin texto (brand.md 0.26 §6.9; diseno.md 0.38 §9.7; datos.md 0.34 y 0.36, 0038 y 0040; Francisco, 12/11/2026:
+      // si Terna no consigue el texto, "Fran lo va a sacar por vos"; desde 0040, «solo… si llevan más de 3 intentos sin obtener la
+      // data»): los avisos de alertas que Terna intentó leer tres veces sin conseguir el texto, para que pegue el texto.
       avisos: {
         porCompletar: (x) => x + ' por completar',
-        intro: 'Avisos que llegaron por alertas y cuyo texto Terna no pudo conseguir: sin el texto no tienen match ni paquete. Aparecen cuando Terna deja de esperar su página (no existe, falló tres veces o lleva unos días sin poder leerla) o cuando son de un portal cuyas páginas Terna no abre. Lo que pegues va a quien tiene el aviso en su lista; acá no se ve de quién es.',
+        intro: 'Avisos que llegaron por alertas y cuyo texto Terna no pudo conseguir: sin el texto no tienen match ni paquete. Aparecen cuando Terna intentó leer su página tres veces y no pudo. Lo que pegues va a quien tiene el aviso en su lista; acá no se ve de quién es.',
         como: 'Abrí el aviso, copiá la descripción completa (qué se hace, qué piden, los requisitos) y pegala en su tarjeta. Si ya no está publicado, tocá "Ya no está abierto".',
         vacio: 'No hay avisos para completar.',
         alerta: (fuente) => 'alerta de ' + fuente,
+        // Desde 0040 la base devuelve solo 'intentos'; los otros cuatro quedan para una base sin 0040 (brand.md 0.26 §6.9: hasta 0.25).
         motivos: {
           no_existe: 'La página del aviso en LinkedIn no existe.',
           intentos: (x) => 'Terna intentó leer su página ' + x + ' veces y no pudo.',

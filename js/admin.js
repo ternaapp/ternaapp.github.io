@@ -1,9 +1,9 @@
 /* Terna · js/admin.js
    Admin (brand.md §6.9), solo Francisco: Usuarios (con Borrar), Invitaciones (abrir o cerrar), Uso, Problemas y, desde
    brand.md 0.11, Empresas: las que ni el motor ni la búsqueda web diaria ubicaron, para que pegue dónde se postula (datos.md 0.28,
-   0032; desde 0.31, 0035, también un portal y "Ya no está abierto") y, desde brand.md 0.23, Avisos sin texto: los de alertas cuyo
-   texto Terna ya no espera, para que pegue el texto (datos.md 0.34, 0038). La pausa del motor no está acá. Lee y escribe solo por
-   las funciones admin_* y config.invitaciones_abiertas (datos.md §14).
+   0032; desde 0.31, 0035, también un portal y "Ya no está abierto") y, desde brand.md 0.23, Avisos sin texto: los de alertas que
+   Terna intentó leer tres veces sin conseguir el texto, para que pegue el texto (datos.md 0.34 y 0.36, 0038 y 0040). La pausa del
+   motor no está acá. Lee y escribe solo por las funciones admin_* y config.invitaciones_abiertas (datos.md §14).
    Pensada primero para escritorio: en celular las tablas se desplazan. */
 'use strict';
 
@@ -249,10 +249,11 @@ Terna.pagina('admin', async (ctx) => {
       h('div', { class: 'botones' }, bGuardar, bSinSitio, bCerrar, bOmitir));
   }
 
-  /* ---------- Avisos sin texto (brand.md 0.23 §6.9; diseno.md 0.35 §9.7; datos.md 0.34, 0038) ----------
-     Francisco, 12/11/2026: si Terna no consigue el texto de un aviso, "Fran lo va a sacar por vos". Una tarjeta por aviso de alerta
-     que alguien tiene en su lista y cuyo texto Terna ya no espera (la página no existe, falló los intentos, pasaron los días de
-     espera o es de un portal cuyas páginas Terna no abre): lo público del aviso, por qué Terna no lo consiguió, el link para abrirlo
+  /* ---------- Avisos sin texto (brand.md 0.26 §6.9; diseno.md 0.38 §9.7; datos.md 0.34 y 0.36, 0038 y 0040) ----------
+     Francisco, 12/11/2026: si Terna no consigue el texto de un aviso, "Fran lo va a sacar por vos"; desde 0040 (22:12), solo cuando
+     Terna intentó leer su página tres veces y no pudo (hasta 0040 también la página que no existía, los días de espera, la lectura
+     apagada y otro portal: con una base sin 0040 se siguen viendo). Una tarjeta por aviso de alerta que alguien tiene en su lista:
+     lo público del aviso, por qué Terna no lo consiguió, el link para abrirlo
      y el texto, que va al match de quien lo tiene (nunca se ve de quién es). Terna lo puntúa en la corrida siguiente, primero, como
      lo que pegaba la persona hasta brand.md 0.22. "Ya no está abierto" lo cierra, como en Empresas. */
   async function avisosSeccion(foco) {
