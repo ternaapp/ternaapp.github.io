@@ -601,6 +601,28 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .empresa-meta { font-size: 14px; color: var(--tinta-suave); }
 .empresa-ejemplo { font-size: 15px; line-height: 1.45; }
 .empresa-ejemplo a { display: inline-flex; align-items: center; gap: 4px; }
+/* Admin › Problemas por casos (problemas.md 0.1 §5; 0042): la tarjeta de Empresas con el estado al lado del título, "Qué hacer"
+   marcado cuando es para vos, el detalle plegado y los textos de la revisión con sus saltos de línea. Solo fichas de color. */
+.caso-revision { max-width: 720px; margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
+.caso-revision p, .caso-revision .caso-texto { font-size: 14px; line-height: 1.45; }
+.casos-lista + .vacio, .casos-lista .vacio { margin: 0; }
+.caso-cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.caso-cabeza .chip { flex: 0 0 auto; }
+.caso-cabeza .tarjeta-titulo { flex: 1 1 260px; min-width: 0; overflow-wrap: anywhere; }
+.caso-texto { white-space: pre-line; overflow-wrap: anywhere; font-size: 15px; line-height: 1.45; }
+.caso-error {
+  white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.45; padding: 8px 10px; border-radius: 8px;
+  background: var(--chip-neutro); font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+.caso-que-hacer { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 8px; border-left: 3px solid var(--error); background: var(--error-tinte); }
+.caso-que-hacer h3 { font-size: 13px; font-weight: 700; color: var(--error-oscuro); }
+.caso-que-hacer .caso-texto { color: var(--tinta); }
+.caso-boton { min-height: 40px; font-size: 14px; }
+.caso-detalle { display: flex; flex-direction: column; gap: 8px; }
+.caso-detalle[hidden] { display: none; }
+.caso-detalle h3 { font-size: 14px; font-weight: 700; margin-top: 4px; }
+.caso-detalle .campo { margin-top: 4px; }
+.caso-veces .tabla-caja { max-height: 360px; overflow: auto; }
 
 /* ---------- 5. Páginas ---------- */
 .cabecera-pagina { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }

@@ -2,8 +2,10 @@
    Admin (brand.md §6.9), solo Francisco: Usuarios (con Borrar), Invitaciones (abrir o cerrar), Uso, Problemas y, desde
    brand.md 0.11, Empresas: las que ni el motor ni la búsqueda web diaria ubicaron, para que pegue dónde se postula (datos.md 0.28,
    0032; desde 0.31, 0035, también un portal y "Ya no está abierto") y, desde brand.md 0.23, Avisos sin texto: los de alertas que
-   Terna intentó leer tres veces sin conseguir el texto, para que pegue el texto (datos.md 0.34 y 0.36, 0038 y 0040). La pausa del
-   motor no está acá. Lee y escribe solo por las funciones admin_* y config.invitaciones_abiertas (datos.md §14).
+   Terna intentó leer tres veces sin conseguir el texto, para que pegue el texto (datos.md 0.34 y 0.36, 0038 y 0040). Desde
+   problemas.md 0.1 (0042), Problemas va por casos con seguimiento: cada falla que se repite es un caso con su estado, lo que hizo
+   la revisión diaria y lo que hiciste vos; sin la 0042, la tabla de antes. La pausa del motor no está acá. Lee y escribe solo
+   por las funciones admin_* y config.invitaciones_abiertas (datos.md §14; problemas.md §5).
    Pensada primero para escritorio: en celular las tablas se desplazan. */
 'use strict';
 
@@ -20,8 +22,14 @@ Terna.pagina('admin', async (ctx) => {
   // Empresas (0032) y Avisos sin texto (0038): sin la migración la función no existe y la subpestaña no se muestra.
   let empresas = null;
   let sinTexto = null;
+  // Problemas por casos (0042; problemas.md 0.1): null mientras la base no la tenga, y entonces Problemas es la tabla de antes.
+  let casos = null;
+  let vistaCasos = Terna.leerLocal('admin.problemas.vista', 'abiertos') === 'cerrados' ? 'cerrados' : 'abiertos';
 
   async function contarSinVer() {
+    const r = await sb.rpc('admin_problemas_casos', { p_dias: 30 });
+    casos = r.error ? null : (r.data || []);
+    if (casos) return;
     const { data } = await sb.rpc('admin_problemas', { p_dias: 30 });
     sinVer = (data || []).filter((p) => !p.visto_en).length;
   }
@@ -36,6 +44,11 @@ Terna.pagina('admin', async (ctx) => {
     return error;
   }
   function chipDe(s) {
+    if (s === 'problemas' && casos) {
+      const paraVos = casos.filter((c) => c.estado === 'para_vos').length;
+      const nuevos = casos.filter((c) => c.estado === 'nuevo').length;
+      return paraVos ? A.problemas.chipParaVos(paraVos) : nuevos ? A.problemas.chipNuevos(nuevos) : null;
+    }
     if (s === 'problemas' && sinVer) return A.sinVer(sinVer);
     if (s === 'empresas' && empresas && empresas.length) return A.empresas.porCompletar(empresas.length);
     if (s === 'avisos' && sinTexto && sinTexto.length) return A.avisos.porCompletar(sinTexto.length);
@@ -138,8 +151,180 @@ Terna.pagina('admin', async (ctx) => {
       tabla([[U.fecha], [U.usuarios, true], [U.revisados, true], [U.puntuados, true], [U.paquetes, true], [U.enviadas, true], [U.aMano, true], [U.tokens, true], [U.usd, true], [U.tope]], cuerpo, pie));
   }
 
-  /* ---------- Problemas ---------- */
+  /* ---------- Problemas por casos (problemas.md 0.1 §5; 0042) ----------
+     Arriba, cuándo pasó la revisión diaria y qué hizo; después, Abiertos (nuevo, volvió, para vos, en curso y arreglado) y
+     Cerrados (resuelto y esperado, de los últimos 30 días), una tarjeta por caso. La tarjeta dice el estado, el título que le
+     puso la revisión (o la clave), qué paso, cuántas veces, cuándo, de qué fuentes y a cuántas personas; si es para vos, qué
+     hacer; si está arreglado, el commit y cuántas corridas faltan. "Detalle y acciones" abre el último error, el diagnóstico,
+     la nota, los botones y cuándo pasó (las filas se piden al abrir). "Copiar para un chat" arma el resumen sin mails. */
+  const ESTILO_CASO = { nuevo: 'chip-espera', volvio: 'chip-error', para_vos: 'chip-error', en_curso: 'chip-azul', arreglado: 'chip-accion', resuelto: '', esperado: '' };
+  const ICONO_CASO = { nuevo: 'i-por-decidir', volvio: 'i-volver', para_vos: 'i-alerta', en_curso: 'i-revisar', arreglado: 'i-probar', resuelto: 'i-tilde', esperado: 'i-tilde' };
+  const ABIERTOS = ['nuevo', 'para_vos', 'en_curso', 'arreglado'];
+  const ACCIONES_CASO = {
+    nuevo: ['arreglado', 'esperado', 'en_curso'],
+    para_vos: ['arreglado', 'esperado', 'en_curso'],
+    en_curso: ['arreglado', 'esperado', 'nuevo'],
+    arreglado: ['resuelto', 'nuevo'],
+    resuelto: ['nuevo'],
+    esperado: ['nuevo'],
+  };
+  const estadoVisible = (c) => (c.estado === 'nuevo' && Number(c.volvio) > 0 ? 'volvio' : c.estado);
+
   async function problemas() {
+    if (casos === null) { await problemasTabla(); return; }
+    const [rc, rr] = await Promise.all([sb.rpc('admin_problemas_casos', { p_dias: 30 }), sb.rpc('admin_ultima_revision')]);
+    if (rc.error) { Terna.errorDeCarga(raiz, rc.error); return; }
+    casos = rc.data || [];
+    dibujarSub();
+    const Pr = A.problemas;
+    const abiertos = casos.filter((c) => ABIERTOS.includes(c.estado));
+    const cerrados = casos.filter((c) => !ABIERTOS.includes(c.estado));
+    Terna.vaciar(raiz);
+    raiz.append(h('p', { class: 'seccion-intro', text: Pr.intro }), lineaRevision(rr.error ? null : (rr.data || [])[0]));
+    const seg = h('div', { class: 'segmentado', role: 'radiogroup', 'aria-label': A.secciones.problemas });
+    for (const v of ['abiertos', 'cerrados']) {
+      seg.append(h('label', null, h('input', { type: 'radio', name: 'problemas-vista', value: v, checked: vistaCasos === v,
+        onchange: () => { vistaCasos = v; Terna.guardarLocal('admin.problemas.vista', v); dibujarLista(); } }),
+      h('span', { text: Pr.vistas[v](v === 'abiertos' ? abiertos.length : cerrados.length) })));
+    }
+    const lista = h('div', { class: 'empresas-lista casos-lista' });
+    raiz.append(h('div', { class: 'herramientas' }, seg), lista);
+    function dibujarLista() {
+      Terna.vaciar(lista);
+      const estos = vistaCasos === 'abiertos' ? abiertos : cerrados;
+      if (!estos.length) { lista.append(h('p', { class: 'vacio', text: vistaCasos === 'abiertos' ? Pr.vacioAbiertos : Pr.vacioCerrados })); return; }
+      estos.forEach((c, i) => lista.append(tarjetaCaso(c, i)));
+    }
+    dibujarLista();
+  }
+  function lineaRevision(r) {
+    const Pr = A.problemas;
+    if (!r) return h('p', { class: 'campo-ayuda caso-revision', text: Pr.sinRevision });
+    const vieja = Date.now() - Date.parse(r.creado_en) > 30 * 3600 * 1000;
+    return h('div', { class: 'caso-revision' },
+      h('p', { class: 'campo-ayuda', text: Pr.revision(Terna.fechaCorta(r.creado_en), Terna.hora(r.creado_en), r) + (vieja ? ' ' + Pr.revisionVieja : '') }),
+      r.resumen ? h('p', { class: 'campo-ayuda caso-texto', text: r.resumen }) : null);
+  }
+  function tarjetaCaso(c, i) {
+    const Pr = A.problemas;
+    const id = 'caso-' + i;
+    const visible = estadoVisible(c);
+    const explicacion = visible === 'arreglado' ? Pr.explicaciones.arreglado(Number(c.confirmar_corridas) || 3) : Pr.explicaciones[visible];
+    const chip = h('span', { class: 'chip ' + (ESTILO_CASO[visible] || ''), title: explicacion },
+      icono(ICONO_CASO[visible], 'icono-14'), h('span', { text: Pr.estados[visible] }), Terna.oculto(': ' + explicacion));
+    const primera = Terna.fechaCorta(c.primera_en);
+    const ultima = Terna.fechaCorta(c.ultima_en);
+    const fuentes = (c.fuentes || []).join(', ');
+    const meta = [A.pasos[c.paso] || c.paso, fuentes || null, Pr.veces(Number(c.ocurrencias)), Pr.cuando(primera, ultima),
+      Number(c.usuarios) ? Pr.personas(Number(c.usuarios)) : null, Number(c.volvio) ? Pr.volvioVeces(Number(c.volvio)) : null].filter(Boolean).join(' · ');
+    const partes = [
+      h('div', { class: 'caso-cabeza' }, chip, h('h2', { class: 'tarjeta-titulo', id: id + '-titulo', tabindex: '-1', text: c.titulo || c.clave })),
+      h('p', { class: 'empresa-meta', text: meta }),
+    ];
+    if (c.estado === 'para_vos' && c.que_hacer) {
+      partes.push(h('div', { class: 'caso-que-hacer' }, h('h3', { text: Pr.queHacer }), h('p', { class: 'caso-texto', text: c.que_hacer })));
+    }
+    if (c.estado === 'arreglado') {
+      const faltan = (Number(c.confirmar_corridas) || 3) - (Number(c.corridas_sin_volver) || 0);
+      partes.push(h('p', { class: 'campo-ayuda', text: (c.commit_sha ? Pr.arreglo(c.commit_sha.slice(0, 7)) + ' ' : '') + Pr.confirma(faltan) }));
+    }
+    // El detalle: plegado y armado al abrirlo (las filas se piden recién ahí).
+    const cuerpo = h('div', { class: 'caso-detalle', id: id + '-detalle', hidden: true });
+    let armado = false;
+    const boton = h('button', { class: 'plegable-boton caso-boton', type: 'button', 'aria-expanded': 'false', 'aria-controls': id + '-detalle',
+      onclick: () => {
+        const abrir = boton.getAttribute('aria-expanded') !== 'true';
+        boton.setAttribute('aria-expanded', String(abrir));
+        cuerpo.hidden = !abrir;
+        if (abrir && !armado) { armado = true; armarDetalle(c, cuerpo, id); }
+      } }, h('span', { text: Pr.verDetalle }), icono('i-chevron'));
+    partes.push(boton, cuerpo);
+    return h('section', { class: 'tarjeta seccion empresa-tarjeta caso-tarjeta', 'aria-labelledby': id + '-titulo', dataset: { caso: c.caso_id, estado: visible } }, partes);
+  }
+  function armarDetalle(c, cuerpo, id) {
+    const Pr = A.problemas;
+    if (c.ultimo_error) cuerpo.append(h('h3', { text: Pr.ultimoError }), h('p', { class: 'caso-error', text: c.ultimo_error }));
+    if (c.diagnostico) cuerpo.append(h('h3', { text: Pr.diagnostico }), h('p', { class: 'caso-texto', text: c.diagnostico }));
+    if (c.estado !== 'para_vos' && c.que_hacer) cuerpo.append(h('h3', { text: Pr.queHacer }), h('p', { class: 'caso-texto', text: c.que_hacer }));
+    if (c.commit_sha && c.estado !== 'arreglado') cuerpo.append(h('p', { class: 'campo-ayuda', text: Pr.arreglo(c.commit_sha.slice(0, 7)) }));
+    if (c.revisado_por && c.revisado_en) {
+      cuerpo.append(h('p', { class: 'campo-ayuda', text: Pr.ultimoCambio(Pr.quien[c.revisado_por] || c.revisado_por, Terna.fechaCorta(c.revisado_en) + ' ' + Terna.hora(c.revisado_en)) }));
+    }
+    if (c.nota) cuerpo.append(h('h3', { text: Pr.nota }), h('p', { class: 'caso-texto', text: c.nota }));
+    const area = h('textarea', { class: 'control', id: id + '-nota', rows: '2', maxlength: '500', 'aria-describedby': id + '-nota-ayuda ' + id + '-nota-error' });
+    const error = h('p', { class: 'campo-error', id: id + '-nota-error' });
+    area.addEventListener('input', () => { if (error.textContent) { error.textContent = ''; area.removeAttribute('aria-invalid'); } });
+    const marcar = (texto) => { error.textContent = texto; area.setAttribute('aria-invalid', 'true'); area.focus(); };
+    const cambiar = async (estado, boton) => {
+      const nota = area.value.trim();
+      if (nota.length > 500) { marcar(Pr.notaLarga); return; }
+      if (/[^\s@]+@[^\s@]+\.[a-z]{2,}/i.test(nota)) { marcar(Pr.notaConMail); return; }
+      boton.disabled = true;
+      const { error: err } = await sb.rpc('admin_cambiar_caso', { p_caso: c.caso_id, p_estado: estado, p_nota: nota || null });
+      boton.disabled = false;
+      if (err) {
+        if (Terna.siSesionVencida(err)) return;
+        if (String(err.message || '').includes('nota_invalida')) { marcar(Pr.notaConMail); return; }
+        Terna.avisoBreve(T.errores.guardar, { error: true });
+        return;
+      }
+      Terna.avisoBreve(estado === c.estado ? T.comun.guardado : Pr.hechos[estado]);
+      await problemas();
+      const t = raiz.querySelector('[data-caso="' + c.caso_id + '"] h2') || raiz.querySelector('.caso-tarjeta h2');
+      if (t) t.focus();
+    };
+    const botones = (ACCIONES_CASO[c.estado] || []).map((estado, k) => {
+      const b = h('button', { class: k === 0 ? 'btn btn-primario' : 'btn', type: 'button', onclick: () => cambiar(estado, b) }, Pr.acciones[estado]);
+      return b;
+    });
+    const bNota = h('button', { class: 'btn btn-texto', type: 'button', onclick: () => cambiar(c.estado, bNota) }, Pr.acciones.nota);
+    const bCopiar = h('button', { class: 'btn btn-texto', type: 'button', onclick: () => Terna.copiar(textoParaChat(c)) }, icono('i-pegar'), Pr.acciones.copiar);
+    cuerpo.append(
+      h('div', { class: 'campo' }, h('label', { for: id + '-nota', text: Pr.notaCampo }), area,
+        h('p', { class: 'campo-ayuda', id: id + '-nota-ayuda', text: Pr.notaAyuda }), error),
+      h('div', { class: 'botones' }, botones, bNota, bCopiar));
+    const veces = h('div', { class: 'caso-veces' });
+    cuerpo.append(h('h3', { text: Pr.lasVeces }), veces);
+    vecesDe(c, veces);
+  }
+  async function vecesDe(c, cont) {
+    const Pr = A.problemas;
+    const parar = Terna.cargando(cont);
+    const { data, error } = await sb.rpc('admin_problemas_de_caso', { p_caso: c.caso_id });
+    parar();
+    if (error) { Terna.errorDeCarga(cont, error); return; }
+    Terna.vaciar(cont);
+    const filas = data || [];
+    if (!filas.length) { cont.append(h('p', { class: 'campo-ayuda', text: Pr.sinFilas })); return; }
+    cont.append(h('div', { class: 'tabla-caja', tabindex: '0', role: 'region', 'aria-label': Pr.lasVeces }, h('table', { class: 'tabla' },
+      h('thead', null, h('tr', null, [Pr.fecha, Pr.usuario, Pr.aviso, Pr.error, Pr.reintentos].map((t, k) => h('th', { scope: 'col', class: k === 4 ? 'der' : null, text: t })))),
+      h('tbody', null, filas.map((p) => h('tr', null,
+        td(Terna.fechaCorta(p.creado_en) + ' ' + Terna.hora(p.creado_en)), td(p.usuario_mail),
+        td(p.aviso_puesto ? p.aviso_puesto + (p.aviso_empresa ? ' · ' + p.aviso_empresa : '') : p.fuente_id),
+        td(p.error), td(Terna.numero(Number(p.reintentos)), true)))))));
+  }
+  // Lo que se pega en un chat: el caso sin mails ni nombres (problemas.md §6.3).
+  function textoParaChat(c) {
+    const Pr = A.problemas;
+    return Pr.copia({
+      id: c.caso_id,
+      estado: Pr.estados[estadoVisible(c)],
+      paso: A.pasos[c.paso] || c.paso,
+      clave: c.clave,
+      veces: Number(c.ocurrencias),
+      cuando: Pr.cuando(Terna.fechaCorta(c.primera_en), Terna.fechaCorta(c.ultima_en)),
+      fuentes: (c.fuentes || []).join(', '),
+      personas: Number(c.usuarios) ? Pr.personas(Number(c.usuarios)) : '',
+      error: c.ultimo_error,
+      diagnostico: c.diagnostico,
+      queHacer: c.que_hacer,
+      commit: c.commit_sha,
+      nota: c.nota,
+    });
+  }
+
+  /* ---------- Problemas, la tabla de antes (una base sin 0042) ---------- */
+  async function problemasTabla() {
     const { data, error } = await sb.rpc('admin_problemas', { p_dias: dias.problemas });
     if (error) { Terna.errorDeCarga(raiz, error); return; }
     const Pr = A.problemas;
@@ -150,7 +335,7 @@ Terna.pagina('admin', async (ctx) => {
       if (r.error) { if (!Terna.siSesionVencida(r.error)) Terna.avisoBreve(T.errores.guardar, { error: true }); return; }
       await contarSinVer();
       dibujarSub();
-      await problemas();
+      await problemasTabla();
       Terna.avisoBreve(T.comun.guardado);
     } }, icono('i-tilde'), Pr.marcar);
     raiz.append(h('div', { class: 'herramientas' }, selectorDias('problemas'), filas.some((p) => !p.visto_en) ? bVistos : null));
