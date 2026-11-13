@@ -551,7 +551,9 @@ window.T = (function () {
       recorridoAccesible: (etapa) => 'Recorrido: ' + etapa,
       linea: {
         en_cola: 'En cola. Terna postula en la próxima corrida.',
-        para_revisar: 'Para revisar. Terna llenó el formulario; mirá las respuestas y decidí.',
+        // brand.md 0.24 §6.5 (Francisco, 12/11/2026: «dejemos en claro que está todo hecho y que solo como usuario final tenés que
+        // darle a confirmar»). Hasta 0.23: "Para revisar. Terna llenó el formulario; mirá las respuestas y decidí."
+        para_revisar: 'Para revisar. Terna completó todo el formulario: solo falta que lo confirmes. Mirá las respuestas y tocá Enviar.',
         enviada: (f, h) => 'Enviada por Terna el ' + f + ' a las ' + h + '.',
         postulado: (f) => 'Postulada a mano el ' + f + '.',
         pendiente: 'Paquete armado.',
@@ -560,7 +562,7 @@ window.T = (function () {
       // La línea corta, debajo del chip de la etapa en la tabla y en la fila: la misma, sin el nombre de la etapa adelante.
       lineaCorta: {
         en_cola: 'Terna postula en la próxima corrida.',
-        para_revisar: 'Terna llenó el formulario; mirá las respuestas y decidí.',
+        para_revisar: 'Terna completó todo el formulario: solo falta que lo confirmes.',
         enviada: (f, h) => 'El ' + f + ' a las ' + h + '.',
         postulado: (f) => 'La marcaste el ' + f + '.',
         pendiente: 'Paquete armado.',
@@ -579,6 +581,7 @@ window.T = (function () {
         elegido_por_usuario: 'Elegiste postular vos.',
       },
       completarRespuestas: 'Completar respuestas para formularios',
+      completarPreferencias: 'Completar Preferencias',
       completarPerfil: 'Completar Mi perfil',
       seVaATrabar: 'Se va a trabar en el mismo lugar: Terna no entra con cuentas.',
       botones: {
@@ -744,9 +747,10 @@ window.T = (function () {
       dispCantidad: 'Cantidad de días',
       dispCantidadAyuda: 'Por ejemplo, 15 o 30 si tenés que avisar en tu trabajo actual.',
       mudanza: 'Mudanza', mudanzaAyuda: 'Lo que Terna responde si un formulario pregunta si te mudarías por el trabajo.',
-      // 0021 (brand.md 0.4.14)
+      // 0021 (brand.md 0.4.14); la segunda oración, desde brand.md 0.25 (Francisco, 12/11/2026, 22:06): la declaración de usar solo
+      // tus palabras se responde que sí y se envía (pipeline.md 0.4.37 §4.12).
       consentimientos: 'Aceptar los consentimientos',
-      consentimientosAyuda: 'Terna marca que sí en las casillas de consentimiento de los formularios: la política de privacidad del empleador, que use tus respuestas demográficas, que te contacte por otras búsquedas, por SMS o WhatsApp, y sus novedades. Si lo apagás, no marca ninguna, y las postulaciones que piden una obligatoria te quedan a mano.',
+      consentimientosAyuda: 'Terna marca que sí en las casillas de consentimiento de los formularios: la política de privacidad del empleador, que use tus respuestas demográficas, que te contacte por otras búsquedas, por SMS o WhatsApp, y sus novedades. También dice que sí cuando un formulario te pide declarar que escribiste todo con tus palabras, aunque tu CV, tu carta y algunas respuestas los escribe Terna: si la empresa lo nota, puede descartar la postulación. Si lo apagás, no marca ninguna, y las postulaciones que piden una obligatoria te quedan a mano.',
       // Los textos que se guardan y que el motor lee (datos.md §5.6, pipeline.md §4.12): no son textos de pantalla, son el formato.
       formato: {
         pais: (pais, si) => pais + ': ' + (si ? 'sí' : 'no') + '.',
@@ -905,6 +909,65 @@ window.T = (function () {
         sitios: 'Sitios donde Terna creó una cuenta',
         estado: { creada: (fecha) => 'Creada el ' + fecha, confirmada: 'Confirmada', ya_existia: 'Ya tenías una cuenta: Terna no entró', fallo: 'No se pudo crear' },
         ninguna: 'Todavía ninguna.',
+      },
+      // «¿Tenés una discapacidad?» (brand.md 0.24 §6.7; diseno.md 0.36 §9.3; datos.md 0.35, 0039): Francisco, 12/11/2026. Para los
+      // formularios que lo preguntan (la autoidentificación de los de EE. UU., CC-305). Nace en «Prefiero no responder», que es lo que
+      // Terna elegía siempre; escribe en el acto y se guarda cifrada. Nunca se pregunta cuál. La lista es la del formulario CC-305.
+      discapacidad: {
+        titulo: '¿Tenés una discapacidad?',
+        porQue: 'Algunos formularios, sobre todo de empresas de Estados Unidos, preguntan si tenés una discapacidad. Responder es voluntario: si no lo hacés, Terna elige «Prefiero no responder».',
+        queHace: 'Terna usa tu respuesta solo para contestar esa pregunta, en los formularios que la hacen. Se guarda cifrada, como tu DNI, y nunca va a tu CV ni a tu carta. Terna no te pregunta cuál.',
+        noResponder: 'Prefiero no responder',
+        no: 'No',
+        si: 'Sí',
+        queCuenta: 'Qué cuenta como discapacidad',
+        definicion: 'Según el formulario que usan las empresas de Estados Unidos, una discapacidad es una condición que limita de forma importante una o más actividades principales de la vida. Si la tenés o la tuviste alguna vez, cuenta. Incluye, entre otras:',
+        lista: [
+          'Trastorno por consumo de alcohol u otras sustancias (sin consumo ilegal actual de drogas)',
+          'Trastorno autoinmune, por ejemplo lupus, fibromialgia, artritis reumatoidea o VIH/sida',
+          'Ceguera o baja visión',
+          'Cáncer, actual o pasado',
+          'Enfermedad cardiovascular o del corazón',
+          'Celiaquía',
+          'Parálisis cerebral',
+          'Sordera o dificultad grave para oír',
+          'Diabetes',
+          'Desfiguración, por ejemplo por quemaduras, heridas, accidentes o trastornos congénitos',
+          'Epilepsia u otro trastorno convulsivo',
+          'Trastornos gastrointestinales, por ejemplo enfermedad de Crohn o síndrome de intestino irritable',
+          'Discapacidad intelectual o del desarrollo',
+          'Condiciones de salud mental, por ejemplo depresión, trastorno bipolar, trastorno de ansiedad, esquizofrenia o TEPT',
+          'Pérdida total o parcial de extremidades',
+          'Movilidad reducida, con silla de ruedas, scooter, andador, órtesis u otros apoyos',
+          'Condiciones del sistema nervioso, por ejemplo migraña, enfermedad de Parkinson o esclerosis múltiple',
+          'Neurodivergencia, por ejemplo TDAH, trastorno del espectro autista, dislexia, dispraxia u otras dificultades de aprendizaje',
+          'Parálisis parcial o total, de cualquier causa',
+          'Condiciones pulmonares o respiratorias, por ejemplo tuberculosis, asma o enfisema',
+          'Baja estatura (enanismo)',
+          'Lesión cerebral traumática',
+        ],
+        confidencial: 'Ese formulario dice que responder es voluntario y confidencial, y que quien decide la contratación no ve tu respuesta.',
+      },
+      // Tu secundario y viajar (brand.md 0.24 §6.7; datos.md 0.35, 0039): Francisco, 12/11/2026, 20:59, para los formularios que lo
+      // preguntan (los de Canonical, con su misma escala). Se guardan con "Guardar preferencias"; sin respuesta, Terna no contesta esas
+      // preguntas y la postulación queda a mano diciendo dónde se cargan.
+      secundario: {
+        titulo: 'Tu secundario',
+        ayuda: 'Algunas empresas preguntan cómo te fue en el secundario. Terna elige en su lista la opción que diga lo mismo que vos y no inventa ninguna.',
+        matematica: '¿Cómo te fue en matemática?',
+        lengua: '¿Y en lengua?',
+        sinResponder: 'Sin responder',
+        escala: [['no_recuerdo', 'No me acuerdo'], ['no_fuerte', 'No era mi fuerte'], ['top50', 'Entre el 50 % mejor de mi escuela'], ['top20', 'Entre el 20 % mejor de mi escuela'],
+          ['top10', 'Entre el 10 % mejor de mi escuela'], ['top5', 'Entre el 5 % mejor de mi escuela'], ['top1_region', 'Entre el 1 % mejor de mi región'],
+          ['top01_region', 'Entre el 0,1 % mejor de mi región'], ['top001_region', 'Entre el 0,01 % mejor de mi región']],
+        evidencia: '¿Cómo lo sabés? (opcional)',
+        evidenciaAyuda: 'Tu promedio, un ranking, un premio o el resultado de un examen. Escribilo con tus palabras: Terna lo pega tal cual cuando el formulario lo pide.',
+      },
+      viajar: {
+        titulo: '¿Podés viajar por trabajo, también al exterior?',
+        ayuda: 'Algunas empresas piden reunirse en persona unas veces por año, en otro país. Terna usa tu respuesta en las preguntas de sí o no sobre viajar.',
+        si: 'Sí',
+        no: 'No',
       },
       revisar: 'Revisar antes de enviar',
       revisarAyuda: 'En Sí, Terna llena el formulario y espera que lo apruebes desde Postulaciones. Se envía en la corrida siguiente.',
@@ -1296,7 +1359,7 @@ window.T = (function () {
       por_puntuar: 'Terna ya tiene el texto de este aviso. Lo puntúa en la próxima corrida.',
       pendiente: 'Todavía no hay postulación.',
       en_cola: 'Terna postula en la próxima corrida.',
-      para_revisar: 'Terna llenó el formulario y espera tu aprobación.',
+      para_revisar: 'Terna completó todo el formulario y espera que lo confirmes.',
       enviada: 'Terna envió el formulario y el sitio lo confirmó.',
       a_mano: 'Terna no pudo o no corresponde. Todo está listo para que postules vos.',
       postulado: 'Marcaste que postulaste.',

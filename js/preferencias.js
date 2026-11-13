@@ -15,7 +15,11 @@
    (CV, carta, notas y salario) y no filtra avisos; hasta 0.26 era el último ítem de Búsqueda. Lee y escribe lo mismo.
    Desde diseno.md 0.29 (§9.3; brand.md 0.16 §6.7; datos.md 0.32, 0036), "¿Terna crea cuentas por vos?" va en Postulación, justo
    debajo de "Terna postula por vos" y solo con su Sí: una pregunta que escribe en el acto, con la contraseña de los sitios y la
-   lista de sitios donde Terna creó una cuenta. A quién se le muestra y la cuenta del último mes, en js/cuentas.js. */
+   lista de sitios donde Terna creó una cuenta. A quién se le muestra y la cuenta del último mes, en js/cuentas.js.
+   Desde diseno.md 0.36 (§9.3; brand.md 0.24 §6.7; datos.md 0.35, 0039), "¿Tenés una discapacidad?" va en Postulación, después de
+   "Revisar antes de enviar" (lo que dice cómo postula Terna queda junto; después, lo que Terna responde en los formularios): Sí, No o Prefiero no responder, para los formularios que lo preguntan. Escribe en el acto, cifrada, con
+   guardar_discapacidad; sin la 0039 la pregunta no se muestra. Debajo, «Tu secundario» (matemática y lengua en la escala de esos
+   formularios y cómo lo sabés) y «¿Podés viajar por trabajo, también al exterior?», que sí se guardan con "Guardar preferencias". */
 'use strict';
 
 // Respuestas para formularios y Tu cuenta están en Mi perfil desde 0.19: los links de antes (preferencias.html#respuestas, el de
@@ -37,7 +41,7 @@ Terna.pagina('preferencias', async (ctx) => {
   const MAX_LARGO_CLAVE = 40;
 
   const parar = Terna.cargando(raiz);
-  const [lectura, lecturaAlertas, lecturaAvisos] = await Promise.all([
+  const [lectura, lecturaAlertas, lecturaAvisos, lecturaDiscapacidad] = await Promise.all([
     // La fila entera (la persona puede leer todas sus columnas): desde 0026 trae también las palabras clave, y sin la migración
     // no falla ni deja un error en la consola; la página anda igual, sin ese ítem (datos.md 0.21 §14).
     sb.from('preferencias').select('*').eq('usuario_id', uid).maybeSingle(),
@@ -45,6 +49,9 @@ Terna.pagina('preferencias', async (ctx) => {
     // La guía del umbral (diseno.md 0.15 §9.3; datos.md 0.21.2 §14): el match de los avisos propios; la vista trae solo los
     // visibles y RLS, solo los de la persona. Se cuenta en el navegador. Si la lectura falla, la guía va sin cuentas.
     sb.from('mis_avisos').select('match, interes, creado_en, puesto, empresa').limit(1000),
+    // 0039: la respuesta a «¿Tenés una discapacidad?», descifrada para la persona de la sesión. Si la función no está (la base sin la
+    // 0039) o la lectura falla, la pregunta no se muestra: no se ofrece algo que no se puede guardar.
+    sb.rpc('leer_discapacidad'),
   ]);
   parar();
   // Las alertas que llegaron (0019; la retención las borra a los 7 días). Si no se pueden leer, los portales van sin estado.
@@ -59,6 +66,8 @@ Terna.pagina('preferencias', async (ctx) => {
   const conAviso = Object.prototype.hasOwnProperty.call(data, 'palabras_clave_aviso');
   // 0027: "Priorizar mis puestos". Sin la columna, el interruptor no aparece y la guía cuenta como con Sí (el default del motor).
   const conPriorizar = Object.prototype.hasOwnProperty.call(data, 'priorizar_puestos');
+  // 0039: el secundario y viajar (para los formularios que lo preguntan). Sin las columnas, los dos ítems no se muestran.
+  const conSecundario = Object.prototype.hasOwnProperty.call(data, 'secundario_matematica');
   const v = Object.assign({}, data, {
     modalidades: (data.modalidades || []).slice(),
     niveles: (data.niveles || NIVELES).slice(),
@@ -757,13 +766,84 @@ Terna.pagina('preferencias', async (ctx) => {
   }
   const cuentas = Cuentas.seOfrecen(ctx.usuario, data) ? preguntaCuentas() : null;
 
+  /* ---------- ¿Tenés una discapacidad? (diseno.md 0.36 §9.3; brand.md 0.24 §6.7; datos.md 0.35, 0039) ----------
+     Francisco, 12/11/2026: algunos formularios lo preguntan (la autoidentificación de los de EE. UU.) y, sin respuesta, Terna elige
+     «Prefiero no responder». Tres radios que escriben en el acto, como la pregunta de las cuentas: Sí y No se guardan cifrados;
+     «Prefiero no responder» saca la respuesta. Debajo, plegado, qué cuenta como discapacidad según ese formulario. Nunca se pregunta
+     cuál. Se atenúa con "Terna postula por vos", como "Revisar antes de enviar": solo sirve cuando Terna llena el formulario. */
+  function preguntaDiscapacidad(inicial) {
+    const D = P.discapacidad;
+    const idT = 'discapacidad-titulo';
+    const err = h('p', { class: 'campo-error', id: 'err-discapacidad', role: 'alert' });
+    let valor = inicial === 'si' || inicial === 'no' ? inicial : 'no_responder';
+    const radio = (val, texto) => h('label', { class: 'casilla' },
+      h('input', { type: 'radio', name: 'discapacidad', value: val, checked: valor === val, 'aria-describedby': 'err-discapacidad', onchange: () => responder(val) }),
+      h('span', { text: texto }));
+    const opciones = h('div', { class: 'opciones' }, radio('no_responder', D.noResponder), radio('no', D.no), radio('si', D.si));
+    // Qué cuenta como discapacidad, plegado con <details> (nativo: teclado y lector de pantalla sin código, y no se confunde con el
+    // botón que pliega el bloque, que es el único .plegable-boton de cada bloque).
+    const referencia = h('details', { class: 'discapacidad-referencia', id: 'discapacidad-referencia' },
+      h('summary', { text: D.queCuenta }),
+      h('div', { class: 'seccion' }, h('p', { text: D.definicion }), h('ul', null, D.lista.map((x) => h('li', { text: x }))),
+        h('p', { class: 'campo-ayuda', text: D.confidencial })));
+    async function responder(val) {
+      const antes = valor;
+      err.textContent = '';
+      const inputs = Array.from(opciones.querySelectorAll('input'));
+      inputs.forEach((x) => { x.disabled = true; });
+      const { error: e } = await sb.rpc('guardar_discapacidad', { p_respuesta: val });
+      inputs.forEach((x) => { x.disabled = nodo.classList.contains('atenuado'); });
+      if (e) {
+        // No se escribió: los botones vuelven a como estaban y el error queda junto a ellos.
+        inputs.forEach((x) => { x.checked = x.value === antes; });
+        if (!Terna.siSesionVencida(e)) { err.textContent = T.errores.guardar; bloques.marcarErrores(); }
+        return;
+      }
+      valor = val;
+      Terna.avisoBreve(T.comun.guardado);
+    }
+    const nodo = h('div', { class: 'subbloque discapacidad', id: 'discapacidad', role: 'group', 'aria-labelledby': idT },
+      h('h4', { id: idT, class: 'tarjeta-titulo', text: D.titulo }), h('p', { text: D.porQue }), h('p', { class: 'campo-ayuda', text: D.queHace }),
+      opciones, err, referencia);
+    nodo.dataset.titulo = idT;
+    return nodo;
+  }
+  const sDisc = lecturaDiscapacidad.error ? null : preguntaDiscapacidad(lecturaDiscapacidad.data);
+
+  /* ---------- Tu secundario y viajar (brand.md 0.24 §6.7; diseno.md 0.36 §9.3; datos.md 0.35, 0039) ----------
+     Francisco, 12/11/2026, 20:59: lo que piden formularios como los de Canonical y Terna no tenía. Dos listas con la escala de esos
+     formularios y la evidencia en palabras de la persona (Terna la pega tal cual), y si puede viajar. Se guardan con "Guardar
+     preferencias", como el resto de la página; sin responder, Terna no contesta esas preguntas. */
+  let sSec = null;
+  let sViaje = null;
+  if (conSecundario) {
+    const S = P.secundario;
+    const lista = (clave, etiqueta) => {
+      const idC = enTema.id(clave);
+      const sel = h('select', { class: 'control', id: idC },
+        h('option', { value: '', text: S.sinResponder }), S.escala.map(([val, texto]) => h('option', { value: val, text: texto, selected: v[clave] === val })));
+      sel.addEventListener('change', () => { v[clave] = sel.value || null; });
+      return h('div', { class: 'campo' }, h('label', { for: idC, text: etiqueta }), sel);
+    };
+    const idEv = enTema.id('evidencia');
+    const evidencia = h('textarea', { class: 'control', id: idEv, maxlength: '600', rows: '3', 'aria-describedby': idEv + '-ayuda' });
+    evidencia.value = v.secundario_evidencia || '';
+    evidencia.addEventListener('input', () => { v.secundario_evidencia = evidencia.value; });
+    sSec = enTema.item(S.titulo, h('p', { class: 'campo-ayuda', text: S.ayuda }),
+      lista('secundario_matematica', S.matematica), lista('secundario_lengua', S.lengua),
+      h('div', { class: 'campo' }, h('label', { for: idEv, text: S.evidencia }), evidencia, h('p', { class: 'campo-ayuda', id: idEv + '-ayuda', text: S.evidenciaAyuda })));
+    const V = P.viajar;
+    sViaje = enTema.grupoRadios(V.titulo, 'viajar', [['si', V.si], ['no', V.no]], v.viajar === true ? 'si' : (v.viajar === false ? 'no' : ''), (x) => { v.viajar = x === 'si'; });
+    sViaje.append(h('p', { class: 'campo-ayuda', text: V.ayuda }));
+  }
+
   const temaPaquetes = Terna.subtema(P.temas.paquetes, null, [sInt, sArm, sIdi, sAvisoCla, sCla, sSal].filter(Boolean));
-  const temaPostulacion = Terna.subtema(P.temas.postulacion, null, [sPos, cuentas ? cuentas.nodo : null, sRev].filter(Boolean));
+  const temaPostulacion = Terna.subtema(P.temas.postulacion, null, [sPos, cuentas ? cuentas.nodo : null, sRev, sDisc, sSec, sViaje].filter(Boolean));
   // Atenuar (diseno.md §9.3): el ítem sigue visible y legible; sus controles quedan inactivos hasta que vuelva a aplicar.
   function atenuar() {
     const poner = (sec, off) => {
       sec.classList.toggle('atenuado', off);
-      sec.querySelectorAll('input, button[role="switch"]').forEach((x) => { x.disabled = off; });
+      sec.querySelectorAll('input, select, textarea, button[role="switch"]').forEach((x) => { x.disabled = off; });
     };
     poner(sPos, !v.armar_paquetes);
     // La pregunta de las cuentas se atenúa con "Terna postula por vos": sin paquetes Terna no postula.
@@ -772,6 +852,7 @@ Terna.pagina('preferencias', async (ctx) => {
       cuentas.nodo.querySelectorAll('input[type="radio"]').forEach((x) => { x.disabled = !v.armar_paquetes; });
     }
     poner(sRev, !v.postular_sola || !v.armar_paquetes);
+    for (const s of [sDisc, sSec, sViaje]) if (s) poner(s, !v.postular_sola || !v.armar_paquetes);
     // La línea y la cuenta de la guía del umbral dicen qué hace Terna para arriba (diseno.md 0.15 §9.3).
     guia.actualizar();
   }
@@ -862,6 +943,12 @@ Terna.pagina('preferencias', async (ctx) => {
       if (conAviso) fila.palabras_clave_aviso = !!v.palabras_clave_aviso;
     }
     if (conPriorizar) fila.priorizar_puestos = !!v.priorizar_puestos;
+    if (conSecundario) {
+      fila.secundario_matematica = v.secundario_matematica || null;
+      fila.secundario_lengua = v.secundario_lengua || null;
+      fila.secundario_evidencia = String(v.secundario_evidencia || '').trim().slice(0, 600) || null;
+      fila.viajar = v.viajar === true ? true : (v.viajar === false ? false : null);
+    }
     if (conEmpresas) {
       fila.empresas_seguidas = v.empresas_seguidas;
       fila.priorizar_empresas = !!v.priorizar_empresas;

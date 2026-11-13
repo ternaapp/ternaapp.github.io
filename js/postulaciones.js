@@ -608,12 +608,15 @@ Terna.pagina('postulaciones', async (ctx) => {
   // Lo que Terna no tiene en ningún lado (un archivo que no es el CV ni la carta): no hay dónde completarlo, así que no va link
   // (pipeline.md 0.3.19 §4.12).
   const CAMPOS_SIN_LINK = { archivo: true };
+  // Desde brand.md 0.24 (0039): el secundario, su evidencia y viajar se completan en Preferencias › Postulación.
+  const CAMPOS_PREFERENCIAS = { secundario_matematica: true, secundario_lengua: true, secundario_evidencia: true, viajar: true };
   function campoTraba(a) { return a.respuestas && a.respuestas.traba ? a.respuestas.traba.campo || null : null; }
   function linkTraba(a) {
     if (a.motivo_a_mano !== 'pregunta_sin_respuesta') return null;
     const campo = campoTraba(a);
     if (CAMPOS_SIN_LINK[campo]) return null;
     if (CAMPOS_PERFIL[campo]) return h('a', { href: 'perfil.html#' + CAMPOS_PERFIL[campo], text: T.postulaciones.completarPerfil });
+    if (CAMPOS_PREFERENCIAS[campo]) return h('a', { href: 'preferencias.html#postulacion', text: T.postulaciones.completarPreferencias });
     return h('a', { href: 'perfil.html#respuestas', text: T.postulaciones.completarRespuestas });
   }
   function captura(a) {
@@ -638,7 +641,8 @@ Terna.pagina('postulaciones', async (ctx) => {
     const dl = h('dl', { class: 'respuestas' });
     for (const c of campos) {
       // brand.md 0.4.9 §6.5: una pregunta cerrada que Terna contestó que no (el perfil no muestra con qué decir que sí) se marca
-      // para que la persona la mire antes de "Enviar".
+      // para que la persona la mire antes de "Enviar". Una declaración suya (sus palabras, sin IA) no lleva nota: desde brand.md
+      // 0.25 Terna la responde que sí y envía, y lo dice la ayuda de "Aceptar los consentimientos".
       const nota = c.revisar === true && a.estado_postulacion === 'para_revisar' ? h('p', { class: 'campo-ayuda', text: T.postulaciones.revisarRespuesta }) : null;
       dl.append(h('div', null, h('dt', { text: c.etiqueta || '' }), h('dd', { text: c.valor ? c.valor : T.postulaciones.sinRespuesta }), nota));
     }
