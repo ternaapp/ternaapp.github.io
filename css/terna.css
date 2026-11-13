@@ -502,6 +502,14 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .tu-umbral-caja { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .tu-umbral-nota { font-size: 14px; color: var(--tinta-suave); }
 .tu-umbral-nota:empty { display: none; }
+/* La franja de Avisos (diseno.md 0.35 §7.10): las mismas dos tarjetas y, al lado, cuántos llegaron en los últimos 30 días. */
+.vistas-nota { font-size: 14px; color: var(--tinta-suave); }
+.vistas-nota:empty { display: none; }
+/* Próximos paquetes y la franja, en ese orden: en celular y hasta 1199 px, uno debajo del otro, como hijos de la página
+   (display: contents). Desde 1200 px, con Próximos paquetes a la vista, la franja va a su derecha, en el lugar que la tarjeta
+   deja libre (llega hasta 760 px): así no suma alto arriba de la lista y el cajón en línea sigue entrando entero en la pantalla
+   con la página arriba (§10.7; a 1280 × 720 le sobraban 3 px). */
+.avisos-arriba { display: contents; }
 
 /* Recorrido (desde diseno.md 0.33, solo en la ficha y de cuatro puntos) */
 .punto { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--borde-control); background: var(--hoja); flex: none; }
@@ -568,11 +576,13 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .tabla th .th-filtro.cambiado .icono { color: var(--accion-oscura); }
 .tabla th .th-filtro.cambiado::before { content: ""; flex: none; width: 6px; height: 6px; margin-right: 3px; border-radius: 50%; background: currentColor; }
 .tabla .btn-texto:hover { background: var(--accion-tinte); }
-/* La columna Paquete: el chip y, debajo, lo que se hace con el paquete (Pedir, Pegar texto) o el lugar de un pedido. */
+/* La columna Paquete: el chip y, debajo, lo que se hace con el paquete (Pedir), el lugar de un pedido o, desde diseno.md 0.35, quién
+   busca el texto de un aviso sin texto (hasta 0.34, Pegar texto). */
 .celda-paquete { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 /* Sin filas: el aviso de vacío en una sola celda, debajo de los encabezados (diseno.md 0.22 §7.6). */
 .tabla td.tabla-vacia { padding: 12px; }
 .pedido-lugar { font-size: 12px; line-height: 1.3; color: var(--espera-oscuro); }
+.sin-texto-linea { font-size: 12px; line-height: 1.3; color: var(--espera-oscuro); }
 .tabla tfoot td { font-weight: 700; border-top: 1px solid var(--borde-control); }
 .tabla-match { font-family: var(--fuente-titulos); font-weight: 700; font-size: 18px; text-align: right; }
 .tabla-match.bajo { color: var(--tinta-suave); }
@@ -1111,6 +1121,10 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .cuenta-nombre { max-width: 24ch; }
   .btn-tema.btn-barra { width: 40px; }
   .con-cajon.abierto { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 20px; align-items: start; }
+  /* Avisos: la franja a la derecha de Próximos paquetes, cuando está (diseno.md 0.35 §7.10). */
+  .avisos-arriba:has(> #proximos:not([hidden])) { display: grid; grid-template-columns: minmax(0, 760px) minmax(0, 1fr); gap: 16px 20px; align-items: start; }
+  .avisos-arriba:has(> #proximos:not([hidden])) .vistas { flex: 1 1 100%; }
+  .avisos-arriba:has(> #proximos:not([hidden])) .vistas-caja { margin-bottom: 0; }
   /* Cajón en línea: el <aside> solo se queda fijo; el marco redondeado se desplaza por dentro y la cruz va centrada
      sobre su esquina de arriba a la derecha (reglas junto al panel, en el corte de 768), así no se va al bajar.
      Se pega a 80 px (no 72) para que la cruz no quede debajo de la barra. */

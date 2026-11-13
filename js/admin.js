@@ -1,8 +1,9 @@
 /* Terna · js/admin.js
    Admin (brand.md §6.9), solo Francisco: Usuarios (con Borrar), Invitaciones (abrir o cerrar), Uso, Problemas y, desde
    brand.md 0.11, Empresas: las que ni el motor ni la búsqueda web diaria ubicaron, para que pegue dónde se postula (datos.md 0.28,
-   0032; desde 0.31, 0035, también un portal y "Ya no está abierto"). La pausa del motor no está acá. Lee y escribe solo por las
-   funciones admin_* y config.invitaciones_abiertas (datos.md §14).
+   0032; desde 0.31, 0035, también un portal y "Ya no está abierto") y, desde brand.md 0.23, Avisos sin texto: los de alertas cuyo
+   texto Terna ya no espera, para que pegue el texto (datos.md 0.34, 0038). La pausa del motor no está acá. Lee y escribe solo por
+   las funciones admin_* y config.invitaciones_abiertas (datos.md §14).
    Pensada primero para escritorio: en celular las tablas se desplazan. */
 'use strict';
 
@@ -12,12 +13,13 @@ Terna.pagina('admin', async (ctx) => {
   const A = T.admin;
   const raiz = document.getElementById('admin');
   const sub = document.getElementById('subpestanas');
-  const SECCIONES = ['usuarios', 'invitaciones', 'uso', 'problemas', 'empresas'];
+  const SECCIONES = ['usuarios', 'invitaciones', 'uso', 'problemas', 'empresas', 'avisos'];
   let seccion = SECCIONES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'uso';
   const dias = { uso: Terna.leerLocal('admin.uso', 7) === 30 ? 30 : 7, problemas: Terna.leerLocal('admin.problemas', 7) === 30 ? 30 : 7 };
   let sinVer = 0;
-  // Empresas (0032): sin la migración la función no existe y la subpestaña no se muestra.
+  // Empresas (0032) y Avisos sin texto (0038): sin la migración la función no existe y la subpestaña no se muestra.
   let empresas = null;
+  let sinTexto = null;
 
   async function contarSinVer() {
     const { data } = await sb.rpc('admin_problemas', { p_dias: 30 });
@@ -28,11 +30,23 @@ Terna.pagina('admin', async (ctx) => {
     empresas = error ? null : (data || []);
     return error;
   }
+  async function leerSinTexto() {
+    const { data, error } = await sb.rpc('admin_avisos_sin_texto');
+    sinTexto = error ? null : (data || []);
+    return error;
+  }
+  function chipDe(s) {
+    if (s === 'problemas' && sinVer) return A.sinVer(sinVer);
+    if (s === 'empresas' && empresas && empresas.length) return A.empresas.porCompletar(empresas.length);
+    if (s === 'avisos' && sinTexto && sinTexto.length) return A.avisos.porCompletar(sinTexto.length);
+    return null;
+  }
   function dibujarSub() {
     Terna.vaciar(sub);
     for (const s of SECCIONES) {
       if (s === 'empresas' && empresas === null) continue;
-      const chip = s === 'problemas' && sinVer ? A.sinVer(sinVer) : (s === 'empresas' && empresas.length ? A.empresas.porCompletar(empresas.length) : null);
+      if (s === 'avisos' && sinTexto === null) continue;
+      const chip = chipDe(s);
       sub.append(h('a', { href: '#' + s, 'aria-current': s === seccion ? 'true' : null, onclick: (e) => { e.preventDefault(); ir(s); } },
         A.secciones[s], chip ? h('span', { class: 'chip chip-espera', text: chip }) : null));
     }
@@ -235,6 +249,99 @@ Terna.pagina('admin', async (ctx) => {
       h('div', { class: 'botones' }, bGuardar, bSinSitio, bCerrar, bOmitir));
   }
 
+  /* ---------- Avisos sin texto (brand.md 0.23 §6.9; diseno.md 0.35 §9.7; datos.md 0.34, 0038) ----------
+     Francisco, 12/11/2026: si Terna no consigue el texto de un aviso, "Fran lo va a sacar por vos". Una tarjeta por aviso de alerta
+     que alguien tiene en su lista y cuyo texto Terna ya no espera (la página no existe, falló los intentos, pasaron los días de
+     espera o es de un portal cuyas páginas Terna no abre): lo público del aviso, por qué Terna no lo consiguió, el link para abrirlo
+     y el texto, que va al match de quien lo tiene (nunca se ve de quién es). Terna lo puntúa en la corrida siguiente, primero, como
+     lo que pegaba la persona hasta brand.md 0.22. "Ya no está abierto" lo cierra, como en Empresas. */
+  async function avisosSeccion(foco) {
+    const error = await leerSinTexto();
+    dibujarSub();
+    if (error) { Terna.errorDeCarga(raiz, error); return; }
+    const V = A.avisos;
+    Terna.vaciar(raiz);
+    raiz.append(h('p', { class: 'seccion-intro', text: V.intro }), h('p', { class: 'campo-ayuda', text: V.como }));
+    if (!sinTexto.length) { raiz.append(h('p', { class: 'vacio', text: V.vacio })); return; }
+    const lista = h('div', { class: 'empresas-lista' });
+    sinTexto.forEach((a, i) => lista.append(tarjetaSinTexto(a, i)));
+    raiz.append(lista);
+    const destino = foco !== undefined ? lista.querySelectorAll('.aviso-sin-texto h2')[Math.min(foco, sinTexto.length - 1)] : null;
+    if (destino) destino.focus();
+  }
+  function motivoSinTexto(a) {
+    const M = A.avisos.motivos;
+    if (a.motivo === 'intentos') return M.intentos(Number(a.pagina_intentos) || 0);
+    if (a.motivo === 'espera') return M.espera(Math.max(1, Math.floor((Date.now() - Date.parse(a.visto_en)) / 86400000)));
+    if (a.motivo === 'sin_lector') return M.sin_lector(a.fuente || '');
+    return M[a.motivo] || '';
+  }
+  function tarjetaSinTexto(a, i) {
+    const V = A.avisos;
+    const id = 'sin-texto-' + i;
+    const max = ctx.config.max_texto_pegado_chars || 20000;
+    const min = ctx.config.min_texto_pegado_chars || 100;
+    // El link sale de avisos.url: solo http y https (Terna.urlExterna; informe de seguridad, H8).
+    const avisoUrl = Terna.urlExterna(a.url);
+    const area = h('textarea', { class: 'control', id: id + '-texto', rows: '8', spellcheck: 'false', 'aria-describedby': id + '-ayuda ' + id + '-cont ' + id + '-error' });
+    const contador = h('p', { class: 'campo-ayuda num', id: id + '-cont', text: V.contador(0, max) });
+    const error = h('p', { class: 'campo-error', id: id + '-error', role: 'alert' });
+    const marcar = (texto) => { error.textContent = texto; area.setAttribute('aria-invalid', 'true'); area.focus(); };
+    area.addEventListener('input', () => {
+      contador.textContent = V.contador(area.value.length, max);
+      if (error.textContent) { error.textContent = ''; area.removeAttribute('aria-invalid'); }
+    });
+    const guardar = async (boton) => {
+      const texto = area.value.trim();
+      if (!texto) { marcar(T.errores.completa); return; }
+      if (texto.length < min) { marcar(T.errores.textoCorto); return; }
+      if (texto.length > max) { marcar(T.errores.textoLargo(max)); return; }
+      boton.disabled = true;
+      const { error: err } = await sb.rpc('admin_completar_texto', { p_aviso: a.aviso_id, p_texto: texto });
+      boton.disabled = false;
+      if (err) {
+        if (Terna.siSesionVencida(err)) return;
+        const msg = String(err.message || '');
+        if (msg.includes('texto_corto')) { marcar(T.errores.textoCorto); return; }
+        if (msg.includes('texto_largo')) { marcar(T.errores.textoLargo(max)); return; }
+        // Mientras tanto Terna lo consiguió, nadie lo tiene ya en su lista o el aviso cerró: se dice y la lista se vuelve a leer.
+        const aviso = msg.includes('aviso_con_texto') ? V.errorConTexto : msg.includes('aviso_sin_listas') ? V.errorSinListas
+          : msg.includes('aviso_desconocido') ? V.errorCerrado : null;
+        if (!aviso) { Terna.avisoBreve(T.errores.guardar, { error: true }); return; }
+        Terna.avisoBreve(aviso);
+        await avisosSeccion(i);
+        return;
+      }
+      Terna.avisoBreve(V.guardado);
+      await avisosSeccion(i);
+    };
+    const cerrar = async (boton) => {
+      boton.disabled = true;
+      const { error: err } = await sb.rpc('admin_cerrar_aviso', { p_aviso: a.aviso_id });
+      boton.disabled = false;
+      if (err) {
+        if (Terna.siSesionVencida(err)) return;
+        Terna.avisoBreve(T.errores.guardar, { error: true });
+      } else {
+        Terna.avisoBreve(V.cerrado);
+      }
+      await avisosSeccion(i);
+    };
+    const bGuardar = h('button', { class: 'btn btn-primario', type: 'button', onclick: () => guardar(bGuardar) }, V.guardar);
+    const bCerrar = h('button', { class: 'btn', type: 'button', 'aria-label': V.cerrarAccesible(a.puesto || ''), onclick: () => cerrar(bCerrar) }, V.cerrar);
+    const meta = [a.empresa, a.ubicacion, a.fuente ? V.alerta(a.fuente) : null].filter(Boolean).join(' · ');
+    return h('section', { class: 'tarjeta seccion empresa-tarjeta aviso-sin-texto', 'aria-labelledby': id + '-titulo', dataset: { aviso: a.aviso_id } },
+      h('h2', { class: 'tarjeta-titulo', id: id + '-titulo', tabindex: '-1', text: a.puesto || '' }),
+      meta ? h('p', { class: 'empresa-meta', text: meta }) : null,
+      h('p', { class: 'empresa-ejemplo' }, h('span', { text: motivoSinTexto(a) + ' ' }),
+        avisoUrl ? h('a', { href: avisoUrl, target: '_blank', rel: 'noopener noreferrer', 'aria-label': V.abrirAccesible(a.fuente || 'LinkedIn') },
+          V.abrir(a.fuente || 'LinkedIn'), icono('i-abrir', 'icono-16')) : null),
+      a.sale_el ? h('p', { class: 'campo-ayuda', text: V.sale(Terna.fechaCorta(a.sale_el)) }) : null,
+      h('div', { class: 'campo' }, h('label', { for: id + '-texto', text: V.texto }), area,
+        h('p', { class: 'campo-ayuda', id: id + '-ayuda', text: V.textoAyuda }), contador, error),
+      h('div', { class: 'botones' }, bGuardar, bCerrar));
+  }
+
   async function cargar() {
     const parar = Terna.cargando(raiz);
     try {
@@ -242,12 +349,13 @@ Terna.pagina('admin', async (ctx) => {
       else if (seccion === 'invitaciones') invitaciones();
       else if (seccion === 'uso') await uso();
       else if (seccion === 'empresas') await empresasSeccion();
+      else if (seccion === 'avisos') await avisosSeccion();
       else await problemas();
     } finally { parar(); }
   }
 
-  await Promise.all([contarSinVer(), leerEmpresas()]);
-  if (seccion === 'empresas' && empresas === null) seccion = 'uso';
+  await Promise.all([contarSinVer(), leerEmpresas(), leerSinTexto()]);
+  if ((seccion === 'empresas' && empresas === null) || (seccion === 'avisos' && sinTexto === null)) seccion = 'uso';
   dibujarSub();
   await cargar();
 }, { admin: true });

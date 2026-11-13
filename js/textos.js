@@ -103,7 +103,6 @@ window.T = (function () {
       aMano: (x) => plural(x, '1 postulación para hacer a mano', n(x) + ' postulaciones para hacer a mano'),
       paraRevisar: (x) => plural(x, '1 para revisar antes de enviar', n(x) + ' para revisar antes de enviar'),
       porDecidir: (x) => plural(x, '1 aviso por decidir si te interesa', n(x) + ' avisos por decidir si te interesan'),
-      sinTexto: (x) => plural(x, '1 aviso sin texto', n(x) + ' avisos sin texto'),
       enCola: (x) => (x === 1 ? '1' : n(x)) + ' en cola: Terna postula en la próxima corrida',
       nadaPendiente: 'Nada pendiente. Terna sigue sola.',
       umbralActual: (u) => 'Umbral actual: ' + u + '.',
@@ -347,7 +346,8 @@ window.T = (function () {
         empresa: 'Se postula en el sitio de la empresa, en un formulario que Terna todavía no sabe completar: lo hacés vos.',
         empresaCuenta: 'El sitio de la empresa pide crear una cuenta para postular. Terna no crea ni usa cuentas: lo hacés vos.',
         empresaViaLinkedin: 'El botón "Postularse" del aviso en LinkedIn lleva al sitio de la empresa, y ahí Terna no encontró un formulario que sepa completar: lo hacés vos.',
-        confirmar: (sinTexto) => 'Terna todavía no leyó la página del aviso en LinkedIn. La lee en las próximas corridas (una por día): trae el texto y te dice si se postula con Easy Apply o en el sitio de la empresa.' + (sinTexto ? ' Si no querés esperar, pegá el texto.' : ''),
+        // Desde brand.md 0.23 sin "Si no querés esperar, pegá el texto.": la persona ya no pega textos.
+        confirmar: 'Terna todavía no leyó la página del aviso en LinkedIn. La lee en las próximas corridas (una por día): trae el texto y te dice si se postula con Easy Apply o en el sitio de la empresa.',
         linkedin: 'Se postula desde el aviso en LinkedIn: su página no dice si es con Easy Apply o en el sitio de la empresa. Lo ves al abrirlo.',
         portal: (nombre) => 'Se postula con tu cuenta de ' + nombre + '. Terna no usa tus cuentas: lo hacés vos.',
       },
@@ -361,8 +361,23 @@ window.T = (function () {
       // Desde brand.md 0.8 "Pedir" va en la columna Paquete, debajo de "Sin armar", y pide confirmación (Francisco, 06/11/2026).
       pedir: 'Pedir',
       pedirAccesible: (puesto) => 'Pedir el paquete de ' + puesto,
-      pegarCorto: 'Pegar texto',
-      pegarAccesible: (puesto) => 'Pegar el texto del aviso de ' + puesto,
+      // Debajo de "Sin texto" (brand.md 0.23 §6.4; Francisco, 12/11/2026: "que muestre sin texto en cola para evaluar… no quiero que
+      // tenga el usuario final el permiso para pegar el texto"): quién lo está buscando. Hasta 0.22, el botón "Pegar texto".
+      sinTextoLinea: { buscando: 'Terna lo busca', admin: 'Lo busca Francisco' },
+      // La franja de arriba de Avisos (brand.md 0.23 §6.4; diseno.md 0.35 §7.10; Francisco, 12/11/2026: "algo similar" a Por postular y
+      // Postuladas, "7 nuevos empleos esta semana… qué es lo nuevo semanalmente, mensualmente"): dos tarjetas que muestran la lista
+      // entera o lo que llegó en los últimos 7 días, con de qué está hecha cada una, y al lado lo de los últimos 30 días.
+      mostrar: 'Mostrar',
+      vistas: { todos: 'Todos', semana: 'Esta semana' },
+      vistaSemanaExplicacion: 'Lo que llegó a tu lista en los últimos 7 días.',
+      partes: {
+        conPaquete: (x) => x + ' con paquete',
+        sinPaquete: (x) => x + ' sin paquete',
+        sinTexto: (x) => x + ' sin texto',
+      },
+      mes: (x) => (x === 1 ? 'En los últimos 30 días llegó 1.' : 'En los últimos 30 días llegaron ' + n(x) + '.'),
+      vacioSemana: 'En los últimos 7 días no llegó ningún aviso que entre en esta lista.',
+      verTodos: 'Ver todos',
       noMeInteresaAccesible: (puesto) => 'No me interesa ' + puesto,
       // Hasta brand.md 0.7 decía "Pedido. Terna lo arma en la próxima corrida y usa uno de tus {3} paquetes del día."
       pedido: (lugar, corridas) => (corridas <= 1 ? 'Pedido. Terna lo arma en la próxima corrida.'
@@ -476,9 +491,13 @@ window.T = (function () {
         postulacion: 'Postulación',
         donde: 'Dónde se postula',
         verEnPostulaciones: 'Ver en Postulaciones',
-        sinTexto: 'Terna no tiene el texto de este aviso. Pegalo y lo puntúa en la próxima corrida.',
-        porPuntuar: 'Pegaste el texto. Terna lo puntúa en la próxima corrida.',
-        pegar: 'Pegar el texto del aviso',
+        // Desde brand.md 0.23 la persona no pega el texto: lo busca Terna y, si no lo consigue, Francisco. Hasta 0.22, "Terna no
+        // tiene el texto de este aviso. Pegalo y lo puntúa en la próxima corrida." con el botón "Pegar el texto del aviso".
+        sinTexto: {
+          buscando: 'Terna todavía no tiene el texto de este aviso. Lo busca sola en las próximas corridas y, cuando lo consigue, lo puntúa. No tenés que hacer nada.',
+          admin: 'Terna no pudo conseguir el texto de este aviso, así que lo busca Francisco a mano. Cuando lo cargue, Terna lo puntúa en la corrida siguiente. Si en unos días no aparece, el aviso sale de tu lista.',
+        },
+        porPuntuar: 'Terna ya tiene el texto de este aviso y lo puntúa en la próxima corrida.',
       },
       notasBloques: [
         { titulo: 'Dónde poner el foco', icono: 'i-foco', nombre: 'foco' },
@@ -488,11 +507,6 @@ window.T = (function () {
         { titulo: 'Salario', icono: 'i-salario', nombre: 'salario' },
       ],
       notasVacio: 'Nada para marcar en este aviso.',
-      pegarTitulo: 'Pegar el texto del aviso',
-      pegarAyuda: (fuente) => 'Abrí el aviso en ' + (fuente || 'el sitio donde lo viste') + ', copiá la descripción completa y pegala acá. Terna lo puntúa en la próxima corrida.',
-      contador: (x, max) => n(x) + ' / ' + n(max),
-      guardarTexto: 'Guardar texto',
-      textoGuardado: 'Texto guardado. Terna lo puntúa en la próxima corrida.',
       vacioSinCorrida: 'Todavía no hay avisos. Terna corre una vez por día; los primeros aparecen después de la próxima corrida.',
       vacioSinAvisos: 'Hoy no apareció ningún aviso que ajuste con tu perfil. Mañana se vuelve a buscar. Si querés ver más, podés bajar el umbral o sumar modalidades.',
       vacioFiltros: 'Ningún aviso coincide con estos filtros.',
@@ -586,7 +600,8 @@ window.T = (function () {
       textoAviso: {
         titulo: 'El texto del aviso',
         ayudaFuente: 'Lo que decía el aviso cuando Terna lo leyó. Te sirve para preparar la entrevista aunque ya no esté publicado.',
-        ayudaUsuario: 'El texto del aviso que pegaste vos. Te sirve para preparar la entrevista aunque ya no esté publicado.',
+        // Desde brand.md 0.23: el que no vino de la fuente lo pegó la persona (hasta 0.22) o Francisco.
+        ayudaUsuario: 'El texto del aviso que Terna tiene guardado para vos. Te sirve para preparar la entrevista aunque ya no esté publicado.',
         vacio: 'Terna no tiene guardado el texto de este aviso.',
         error: 'No se pudo traer el texto del aviso. Probá de nuevo.',
       },
@@ -946,12 +961,12 @@ window.T = (function () {
           ['pasos', [
             '*Creá las alertas* en los portales que uses: una por cada puesto que buscás, diaria y por mail.',
             '*Armá en tu correo* una carpeta para las alertas y un filtro que se las reenvía solo a tu dirección de Terna. Se hace una vez, desde una computadora.',
-            '*Listo.* Al día siguiente de cada alerta, sus avisos aparecen en Avisos. Terna busca el texto completo de cada uno en la página de empleos de la empresa y, si es de LinkedIn, en la página pública del aviso, sin entrar con ninguna cuenta; si no lo consigue, te pide que pegues el texto para darte el match.',
+            '*Listo.* Al día siguiente de cada alerta, sus avisos aparecen en Avisos. Terna busca el texto completo de cada uno en la página de empleos de la empresa y, si es de LinkedIn, en la página pública del aviso, sin entrar con ninguna cuenta; si en unos días no lo consigue, se lo pasa a Francisco, que lo busca a mano, para darte el match.',
           ], 'resto'],
           ['pasos', [
             '*Creá las alertas* en los portales que uses: una por cada puesto que buscás, diaria y por mail.',
             '*Armá en tu Gmail* un filtro que les ponga a tus alertas la etiqueta *Terna/Alertas*. Se hace una vez, desde una computadora.',
-            '*Listo.* Al día siguiente de cada alerta, sus avisos aparecen en Avisos. Terna busca el texto completo de cada uno en la página de empleos de la empresa y, si es de LinkedIn, en la página pública del aviso, sin entrar con ninguna cuenta; si no lo consigue, te pide que pegues el texto para darte el match.',
+            '*Listo.* Al día siguiente de cada alerta, sus avisos aparecen en Avisos. Terna busca el texto completo de cada uno en la página de empleos de la empresa y, si es de LinkedIn, en la página pública del aviso, sin entrar con ninguna cuenta; si en unos días no lo consigue, se lo pasa a Francisco, que lo busca a mano, para darte el match.',
           ], 'dueno'],
           ['subtitulo', 'Tu dirección de Terna', 'resto'],
           ['p', 'Es la dirección de mail a la que le mandás tus alertas. Es solo tuya: por ella Terna sabe que esas alertas son tuyas. Lleva el nombre de Francisco porque llega a una casilla de Gmail suya, en una etiqueta aparte que lee Terna.', 'resto'],
@@ -1147,14 +1162,14 @@ window.T = (function () {
             'En Preferencias, *Alertas por mail* dice para cada portal cuándo llegó su última alerta. Si dice *Sin alertas en los últimos 7 días*, fijate que la alerta llegue a tu etiqueta o carpeta *Alertas de empleo* y que el filtro o la regla tenga tu dirección de Terna.',
             'En Gmail, si *Reenviarlo a* no muestra tu dirección de Terna, falta que Francisco confirme la parte 2: avisale.',
             'Si dice *Llegaron mails, pero sin avisos*, avisale a Francisco: puede ser que el portal haya cambiado la forma de sus mails.',
-            'Los avisos de una alerta llegan sin el texto completo. Si Terna no lo encuentra en la página de empleos de la empresa ni, en los de LinkedIn, en la página pública del aviso, en Avisos tocá *Pegar el texto del aviso* para que lo puntúe.',
+            'Los avisos de una alerta llegan sin el texto completo. Terna lo busca en la página de empleos de la empresa y, en los de LinkedIn, en la página pública del aviso; mientras tanto, en Avisos dicen *Sin texto*. Si no lo consigue, lo busca Francisco a mano.',
             'Para dejar de mandarle alertas a Terna, borrá el filtro (Gmail: *Filtros y direcciones bloqueadas*) o la regla (Outlook: *Reglas*), o la alerta en el portal.',
           ], 'resto'],
           ['lista', [
             '*Terna lee las alertas una vez por día*, a la mañana: lo que llega hoy aparece mañana.',
             'En Preferencias, *Alertas por mail* dice para cada portal cuándo llegó su última alerta. Si dice *Sin alertas en los últimos 7 días*, fijate en tu Gmail que la alerta tenga la etiqueta *Terna/Alertas*.',
             'Si dice *Llegaron mails, pero sin avisos*, puede ser que el portal haya cambiado la forma de sus mails y haya que ajustar cómo Terna los lee.',
-            'Los avisos de una alerta llegan sin el texto completo. Si Terna no lo encuentra en la página de empleos de la empresa ni, en los de LinkedIn, en la página pública del aviso, en Avisos tocá *Pegar el texto del aviso* para que lo puntúe.',
+            'Los avisos de una alerta llegan sin el texto completo. Terna lo busca en la página de empleos de la empresa y, en los de LinkedIn, en la página pública del aviso; mientras tanto, en Avisos dicen *Sin texto*. Si no lo consigue, lo busca Francisco a mano.',
             'Para que Terna deje de leer tus alertas, borrá el filtro (*Filtros y direcciones bloqueadas*) o la alerta en el portal.',
           ], 'dueno'],
           ['ir', ['Ver mis portales en Preferencias', 'preferencias.html#alertas']],
@@ -1185,7 +1200,7 @@ window.T = (function () {
 
     admin: {
       titulo: 'Admin',
-      secciones: { usuarios: 'Usuarios', invitaciones: 'Invitaciones', uso: 'Uso', problemas: 'Problemas', empresas: 'Empresas' },
+      secciones: { usuarios: 'Usuarios', invitaciones: 'Invitaciones', uso: 'Uso', problemas: 'Problemas', empresas: 'Empresas', avisos: 'Avisos sin texto' },
       sinVer: (x) => x + ' sin ver',
       usuarios: { mail: 'Mail', alta: 'Alta', ultima: 'Última entrada', estado: 'Estado', avisos: 'Avisos (7 días)', paquetes: 'Paquetes (7 días)', borrar: 'Borrar' },
       estados: { activo: 'Activo', pausado: 'Pausado' },
@@ -1232,6 +1247,36 @@ window.T = (function () {
         errorUrl: 'Pegá un link que empiece con https://.',
         errorLinkedin: 'Ese link es de LinkedIn. Tocá "Postularse" en el aviso y pegá el de la página a la que te lleva. Si es Easy Apply, tocá "No tiene página propia".',
       },
+      // Admin › Avisos sin texto (brand.md 0.23 §6.9; diseno.md 0.35 §9.7; datos.md 0.34, 0038; Francisco, 12/11/2026: si Terna no
+      // consigue el texto, "Fran lo va a sacar por vos"): los avisos de alertas cuyo texto Terna ya no espera, para que pegue el texto.
+      avisos: {
+        porCompletar: (x) => x + ' por completar',
+        intro: 'Avisos que llegaron por alertas y cuyo texto Terna no pudo conseguir: sin el texto no tienen match ni paquete. Aparecen cuando Terna deja de esperar su página (no existe, falló tres veces o lleva unos días sin poder leerla) o cuando son de un portal cuyas páginas Terna no abre. Lo que pegues va a quien tiene el aviso en su lista; acá no se ve de quién es.',
+        como: 'Abrí el aviso, copiá la descripción completa (qué se hace, qué piden, los requisitos) y pegala en su tarjeta. Si ya no está publicado, tocá "Ya no está abierto".',
+        vacio: 'No hay avisos para completar.',
+        alerta: (fuente) => 'alerta de ' + fuente,
+        motivos: {
+          no_existe: 'La página del aviso en LinkedIn no existe.',
+          intentos: (x) => 'Terna intentó leer su página ' + x + ' veces y no pudo.',
+          espera: (x) => (x === 1 ? 'Llegó hace 1 día y Terna todavía no pudo leer su página.' : 'Llegó hace ' + x + ' días y Terna todavía no pudo leer su página.'),
+          lectura_apagada: 'La lectura de las páginas de LinkedIn está apagada.',
+          sin_lector: (fuente) => 'Terna no abre las páginas de ' + fuente + '.',
+        },
+        sale: (f) => 'Si nadie lo completa, sale de la lista el ' + f + '.',
+        abrir: (fuente) => 'Abrir el aviso en ' + fuente,
+        abrirAccesible: (fuente) => 'Abrir el aviso en ' + fuente + ', abre en otra pestaña',
+        texto: 'Texto del aviso',
+        textoAyuda: 'La descripción completa, como está en el aviso. Terna lo puntúa en la próxima corrida para quien lo tiene en su lista.',
+        contador: (x, max) => n(x) + ' / ' + n(max),
+        guardar: 'Guardar texto',
+        cerrar: 'Ya no está abierto',
+        cerrarAccesible: (puesto) => 'Ya no está abierto: ' + puesto,
+        guardado: 'Guardado. Terna lo puntúa en la próxima corrida.',
+        cerrado: 'Listo: Terna da el aviso por cerrado.',
+        errorConTexto: 'Este aviso ya tiene texto: Terna lo consiguió mientras tanto.',
+        errorSinListas: 'Ya nadie tiene este aviso en su lista: no hace falta completarlo.',
+        errorCerrado: 'Este aviso ya cerró.',
+      },
     },
 
     // brand.md §6.10: cada chip lleva su explicación como texto accesible y como tooltip.
@@ -1244,8 +1289,11 @@ window.T = (function () {
       pedido: 'Lo pediste. Terna lo arma antes que los que elige sola, en el orden de tus próximos paquetes.',
       armado: 'CV, carta, salario y notas listos.',
       no_se_pudo_armar: 'Falló al armarlo. Terna lo reintenta mañana.',
-      sin_texto: 'Terna no tiene el texto de este aviso. Pegalo para que lo puntúe.',
-      por_puntuar: 'Pegaste el texto. Terna lo puntúa en la próxima corrida.',
+      // Desde brand.md 0.23 (la persona ya no pega textos): hasta 0.22, "Terna no tiene el texto de este aviso. Pegalo para que lo
+      // puntúe." y "Pegaste el texto. Terna lo puntúa en la próxima corrida."
+      sin_texto: 'Terna todavía no tiene el texto de este aviso. Lo busca en las próximas corridas y, cuando lo consigue, lo puntúa.',
+      sin_texto_admin: 'Terna no pudo conseguir el texto de este aviso. Lo busca Francisco a mano; cuando lo cargue, Terna lo puntúa.',
+      por_puntuar: 'Terna ya tiene el texto de este aviso. Lo puntúa en la próxima corrida.',
       pendiente: 'Todavía no hay postulación.',
       en_cola: 'Terna postula en la próxima corrida.',
       para_revisar: 'Terna llenó el formulario y espera tu aprobación.',
@@ -1307,7 +1355,8 @@ window.T = (function () {
       textoCorto: 'El texto es muy corto para ser un aviso.',
       textoLargo: (max) => 'El texto es demasiado largo (hasta ' + n(max) + ' caracteres).',
       conTexto: 'Este aviso ya tiene texto.',
-      sinTexto: 'Primero pegá el texto del aviso.',
+      // Desde brand.md 0.23; hasta 0.22, "Primero pegá el texto del aviso."
+      sinTexto: 'Terna todavía no tiene el texto de este aviso.',
       yaArmado: 'Este aviso ya tiene paquete.',
       yaPedido: 'Ya está pedido.',
       armarNo: 'Armar paquetes está en No.',

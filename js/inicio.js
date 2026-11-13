@@ -116,7 +116,8 @@ Terna.pagina('inicio', async (ctx) => {
       if (cuantasAMano) filas.push(filaPendiente('postulaciones.html#a-mano', 'i-a-mano', I.aMano(cuantasAMano)));
       if (num(r.para_revisar)) filas.push(filaPendiente('postulaciones.html#para-revisar', 'i-revisar', I.paraRevisar(num(r.para_revisar))));
       if (num(r.por_decidir)) filas.push(filaPendiente('avisos.html?interes=por_decidir', 'i-por-decidir', I.porDecidir(num(r.por_decidir))));
-      if (num(r.sin_texto)) filas.push(filaPendiente('avisos.html?paquete=sin_texto', 'i-sin-texto', I.sinTexto(num(r.sin_texto))));
+      // Los avisos sin texto ya no son algo que te toca (brand.md 0.23 §6.3): los busca Terna y, si no puede, Francisco. Hasta 0.22,
+      // "{n} avisos sin texto", con el link a Avisos, para pegarlos.
       if (num(r.en_cola)) filas.push(filaPendiente(null, 'i-pedido', I.enCola(num(r.en_cola))));
       if (filas.length) queHay.append(h('div', { class: 'tarjeta tarjeta-plana' }, filas));
       else queHay.append(h('p', { class: 'tarjeta nada-pendiente', text: I.nadaPendiente }));

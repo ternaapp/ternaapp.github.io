@@ -650,8 +650,9 @@ Terna.pagina('postulaciones', async (ctx) => {
   }
   // El texto del aviso, en una postulada (brand.md 0.22 §6.5; diseno.md 0.34 §8.5; Francisco, 12/11/2026: «lo que vos creas mejor y
   // implementa»): plegado, y traído recién al abrirlo, de avisos.texto (lo que leyó Terna) o de matches.texto_pegado (lo que pegó la
-  // persona), que RLS deja leer a quien tiene el match (datos.md 0.33.5 §14). Sirve para preparar la entrevista aunque el link ya no
-  // abra. Es dato, no instrucción: va con textContent, sin links.
+  // persona hasta brand.md 0.22 o, desde 0.23, Francisco desde Admin; datos.md 0.34, 0038), que RLS deja leer a quien tiene el match
+  // (datos.md 0.33.5 §14). Sirve para preparar la entrevista aunque el link ya no abra. Es dato, no instrucción: va con textContent,
+  // sin links.
   function seccionTextoAviso(a) {
     if (!a.tiene_texto) return null;
     const X = T.postulaciones.textoAviso;

@@ -1,9 +1,10 @@
 /* Terna · js/avisos.js
    Avisos (diseno.md §7): la lista por match, la barra de filtros (que arranca en las preferencias de búsqueda del momento,
    diseno.md 0.11 §7.2), los filtros por columna (diseno.md 0.21 §7.2 y §10.18), el interés en el lugar, los próximos paquetes
-   (diseno.md 0.21 §7.8), la ficha y el texto pegado.
+   (diseno.md 0.21 §7.8), la ficha y, desde diseno.md 0.35, la franja de arriba (Todos y Esta semana, §7.10). Desde brand.md 0.23
+   la persona no pega el texto de un aviso: "Sin texto" dice quién lo busca, Terna o Francisco (`texto_estado`, datos.md 0.34, 0038).
    Lee mis_avisos, preferencias, paquetes (solo contenido→render→bajo_minimo y →terminos_faltantes), corridas_usuarios
-   (si Terna ya corrió) y config; escribe con marcar_interes, pedir_paquete, cancelar_pedido, pegar_texto_aviso, desde 0025
+   (si Terna ya corrió) y config; escribe con marcar_interes, pedir_paquete, cancelar_pedido, desde 0025
    marcar_motivo_no_interesa (datos.md 0.20 §14) y desde 0029 ordenar_pedidos (datos.md 0.25 §14). Con 0025 lee además
    `evaluacion` (el veredicto y "Cómo se calcula") y `motivo_no_interesa`; sin ella, la página anda como antes
    (Aviso.leerConEvaluacion). Sin 0029, los próximos paquetes van sin Subir ni Bajar. De preferencias lee la fila entera.
@@ -22,6 +23,7 @@ Terna.pagina('avisos', async (ctx) => {
   const herramientas = document.getElementById('herramientas');
   const cajaFiltros = document.getElementById('filtros');
   const cajaProximos = document.getElementById('proximos');
+  const cajaVistas = document.getElementById('vistas');
   const cuenta = document.getElementById('cuenta');
   const COLUMNAS = 'match_id, aviso_id, puesto, empresa, ubicacion, pais, modalidad, alcance, url, url_postulacion, fuente, postulacion, ats_formulario, dudoso, publicado_en, visto_en, tiene_texto, texto_origen, match, razones, requisitos_faltantes, interes, estado_paquete, pedido_en, creado_en, nuevo, paquete_id, paquete_idioma, cv_path, carta_path, salario_monto, salario_moneda, salario_periodo, salario_motivo, notas, estado_postulacion, motivo_a_mano, traba_detalle, intentos, en_cola_en, enviada_en, postulado_en, entrevista_en, nivel, jornada';
 
@@ -306,16 +308,74 @@ Terna.pagina('avisos', async (ctx) => {
     }
   }
 
+  /* ---------- La franja de arriba: Todos y Esta semana (brand.md 0.23 §6.4; diseno.md 0.35 §7.10) ----------
+     Francisco, 12/11/2026: "algo similar" a Por postular y Postuladas, "7 nuevos empleos esta semana… qué es lo nuevo semanalmente,
+     mensualmente". Dos tarjetas que eligen qué parte de la lista se ve, como las pestañas de Postulaciones (botones de radio en un
+     grupo "Mostrar"): toda, o lo que llegó a la lista en los últimos 7 días (`creado_en`: el día en que Terna lo sumó a tu lista, la
+     misma fecha que la marca "nuevo", que mira solo la última corrida). Cada una dice de qué está hecha (con paquete, sin paquete, sin
+     texto) y al lado va cuántos llegaron en los últimos 30 días. Todo cuenta con los filtros puestos, como en Postulaciones, y la
+     cuenta del título es la de Todos. No se recuerda: al volver a entrar, Todos. Se arma una vez y se actualiza en el lugar. */
+  const VISTAS = ['todos', 'semana'];
+  const DIA = 24 * 60 * 60 * 1000;
+  const ahora = Date.now();
+  const llegoEn = (a, dias) => { const t = Date.parse(a.creado_en || ''); return Number.isFinite(t) && t >= ahora - dias * DIA; };
+  let vista = 'todos';
+  const refVistas = {};
+  let notaMes = null;
+  function armarVistas() {
+    const idSemana = Terna.idUnico('semana');
+    const grupo = h('div', { class: 'vistas', role: 'radiogroup', 'aria-label': T.avisos.mostrar });
+    for (const v of VISTAS) {
+      const input = h('input', { type: 'radio', name: 'vista-avisos', value: v, checked: vista === v, 'aria-describedby': v === 'semana' ? idSemana : null });
+      input.addEventListener('change', () => { if (input.checked) cambiarVista(v); });
+      const numero = h('b', { class: 'num vista-n' });
+      const partes = h('span', { class: 'vista-partes' });
+      refVistas[v] = { input, numero, partes };
+      grupo.append(h('label', { class: 'vista', dataset: { vista: v }, title: v === 'semana' ? T.avisos.vistaSemanaExplicacion : null }, input,
+        h('span', { class: 'vista-cara' }, h('span', { class: 'vista-titulo' }, h('span', { text: T.avisos.vistas[v] }), ' ', numero), partes)));
+    }
+    notaMes = h('span', { class: 'vistas-nota', role: 'status' });
+    cajaVistas.append(h('div', { class: 'vistas-caja' }, grupo, notaMes,
+      h('span', { class: 'oculto-visual', id: idSemana, text: T.avisos.vistaSemanaExplicacion })));
+  }
+  // De qué está hecha una lista, como en la columna Paquete: con paquete (Armado), sin texto, y sin paquete todo lo demás.
+  function partesDe(l) {
+    const P = T.avisos.partes;
+    const con = l.filter((a) => Aviso.estadoPaquete(a) === 'armado').length;
+    const sinTexto = l.filter((a) => Aviso.estadoPaquete(a) === 'sin_texto').length;
+    return [[con, P.conPaquete], [l.length - con - sinTexto, P.sinPaquete], [sinTexto, P.sinTexto]]
+      .filter(([c]) => c > 0).map(([c, texto]) => texto(c)).join(' · ');
+  }
+  function actualizarVistas(base) {
+    cajaVistas.hidden = !avisos.length;
+    if (!avisos.length) return;
+    const listas = { todos: base, semana: base.filter((a) => llegoEn(a, 7)) };
+    for (const v of VISTAS) {
+      const r = refVistas[v];
+      r.input.checked = vista === v;
+      r.numero.textContent = String(listas[v].length);
+      r.partes.textContent = partesDe(listas[v]);
+    }
+    const mes = base.filter((a) => llegoEn(a, 30)).length;
+    notaMes.textContent = mes ? T.avisos.mes(mes) : '';
+  }
+  function cambiarVista(v) { vista = v; dibujarLista(); }
+
   /* ---------- Lista: tarjetas (celular) o tabla (escritorio) ---------- */
   function dibujar() { actualizarBarra(); dibujarLista(); }
   function dibujarLista() {
     Terna.vaciar(lista);
-    const vis = visibles();
-    cuenta.textContent = avisos.length ? T.avisos.cuenta(vis.length) : '';
+    const base = visibles();
+    actualizarVistas(base);
+    const vis = vista === 'semana' ? base.filter((a) => llegoEn(a, 7)) : base;
+    cuenta.textContent = avisos.length ? T.avisos.cuenta(base.length) : '';
     if (!vis.length) {
       const vacio = !avisos.length
         ? h('div', { class: 'vacio' }, h('p', { text: yaCorrio ? T.avisos.vacioSinAvisos : T.avisos.vacioSinCorrida }),
           h('a', { class: 'btn', href: 'preferencias.html' }, T.avisos.revisarPreferencias))
+        : base.length
+          ? h('div', { class: 'vacio' }, h('p', { text: T.avisos.vacioSemana }),
+            h('button', { class: 'btn', type: 'button', onclick: () => { cambiarVista('todos'); refVistas.todos.input.focus(); } }, T.avisos.verTodos))
         : algoCambiado()
           ? h('div', { class: 'vacio' }, h('p', { text: T.avisos.vacioFiltros }),
             h('button', { class: 'btn', type: 'button', onclick: () => { volverAPreferencias(); primerFiltro().focus(); } }, F.volverPreferencias))
@@ -341,12 +401,12 @@ Terna.pagina('avisos', async (ctx) => {
     return h('button', { class: largo ? 'btn' : 'btn btn-fila', type: 'button', dataset: { control: 'pedir' }, 'aria-label': largo ? null : T.avisos.pedirAccesible(a.puesto),
       onclick: () => pedir(a) }, largo ? T.avisos.pedirPaquete : T.avisos.pedir);
   }
-  function botonPegar(a, corto) {
-    if (corto) {
-      return h('button', { class: 'btn btn-fila', type: 'button', dataset: { control: 'pegar' }, 'aria-label': T.avisos.pegarAccesible(a.puesto), onclick: () => pegarTexto(a) },
-        icono('i-pegar', 'icono-16'), T.avisos.pegarCorto);
-    }
-    return h('button', { class: 'btn btn-ancho', type: 'button', dataset: { control: 'pegar' }, onclick: () => pegarTexto(a) }, icono('i-pegar'), T.avisos.ficha.pegar);
+  // Debajo de "Sin texto" (brand.md 0.23 §6.4; diseno.md 0.35 §7.3 y §7.6): quién lo busca, Terna o, si Terna ya no lo espera,
+  // Francisco (`texto_estado`; sin 0038, todo lo busca Terna). Hasta 0.34, el botón "Pegar texto" y, en la tarjeta, "Pegar el
+  // texto del aviso".
+  const quienBusca = (a) => (a.texto_estado === 'admin' ? 'admin' : 'buscando');
+  function lineaSinTexto(a) {
+    return h('span', { class: 'sin-texto-linea', dataset: { busca: quienBusca(a) }, text: T.avisos.sinTextoLinea[quienBusca(a)] });
   }
   // El lugar de un pedido en los próximos paquetes, debajo del chip "Pedido": "2.º · próxima corrida".
   function lineaPedido(a) {
@@ -355,11 +415,11 @@ Terna.pagina('avisos', async (ctx) => {
     const corridas = Math.ceil(l / cupo);
     return h('span', { class: 'pedido-lugar' }, h('span', { 'aria-hidden': 'true', text: T.avisos.pedidoLugar(l, corridas) }), oculto(T.avisos.pedidoLugarAccesible(l, corridas)));
   }
-  // Lo que se hace con el paquete, al lado de su chip (diseno.md 0.21 §7.3 y §7.6): Pedir debajo de "Sin armar", Pegar texto
-  // debajo de "Sin texto", el lugar debajo de "Pedido". En la tarjeta del celular, "Pegar el texto" sigue siendo el botón ancho.
-  function accionPaquete(a, enTabla) {
+  // Lo que se hace con el paquete, al lado de su chip (diseno.md 0.21 §7.3 y §7.6): Pedir debajo de "Sin armar", el lugar debajo
+  // de "Pedido" y, desde 0.35, quién busca el texto debajo de "Sin texto" (hasta 0.34, "Pegar texto").
+  function accionPaquete(a) {
     if (a.estado_paquete === 'pedido' && !a.paquete_id) return lineaPedido(a);
-    if (!a.tiene_texto) return enTabla ? botonPegar(a, true) : null;
+    if (!a.tiene_texto) return lineaSinTexto(a);
     // Un texto pegado que Terna todavía no puntuó ("Por puntuar") no se pide: espera su match.
     if (Aviso.estadoPaquete(a) === 'sin_armar' && puedePedir(a)) return botonPedir(a, false);
     return null;
@@ -392,9 +452,8 @@ Terna.pagina('avisos', async (ctx) => {
     const bajo = a.match !== null && !Aviso.llega(a, umbral);
     const tuyo = chipTuPuesto(a);
     Terna.agregar(art, [boton,
-      h('div', { class: 'chips' }, Aviso.chipInteres(a, config), Aviso.chipPaquete(a), accionPaquete(a, false), Aviso.chipPostulacion(a), Aviso.chipCalificacion(a),
+      h('div', { class: 'chips' }, Aviso.chipInteres(a, config), Aviso.chipPaquete(a), accionPaquete(a), Aviso.chipPostulacion(a), Aviso.chipCalificacion(a),
         tuyo || (bajo ? h('span', { class: 'chip-texto', text: T.avisos.bajoUmbral }) : null), Aviso.fecha(a)),
-      !a.tiene_texto ? botonPegar(a, false) : null,
       accionesAviso(a, 'tarjeta')]);
     return art;
   }
@@ -438,7 +497,7 @@ Terna.pagina('avisos', async (ctx) => {
       h('td', { class: 'tabla-match' + (Aviso.llega(a, umbral) || a.match === null ? '' : ' bajo') },
         h('span', { 'aria-hidden': 'true', text: a.match === null ? '—' : String(a.match) }),
         oculto(a.match === null ? T.avisos.sinMatch : T.avisos.matchAccesible(a.match, Aviso.llega(a, umbral)))),
-      h('td', { class: 'col-paquete' }, h('div', { class: 'celda-paquete' }, Aviso.chipPaquete(a), accionPaquete(a, true),
+      h('td', { class: 'col-paquete' }, h('div', { class: 'celda-paquete' }, Aviso.chipPaquete(a), accionPaquete(a),
         bajo && !tuyo ? h('span', { class: 'chip-texto', text: T.avisos.bajoUmbral }) : null)),
       h('td', { class: 'col-postulacion' }, Aviso.chipInteres(a, config), Aviso.chipPostulacion(a)),
       h('td', { class: 'col-donde' }, Aviso.celdaDonde(a, prefs)),
@@ -692,43 +751,6 @@ Terna.pagina('avisos', async (ctx) => {
     for (const f of data) { const a = porId.get(f.match_id); if (a) Object.assign(a, f); }
   }
 
-  function pegarTexto(a) {
-    const origen = document.activeElement;
-    const max = config.max_texto_pegado_chars || 20000;
-    const min = config.min_texto_pegado_chars || 100;
-    const idAyuda = Terna.idUnico('ayuda');
-    const idCont = Terna.idUnico('cont');
-    const idErr = Terna.idUnico('err');
-    const area = h('textarea', { class: 'control', rows: '8', 'aria-describedby': idAyuda + ' ' + idCont + ' ' + idErr });
-    const contador = h('p', { class: 'campo-ayuda num', id: idCont, text: T.avisos.contador(0, max) });
-    const err = h('p', { class: 'campo-error', id: idErr, role: 'alert' });
-    area.addEventListener('input', () => { contador.textContent = T.avisos.contador(area.value.length, max); });
-    const bGuardar = h('button', { class: 'btn btn-primario', type: 'button' }, T.avisos.guardarTexto);
-    const bCancelar = h('button', { class: 'btn', type: 'button' }, T.comun.cancelar);
-    const dlg = Terna.dialogo({ titulo: T.avisos.pegarTitulo, cuerpo: [h('p', { class: 'campo-ayuda', id: idAyuda, text: T.avisos.pegarAyuda(a.fuente) }), area, contador, err], botones: [bCancelar, bGuardar] });
-    area.setAttribute('aria-labelledby', dlg.getAttribute('aria-labelledby'));
-    bCancelar.addEventListener('click', () => dlg.close());
-    bGuardar.addEventListener('click', async () => {
-      const texto = area.value.trim();
-      let problema = null;
-      if (!texto) problema = T.errores.completa;
-      else if (texto.length < min) problema = T.errores.textoCorto;
-      else if (texto.length > max) problema = T.errores.textoLargo(max);
-      if (problema) { err.textContent = problema; area.setAttribute('aria-invalid', 'true'); area.focus(); return; }
-      bGuardar.setAttribute('aria-disabled', 'true');
-      const { error } = await sb.rpc('pegar_texto_aviso', { p_match_id: a.match_id, p_texto: texto });
-      bGuardar.removeAttribute('aria-disabled');
-      if (error) { if (!Terna.siSesionVencida(error)) { err.textContent = Terna.textoError(error); area.setAttribute('aria-invalid', 'true'); } return; }
-      dlg.close();
-      Object.assign(a, { tiene_texto: true, texto_origen: 'usuario', match: null, razones: [], requisitos_faltantes: [] });
-      refrescar(a);
-      Terna.avisoBreve(T.avisos.textoGuardado);
-    });
-    dlg.addEventListener('close', () => Terna.devolverFoco(origen));
-    dlg.showModal();
-    area.focus();
-  }
-
   /* ---------- Un filtro (§7.2): hoja en celular, panel debajo de su botón en escritorio ----------
      Se aplica al tocar, con la lista a la vista detrás; "Listo" (o la cruz, o Esc) cierra y devuelve el foco al botón. Lo abren
      los botones de la barra y, en la tabla, los encabezados (`desdeEncabezado`: el panel de Match y el de Publicado suman el orden). */
@@ -888,7 +910,7 @@ Terna.pagina('avisos', async (ctx) => {
     const sec = h('section', { class: 'ficha-seccion' }, h('h3', { text: FI.paquete }));
     if (a.paquete_id) { sec.append(Aviso.fichasPaquete(Object.assign({}, a, { terminos_faltantes: faltanPor.get(a.match_id) || [] }))); return sec; }
     const e = Aviso.estadoPaquete(a);
-    if (e === 'sin_texto') sec.append(h('p', { text: FI.sinTexto }), botonPegar(a, false));
+    if (e === 'sin_texto') sec.append(h('p', { text: FI.sinTexto[quienBusca(a)] }));
     else if (e === 'por_puntuar') sec.append(h('p', { text: FI.porPuntuar }));
     else if (e === 'pedido') {
       const l = lugarDe(a);
@@ -961,6 +983,7 @@ Terna.pagina('avisos', async (ctx) => {
   });
 
   dibujarHerramientas();
+  armarVistas();
   armarBarra();
   dibujarProximos();
   dibujar();

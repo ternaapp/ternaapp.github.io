@@ -30,10 +30,11 @@ window.Aviso = (function () {
     return h('span', { class: 'chip' + (clase ? ' ' + clase : ''), title: explicacion || null },
       icono(iconoId, 'icono-14'), h('span', { text: texto }), explicacion ? oculto(': ' + explicacion) : null);
   }
+  // "Sin texto" dice quién lo busca (brand.md 0.23 §6.10; datos.md 0.34, 0038): Terna o, si Terna ya no lo espera, Francisco.
   function chipPaquete(a) {
     const e = estadoPaquete(a);
     const [c, i] = ESTILO_PAQUETE[e] || ESTILO_PAQUETE.sin_armar;
-    return chip(c, i, T.avisos.paquete[e], T.chips[e]);
+    return chip(c, i, T.avisos.paquete[e], e === 'sin_texto' && a.texto_estado === 'admin' ? T.chips.sin_texto_admin : T.chips[e]);
   }
   function chipPostulacion(a) {
     const e = a.estado_postulacion;
@@ -607,7 +608,7 @@ window.Aviso = (function () {
     switch (d.clave) {
       case 'terna': return prefs && prefs.revisar_antes_de_enviar ? E.ternaRevisa : E.terna;
       case 'easy_apply': return E.easy_apply;
-      case 'confirmar': return E.confirmar(!a.tiene_texto);
+      case 'confirmar': return E.confirmar;
       case 'portal': return d.nombre === 'LinkedIn' && !d.url ? E.linkedin : E.portal(d.nombre);
       default:
         if (d.ternaNo) return E.ternaNo;
@@ -706,12 +707,14 @@ window.Aviso = (function () {
       T.avisos.verEnFuente(a.fuente), icono('i-abrir', 'icono-16'));
   }
 
-  /* ---------- Leer mis_avisos con las columnas de 0025 y 0031, o sin ellas ----------
+  /* ---------- Leer mis_avisos con las columnas de 0025, 0031 y 0038, o sin ellas ----------
      Mientras el proyecto no tenga una migración, pedir sus columnas da 42703 (la columna no existe): se vuelve a pedir sin las de
-     la última (0031: `linkedin_postulacion`) y, si tampoco, sin las de 0025 (`evaluacion`, `motivo_no_interesa`), y la página anda
-     con lo que haya: sin Easy Apply, sin veredicto ni motivo. `armar(columnas)` devuelve la consulta. */
+     la última (0038: `texto_estado`; 0031: `linkedin_postulacion`) y, si tampoco, sin las de 0025 (`evaluacion`,
+     `motivo_no_interesa`), y la página anda con lo que haya: sin quién busca el texto (todo "Terna lo busca"), sin Easy Apply,
+     sin veredicto ni motivo. `armar(columnas)` devuelve la consulta. */
   const COLUMNAS_0025 = 'evaluacion, motivo_no_interesa';
   const COLUMNAS_0031 = 'linkedin_postulacion';
+  const COLUMNAS_0038 = 'texto_estado';
   function faltaColumna(error) {
     const texto = String((error && (error.message || '')) || '') + ' ' + String((error && error.details) || '');
     return Boolean(error) && (error.code === '42703' || error.code === 'PGRST204' || /does not exist|Could not find/i.test(texto));
@@ -724,13 +727,14 @@ window.Aviso = (function () {
     return filas;
   }
   async function leerConEvaluacion(armar, columnas) {
-    const intentos = [columnas + ', ' + COLUMNAS_0025 + ', ' + COLUMNAS_0031, columnas + ', ' + COLUMNAS_0025, columnas];
+    const intentos = [columnas + ', ' + COLUMNAS_0025 + ', ' + COLUMNAS_0031 + ', ' + COLUMNAS_0038, columnas + ', ' + COLUMNAS_0025 + ', ' + COLUMNAS_0031,
+      columnas + ', ' + COLUMNAS_0025, columnas];
     for (let i = 0; i < intentos.length; i++) {
       const r = await armar(intentos[i]);
-      if (!r.error) return { data: sinEntrevista(r.data), error: null, conEvaluacion: i < 2, conDonde: i === 0 };
-      if (!faltaColumna(r.error) || i === intentos.length - 1) return { data: null, error: r.error, conEvaluacion: false, conDonde: false };
+      if (!r.error) return { data: sinEntrevista(r.data), error: null, conEvaluacion: i < 3, conDonde: i < 2, conTextoEstado: i === 0 };
+      if (!faltaColumna(r.error) || i === intentos.length - 1) return { data: null, error: r.error, conEvaluacion: false, conDonde: false, conTextoEstado: false };
     }
-    return { data: null, error: null, conEvaluacion: false, conDonde: false };
+    return { data: null, error: null, conEvaluacion: false, conDonde: false, conTextoEstado: false };
   }
 
   return {

@@ -455,6 +455,7 @@ window.Terna = (function () {
       el.style.setProperty('--alto-acciones', (barra ? barra.offsetHeight : 0) + 'px');
     }
     fichaAbierta = { el, linea: !!linea, origen, alCerrar: opciones.alCerrar, clave: opciones.clave || null };
+    desplazableEnfocable(el.querySelector('.hoja-desplazable'));
     if (linea) {
       ajustarLinea();
       // Lo que el cajón tiene arriba puede cambiar de alto con él abierto: se vuelve a medir (ajustarLinea).
@@ -493,6 +494,16 @@ window.Terna = (function () {
     if (c) { const scroll = d ? d.scrollTop : 0; vaciar(c); agregar(c, [cuerpo]); if (d) d.scrollTop = scroll; }
     const a = fichaAbierta.el.querySelector('.hoja-acciones');
     if (a && acciones) { vaciar(a); agregar(a, [acciones]); }
+    desplazableEnfocable(d);
+  }
+  // El cuerpo que se desplaza tiene que poder moverse con el teclado (WCAG 2.1.1; axe, scrollable-region-focusable): si adentro no
+  // hay nada que tome el foco, la región misma lo toma. Pasa con la ficha de un aviso sin texto, que desde brand.md 0.23 no tiene
+  // "Pegar el texto del aviso" ni otro control; las demás fichas tienen sus botones y no suman una parada.
+  const ENFOCABLES = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])';
+  function desplazableEnfocable(d) {
+    if (!d) return;
+    if (d.querySelector(ENFOCABLES)) d.removeAttribute('tabindex');
+    else d.setAttribute('tabindex', '0');
   }
   // Cajón en línea: el alto es el que queda de pantalla debajo de donde se pega (80 px), menos lo que la página tiene
   // después de la lista (el pie). Así entra entero entre la barra y el final de la página: con pocas filas la página no
