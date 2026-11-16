@@ -11,7 +11,7 @@
 'use strict';
 
 window.Cuentas = (function () {
-  const PARA_TODOS = false;
+  const PARA_TODOS = true;
   // "El último mes": 30 días con hoy, como "Mes" de Cómo viene en Inicio.
   const DIAS = 30;
   // Lo que Aviso.donde mira de mis_avisos, y las fechas.
