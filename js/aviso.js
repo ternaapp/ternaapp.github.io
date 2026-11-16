@@ -390,9 +390,11 @@ window.Aviso = (function () {
     const n = config ? config.max_reintentos_postulacion : null;
     return n === null || n === undefined ? null : Number(n);
   }
+  // En todas las postulaciones a mano, no solo las de formulario (0043; Francisco, 16/11/2026: «quiero que todas tengan disponibles
+  // el volver a probar»). El motor vuelve a evaluar lo que entra en cola y deja a mano lo que sigue sin formulario conocido.
   function puedeVolverAProbar(a, config) {
     const tope = topeIntentos(config);
-    return a.estado_postulacion === 'a_mano' && a.postulacion === 'formulario' && (tope === null || (a.intentos || 0) < tope);
+    return a.estado_postulacion === 'a_mano' && (tope === null || (a.intentos || 0) < tope);
   }
   // La sección "Postulación" de la ficha del aviso: dónde se postula (diseno.md 0.23 §7.5), chip, línea y el link a la ficha de la
   // postulación.
