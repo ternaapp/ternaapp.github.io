@@ -41,7 +41,7 @@ Terna.pagina('preferencias', async (ctx) => {
   const MAX_LARGO_CLAVE = 40;
 
   const parar = Terna.cargando(raiz);
-  const [lectura, lecturaAlertas, lecturaAvisos, lecturaDiscapacidad] = await Promise.all([
+  const [lectura, lecturaAlertas, lecturaAvisos, lecturaDiscapacidad, lecturaAuto] = await Promise.all([
     // La fila entera (la persona puede leer todas sus columnas): desde 0026 trae también las palabras clave, y sin la migración
     // no falla ni deja un error en la consola; la página anda igual, sin ese ítem (datos.md 0.21 §14).
     sb.from('preferencias').select('*').eq('usuario_id', uid).maybeSingle(),
@@ -52,6 +52,8 @@ Terna.pagina('preferencias', async (ctx) => {
     // 0039: la respuesta a «¿Tenés una discapacidad?», descifrada para la persona de la sesión. Si la función no está (la base sin la
     // 0039) o la lectura falla, la pregunta no se muestra: no se ofrece algo que no se puede guardar.
     sb.rpc('leer_discapacidad'),
+    // 0049: la autoidentificación, descifrada para la persona de la sesión. Sin la 0049 o si la lectura falla, no se muestra.
+    sb.rpc('leer_autoidentificacion'),
   ]);
   parar();
   // Las alertas que llegaron (0019; la retención las borra a los 7 días). Si no se pueden leer, los portales van sin estado.
@@ -813,6 +815,51 @@ Terna.pagina('preferencias', async (ctx) => {
   }
   const sDisc = lecturaDiscapacidad.error ? null : preguntaDiscapacidad(lecturaDiscapacidad.data);
 
+  /* ---------- Sobre vos, para los formularios (diseno.md 0.43 §9.3; brand.md 0.35 §6.7; datos.md 0.41, 0049) ----------
+     Francisco, 17/11/2026: género, pronombres, si es hispano o latino, raza y si es veterano de EE. UU., que los formularios preguntan
+     y Terna contestaba siempre «Prefiero no responder». Una lista por pregunta, que nace en «Prefiero no responder» y escribe en el
+     acto todo el conjunto (guardar_autoidentificacion), como la discapacidad. Se atenúa con "Terna postula por vos". */
+  function preguntaAutoidentificacion(inicial) {
+    const A = P.autoidentificacion;
+    const idT = 'autoidentificacion-titulo';
+    const err = h('p', { class: 'campo-error', id: 'err-autoidentificacion', role: 'alert' });
+    const valores = {};
+    const base = inicial && typeof inicial === 'object' ? inicial : {};
+    A.preguntas.forEach(([clave, , opciones]) => { valores[clave] = opciones.some(([val]) => val === base[clave]) ? base[clave] : ''; });
+    const listas = A.preguntas.map(([clave, etiqueta, opciones, ayuda]) => {
+      const idC = 'autoidentificacion-' + clave;
+      const idA = idC + '-ayuda';
+      const sel = h('select', Object.assign({ class: 'control', id: idC }, ayuda ? { 'aria-describedby': idA + ' err-autoidentificacion' } : { 'aria-describedby': 'err-autoidentificacion' }),
+        h('option', { value: '', text: A.noResponder }), opciones.map(([val, texto]) => h('option', { value: val, text: texto, selected: valores[clave] === val })));
+      sel.addEventListener('change', () => guardar(clave, sel));
+      return h('div', { class: 'campo' }, h('label', { for: idC, text: etiqueta }), sel, ayuda ? h('p', { class: 'campo-ayuda', id: idA, text: ayuda }) : null);
+    });
+    async function guardar(clave, sel) {
+      const antes = valores[clave];
+      valores[clave] = sel.value;
+      err.textContent = '';
+      const datos = {};
+      Object.keys(valores).forEach((k) => { if (valores[k]) datos[k] = valores[k]; });
+      sel.disabled = true;
+      const { error: e } = await sb.rpc('guardar_autoidentificacion', { p_datos: datos });
+      sel.disabled = nodo.classList.contains('atenuado');
+      if (e) {
+        // No se escribió: la lista vuelve a como estaba y el error queda junto a las preguntas.
+        valores[clave] = antes;
+        sel.value = antes;
+        if (!Terna.siSesionVencida(e)) { err.textContent = T.errores.guardar; bloques.marcarErrores(); }
+        return;
+      }
+      Terna.avisoBreve(T.comun.guardado);
+    }
+    const nodo = h('div', { class: 'subbloque autoidentificacion', id: 'autoidentificacion', role: 'group', 'aria-labelledby': idT },
+      h('h4', { id: idT, class: 'tarjeta-titulo', text: A.titulo }), h('p', { text: A.porQue }), h('p', { class: 'campo-ayuda', text: A.queHace }),
+      listas, err);
+    nodo.dataset.titulo = idT;
+    return nodo;
+  }
+  const sAuto = lecturaAuto.error ? null : preguntaAutoidentificacion(lecturaAuto.data);
+
   /* ---------- Tu secundario y viajar (brand.md 0.24 §6.7; diseno.md 0.36 §9.3; datos.md 0.35, 0039) ----------
      Francisco, 12/11/2026, 20:59: lo que piden formularios como los de Canonical y Terna no tenía. Dos listas con la escala de esos
      formularios y la evidencia en palabras de la persona (Terna la pega tal cual), y si puede viajar. Se guardan con "Guardar
@@ -841,7 +888,7 @@ Terna.pagina('preferencias', async (ctx) => {
   }
 
   const temaPaquetes = Terna.subtema(P.temas.paquetes, null, [sInt, sArm, sIdi, sAvisoCla, sCla, sSal].filter(Boolean));
-  const temaPostulacion = Terna.subtema(P.temas.postulacion, null, [sPos, cuentas ? cuentas.nodo : null, sRev, sDisc, sSec, sViaje].filter(Boolean));
+  const temaPostulacion = Terna.subtema(P.temas.postulacion, null, [sPos, cuentas ? cuentas.nodo : null, sRev, sDisc, sAuto, sSec, sViaje].filter(Boolean));
   // Atenuar (diseno.md §9.3): el ítem sigue visible y legible; sus controles quedan inactivos hasta que vuelva a aplicar.
   function atenuar() {
     const poner = (sec, off) => {
@@ -855,7 +902,7 @@ Terna.pagina('preferencias', async (ctx) => {
       cuentas.nodo.querySelectorAll('input[type="radio"]').forEach((x) => { x.disabled = !v.armar_paquetes; });
     }
     poner(sRev, !v.postular_sola || !v.armar_paquetes);
-    for (const s of [sDisc, sSec, sViaje]) if (s) poner(s, !v.postular_sola || !v.armar_paquetes);
+    for (const s of [sDisc, sAuto, sSec, sViaje]) if (s) poner(s, !v.postular_sola || !v.armar_paquetes);
     // La línea y la cuenta de la guía del umbral dicen qué hace Terna para arriba (diseno.md 0.15 §9.3).
     guia.actualizar();
   }

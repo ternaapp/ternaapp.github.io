@@ -42,7 +42,12 @@ Terna.pagina('perfil', async (ctx) => {
 
   const parar = Terna.cargando(raiz);
   const [rP, rE, rS, rI, rC, rA, rR] = await Promise.all([
-    sb.from('perfiles').select('nombre, apellido, telefono, ciudad, linkedin, portfolio, perfil_estructurado, perfil_estructurado_en, cv_original_leido_en').eq('usuario_id', uid).maybeSingle(),
+    // 0049: con el GitHub; sin la columna (la base sin la 0049), la lectura de antes y el campo no se muestra.
+    (async () => {
+      const columnas = 'nombre, apellido, telefono, ciudad, linkedin, portfolio, perfil_estructurado, perfil_estructurado_en, cv_original_leido_en';
+      const r = await sb.from('perfiles').select(columnas + ', github').eq('usuario_id', uid).maybeSingle();
+      return r.error && (r.error.code === '42703' || /github/.test(r.error.message || '')) ? sb.from('perfiles').select(columnas).eq('usuario_id', uid).maybeSingle() : r;
+    })(),
     sb.from('experiencias').select('id, puesto, empresa, desde, hasta, actual, descripcion, orden').eq('usuario_id', uid).order('orden').order('desde', { ascending: false }),
     sb.from('estudios').select('id, titulo, institucion, anio, estado, promedio, nivel, orden').eq('usuario_id', uid).order('orden'),
     sb.from('idiomas').select('id, idioma, nivel').eq('usuario_id', uid).order('creado_en'),
@@ -62,7 +67,9 @@ Terna.pagina('perfil', async (ctx) => {
   let clave = 0;
   const nuevaClave = () => 'n' + (clave += 1);
   const perfil = rP.data || {};
+  const conGithub = Object.prototype.hasOwnProperty.call(perfil, 'github');
   const datos = { nombre: perfil.nombre || '', apellido: perfil.apellido || '', telefono: perfil.telefono || '', ciudad: perfil.ciudad || '', linkedin: perfil.linkedin || '', portfolio: perfil.portfolio || '' };
+  if (conGithub) datos.github = perfil.github || '';
   const listas = {
     exp: (rE.data || []).map((e) => Object.assign({ clave: nuevaClave() }, e, { descripcion: e.descripcion || '' })),
     // 0022: sin tipo elegido, se propone el que dice el nombre (como lo deduce el motor); se guarda cuando la persona guarda.
@@ -185,7 +192,9 @@ Terna.pagina('perfil', async (ctx) => {
       campo({ id: 'dato-mail', etiqueta: P.mail, valor: ctx.usuario.mail, ayuda: P.mailAyuda, readonly: true, tipo: 'email', autocomplete: 'email' }),
       c('ciudad', P.ciudad, { max: 80, autocomplete: 'address-level2', ayuda: P.ciudadAyuda }),
       h('div', { class: 'dos dos-apilable' }, c('telefono', P.telefono, { max: 30, tipo: 'tel', autocomplete: 'tel' }), c('linkedin', P.linkedin, { max: 200, tipo: 'url', autocomplete: 'url', inputmode: 'url' })),
-      c('portfolio', P.portfolio, { max: 300, tipo: 'url', inputmode: 'url', ayuda: P.portfolioAyuda }));
+      conGithub ? h('div', { class: 'dos dos-apilable' }, c('portfolio', P.portfolio, { max: 300, tipo: 'url', inputmode: 'url', ayuda: P.portfolioAyuda }),
+        c('github', P.github, { max: 300, tipo: 'url', inputmode: 'url', ayuda: P.githubAyuda }))
+        : c('portfolio', P.portfolio, { max: 300, tipo: 'url', inputmode: 'url', ayuda: P.portfolioAyuda }));
     const identificacion = temaIdentificacion();
     const respuestas = Terna.subtema(T.respuestas.titulo, T.respuestas.intro, resp.nodos);
     return seccion('datos', P.datos, [contacto, identificacion, respuestas], { alAbrir: cargarIdentificacion || undefined, temas: [
@@ -653,7 +662,9 @@ Terna.pagina('perfil', async (ctx) => {
         const v = (x) => (String(x || '').trim() || null);
         // 0020: el portfolio se guarda como link; sin "https://" adelante, se lo agrega (la base pide http o https).
         const link = (x) => { const s = v(x); return s && !/^https?:\/\//i.test(s) ? 'https://' + s : s; };
-        const { error } = await sb.from('perfiles').update({ nombre: v(datos.nombre), apellido: v(datos.apellido), telefono: v(datos.telefono), ciudad: v(datos.ciudad), linkedin: v(datos.linkedin), portfolio: link(datos.portfolio) }).eq('usuario_id', uid);
+        const cambios = { nombre: v(datos.nombre), apellido: v(datos.apellido), telefono: v(datos.telefono), ciudad: v(datos.ciudad), linkedin: v(datos.linkedin), portfolio: link(datos.portfolio) };
+        if (conGithub) cambios.github = link(datos.github);   // 0049, como el portfolio
+        const { error } = await sb.from('perfiles').update(cambios).eq('usuario_id', uid);
         if (error) throw error;
         Terna.actualizarPerfil({ nombre: v(datos.nombre), apellido: v(datos.apellido) });
       }

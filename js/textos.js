@@ -748,6 +748,8 @@ window.T = (function () {
       ciudadAyuda: 'Terna busca en tu ciudad y alrededores; si ponés Buenos Aires, incluye CABA y el Gran Buenos Aires.',
       linkedin: 'LinkedIn (opcional)',
       portfolio: 'Portfolio o sitio propio (opcional)', portfolioAyuda: 'Un link a tu trabajo. Terna lo usa solo si un formulario lo pide.',
+      // 0049 (brand.md 0.35 §6.6): el GitHub, al lado del portfolio.
+      github: 'GitHub (opcional)', githubAyuda: 'Terna lo pone cuando un formulario pide tu GitHub, o un sitio y no cargaste portfolio.',
       // Experiencia laboral (brand.md 0.7 §6.6): cada trabajo en su propia caja, con un título que dice cuál es.
       experiencia: 'Experiencia laboral',
       puesto: 'Puesto', empresa: 'Empresa', desde: 'Desde', hasta: 'Hasta', mes: 'Mes', anio: 'Año', actual: 'Trabajo actual',
@@ -1059,6 +1061,22 @@ window.T = (function () {
           'Lesión cerebral traumática',
         ],
         confidencial: 'Ese formulario dice que responder es voluntario y confidencial, y que quien decide la contratación no ve tu respuesta.',
+      },
+      // «Sobre vos, para los formularios» (brand.md 0.35 §6.7; diseno.md 0.43 §9.3; datos.md 0.41, 0049): Francisco, 17/11/2026,
+      // con ASAPP y Canonical: la autoidentificación voluntaria de los formularios (sobre todo de EE. UU.), que Terna contestaba siempre
+      // «Prefiero no responder» porque no la tenía. Cada pregunta nace en «Prefiero no responder», escribe en el acto y se guarda cifrada.
+      autoidentificacion: {
+        titulo: 'Sobre vos, para los formularios',
+        porQue: 'Algunos formularios, sobre todo de empresas de Estados Unidos, preguntan tu género, tu origen o si sos veterano. Responder es voluntario: si dejás «Prefiero no responder», Terna elige esa opción.',
+        queHace: 'Terna usa tus respuestas solo para contestar esas preguntas y elige la opción del formulario que diga lo mismo; si ninguna lo dice, «Prefiero no responder». Se guardan cifradas, como tu DNI, y nunca van a tu CV ni a tu carta.',
+        noResponder: 'Prefiero no responder',
+        preguntas: [
+          ['genero', 'Género', [['hombre', 'Hombre'], ['mujer', 'Mujer'], ['no_binario', 'No binario']]],
+          ['pronombres', 'Pronombres', [['el', 'Él (he/him)'], ['ella', 'Ella (she/her)'], ['elle', 'Elle (they/them)']]],
+          ['hispano', '¿Sos hispano o latino?', [['si', 'Sí'], ['no', 'No']], 'En los formularios de Estados Unidos, «hispano o latino» es tener origen en América Latina o España, sin importar la raza. Si naciste o tu familia es de Argentina, es Sí.'],
+          ['raza', 'Raza', [['blanca', 'Blanca'], ['negra', 'Negra o afrodescendiente'], ['asiatica', 'Asiática'], ['indigena_americana', 'Indígena de América'], ['isla_pacifico', 'Nativa de Hawái u otras islas del Pacífico'], ['dos_o_mas', 'Dos o más']], 'Se usa cuando el formulario pregunta la raza aparte. Si en la misma lista está «Hispanic or Latino», Terna elige esa si respondiste Sí arriba.'],
+          ['veterano', '¿Sos veterano de las Fuerzas Armadas de Estados Unidos?', [['no', 'No'], ['si', 'Sí']], 'Solo cuenta el servicio en las Fuerzas Armadas de Estados Unidos. El servicio militar en Argentina u otro país es No.'],
+        ],
       },
       // Tu secundario y viajar (brand.md 0.24 §6.7; datos.md 0.35, 0039): Francisco, 12/11/2026, 20:59, para los formularios que lo
       // preguntan (los de Canonical, con su misma escala). Se guardan con "Guardar preferencias"; sin respuesta, Terna no contesta esas
