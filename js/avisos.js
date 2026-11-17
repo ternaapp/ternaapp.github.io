@@ -167,11 +167,14 @@ Terna.pagina('avisos', async (ctx) => {
     return filtros.bajoUmbral ? Math.max(piso, Math.min(m, 100)) : Math.max(m, umbral);
   }
   // Un aviso sin match no llega ni deja de llegar: se ve siempre, salvo cuando se piden solo los que no llegan.
+  // Lo que la persona pidió se ve siempre mientras no toque el filtro (busqueda.md 0.2 §4.5; js/lista.js): con Match en "Llegan a mi
+  // umbral" y sin subir el mínimo, un pedido pasa aunque no llegue; y pasa cada preferencia de búsqueda que ella no cambió acá.
   function pasaMatch(a) {
     if (a.match === null || a.match === undefined) return !filtros.soloBajo;
     if (filtros.soloBajo) return a.match >= minimo() && a.match < umbral;
-    return a.match >= minimo() || loTuyo.prioritario(a);
+    return a.match >= minimo() || loTuyo.prioritario(a) || (loTuyo.pedido(a) && filtros.matchMin === null);
   }
+  function busquedaDePedidos() { const b = {}; for (const k of BUSQUEDA) b[k] = filtros[k] || TODOS[k]; return b; }
   // Prioridad: un aviso puede ser de tus puestos y de una empresa que seguís a la vez; "Los demás" son los que no son ni lo uno
   // ni lo otro.
   const enPrioridad = (a, v) => (v === 'tu_puesto' ? loTuyo.esTuPuesto(a) : v === 'empresa' ? loTuyo.esTuEmpresa(a) : !loTuyo.prioritario(a));
@@ -183,7 +186,7 @@ Terna.pagina('avisos', async (ctx) => {
     if (excepto !== 'paquete' && filtros.paquete && !filtros.paquete.includes(Aviso.estadoPaquete(a))) return false;
     if (excepto !== 'postulacion' && filtros.postulacion && !filtros.postulacion.includes(a.estado_postulacion)) return false;
     if (excepto !== 'donde' && filtros.donde && !filtros.donde.includes(Aviso.donde(a, prefs).clave)) return false;
-    if (!Aviso.pasaBusqueda(a, busquedaHoy)) return false;
+    if (!Aviso.pasaBusqueda(a, loTuyo.pedido(a) ? busquedaDePedidos() : busquedaHoy)) return false;
     if (!pasaMatch(a)) return false;
     if (excepto !== 'requisitos' && filtros.requisitos && !filtros.requisitos.includes(Aviso.categoriaRequisitos(a))) return false;
     if (excepto !== 'prioridad' && filtros.prioridad && !filtros.prioridad.some((v) => enPrioridad(a, v))) return false;
@@ -981,6 +984,12 @@ Terna.pagina('avisos', async (ctx) => {
     const abierta = Terna.hojaAbierta();
     if (abierta && abierta.clave && porId.has(abierta.clave)) { Terna.cerrarHoja(false); abrirFicha(porId.get(abierta.clave), null, true); }
   });
+
+  // Debajo de la lista, qué es esta lista y dónde está todo lo demás (busqueda.md 0.2 §4.6).
+  const contenido = document.getElementById('contenido');
+  if (contenido && T.busqueda) {
+    contenido.append(h('p', { class: 'avisos-busqueda' }, T.busqueda.enAvisos + ' ', h('a', { href: 'busqueda.html', text: T.comun.pestanas.busqueda }), '.'));
+  }
 
   dibujarHerramientas();
   armarVistas();

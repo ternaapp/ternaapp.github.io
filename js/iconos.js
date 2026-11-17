@@ -9,6 +9,8 @@
   const S = {
     'i-inicio': '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',
     'i-avisos': P('M4 6h16M4 12h16M4 18h10'),
+    // La pestaña Búsqueda y su campo (busqueda.md 0.1 §4): la lupa.
+    'i-buscar': '<circle cx="11" cy="11" r="6.5"/>' + P('M16 16l4.5 4.5'),
     'i-postulaciones': '<rect x="6" y="4" width="12" height="17" rx="2"/>' + P('M9 4V2h6v2M9 13l2 2 4-4'),
     'i-perfil': '<circle cx="12" cy="8" r="4"/>' + P('M4 21c0-4 3.6-7 8-7s8 3 8 7'),
     'i-preferencias': P('M4 7h10M18 7h2M4 17h4M12 17h8') + '<circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',

@@ -435,7 +435,9 @@ Terna.pagina('inicio', async (ctx) => {
   }
 
   // Lo de arriba primero (una llamada); el tablero llega después sin mover lo que ya está.
-  const [rResumen] = await Promise.all([sb.rpc('mi_resumen', { p_desde: desde() })]);
+  // Con el resumen llega cuánto hay para buscar (0045; busqueda.md 0.2 §4.6): tres números de la base. Si la función no está o
+  // falla, Inicio queda como antes, sin el renglón.
+  const [rResumen, rBusqueda] = await Promise.all([sb.rpc('mi_resumen', { p_desde: desde() }), sb.rpc('avisos_abiertos_resumen')]);
   parar();
   if (rResumen.error) { Terna.errorDeCarga(cont, rResumen.error); return; }
   Terna.vaciar(cont);
@@ -444,6 +446,12 @@ Terna.pagina('inicio', async (ctx) => {
   dibujarCifras(r);
   dibujarQueHay(r);
   cont.append(corrida);
+  const hayPara = !rBusqueda.error && rBusqueda.data && num(rBusqueda.data.avisos) > 0 ? rBusqueda.data : null;
+  if (hayPara) {
+    cont.append(h('p', { class: 'inicio-busqueda' }, icono('i-buscar', 'icono-16'),
+      h('span', { text: T.busqueda.enInicio(num(hayPara.avisos), num(hayPara.empresas), num(hayPara.semana)) }),
+      h('a', { href: 'busqueda.html', text: T.busqueda.enInicioLink })));
+  }
   const tarjetaCuentas = preguntaCuentas();
   if (tarjetaCuentas) cont.append(tarjetaCuentas);
   cont.append(tablero);

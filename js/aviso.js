@@ -648,12 +648,15 @@ window.Aviso = (function () {
   const lineaAviso = (a) => h('p', { class: 'dialogo-aviso', text: a.puesto + (a.empresa ? ' · ' + a.empresa : '') });
 
   // Pedir paquete: en qué lugar de los próximos paquetes queda y cuándo se arma; si después Terna postula, también. true o false.
-  function confirmarPedir(a, { lugar, corridas, cupo, prefs }) {
+  // `extra`: renglones propios de quien lo pide (Búsqueda dice que el aviso todavía no tiene match y que pasa a tus avisos;
+  // busqueda.md 0.1 §5).
+  function confirmarPedir(a, { lugar, corridas, cupo, prefs, extra }) {
     const C = T.avisos.confirmarPedir;
     const sola = !prefs || prefs.postular_sola !== false;
     const postula = sola && postulable(a) ? (prefs && prefs.revisar_antes_de_enviar ? C.revisa : C.postula) : null;
     return Terna.confirmar({ titulo: C.titulo, si: C.si, clase: 'dialogo-confirmar',
-      cuerpo: [lineaAviso(a), h('p', { text: C.lugar(lugar, corridas, cupo) }), h('p', { class: 'suave', text: C.regla(cupo) }), postula ? h('p', { text: postula }) : null] });
+      cuerpo: [lineaAviso(a), h('p', { text: C.lugar(lugar, corridas, cupo) }), ...(extra || []).map((x) => h('p', { text: x })),
+        h('p', { class: 'suave', text: C.regla(cupo) }), postula ? h('p', { text: postula }) : null] });
   }
 
   // No me interesa: qué deja de hacer Terna, qué se cancela y cuándo se borra; con 0025, el motivo opcional en el mismo diálogo

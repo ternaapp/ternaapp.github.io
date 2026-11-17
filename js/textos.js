@@ -16,7 +16,7 @@ window.T = (function () {
     comun: {
       irAlContenido: 'Ir al contenido',
       logo: 'Terna, ir a Inicio',
-      pestanas: { inicio: 'Inicio', avisos: 'Avisos', postulaciones: 'Postulaciones', perfil: 'Mi perfil', preferencias: 'Preferencias', invitaciones: 'Invitaciones', admin: 'Admin', alertas: 'Guías de alertas' },
+      pestanas: { inicio: 'Inicio', busqueda: 'Búsqueda', avisos: 'Avisos', postulaciones: 'Postulaciones', perfil: 'Mi perfil', preferencias: 'Preferencias', invitaciones: 'Invitaciones', admin: 'Admin', alertas: 'Guías de alertas' },
       navegacion: 'Secciones',
       salir: 'Salir',
       // El botón del sol o la luna (brand.md 0.17 §6.1): su nombre dice a qué modo pasa.
@@ -512,6 +512,110 @@ window.T = (function () {
       vacioFiltros: 'Ningún aviso coincide con estos filtros.',
       vacioPreferencias: 'Ningún aviso entra en tus preferencias de búsqueda. Podés abrir uno de los filtros de arriba o cambiar tus preferencias.',
       revisarPreferencias: 'Revisar preferencias',
+    },
+
+    // Búsqueda (busqueda.md 0.2 §5; Francisco, 16/11/2026: «una tab exclusiva y dedicada a búsqueda… que en vez de buscar trabajo
+    // en LinkedIn… busque trabajo dentro de nuestra plataforma»): todos los avisos abiertos de la base, para buscar a mano y pedir
+    // el paquete de cualquiera. Lo que ya decía Avisos (Pedir paquete, Dónde se postula, los filtros) se dice igual y sale de ahí.
+    // 0.2 es la segunda versión, después de la revisión como usuaria y como diseño (busqueda.md §8).
+    busqueda: {
+      titulo: 'Búsqueda',
+      cuenta: (x) => plural(x, '1 aviso abierto', n(x) + ' avisos abiertos'),
+      cuentaEmpresas: (x) => 'de ' + n(x) + ' empresas',
+      cuentaDe: (x, total) => n(x) + ' de ' + n(total) + ' avisos abiertos',
+      // Hasta 0.1 la bajada explicaba también qué hace Terna con el pedido (cinco renglones en el celular, arriba del buscador):
+      // eso lo dicen la confirmación de Pedir paquete y la ficha.
+      intro: 'Todo lo que Terna tiene abierto hoy, no solo lo que eligió para vos. Si un aviso te interesa, pedí el paquete.',
+      buscador: {
+        etiqueta: 'Buscar en los avisos',
+        ejemplo: 'Puesto, empresa, lugar o palabra',
+        borrar: 'Borrar la búsqueda',
+        buscando: 'Buscando en las descripciones…',
+        // Lo que se encontró con lo escrito y los filtros puestos: por el puesto, la empresa o el lugar, y además en la descripción.
+        resultado: (directos, descripcion) => (directos + descripcion === 0 ? 'Ningún aviso lo dice.'
+          : descripcion === 0 ? plural(directos, '1 aviso lo dice', n(directos) + ' avisos lo dicen') + ' en el puesto, la empresa o el lugar.'
+            : directos === 0 ? plural(descripcion, '1 aviso lo nombra', n(descripcion) + ' avisos lo nombran') + ' en la descripción.'
+              : plural(directos, '1 aviso lo dice', n(directos) + ' avisos lo dicen') + ' en el puesto, la empresa o el lugar, y '
+                + plural(descripcion, '1 más lo nombra', n(descripcion) + ' más lo nombran') + ' en la descripción.'),
+        // Los que tienen las palabras, pero no juntas: aparte, para no tapar lo que sí dice lo que se escribió (busqueda.md §8, F1).
+        sueltas: (x) => plural(x, 'Ver 1 más que tiene esas palabras por separado', 'Ver ' + n(x) + ' más que tienen esas palabras por separado'),
+        sinSueltas: 'Ocultar los que tienen las palabras por separado',
+        soloSueltas: (x) => 'Ningún aviso lo dice así. ' + plural(x, 'Hay 1 que tiene esas palabras por separado.', 'Hay ' + n(x) + ' que tienen esas palabras por separado.'),
+        corta: 'Escribí dos letras o más.',
+        error: 'No se pudo buscar en las descripciones: ves lo que coincide por puesto, empresa o lugar.',
+        enDescripcion: 'Lo nombra la descripción',
+        porSeparado: 'Tiene esas palabras',
+      },
+      filtros: {
+        barra: 'Filtros',
+        lista: 'En tu lista',
+        todosLista: 'Todos',
+        sinFiltros: 'Sin filtros: ves todo lo abierto.',
+        conPreferencias: 'Con tus preferencias de búsqueda.',
+        usarPreferencias: 'Usar mis preferencias',
+        limpiar: 'Limpiar filtros',
+        todasEmpresas: 'Todas',
+        // Empresa: son cientos, así que el filtro muestra las que más avisos tienen y busca el resto por nombre.
+        buscarEmpresa: 'Buscar una empresa',
+        masEmpresas: (x) => 'Y ' + n(x) + ' más: escribí el nombre para encontrarlas.',
+        ningunaEmpresa: 'Ninguna empresa con avisos abiertos se llama así.',
+        elegidas: 'Elegidas',
+      },
+      // Qué es cada aviso para la persona: nada todavía, uno de sus avisos, un paquete pedido, uno armado o una postulación hecha.
+      lista: { fuera: 'No está en tu lista', en_lista: 'En tus avisos', pedido: 'Paquete pedido', con_paquete: 'Con paquete', postulada: 'Postulada', no_interesa: 'No te interesa' },
+      listaFiltro: { fuera: 'No están en tu lista', en_lista: 'En tus avisos', pedido: 'Paquete pedido', con_paquete: 'Con paquete', postulada: 'Postuladas', no_interesa: 'No te interesan' },
+      listaConMatch: (estado, m) => estado + ' · ' + m,
+      listaConMatchAccesible: (estado, m) => estado + ', match ' + m,
+      ordenEmpresa: 'Empresa (A a Z)',
+      ordenMatch: 'Tu match',
+      columnas: { lista: 'En tu lista', paquete: 'Paquete' },
+      verEnAvisos: 'Ver en Avisos',
+      verEnPostulaciones: 'Ver en Postulaciones',
+      mostrarMas: (x) => 'Mostrar ' + n(x) + ' más',
+      mostrando: (x, total) => 'Mostrando ' + n(x) + ' de ' + n(total) + '.',
+      // Lo que se sabe sin pedir nada (busqueda.md §8, F5): el título nombra uno de tus puestos, o la empresa es una que seguís.
+      tuPuestoExplicacion: (puesto) => 'El título nombra uno de tus puestos ("' + puesto + '").',
+      tuEmpresaExplicacion: (empresa) => 'Es de una empresa que seguís ("' + empresa + '").',
+      confirmar: {
+        sinMatch: 'Este aviso todavía no tiene tu match: Terna lo calcula en la próxima corrida, antes de armar el paquete.',
+        pasaALista: 'Pasa a tus avisos: lo seguís en Avisos, en Próximos paquetes.',
+      },
+      ficha: {
+        enTuLista: 'En tu lista',
+        donde: 'Dónde se postula',
+        datos: 'Datos del aviso',
+        nivel: 'Nivel', jornada: 'Jornada', modalidad: 'Modalidad', publicado: 'Publicado', fuente: 'Fuente',
+        fuenteNota: (fuente) => 'Terna lo leyó en ' + fuente + '. El texto completo está en el aviso original.',
+        masDeEmpresa: (x, empresa) => 'Ver los ' + n(x) + ' avisos abiertos de ' + empresa,
+        estado: {
+          fuera: 'Todavía no está en tu lista: Terna no lo eligió para vos. Si pedís el paquete, pasa a tus avisos y Terna calcula tu match en la próxima corrida.',
+          fueraConMatch: (m) => 'Terna ya lo puntuó para vos (match ' + m + ') y no lo dejó en tu lista. Si pedís el paquete, lo arma igual.',
+          en_lista: (m) => (m === null ? 'Está en tus avisos.' : 'Está en tus avisos, con match ' + m + '.'),
+          pedidoSinMatch: 'Antes de armarlo, Terna calcula tu match.',
+          con_paquete: 'Ya tiene el paquete armado: el CV, la carta, el salario sugerido y las notas están en Postulaciones.',
+          postulada: 'Ya está postulada. La seguís en Postulaciones.',
+          no_interesa: 'Lo marcaste "No me interesa". Si pedís el paquete, vuelve a tus avisos.',
+          no_se_pudo: 'Terna no pudo armar el paquete. Podés volver a pedirlo.',
+        },
+        armarNo: 'Armar paquetes está en No: Terna no arma nada, tampoco lo que pidas acá.',
+        cambiarlo: 'Cambiarlo en Preferencias',
+      },
+      vacioBase: 'Terna todavía no tiene avisos abiertos. Busca todos los días: volvé después de la próxima corrida.',
+      vacioBusqueda: (q) => 'Ningún aviso abierto coincide con "' + q + '".',
+      vacioFiltros: 'Ningún aviso abierto coincide con estos filtros.',
+      vacioAyuda: 'Probá con otra palabra o con menos filtros. Terna suma avisos todos los días.',
+      // Francisco, 16/11/2026, buscó los avisos de una empresa cuyo sitio Terna todavía no lee: que la página lo diga (§8, F2).
+      queTiene: 'Terna muestra los avisos de los sitios que sabe leer: de algunas empresas todavía no tiene ninguno, o tiene pocos.',
+      seguirEmpresa: 'Si buscás una empresa en particular, sumala en Preferencias › Búsqueda › Empresas que seguís: Terna prioriza sus avisos cuando los encuentra.',
+      irAPreferencias: 'Ir a Preferencias',
+      pie: 'Acá buscás vos. Lo que Terna busca sola para vos se cambia en',
+      piePreferencias: 'Preferencias › Búsqueda',
+      // En Inicio (busqueda.md §4.6): cuánto hay para buscar, con el link.
+      enInicio: (avisos, empresas, semana) => 'Terna tiene hoy ' + plural(avisos, '1 aviso abierto', n(avisos) + ' avisos abiertos')
+        + (empresas > 1 ? ' de ' + n(empresas) + ' empresas' : '') + (semana > 0 ? '; ' + plural(semana, '1 es', n(semana) + ' son') + ' de esta semana' : '') + '.',
+      enInicioLink: 'Buscar entre todos',
+      // En Avisos, debajo de la lista (busqueda.md §4.6): qué diferencia hay entre las dos pestañas, con el link.
+      enAvisos: 'Estos son los avisos que Terna eligió para vos. Todo lo que tiene abierto está en',
     },
 
     postulaciones: {
@@ -1490,6 +1594,8 @@ window.T = (function () {
       sinTexto: 'Terna todavía no tiene el texto de este aviso.',
       yaArmado: 'Este aviso ya tiene paquete.',
       yaPedido: 'Ya está pedido.',
+      // 0045 (busqueda.md 0.1 §6): el aviso se cerró, o ya no se puede pedir, entre que la persona lo vio en Búsqueda y lo pidió.
+      avisoNoDisponible: 'Ese aviso ya no está abierto. Actualizá la página para ver los que siguen.',
       armarNo: 'Armar paquetes está en No.',
       enviada: 'Terna ya envió esta postulación; no se puede volver atrás.',
       noPostulable: 'Terna no puede postular en este sitio. Hacelo vos: todo está listo.',
@@ -1529,6 +1635,7 @@ window.T = (function () {
         texto_corto: e.textoCorto, texto_largo: e.textoLargo(c.max_texto_pegado_chars || 20000),
         aviso_con_texto: e.conTexto, aviso_sin_texto: e.sinTexto,
         paquete_ya_armado: e.yaArmado, paquete_ya_pedido: e.yaPedido, armar_desactivado: e.armarNo,
+        aviso_no_disponible: e.avisoNoDisponible,
         dni_invalido: e.dni, cuil_invalido: e.cuil, fecha_nacimiento_invalida: e.nacimiento,
         direccion_incompleta: e.direccionIncompleta, calle_invalida: e.calle, codigo_postal_invalido: e.codigoPostal, provincia_invalida: e.provincia,
         interes_invalido: e.marcar, transicion_invalida: e.marcar, motivo_sin_no_interesa: e.motivoSinNoInteresa,

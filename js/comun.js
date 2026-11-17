@@ -13,13 +13,13 @@ window.Terna = (function () {
     bucket: 'documentos',
   };
   const PAGINAS = {
-    inicio: 'index.html', avisos: 'avisos.html', postulaciones: 'postulaciones.html', perfil: 'perfil.html',
+    inicio: 'index.html', busqueda: 'busqueda.html', avisos: 'avisos.html', postulaciones: 'postulaciones.html', perfil: 'perfil.html',
     preferencias: 'preferencias.html', invitaciones: 'invitaciones.html', admin: 'admin.html', alertas: 'alertas.html',
   };
   // Páginas sin pestaña propia: marcan la de la sección a la que pertenecen (las guías de alertas son de Preferencias).
   const PESTANA_DE = { alertas: 'preferencias' };
   const ICONOS_PESTANAS = {
-    inicio: 'i-inicio', avisos: 'i-avisos', postulaciones: 'i-postulaciones', perfil: 'i-perfil',
+    inicio: 'i-inicio', busqueda: 'i-buscar', avisos: 'i-avisos', postulaciones: 'i-postulaciones', perfil: 'i-perfil',
     preferencias: 'i-preferencias', invitaciones: 'i-sobre', admin: 'i-admin',
   };
   const SVG = 'http://www.w3.org/2000/svg';
@@ -161,7 +161,7 @@ window.Terna = (function () {
   }
   // Solo deja volver a una página propia, con un hash simple.
   function volverValido(valor) {
-    return /^(index|avisos|postulaciones|perfil|preferencias|invitaciones|admin|alertas)\.html(#[a-z0-9-]+)?$/i.test(valor || '') ? valor : 'index.html';
+    return /^(index|busqueda|avisos|postulaciones|perfil|preferencias|invitaciones|admin|alertas)\.html(#[a-z0-9-]+)?$/i.test(valor || '') ? valor : 'index.html';
   }
   async function salir() {
     estado.saliendo = true;
@@ -180,7 +180,8 @@ window.Terna = (function () {
     if (!cont) return;
     vaciar(cont);
     const nav = h('nav', { class: 'pestanas', 'aria-label': T.comun.navegacion });
-    for (const clave of ['inicio', 'avisos', 'postulaciones', 'perfil', 'preferencias', 'invitaciones']) nav.append(pestana(clave, pagina));
+    // Desde busqueda.md 0.1 (16/11/2026), Búsqueda va segunda: de lo más ancho (todo lo abierto) a lo tuyo (Avisos) y a lo que se postula.
+    for (const clave of ['inicio', 'busqueda', 'avisos', 'postulaciones', 'perfil', 'preferencias', 'invitaciones']) nav.append(pestana(clave, pagina));
     const nombre = h('span', { class: 'cuenta-nombre', id: 'cuenta-nombre' });
     const barra = h('div', { class: 'barra' },
       h('a', { class: 'logo', href: 'index.html', 'aria-label': T.comun.logo },

@@ -3,6 +3,7 @@
    que dar lo mismo (Francisco, 07/11/2026: "dice 29 postulaciones para hacer a mano pero me figuran 9"). Las dos páginas arman
    la lista con estas mismas reglas:
    - con interés (me interesa o por decidir), dentro de las preferencias de búsqueda y desde el umbral;
+   - lo que la persona pidió entra siempre, aunque esté fuera de sus preferencias o debajo del umbral (busqueda.md 0.2 §4.5);
    - lo "tuyo" entra desde el piso: los avisos de tus puestos ("Priorizar mis puestos", 0027) y, desde 0034, los de las empresas
      que seguís ("Priorizar mis empresas"), como los toma el motor (pipeline.md 0.4.15 §4.9 punto 3c y 0.4.24 §4.19);
    - los links de Inicio cuentan y filtran con la regla del motor y nada más (`esLaEmpresa`, `esElPuesto`): "Dos" no trae
@@ -26,8 +27,11 @@ window.Lista = (function () {
     const esTuEmpresa = (a) => !!Aviso.tuEmpresa(a, criterio);
     const prioritario = (a) => esTuPuesto(a) || esTuEmpresa(a);
     const llegaOEsTuyo = (a, minimo) => a.match === null || a.match === undefined || a.match >= minimo || prioritario(a);
-    // La lista con la que abre Avisos.
-    const enLista = (a) => INTERES_INICIAL.includes(a.interes) && Aviso.pasaBusqueda(a, busqueda) && llegaOEsTuyo(a, umbral);
+    // La lista con la que abre Avisos. Desde busqueda.md 0.2 (16/11/2026), lo que la persona pidió se ve siempre, aunque no llegue a
+    // su umbral o quede fuera de sus preferencias: lo eligió ella (desde Búsqueda se pide cualquier aviso abierto), el motor lo arma
+    // igual (pipeline.md §4.9) y, sin esto, un pedido hecho en Búsqueda no aparecía en la lista de Avisos.
+    const pedido = (a) => !!a.pedido_en;
+    const enLista = (a) => INTERES_INICIAL.includes(a.interes) && (pedido(a) || (Aviso.pasaBusqueda(a, busqueda) && llegaOEsTuyo(a, umbral)));
     const igual = (x, y) => Empresas.normalizada(x) === Empresas.normalizada(y);
     // La empresa con la regla del motor; si es una que seguís, también con el nombre de su tablero (el alias).
     function esLaEmpresa(a, texto) {
@@ -39,7 +43,7 @@ window.Lista = (function () {
     const deEmpresa = (a, texto) => !String(texto || '').trim() || Filtros.contiene(a.empresa, texto) || esLaEmpresa(a, texto);
     const dePuesto = (a, texto) => !String(texto || '').trim() || Filtros.contiene(a.puesto, texto) || esElPuesto(a, texto);
     return { criterio, umbral, piso, busqueda, puestos, filas, misPuestos: criterio.puestos, misEmpresas: criterio.empresas, fuera,
-      esTuPuesto, esTuEmpresa, prioritario, llegaOEsTuyo, enLista, esLaEmpresa, esElPuesto, deEmpresa, dePuesto };
+      esTuPuesto, esTuEmpresa, prioritario, llegaOEsTuyo, pedido, enLista, esLaEmpresa, esElPuesto, deEmpresa, dePuesto };
   }
 
   // Las empresas que sigue la persona (0034; datos.md 0.30): una lista de nombres en sus preferencias, como los puestos. La web

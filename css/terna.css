@@ -553,8 +553,8 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .tabla-caja { position: relative; overflow-x: auto; background: var(--hoja); border: 1px solid var(--linea); border-radius: 10px; }
 /* Las tablas de Avisos y Postulaciones se adaptan a su propio ancho, no al de la ventana (diseno.md 0.8 §7.6 y §8.6): con el
    cajón abierto o con el carril, lo que no entra pasa a la línea de apoyo debajo del puesto en vez de desplazarse. */
-.tabla-avisos, .tabla-postulaciones { container-type: inline-size; container-name: tabla; }
-.tabla-avisos .linea-apoyo, .tabla-postulaciones .apoyo-empresa, .tabla-postulaciones .apoyo-porque { display: none; }
+.tabla-avisos, .tabla-postulaciones, .tabla-busqueda { container-type: inline-size; container-name: tabla; }
+.tabla-avisos .linea-apoyo, .tabla-busqueda .linea-apoyo, .tabla-postulaciones .apoyo-empresa, .tabla-postulaciones .apoyo-porque { display: none; }
 .tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
 .tabla th {
   text-align: left; font-weight: 500; color: var(--tinta-suave); font-size: 13px; padding: 10px; white-space: nowrap;
@@ -812,6 +812,32 @@ a.barra-link:hover .barra-nombre > span { text-decoration: underline; text-under
 .proximos-pie { font-size: 13px; color: var(--tinta-suave); line-height: 1.4; padding-top: 6px; border-top: 1px solid var(--linea); }
 .tabla-avisos { display: none; }
 
+/* Búsqueda (busqueda.md 0.1 §4): la bajada, el buscador y la lista de todos los avisos abiertos. La barra de filtros, las tarjetas,
+   la tabla y la ficha son las de Avisos. */
+.busqueda-intro { font-size: 15px; line-height: 1.45; max-width: 86ch; color: var(--tinta-suave); margin-top: -6px; }
+.buscador { display: flex; flex-direction: column; gap: 6px; }
+.buscador-caja { position: relative; display: flex; align-items: center; max-width: 760px; }
+.buscador-icono { position: absolute; left: 12px; width: 20px; height: 20px; color: var(--tinta-suave); pointer-events: none; }
+.buscador-campo { min-height: 48px; padding: 0 48px 0 40px; font-size: 17px; }
+.buscador-campo::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.buscador-borrar { position: absolute; right: 2px; width: 44px; min-height: 44px; padding: 0; }
+.buscador-borrar[hidden] { display: none; }
+.buscador-estado { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; min-height: 20px; font-size: 13px; line-height: 1.4; color: var(--tinta-suave); }
+.buscador-estado .btn { margin-left: -8px; }
+.buscador-estado:empty { display: none; }
+.cuenta-empresas { display: none; }
+.en-descripcion .icono { color: var(--tinta-suave); }
+.link-lista { font-size: 13px; white-space: nowrap; }
+.mas-resultados { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 0 4px; font-size: 14px; }
+dl.respuestas.datos-aviso { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
+/* La tarjeta del celular termina con la fecha a la izquierda y, a la derecha, adónde seguirlo y Pedir paquete. */
+.tarjeta-pie { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; min-height: 32px; }
+.tabla-busqueda .linea-tuya { margin-top: 3px; }
+.avisos-busqueda { font-size: 13px; color: var(--tinta-suave); line-height: 1.4; }
+.inicio-busqueda { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font-size: 14px; line-height: 1.4; color: var(--tinta-suave); }
+.busqueda-pie { font-size: 13px; color: var(--tinta-suave); line-height: 1.4; }
+.tabla-busqueda { display: none; }
+
 /* Postulaciones */
 .lista-postulaciones { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .fila-postulacion {
@@ -989,8 +1015,11 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
      en 1.024): los espacios van más apretados y el nombre se corta; desde 1200 recuperan el aire. */
   .pestanas { position: static; flex: 1; gap: 12px; padding: 0; border-bottom: 0; background: transparent; height: 56px; overflow: visible; }
   .pestana { flex-direction: row; gap: 6px; min-width: 0; height: 56px; padding: 0 2px; font-size: 14px; }
-  .cuenta { position: static; height: auto; gap: 4px; }
-  .cuenta-nombre { display: inline-block; max-width: 12ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+  /* El nombre es lo que cede cuando la barra queda justa (busqueda.md 0.1 §4.1): se corta con puntos suspensivos antes de
+     empujar a las pestañas o de salirse de la página. */
+  .cuenta { position: static; height: auto; gap: 4px; min-width: 0; }
+  .cuenta > .btn { flex: none; }
+  .cuenta-nombre { display: inline-block; max-width: 12ch; min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
   /* Cómo viene en escritorio: la etiqueta, la barra y el número en una fila; la nota debajo de la etiqueta. */
   .etapa { grid-template-columns: minmax(150px, 34%) minmax(0, 1fr) 52px; grid-template-areas: "nombre barra numero" "nota . ."; row-gap: 2px; align-items: center; }
   .cifra-numero { text-align: right; }
@@ -1050,6 +1079,16 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   .asi-funciona p { font-size: 15px; max-width: 70ch; }
   .lista-tarjetas.solo-celular { display: none; }
   .tabla-avisos, .tabla-postulaciones { display: block; }
+  /* Búsqueda: la tabla, del tamaño de la de Avisos. Dónde se postula y En tu lista parten sus palabras antes de ensancharla. */
+  .tabla-busqueda { display: block; }
+  .cuenta-empresas { display: inline; }
+  .tabla-busqueda .tabla { font-size: 13px; }
+  .tabla-busqueda .tabla th, .tabla-busqueda .tabla td { padding: 8px 6px; }
+  .tabla-busqueda .btn-fila { font-size: 12px; padding: 0 8px; }
+  .tabla-busqueda td.col-donde { max-width: 150px; }
+  .tabla-busqueda td.col-empresa { max-width: 220px; overflow-wrap: anywhere; }
+  .tabla-busqueda td.col-ubicacion { max-width: 240px; }
+  .tabla-busqueda td.col-publicado { white-space: nowrap; }
   /* Próximos paquetes: una lista corta, que no se estira a lo ancho de la página. */
   .proximos { max-width: 760px; }
   .btn-icono { width: 36px; min-height: 36px; }
@@ -1128,6 +1167,32 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
      tabla necesitaba 516 y la caja medía 498; con esto, 492). */
   .tabla-postulaciones .tabla th, .tabla-postulaciones .tabla td { padding-left: 4px; padding-right: 4px; }
   .tabla-postulaciones .tabla th .th-filtro { margin: -6px -4px; padding: 6px 4px; }
+}
+
+/* Búsqueda, por el ancho de su caja: primero se va Publicado (está en la ficha), después Ubicación y Dónde se postula pasan a la
+   línea de apoyo, y por último Empresa. */
+@container tabla (max-width: 1000px) {
+  .tabla-busqueda .col-publicado { display: none; }
+}
+@container tabla (max-width: 880px) {
+  .tabla-busqueda .col-ubicacion, .tabla-busqueda .col-donde { display: none; }
+  .tabla-busqueda .linea-apoyo { display: block; margin-top: 2px; }
+  .tabla-busqueda .apoyo-empresa { display: none; }
+}
+@container tabla (max-width: 640px) {
+  .tabla-busqueda .col-empresa { display: none; }
+  .tabla-busqueda .apoyo-empresa { display: inline; }
+  .tabla-busqueda .tabla th, .tabla-busqueda .tabla td { padding-left: 4px; padding-right: 4px; }
+}
+
+/* Con Búsqueda son siete pestañas, y ocho con Admin (busqueda.md 0.1 §4.1; medido el 16/11/2026: a 1.024 px la barra de siete
+   quedaba 13 px adentro de su margen con un nombre de tres letras, y la de ocho medía 1.120). Entre 1024 y 1279 px las pestañas
+   van solo con su palabra, sin el ícono (26 px menos cada una); con Admin, hasta 1439. Desde ahí, como siempre. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .pestana .icono { display: none; }
+}
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .pestanas:has([data-pestana="admin"]) .pestana .icono { display: none; }
 }
 
 /* ---------- 8. Escritorio ancho: 1200 px o más ---------- */
