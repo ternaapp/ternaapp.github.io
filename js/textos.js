@@ -992,11 +992,12 @@ window.T = (function () {
       interesDefecto: 'Me interesa por defecto',
       interesDefectoAyuda: 'En Sí, todo aviso que llega a tu umbral te interesa hasta que digas lo contrario, y Terna arma y postula sola. En No, decidís aviso por aviso y Terna espera tu marca.',
       // Desde brand.md 0.7 los paquetes por día son siempre 3 (config.paquetes_por_dia_opciones = {3}, 0028): no hay qué elegir, y la
-      // ayuda de Armar paquetes dice cuántos arma y en qué orden (seleccion.py, pipeline.md §4.9).
+      // ayuda de Armar paquetes dice cuántos arma y en qué orden (seleccion.py, pipeline.md §4.9). Desde brand.md 0.30 (17/11/2026) no
+      // dice «y no más de una vez por semana a la misma empresa»: la regla salió (pipeline.md 0.5.10).
       armar: 'Armar paquetes',
       armarAyuda: (n) => 'En Sí, Terna arma ' + n + ' paquetes por día, del aviso de mayor match para abajo. Se adelantan los que pediste, '
         + 'los de tus puestos si los priorizás y, si Terna postula por vos, los que puede postular sola. Terna postula como máximo a esos '
-        + n + ', y no más de una vez por semana a la misma empresa. En No, solo busca y puntúa avisos.',
+        + n + '. En No, solo busca y puntúa avisos.',
       recomendado: (x) => x + ' (recomendado)',
       postularSola: 'Terna postula por vos',
       postularSolaAyuda: 'Terna postula sola en los avisos que te interesan y cuyo formulario es público y conocido. Llena el formulario con tu perfil, sube tu CV y tu carta y responde las preguntas con lo que tu perfil dice. Nunca entra con cuentas tuyas, nunca resuelve captchas y nunca inventa una respuesta. Lo que no puede hacer te lo deja listo para hacerlo a mano. Cada envío queda guardado con las respuestas y una captura.',
