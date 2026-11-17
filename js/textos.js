@@ -613,9 +613,10 @@ window.T = (function () {
       irAPreferencias: 'Ir a Preferencias',
       pie: 'Acá buscás vos, entre todo lo que Terna tiene abierto y no solo lo que eligió para vos. Lo que Terna busca sola se cambia en',
       piePreferencias: 'Preferencias › Búsqueda',
-      // En Inicio (busqueda.md §4.6): cuánto hay para buscar, con el link.
-      enInicio: (avisos, empresas, semana) => 'Terna tiene hoy ' + plural(avisos, '1 aviso abierto', n(avisos) + ' avisos abiertos')
-        + (empresas > 1 ? ' de ' + n(empresas) + ' empresas' : '') + (semana > 0 ? '; ' + plural(semana, '1 es', n(semana) + ' son') + ' de esta semana' : '') + '.',
+      // En Inicio (busqueda.md §4.6): cuánto hay para buscar, con el link. Sin la cuenta de empresas desde 0.3: la base y la página
+      // no juntan igual dos nombres de la misma empresa (652 y 653 el 17/11/2026) y dos números distintos para lo mismo confunden.
+      enInicio: (avisos, semana) => 'Terna tiene hoy ' + plural(avisos, '1 aviso abierto', n(avisos) + ' avisos abiertos')
+        + (semana > 0 ? '; ' + plural(semana, '1 es', n(semana) + ' son') + ' de esta semana' : '') + '.',
       enInicioLink: 'Buscar entre todos',
       // En Avisos, debajo de la lista (busqueda.md §4.6): qué diferencia hay entre las dos pestañas, con el link.
       enAvisos: 'Estos son los avisos que Terna eligió para vos. Todo lo que tiene abierto está en',

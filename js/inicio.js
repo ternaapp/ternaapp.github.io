@@ -449,7 +449,7 @@ Terna.pagina('inicio', async (ctx) => {
   const hayPara = !rBusqueda.error && rBusqueda.data && num(rBusqueda.data.avisos) > 0 ? rBusqueda.data : null;
   if (hayPara) {
     cont.append(h('p', { class: 'inicio-busqueda' }, icono('i-buscar', 'icono-16'),
-      h('span', { text: T.busqueda.enInicio(num(hayPara.avisos), num(hayPara.empresas), num(hayPara.semana)) }),
+      h('span', { text: T.busqueda.enInicio(num(hayPara.avisos), num(hayPara.semana)) }),
       h('a', { href: 'busqueda.html', text: T.busqueda.enInicioLink })));
   }
   const tarjetaCuentas = preguntaCuentas();
