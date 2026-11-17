@@ -573,6 +573,8 @@ window.T = (function () {
       verEnPostulaciones: 'Ver en Postulaciones',
       mostrarMas: (x) => 'Mostrar ' + n(x) + ' más',
       mostrando: (x, total) => 'Mostrando ' + n(x) + ' de ' + n(total) + '.',
+      // El lugar de algunos avisos es una lista larga de países: en la tabla, los dos primeros y esto (brand.md 0.29 §6.3.1).
+      variosLugares: (primeros) => primeros + ' y otros lugares',
       // Lo que se sabe sin pedir nada (busqueda.md §8, F5): el título nombra uno de tus puestos, o la empresa es una que seguís.
       tuPuestoExplicacion: (puesto) => 'El título nombra uno de tus puestos ("' + puesto + '").',
       tuEmpresaExplicacion: (empresa) => 'Es de una empresa que seguís ("' + empresa + '").',

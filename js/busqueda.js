@@ -173,6 +173,15 @@ Terna.pagina('busqueda', async (ctx) => {
   const conPrefs = () => hayPrefs && BUSQUEDA.every((k) => mismos(filtros[k], prefsComoFiltro()[k]));
 
   const lugarDe = (a) => a.ubicacion || T.avisos.alcanceMin[a.alcance === 'exterior' ? 'exterior' : 'local'];
+  // Algunas fuentes mandan como lugar la lista de países desde donde se puede trabajar (veinte o más, y cortada): en la tabla van
+  // los dos primeros y «y otros lugares». El texto entero queda al pasar el mouse, y el filtro Ubicación busca en todo.
+  function lugarCorto(a) {
+    const todo = lugarDe(a);
+    const partes = todo.split(',').map((x) => x.trim()).filter(Boolean);
+    return partes.length > 4 ? B.variosLugares(partes.slice(0, 2).join(', ')) : todo;
+  }
+  const conModalidad = (a, lugar) => lugar + (a.modalidad ? ' · ' + T.avisos.modalidadMin[a.modalidad] : '');
+  const tituloLugar = (a) => (lugarCorto(a) === lugarDe(a) ? null : lugarDe(a));
   function pasa(a, excepto) {
     if (excepto !== 'empresa' && filtros.empresa && !filtros.empresa.includes(a.empresa || '')) return false;
     if (excepto !== 'ubicacion' && !Filtros.contiene(lugarDe(a), filtros.ubicacion)) return false;
@@ -493,7 +502,7 @@ Terna.pagina('busqueda', async (ctx) => {
     const d = Aviso.donde(a, prefs);
     return h('div', { class: 'atributos linea-apoyo' },
       a.empresa ? h('span', { class: 'apoyo-empresa', text: a.empresa + ' · ' }) : null,
-      h('span', { class: 'apoyo-lugar', text: lugarDe(a) + (a.modalidad ? ' · ' + T.avisos.modalidadMin[a.modalidad] : '') }),
+      h('span', { class: 'apoyo-lugar', title: tituloLugar(a), text: conModalidad(a, lugarCorto(a)) }),
       d.hecha ? null : h('span', { class: 'apoyo-donde', text: ' · ' + Aviso.textoDonde(d) }));
   }
   function fila(a) {
@@ -503,7 +512,7 @@ Terna.pagina('busqueda', async (ctx) => {
         marcas.length ? h('div', { class: 'chips linea-tuya' }, marcas) : null),
       h('td', { class: 'col-empresa', text: a.empresa || '' }),
       h('td', { class: 'col-ubicacion' }, h('span', { class: 'atributos' }, icono(a.alcance === 'exterior' ? 'i-exterior' : 'i-local', 'icono-16'),
-        h('span', { text: lugarDe(a) + (a.modalidad ? ' · ' + T.avisos.modalidadMin[a.modalidad] : '') }))),
+        h('span', { title: tituloLugar(a), text: conModalidad(a, lugarCorto(a)) }))),
       h('td', { class: 'col-donde' }, Aviso.celdaDonde(a, prefs)),
       h('td', { class: 'col-lista' }, h('div', { class: 'celda-paquete' }, chipLista(a), linkLista(a))),
       h('td', { class: 'col-paquete' }, accion(a)),
