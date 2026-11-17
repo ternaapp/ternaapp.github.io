@@ -499,7 +499,18 @@ a.fila:hover { color: var(--tinta); background: var(--seleccion); }
 .vista input:checked + .vista-cara { background: var(--accion-tinte); border-color: var(--accion); }
 .vista input:checked + .vista-cara .vista-titulo { font-weight: 700; color: var(--accion-oscura); }
 .vista input:focus-visible + .vista-cara { outline: 2px solid var(--accion); outline-offset: 2px; }
+/* Desde 0.41: Postuladas primero; Por postular resalta su número con un punto cuando alguna te toca a vos (el texto de abajo lo dice). */
+.vista.te-toca .vista-n { display: inline-flex; align-items: center; gap: 6px; color: var(--accion-oscura); }
+.vista.te-toca .vista-n::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accion); }
+/* La línea de arriba de la lista, una por pestaña en el mismo lugar: en Postuladas, la nota; en Por postular, "Tu umbral". */
+.linea-vista { display: flex; flex-wrap: wrap; align-items: center; min-height: 36px; }
+.linea-vista .etapa-nota { margin: 0; }
+.linea-vista > [hidden] { display: none; }
 .tu-umbral-caja { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+@media (max-width: 767px) {
+  .tu-umbral-caja { flex-direction: column; align-items: flex-start; }
+  .tu-umbral .chip-opcion-cara { min-height: 44px; }
+}
 .tu-umbral-nota { font-size: 14px; color: var(--tinta-suave); }
 .tu-umbral-nota:empty { display: none; }
 /* La franja de Avisos (diseno.md 0.35 §7.10): las mismas dos tarjetas y, al lado, cuántos llegaron en los últimos 30 días. */

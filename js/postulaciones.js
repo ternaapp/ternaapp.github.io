@@ -66,13 +66,17 @@ Terna.pagina('postulaciones', async (ctx) => {
      como tu umbral y si lo desactivas te aparecen todas"): lo que quedó a mano, o con el paquete armado, y Terna ya no sugiere
      (subiste el umbral o un repuntaje lo bajó) se ve solo sin la casilla y desde el piso; debajo del piso, nunca. Lo ya postulado y
      lo que Terna tiene en marcha se ve siempre: se mandó, o se está por mandar, en nombre de la persona. */
-  const VISTAS = ['por_postular', 'postuladas'];
+  /* Desde 0.41 (Francisco, 17/11/2026: «primero "postuladas" y despues por postular… por default ya que en teoria se tendria que
+     poder postular a todas sola»): Postuladas va primera y es la de entrada; Por postular, los casos para hacer a mano. "Tu umbral"
+     sale de al lado de las pestañas a la línea de arriba de la lista, solo en Por postular, que es lo único que cambia («ubicalo en
+     un mejor lugar»). */
+  const VISTAS = ['postuladas', 'por_postular'];
   const URGENCIA = { a_mano: 0, para_revisar: 1, en_cola: 2, enviada: 3, postulado: 4, pendiente: 5 };
   const HASH = { por_postular: 'por-postular', postuladas: 'postuladas' };
   // Los hash de las etapas de antes (hasta 0.32), que siguen en los links de Inicio y en lo que alguien haya guardado.
   const DE_HASH = { 'por-postular': 'por_postular', postuladas: 'postuladas', todas: 'por_postular', 'a-mano': 'por_postular', 'para-revisar': 'por_postular',
     'en-cola': 'por_postular', 'bajo-umbral': 'por_postular', enviadas: 'postuladas', entrevistas: 'postuladas' };
-  let vista = 'por_postular';
+  let vista = 'postuladas';
   let soloSugeridas = true;
   const hecha = (a) => a.estado_postulacion === 'enviada' || a.estado_postulacion === 'postulado';
   const enMarcha = (a) => a.estado_postulacion === 'en_cola' || a.estado_postulacion === 'para_revisar';
@@ -223,6 +227,8 @@ Terna.pagina('postulaciones', async (ctx) => {
   const refVistas = {};
   let casillaUmbral = null;
   let notaUmbral = null;
+  let cajaUmbral = null;
+  let notaPostuladas = null;
   function armarVistas() {
     const grupo = h('div', { class: 'vistas', role: 'radiogroup', 'aria-label': T.postulaciones.mostrar });
     for (const v of VISTAS) {
@@ -240,11 +246,15 @@ Terna.pagina('postulaciones', async (ctx) => {
     casillaUmbral = h('input', { type: 'checkbox', name: 'tu-umbral', checked: soloSugeridas, 'aria-describedby': idExplicacion });
     casillaUmbral.addEventListener('change', () => { soloSugeridas = casillaUmbral.checked; dibujar(); });
     notaUmbral = h('span', { class: 'tu-umbral-nota', role: 'status' });
-    cajaVistas.append(h('div', { class: 'vistas-caja' }, grupo,
-      h('div', { class: 'tu-umbral-caja' },
-        h('label', { class: 'chip-opcion chip-opcion-form tu-umbral', title: explicacion }, casillaUmbral,
-          h('span', { class: 'chip-opcion-cara' }, h('span', { class: 'marca' }, icono('i-tilde')), U.etiqueta(umbral))),
-        h('span', { class: 'oculto-visual', id: idExplicacion, text: explicacion }), notaUmbral)));
+    cajaVistas.append(h('div', { class: 'vistas-caja' }, grupo));
+    // La línea de arriba de la lista, una por pestaña y en el mismo lugar (diseno.md 0.41 §8.2): en Postuladas, para qué sirve volver;
+    // en Por postular, "Tu umbral" con su nota. Se arma una sola vez, fuera de la lista, para que el foco no se pierda al redibujarla.
+    cajaUmbral = h('div', { class: 'tu-umbral-caja' },
+      h('label', { class: 'chip-opcion chip-opcion-form tu-umbral', title: explicacion }, casillaUmbral,
+        h('span', { class: 'chip-opcion-cara' }, h('span', { class: 'marca' }, icono('i-tilde')), U.etiqueta(umbral))),
+      h('span', { class: 'oculto-visual', id: idExplicacion, text: explicacion }), notaUmbral);
+    notaPostuladas = h('p', { class: 'etapa-nota', text: T.postulaciones.postuladasNota });
+    document.querySelector('.post-principal .con-cajon').before(h('div', { class: 'linea-vista' }, notaPostuladas, cajaUmbral));
   }
   function actualizarVistas() {
     const base = filtradas();
@@ -260,7 +270,11 @@ Terna.pagina('postulaciones', async (ctx) => {
         : [[cuantas(l, (a) => a.estado_postulacion === 'enviada'), P.enviadas], [cuantas(l, (a) => a.estado_postulacion === 'postulado'), P.aMano]])
         .filter(([c]) => c > 0).map(([c, texto]) => texto(c));
       r.partes.textContent = partes.join(' · ');
+      // Por postular resalta su número cuando alguna te toca a vos: queda segunda y no se tiene que perder (con el texto, no solo el color).
+      if (v === 'por_postular') r.input.closest('.vista').classList.toggle('te-toca', cuantas(l, (a) => !laTieneTerna(a)) > 0);
     }
+    cajaUmbral.hidden = vista !== 'por_postular';
+    notaPostuladas.hidden = vista !== 'postuladas' || enVista(base, 'postuladas').length === 0;
     // Cuántas quedaron entre el piso y tu umbral, con los filtros puestos: lo que la casilla esconde o deja ver.
     const U = T.postulaciones.tuUmbral;
     const k = postulaciones.filter((a) => quedo(a) && !bajoPiso(a) && pasaFiltros(a)).length;
@@ -303,6 +317,13 @@ Terna.pagina('postulaciones', async (ctx) => {
     estadoFiltros.hidden = !algoCambiado();
     if (enfocado && estadoFiltros.hidden) primerFiltro().focus();
   }
+  // Postuladas vacía con algo en Por postular (la persona nueva entra acá): el botón lleva a la otra pestaña, con su nombre.
+  function vacioVista() {
+    const texto = h('p', { text: T.postulaciones.vacioVista[vista] });
+    if (vista !== 'postuladas' || !enVista(visibles(), 'por_postular').length) return h('p', { class: 'vacio', text: T.postulaciones.vacioVista[vista] });
+    return h('div', { class: 'vacio' }, texto, h('button', { class: 'btn', type: 'button',
+      onclick: () => { cambiarVista('por_postular'); refVistas.por_postular.input.focus(); } }, T.postulaciones.vistas.por_postular));
+  }
   function dibujarLista() {
     Terna.vaciar(lista);
     const todas = filtradas();
@@ -312,7 +333,7 @@ Terna.pagina('postulaciones', async (ctx) => {
     if (!vis.length) {
       const vacio = !hay ? h('p', { class: 'vacio', text: T.postulaciones.vacio })
         : enVista(visibles(), vista).length === 0
-          ? h('p', { class: 'vacio', text: T.postulaciones.vacioVista[vista] })
+          ? vacioVista()
           : h('div', { class: 'vacio' }, h('p', { text: T.postulaciones.vacioFiltros }),
             h('button', { class: 'btn', type: 'button', onclick: () => { limpiarFiltros(); primerFiltro().focus(); } }, T.avisos.filtros.limpiarFiltros));
       // En escritorio la lista es siempre la tabla, también vacía, con sus encabezados, que son los filtros de sus columnas
@@ -321,8 +342,6 @@ Terna.pagina('postulaciones', async (ctx) => {
       ubicarFiltros();
       return;
     }
-    // Arriba de Postuladas, para qué sirve volver (brand.md 0.21 §6.5).
-    if (vista === 'postuladas') lista.append(h('p', { class: 'etapa-nota', text: T.postulaciones.postuladasNota }));
     if (Terna.anchoEscritorio.matches) lista.append(tabla(vis));
     else lista.append(h('ul', { class: 'lista-postulaciones', role: 'list' }, vis.map((a) => h('li', null, filaCelular(a)))));
     ubicarFiltros();
