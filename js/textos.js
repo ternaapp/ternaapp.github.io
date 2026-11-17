@@ -923,8 +923,9 @@ window.T = (function () {
       // Qué buscás (brand.md 0.4.5 §6.7; datos.md 0.9, 0015)
       puestos: 'Puestos que buscás',
       // Una casilla por puesto, numeradas (brand.md 0.4.7 §6.7; diseno.md 0.10 §9.3)
-      puestosAyuda: 'Uno por casilla, hasta 8. Terna pone primero los avisos de estos puestos y de puestos parecidos. Aunque no cargues ninguno, también busca los que se parecen a tu título y a tus experiencias.',
+      puestosAyuda: 'Uno por casilla, hasta 10. Terna pone primero los avisos de estos puestos y de puestos parecidos. Aunque no cargues ninguno, también busca los que se parecen a tu título y a tus experiencias.',
       puestosCuenta: (n, max) => n + ' de ' + max,
+      puestosLlenos: 'Diez de diez, como la camiseta de Messi.',
       puesto: (n) => 'Puesto ' + n,
       puestoPrimero: 'Por ejemplo, Sales Operations',
       puestoOtro: 'Agregar otro puesto',
@@ -1630,7 +1631,7 @@ window.T = (function () {
         salario_rango_invalido: e.minimoMayor, salario_incompleto: e.salarioIncompleto,
         modalidades_vacias: e.modalidades,
         niveles_vacios: e.niveles, jornadas_vacias: e.jornadas,
-        puestos_demasiados: e.puestosDemasiados(8), puesto_largo: e.puestoLargo(60),
+        puestos_demasiados: e.puestosDemasiados(10), puesto_largo: e.puestoLargo(60),
         palabras_clave_demasiadas: e.palabrasClaveDemasiadas(15), palabra_clave_larga: e.palabraClaveLarga(40),
         umbral_fuera_de_rango: e.umbral(c.umbral_min || 50, c.umbral_max || 95),
         paquetes_por_dia_invalido: e.paquetes(c.paquetes_por_dia_opciones && c.paquetes_por_dia_opciones.length ? c.paquetes_por_dia_opciones : [3]),

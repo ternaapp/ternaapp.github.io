@@ -35,7 +35,7 @@ Terna.pagina('preferencias', async (ctx) => {
   const raiz = document.getElementById('preferencias');
   const NIVELES = ['pasantia', 'junior', 'semi_senior', 'senior', 'lider', 'director'];
   const JORNADAS = ['completa', 'parcial'];
-  const MAX_PUESTOS = 8;
+  const MAX_PUESTOS = 10;
   const MAX_LARGO_PUESTO = 60;
   const MAX_CLAVES = 15;
   const MAX_LARGO_CLAVE = 40;
@@ -224,11 +224,13 @@ Terna.pagina('preferencias', async (ctx) => {
 
   /* ---------- Qué buscás: puestos (0015), nivel y jornada ----------
      Puestos (diseno.md 0.10 §9.3): una lista numerada con una casilla por puesto. Se ven los cargados y una casilla
-     vacía al final para el siguiente, hasta 8; los que tienen texto son los que Terna busca. Enter pasa a la casilla
+     vacía al final para el siguiente, hasta 10 (desde el 17/11/2026; 0048); los que tienen texto son los que Terna busca. Enter pasa a la casilla
      siguiente; Borrar en una casilla vacía vuelve a la anterior; una casilla vacía en el medio se va al salir de ella. */
   const idPue = id('puestos');
   const listaPue = h('ol', { class: 'puestos' });
   const cuentaPue = h('span', { class: 'puestos-cuenta num' });
+  // Con las diez casillas llenas, una línea de más (brand.md 0.30 §6.7): la 10, como la de Messi.
+  const llenosPue = h('p', { class: 'campo-nota puestos-llenos', hidden: true, text: P.puestosLlenos });
   const filasPue = () => Array.from(listaPue.children);
   const inputDe = (li) => li.querySelector('input');
   // Igual que validar_preferencias (0015): sin espacios de más, sin vacíos y sin repetidos (sin mirar mayúsculas), en orden.
@@ -294,6 +296,7 @@ Terna.pagina('preferencias', async (ctx) => {
     });
     v.puestos_objetivo = leerPuestos();
     cuentaPue.textContent = P.puestosCuenta(v.puestos_objetivo.length, MAX_PUESTOS);
+    llenosPue.hidden = v.puestos_objetivo.length < MAX_PUESTOS;
     verPriorizar();
     guia.actualizar();
   }
@@ -322,7 +325,7 @@ Terna.pagina('preferencias', async (ctx) => {
   ordenarPuestos();
   const sPue = h('div', { class: 'subbloque', role: 'group', 'aria-labelledby': idPue },
     h('div', { class: 'interruptor-fila' }, h('h3', { id: idPue, class: 'tarjeta-titulo', text: P.puestos }), cuentaPue),
-    listaPue, h('p', { class: 'campo-ayuda', id: 'ayuda-puestos', text: P.puestosAyuda }), error('err-puestos'), sPri);
+    listaPue, llenosPue, h('p', { class: 'campo-ayuda', id: 'ayuda-puestos', text: P.puestosAyuda }), error('err-puestos'), sPri);
   /* ---------- Empresas que seguís (0034; brand.md 0.13 §6.7; diseno.md 0.26 §9.3; datos.md 0.30) ----------
      Dentro de Búsqueda, debajo de los puestos y con la misma forma: una casilla por empresa, numeradas, hasta 10, y se guarda con
      "Guardar preferencias". Solo nombres (Francisco, 07/11/2026: sin links, "si no está, que se joda"): Terna no sale a buscarlas,
