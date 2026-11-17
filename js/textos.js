@@ -523,28 +523,29 @@ window.T = (function () {
       cuenta: (x) => plural(x, '1 aviso abierto', n(x) + ' avisos abiertos'),
       cuentaEmpresas: (x) => 'de ' + n(x) + ' empresas',
       cuentaDe: (x, total) => n(x) + ' de ' + n(total) + ' avisos abiertos',
-      // Hasta 0.1 la bajada explicaba también qué hace Terna con el pedido (cinco renglones en el celular, arriba del buscador):
-      // eso lo dicen la confirmación de Pedir paquete y la ficha.
-      intro: 'Todo lo que Terna tiene abierto hoy, no solo lo que eligió para vos. Si un aviso te interesa, pedí el paquete.',
+      // Sin bajada desde 0.3 (busqueda.md §8, la revisión con las skills de diseño): el buscador va primero, debajo del título. Qué
+      // es la lista lo dicen la cuenta y el estado de los filtros; qué hace Terna con un pedido, la confirmación y la ficha; y la
+      // diferencia con Avisos, el pie.
       buscador: {
         etiqueta: 'Buscar en los avisos',
         ejemplo: 'Puesto, empresa, lugar o palabra',
         borrar: 'Borrar la búsqueda',
         buscando: 'Buscando en las descripciones…',
         // Lo que se encontró con lo escrito y los filtros puestos: por el puesto, la empresa o el lugar, y además en la descripción.
-        resultado: (directos, descripcion) => (directos + descripcion === 0 ? 'Ningún aviso lo dice.'
-          : descripcion === 0 ? plural(directos, '1 aviso lo dice', n(directos) + ' avisos lo dicen') + ' en el puesto, la empresa o el lugar.'
-            : directos === 0 ? plural(descripcion, '1 aviso lo nombra', n(descripcion) + ' avisos lo nombran') + ' en la descripción.'
-              : plural(directos, '1 aviso lo dice', n(directos) + ' avisos lo dicen') + ' en el puesto, la empresa o el lugar, y '
-                + plural(descripcion, '1 más lo nombra', n(descripcion) + ' más lo nombran') + ' en la descripción.'),
+        // Desde 0.3, un solo verbo, el de los vacíos («Ningún aviso abierto coincide con…»): coincidir.
+        resultado: (directos, descripcion) => (directos + descripcion === 0 ? 'Ningún aviso coincide.'
+          : descripcion === 0 ? plural(directos, '1 aviso coincide', n(directos) + ' avisos coinciden') + ' en el puesto, la empresa o el lugar.'
+            : directos === 0 ? plural(descripcion, '1 aviso coincide', n(descripcion) + ' avisos coinciden') + ' en la descripción.'
+              : plural(directos, '1 aviso coincide', n(directos) + ' avisos coinciden') + ' en el puesto, la empresa o el lugar, y '
+                + n(descripcion) + ' más en la descripción.'),
         // Los que tienen las palabras, pero no juntas: aparte, para no tapar lo que sí dice lo que se escribió (busqueda.md §8, F1).
         sueltas: (x) => plural(x, 'Ver 1 más que tiene esas palabras por separado', 'Ver ' + n(x) + ' más que tienen esas palabras por separado'),
         sinSueltas: 'Ocultar los que tienen las palabras por separado',
-        soloSueltas: (x) => 'Ningún aviso lo dice así. ' + plural(x, 'Hay 1 que tiene esas palabras por separado.', 'Hay ' + n(x) + ' que tienen esas palabras por separado.'),
+        soloSueltas: (x) => 'Ningún aviso lo tiene escrito así. ' + plural(x, 'Hay 1 que tiene esas palabras por separado.', 'Hay ' + n(x) + ' que tienen esas palabras por separado.'),
         corta: 'Escribí dos letras o más.',
         error: 'No se pudo buscar en las descripciones: ves lo que coincide por puesto, empresa o lugar.',
-        enDescripcion: 'Lo nombra la descripción',
-        porSeparado: 'Tiene esas palabras',
+        enDescripcion: 'Coincide en la descripción',
+        porSeparado: 'Tiene las palabras por separado',
       },
       filtros: {
         barra: 'Filtros',
@@ -610,7 +611,7 @@ window.T = (function () {
       queTiene: 'Terna muestra los avisos de los sitios que sabe leer: de algunas empresas todavía no tiene ninguno, o tiene pocos.',
       seguirEmpresa: 'Si buscás una empresa en particular, sumala en Preferencias › Búsqueda › Empresas que seguís: Terna prioriza sus avisos cuando los encuentra.',
       irAPreferencias: 'Ir a Preferencias',
-      pie: 'Acá buscás vos. Lo que Terna busca sola para vos se cambia en',
+      pie: 'Acá buscás vos, entre todo lo que Terna tiene abierto y no solo lo que eligió para vos. Lo que Terna busca sola se cambia en',
       piePreferencias: 'Preferencias › Búsqueda',
       // En Inicio (busqueda.md §4.6): cuánto hay para buscar, con el link.
       enInicio: (avisos, empresas, semana) => 'Terna tiene hoy ' + plural(avisos, '1 aviso abierto', n(avisos) + ' avisos abiertos')

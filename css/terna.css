@@ -812,9 +812,10 @@ a.barra-link:hover .barra-nombre > span { text-decoration: underline; text-under
 .proximos-pie { font-size: 13px; color: var(--tinta-suave); line-height: 1.4; padding-top: 6px; border-top: 1px solid var(--linea); }
 .tabla-avisos { display: none; }
 
-/* Búsqueda (busqueda.md 0.1 §4): la bajada, el buscador y la lista de todos los avisos abiertos. La barra de filtros, las tarjetas,
-   la tabla y la ficha son las de Avisos. */
-.busqueda-intro { font-size: 15px; line-height: 1.45; max-width: 86ch; color: var(--tinta-suave); margin-top: -6px; }
+/* Búsqueda (busqueda.md 0.3 §4): el buscador, primero y debajo del título; después los filtros y, a su derecha (debajo, en el
+   celular), el orden, al lado de la lista que ordena. La barra de filtros, las tarjetas, la tabla y la ficha son las de Avisos. */
+.busqueda-controles { display: flex; flex-direction: column; gap: 8px; }
+.busqueda-controles > .filtros { min-width: 0; }
 .buscador { display: flex; flex-direction: column; gap: 6px; }
 .buscador-caja { position: relative; display: flex; align-items: center; max-width: 760px; }
 .buscador-icono { position: absolute; left: 12px; width: 20px; height: 20px; color: var(--tinta-suave); pointer-events: none; }
@@ -1082,6 +1083,9 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accion)
   /* Búsqueda: la tabla, del tamaño de la de Avisos. Dónde se postula y En tu lista parten sus palabras antes de ensancharla. */
   .tabla-busqueda { display: block; }
   .cuenta-empresas { display: inline; }
+  .busqueda-controles { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .busqueda-controles > .filtros { flex: 1 1 auto; }
+  .busqueda-controles > .herramientas { flex: 0 0 auto; }
   .tabla-busqueda .tabla { font-size: 13px; }
   .tabla-busqueda .tabla th, .tabla-busqueda .tabla td { padding: 8px 6px; }
   .tabla-busqueda .btn-fila { font-size: 12px; padding: 0 8px; }

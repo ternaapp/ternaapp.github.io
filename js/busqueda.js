@@ -26,7 +26,6 @@ Terna.pagina('busqueda', async (ctx) => {
   const cajaFiltros = document.getElementById('filtros');
   const cajaBuscador = document.getElementById('buscador');
   const cuenta = document.getElementById('cuenta');
-  const intro = document.getElementById('intro');
   const pie = document.getElementById('pie-busqueda');
 
   const parar = Terna.cargando(lista);
@@ -312,7 +311,8 @@ Terna.pagina('busqueda', async (ctx) => {
   campo.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); aplicarTexto(); } });
   borrar.addEventListener('click', () => { campo.value = ''; aplicarTexto(); campo.focus(); });
   function armarBuscador() {
-    cajaBuscador.append(h('label', { class: 'campo-etiqueta', for: idCampo, text: B.buscador.etiqueta }),
+    // El nombre del campo es para el lector de pantalla: a la vista ya lo dicen el título de la página, la lupa y el ejemplo.
+    cajaBuscador.append(h('label', { class: 'oculto-visual', for: idCampo, text: B.buscador.etiqueta }),
       h('div', { class: 'buscador-caja' }, icono('i-buscar', 'buscador-icono'), campo, borrar), estadoBuscador);
   }
   function dibujarEstadoBuscador(r) {
@@ -795,7 +795,6 @@ Terna.pagina('busqueda', async (ctx) => {
   });
 
   /* ---------- Arranque ---------- */
-  intro.textContent = B.intro;
   pie.append(B.pie + ' ', h('a', { href: 'preferencias.html#busqueda', text: B.piePreferencias }), '.');
   armarBuscador();
   dibujarHerramientas();
