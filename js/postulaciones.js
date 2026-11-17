@@ -739,7 +739,9 @@ Terna.pagina('postulaciones', async (ctx) => {
         cont.append(Aviso.abrirAviso(a), b(B.marcarPostulado, 'i-enviada', () => conDeshacer(a, 'postulado', H.postulado)));
         if (Aviso.puedeVolverAProbar(a, config)) {
           cont.append(b(B.volverAProbar, 'i-probar', () => volverAProbar(a)));
-          if (a.motivo_a_mano === 'requiere_cuenta') notas.push(h('p', { class: 'campo-ayuda', text: T.postulaciones.seVaATrabar }));
+          // brand.md 0.32 (17/11/2026): las trabas de la cuenta que terminan en «tocá Volver a probar» (ya tenías una cuenta, confirmala
+          // por mail) se destraban con eso; la nota de que se va a trabar igual queda para las otras.
+          if (a.motivo_a_mano === 'requiere_cuenta' && !/Volver a probar\.?$/.test(a.traba_detalle || '')) notas.push(h('p', { class: 'campo-ayuda', text: T.postulaciones.seVaATrabar }));
         }
         cont.append(noInteresa);
         break;
