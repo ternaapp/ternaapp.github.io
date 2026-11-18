@@ -64,6 +64,7 @@ Terna.pagina('preferencias', async (ctx) => {
       .map((a) => ({ match: Number(a.match), creado: Date.parse(a.creado_en) || 0, puesto: a.puesto || '' }));
   const data = lectura.data;
   if (lectura.error || !data) { Terna.errorDeCarga(raiz, lectura.error); return; }
+  const conIdeal = Object.prototype.hasOwnProperty.call(data, 'cv_ideal');
   const conClaves = Object.prototype.hasOwnProperty.call(data, 'palabras_clave');
   const conAviso = Object.prototype.hasOwnProperty.call(data, 'palabras_clave_aviso');
   // 0027: "Priorizar mis puestos". Sin la columna, el interruptor no aparece y la guía cuenta como con Sí (el default del motor).
@@ -474,6 +475,7 @@ Terna.pagina('preferencias', async (ctx) => {
      Paquetes: qué avisos te interesan, armar (3 por día), el idioma, las palabras clave y, desde 0.27, el salario.
      Postulación: postular y revisar. */
   const sInt = enTema.conInterruptor(P.interesDefecto, P.interesDefectoAyuda, v.interes_por_defecto, (x) => { v.interes_por_defecto = x; });
+  const sIdeal = conIdeal ? enTema.conInterruptor(P.cvIdeal, P.cvIdealAyuda, v.cv_ideal === true, (x) => { v.cv_ideal = x; }) : null;
   const sArm = enTema.conInterruptor(P.armar, P.armarAyuda(defectoPaquetes), v.armar_paquetes, (x) => { v.armar_paquetes = x; atenuar(); });
   const sIdi = enTema.grupoRadios(P.idiomaDocs, 'idioma', [['aviso', P.idiomaAviso], ['espanol', P.idiomaEspanol]], v.idioma_documentos, (x) => { v.idioma_documentos = x; });
   /* Palabras clave, a la vista (brand.md 0.6 §6.7; datos.md 0.23, 0026; cv-ats.md 0.5 §3.7). Dos interruptores:
@@ -887,7 +889,7 @@ Terna.pagina('preferencias', async (ctx) => {
     sViaje.append(h('p', { class: 'campo-ayuda', text: V.ayuda }));
   }
 
-  const temaPaquetes = Terna.subtema(P.temas.paquetes, null, [sInt, sArm, sIdi, sAvisoCla, sCla, sSal].filter(Boolean));
+  const temaPaquetes = Terna.subtema(P.temas.paquetes, null, [sInt, sArm, sIdeal, sIdi, sAvisoCla, sCla, sSal].filter(Boolean));
   const temaPostulacion = Terna.subtema(P.temas.postulacion, null, [sPos, cuentas ? cuentas.nodo : null, sRev, sDisc, sAuto, sSec, sViaje].filter(Boolean));
   // Atenuar (diseno.md §9.3): el ítem sigue visible y legible; sus controles quedan inactivos hasta que vuelva a aplicar.
   function atenuar() {
@@ -986,6 +988,7 @@ Terna.pagina('preferencias', async (ctx) => {
       interes_por_defecto: v.interes_por_defecto, postular_sola: v.postular_sola, revisar_antes_de_enviar: v.revisar_antes_de_enviar,
       puestos_objetivo: v.puestos_objetivo, niveles: v.niveles, jornadas: v.jornadas,
     };
+    if (conIdeal && v.cv_ideal !== data.cv_ideal) fila.cv_ideal = v.cv_ideal === true;
     const clavesCambiaron = conClaves && huellaClaves() !== clavesGuardadas;
     if (clavesCambiaron) {
       fila.palabras_clave = v.palabras_clave;
@@ -1015,6 +1018,7 @@ Terna.pagina('preferencias', async (ctx) => {
       if (destino) { marcar(destino, Terna.textoError(e)); mostrarBanda(T.errores.guardarCampos); } else mostrarBanda(T.errores.guardar);
       return;
     }
+    if (conIdeal) data.cv_ideal = v.cv_ideal;
     if (clavesCambiaron) clavesGuardadas = huellaClaves();
     Terna.avisoBreve(P.guardado);
   });
