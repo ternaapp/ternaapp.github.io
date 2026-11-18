@@ -998,7 +998,7 @@ window.T = (function () {
       // ayuda de Armar paquetes dice cuántos arma y en qué orden (seleccion.py, pipeline.md §4.9). Desde brand.md 0.30 (17/11/2026) no
       // dice «y no más de una vez por semana a la misma empresa»: la regla salió (pipeline.md 0.5.10).
       cvIdeal: 'CV IDEAL',
-      cvIdealAyuda: 'Adapta la narrativa del CV a cada aviso e incorpora sus palabras clave y habilidades, aunque no estén respaldadas por tu perfil. Revisá el contenido antes de usarlo. No garantiza superar todos los filtros ni recibir una entrevista. Se aplica a los próximos paquetes.',
+      cvIdealAyuda: 'Conserva el CV estándar completo y suma palabras clave del aviso en Habilidades, aunque no estén respaldadas por tu perfil. Si un agregado no entra, conserva el contenido original. Revisá el CV antes de usarlo. No garantiza superar todos los filtros ni recibir una entrevista. Se aplica a los próximos paquetes.',
       armar: 'Armar paquetes',
       armarAyuda: (n) => 'En Sí, Terna arma ' + n + ' paquetes por día, del aviso de mayor match para abajo. Se adelantan los que pediste, '
         + 'los de tus puestos si los priorizás y, si Terna postula por vos, los que puede postular sola. Terna postula como máximo a esos '
