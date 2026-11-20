@@ -4,8 +4,9 @@
    0032; desde 0.31, 0035, también un portal y "Ya no está abierto") y, desde brand.md 0.23, Avisos sin texto: los de alertas que
    Terna intentó leer tres veces sin conseguir el texto, para que pegue el texto (datos.md 0.34 y 0.36, 0038 y 0040). Desde
    problemas.md 0.1 (0042), Problemas va por casos con seguimiento: cada falla que se repite es un caso con su estado, lo que hizo
-   la revisión diaria y lo que hiciste vos; sin la 0042, la tabla de antes. La pausa del motor no está acá. Lee y escribe solo
-   por las funciones admin_* y config.invitaciones_abiertas (datos.md §14; problemas.md §5).
+   la revisión diaria y lo que hiciste vos; sin la 0042, la tabla de antes. Desde brand.md 0.38 (0052), Modelo de IA: quién escribe
+   los paquetes y las respuestas, Claude o el modelo local de Fenix (modelo-local.md §5). La pausa del motor no está acá. Lee y
+   escribe solo por las funciones admin_*, config.invitaciones_abiertas y las cuatro columnas de 0052 (datos.md §14; problemas.md §5).
    Pensada primero para escritorio: en celular las tablas se desplazan. */
 'use strict';
 
@@ -15,13 +16,17 @@ Terna.pagina('admin', async (ctx) => {
   const A = T.admin;
   const raiz = document.getElementById('admin');
   const sub = document.getElementById('subpestanas');
-  const SECCIONES = ['usuarios', 'invitaciones', 'uso', 'problemas', 'empresas', 'avisos'];
+  const SECCIONES = ['usuarios', 'invitaciones', 'uso', 'problemas', 'empresas', 'avisos', 'ia'];
   let seccion = SECCIONES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'uso';
   const dias = { uso: Terna.leerLocal('admin.uso', 7) === 30 ? 30 : 7, problemas: Terna.leerLocal('admin.problemas', 7) === 30 ? 30 : 7 };
   let sinVer = 0;
   // Empresas (0032) y Avisos sin texto (0038): sin la migración la función no existe y la subpestaña no se muestra.
   let empresas = null;
   let sinTexto = null;
+  // Modelo de IA (0052): las cuatro columnas se leen acá y no en `COLUMNAS_CONFIG` de comun.js (sin la 0052 esa lectura rompería
+  // todas las páginas). null mientras la base no las tenga: la subpestaña no se muestra.
+  const COLUMNAS_IA = ['ia_armar', 'ia_responder', 'ia_alcance', 'modelo_local'];
+  let ia = null;
   // Problemas por casos (0042; problemas.md 0.1): null mientras la base no la tenga, y entonces Problemas es la tabla de antes.
   let casos = null;
   let vistaCasos = Terna.leerLocal('admin.problemas.vista', 'abiertos') === 'cerrados' ? 'cerrados' : 'abiertos';
@@ -36,6 +41,12 @@ Terna.pagina('admin', async (ctx) => {
   async function leerEmpresas() {
     const { data, error } = await sb.rpc('admin_empresas_para_completar');
     empresas = error ? null : (data || []);
+    return error;
+  }
+  async function leerIa() {
+    // Toda la fila (como la lee cualquiera) y no las cuatro columnas: sin la 0052, pedirlas por nombre es un 400 en la consola.
+    const { data, error } = await sb.from('config').select('*').eq('id', 1).maybeSingle();
+    ia = !error && data && COLUMNAS_IA.every((c) => c in data) ? Object.fromEntries(COLUMNAS_IA.map((c) => [c, data[c]])) : null;
     return error;
   }
   async function leerSinTexto() {
@@ -59,6 +70,7 @@ Terna.pagina('admin', async (ctx) => {
     for (const s of SECCIONES) {
       if (s === 'empresas' && empresas === null) continue;
       if (s === 'avisos' && sinTexto === null) continue;
+      if (s === 'ia' && ia === null) continue;
       const chip = chipDe(s);
       sub.append(h('a', { href: '#' + s, 'aria-current': s === seccion ? 'true' : null, onclick: (e) => { e.preventDefault(); ir(s); } },
         A.secciones[s], chip ? h('span', { class: 'chip chip-espera', text: chip }) : null));
@@ -528,6 +540,42 @@ Terna.pagina('admin', async (ctx) => {
       h('div', { class: 'botones' }, bGuardar, bCerrar));
   }
 
+  /* ---------- Modelo de IA (brand.md 0.38 §6.9; diseno.md 0.44 §9.9; 0052) ---------- */
+  // Las opciones de cada ítem, en el orden en que se muestran. Los modelos locales son los de terna-motor datos/ia_local.json.
+  const OPCIONES_IA = { ia_armar: ['nube', 'local'], ia_responder: ['nube', 'local'], ia_alcance: ['admin', 'todos'], modelo_local: ['qwen3.6-35b-a3b', 'qwen3.5-9b'] };
+  function iaSeccion() {
+    const I = A.ia;
+    Terna.vaciar(raiz);
+    const tarjeta = h('section', { class: 'tarjeta seccion prefs' });
+    for (const col of COLUMNAS_IA) {
+      const idT = 'h-ia-' + col;
+      const idA = idT + '-ayuda';
+      const seg = h('div', { class: 'segmentado', role: 'radiogroup', 'aria-labelledby': idT, 'aria-describedby': idA });
+      const opciones = OPCIONES_IA[col].includes(ia[col]) ? OPCIONES_IA[col] : OPCIONES_IA[col].concat([ia[col]]);
+      for (const v of opciones) {
+        seg.append(h('label', null, h('input', { type: 'radio', name: 'ia-' + col, value: v, checked: ia[col] === v,
+          onchange: () => guardarIa(col, v, seg) }), h('span', { text: I.opciones[v] || v })));
+      }
+      tarjeta.append(h('div', { class: 'campo' }, h('h2', { id: idT, class: 'tarjeta-titulo', text: I.items[col].titulo }),
+        h('p', { class: 'campo-ayuda', id: idA, text: I.items[col].ayuda }), seg));
+    }
+    tarjeta.append(h('p', { class: 'campo-ayuda', text: I.pie }));
+    raiz.append(h('p', { class: 'seccion-intro', text: I.intro }), tarjeta);
+  }
+  async function guardarIa(col, valor, seg) {
+    const antes = ia[col];
+    for (const r of seg.querySelectorAll('input')) r.disabled = true;
+    const { error } = await sb.from('config').update({ [col]: valor }).eq('id', 1);
+    for (const r of seg.querySelectorAll('input')) r.disabled = false;
+    if (error) {
+      for (const r of seg.querySelectorAll('input')) r.checked = r.value === antes;
+      if (!Terna.siSesionVencida(error)) Terna.avisoBreve(T.errores.guardar, { error: true });
+      return;
+    }
+    ia[col] = valor;
+    Terna.avisoBreve(T.comun.guardado);
+  }
+
   async function cargar() {
     const parar = Terna.cargando(raiz);
     try {
@@ -536,12 +584,13 @@ Terna.pagina('admin', async (ctx) => {
       else if (seccion === 'uso') await uso();
       else if (seccion === 'empresas') await empresasSeccion();
       else if (seccion === 'avisos') await avisosSeccion();
+      else if (seccion === 'ia') iaSeccion();
       else await problemas();
     } finally { parar(); }
   }
 
-  await Promise.all([contarSinVer(), leerEmpresas(), leerSinTexto()]);
-  if ((seccion === 'empresas' && empresas === null) || (seccion === 'avisos' && sinTexto === null)) seccion = 'uso';
+  await Promise.all([contarSinVer(), leerEmpresas(), leerSinTexto(), leerIa()]);
+  if ((seccion === 'empresas' && empresas === null) || (seccion === 'avisos' && sinTexto === null) || (seccion === 'ia' && ia === null)) seccion = 'uso';
   dibujarSub();
   await cargar();
 }, { admin: true });

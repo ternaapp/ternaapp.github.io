@@ -1395,7 +1395,7 @@ window.T = (function () {
 
     admin: {
       titulo: 'Admin',
-      secciones: { usuarios: 'Usuarios', invitaciones: 'Invitaciones', uso: 'Uso', problemas: 'Problemas', empresas: 'Empresas', avisos: 'Avisos sin texto' },
+      secciones: { usuarios: 'Usuarios', invitaciones: 'Invitaciones', uso: 'Uso', problemas: 'Problemas', empresas: 'Empresas', avisos: 'Avisos sin texto', ia: 'Modelo de IA' },
       sinVer: (x) => x + ' sin ver',
       usuarios: { mail: 'Mail', alta: 'Alta', ultima: 'Última entrada', estado: 'Estado', avisos: 'Avisos (7 días)', paquetes: 'Paquetes (7 días)', borrar: 'Borrar' },
       estados: { activo: 'Activo', pausado: 'Pausado' },
@@ -1537,6 +1537,22 @@ window.T = (function () {
         errorConTexto: 'Este aviso ya tiene texto: Terna lo consiguió mientras tanto.',
         errorSinListas: 'Ya nadie tiene este aviso en su lista: no hace falta completarlo.',
         errorCerrado: 'Este aviso ya cerró.',
+      },
+      // Admin › Modelo de IA (brand.md 0.38 §6.9; diseno.md 0.44 §9.9; 0052; Francisco, 19/11/2026: «que dentro de la configuración a
+      // un lado se pueda seleccionar si el modelo cloud o el modelo local»): quién escribe los paquetes y las respuestas.
+      ia: {
+        intro: 'Quién escribe los paquetes y las respuestas de los formularios: Claude, en la nube, o el modelo local, que corre en Fenix. El local no cuesta nada por paquete, tarda más y todavía está a prueba. Si no arranca o no logra un paquete, Terna sigue con Claude.',
+        items: {
+          ia_armar: { titulo: 'Paquetes', ayuda: 'El CV, la carta, el salario y las notas.' },
+          ia_responder: { titulo: 'Respuestas de los formularios', ayuda: 'Las preguntas abiertas de cada formulario. Se escriben con el formulario abierto: en local tardan minutos en lugar de segundos.' },
+          ia_alcance: { titulo: 'Para quién', ayuda: 'Solo para mí: el modelo local escribe solo lo tuyo, para probarlo, y las demás personas siguen con Claude.' },
+          modelo_local: { titulo: 'Modelo local', ayuda: 'Tiene que estar instalado en Fenix (fenix\\ia-local.bat).' },
+        },
+        opciones: {
+          nube: 'Nube (Claude)', local: 'Local (Fenix)', admin: 'Solo para mí', todos: 'Para todos',
+          'qwen3.6-35b-a3b': 'Qwen3.6 35B (el principal)', 'qwen3.5-9b': 'Qwen3.5 9B (más liviano)',
+        },
+        pie: 'Los cambios valen desde la próxima corrida.',
       },
     },
 
