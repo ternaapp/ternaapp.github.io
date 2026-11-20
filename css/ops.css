@@ -1,0 +1,126 @@
+/* Terna · css/ops.css
+   El portal operativo (ops.html; operacion.md §5). Lo que no está en terna.css: el encabezado propio (sin las pestañas de la web
+   de usuario), las tarjetas de Hoy con su gravedad, las listas de tarjetas, los filtros y el alta del segundo paso. Reutiliza las
+   fichas de color de terna.css, así anda igual en claro y en oscuro. La única excepción son los dos colores del QR: tienen que ser
+   negro sobre blanco en los dos modos para que la cámara lo lea. */
+
+:root { --qr-claro: #FFFFFF; --qr-oscuro: #000000; }
+
+/* Encabezado: la cáscara, una sola línea. */
+#barra-ops { position: sticky; top: 0; z-index: 20; background: var(--cascara); border-bottom: 1px solid var(--cascara-linea); }
+#barra-ops :focus-visible { outline-color: var(--acento); }
+.op-barra { display: flex; align-items: center; gap: 8px; height: 56px; width: 100%; max-width: 1232px; margin: 0 auto; padding-right: 8px; }
+#barra-ops .logo, #barra-ops .logo:hover { color: var(--cascara-tinta); }
+#barra-ops .logo-marca { color: var(--acento); }
+.op-marca {
+  color: var(--acento); font-size: 14px; font-weight: 700; line-height: 1; padding: 6px 8px;
+  border: 1px solid var(--cascara-linea); border-radius: 6px; white-space: nowrap;
+}
+.op-cuenta { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+#barra-ops .btn-barra { color: var(--cascara-tinta); }
+#barra-ops .btn-barra:hover { background: var(--cascara-fuerte); color: var(--cascara-tinta); }
+.pagina-ops { scroll-padding-top: 64px; }
+.pagina-ops .subpestanas[hidden] { display: none; }
+#ops { display: flex; flex-direction: column; gap: 14px; }
+
+/* Entrar, el código y el alta del segundo paso. */
+.op-acceso { width: 100%; max-width: 440px; margin: 16px auto 0; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.op-acceso-titulo { font-size: 24px; }
+.op-acceso-titulo:focus { outline: none; }
+.op-acceso .banda { border-radius: 8px; }
+.op-codigo { font-size: 22px; letter-spacing: 0.25em; font-variant-numeric: tabular-nums; max-width: 200px; }
+.op-qr-caja { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.op-qr { width: 200px; height: 200px; border-radius: 6px; }
+.op-qr-fondo { fill: var(--qr-claro); }
+.op-qr-punto { fill: var(--qr-oscuro); }
+.op-clave-caja { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.op-clave {
+  display: block; max-width: 100%; padding: 8px 10px; border-radius: 6px; background: var(--seleccion);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 16px; overflow-wrap: anywhere;
+}
+
+/* Cada sección: título, «Actualizar» y la hora de la lectura. */
+.op-encabezado { display: flex; flex-direction: column; gap: 6px; }
+.op-encabezado-fila { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.op-titulo { font-size: 26px; }
+.op-titulo:focus { outline: none; }
+.op-actualizar { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.op-subtitulo { font-size: 17px; font-weight: 700; line-height: 1.3; }
+.op-subtitulo:focus { outline: none; }
+
+/* Hoy: las tarjetas, primero lo roto. La gravedad va en el chip (con palabra e ícono) y en el borde izquierdo. */
+.op-todo-bien {
+  display: flex; align-items: center; gap: 8px; max-width: 860px; padding: 12px 14px; border-radius: 10px;
+  background: var(--accion-tinte); color: var(--accion-oscura); font-weight: 700;
+}
+.op-tarjetas { display: flex; flex-direction: column; gap: 10px; max-width: 860px; }
+.op-hoy { display: grid; grid-template-columns: minmax(0, 1fr); max-width: none; }
+.op-tarjeta { display: flex; flex-direction: column; gap: 6px; border-left-width: 4px; }
+.op-roto { border-left-color: var(--error); }
+.op-mirar { border-left-color: var(--espera-oscuro); }
+.op-bien { border-left-color: var(--accion); }
+.op-cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.op-cabeza .chip { flex: 0 0 auto; }
+.op-cabeza .tarjeta-titulo { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
+.op-cifra .cifra-numero { font-size: 28px; }
+.op-linea { font-size: 15px; line-height: 1.45; overflow-wrap: anywhere; }
+.op-ir { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; font-weight: 500; }
+a.op-ir { padding: 0 8px; text-decoration: none; }
+a.op-ir:hover { text-decoration: underline; }
+.op-pie { max-width: 70ch; }
+
+/* Listas de tarjetas: sitios, empresas, postulaciones, paquetes. */
+.op-item { display: flex; flex-direction: column; gap: 6px; }
+.op-meta { font-size: 13px; line-height: 1.45; color: var(--tinta-suave); overflow-wrap: anywhere; }
+.op-persona { color: var(--tinta); font-weight: 500; font-variant-numeric: tabular-nums; }
+.op-error { margin: 0; max-height: 180px; overflow: auto; font-size: 12px; }
+.op-acciones { margin-top: 2px; }
+.op-link { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; font-size: 14px; overflow-wrap: anywhere; }
+.op-plegar { align-self: flex-start; }
+.op-plegar .icono { transition: transform var(--mov); }
+.op-plegar[aria-expanded="true"] .icono { transform: rotate(180deg); }
+.op-detalle { display: flex; flex-direction: column; gap: 8px; padding-top: 2px; }
+.op-detalle[hidden] { display: none; }
+.op-detalle h3 { font-size: 13px; font-weight: 700; color: var(--tinta-suave); margin-bottom: 2px; }
+.op-lista, .op-seccion { display: flex; flex-direction: column; gap: 12px; }
+.op-filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.op-buscar { flex: 1 1 220px; max-width: 360px; }
+.op-filtro-campo { display: inline-flex; align-items: center; gap: 6px; }
+.op-select { width: auto; min-width: 150px; }
+
+/* Resúmenes y tablas. */
+.op-resumen { display: flex; flex-direction: column; gap: 10px; max-width: 860px; }
+.op-cifras { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin: 0; }
+.op-cifra-caja { display: flex; flex-direction: column; gap: 2px; }
+.op-cifra-caja dt { font-size: 13px; line-height: 1.3; }
+.op-cifra-caja dd { margin: 0; font-size: 24px; }
+.op-grupos { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.op-grupo { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.op-tabla th[scope="row"] { font-weight: 500; text-align: left; white-space: nowrap; }
+.op-tabla td, .op-tabla th[scope="row"] { padding: 8px 10px; border-bottom: 1px solid var(--linea); vertical-align: top; }
+.op-celda-error {
+  min-width: 220px; max-width: 420px; font-size: 12px; color: var(--tinta-suave); overflow-wrap: anywhere;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+.op-fila-error th, .op-fila-error td { background: var(--error-tinte); }
+.op-fila-total th, .op-fila-total td { font-weight: 700; background: var(--seleccion); }
+.btn-enlace {
+  display: inline; min-height: 24px; padding: 0; border: 0; background: none; color: var(--accion);
+  font: inherit; text-align: left; text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
+}
+.btn-enlace:hover { color: var(--accion-oscura); }
+.op-factores { max-width: 860px; }
+.op-factores-lista { margin: 0; padding-left: 1.2em; font-size: 15px; line-height: 1.6; }
+.op-corrida-detalle:empty { display: none; }
+.op-corrida-detalle { display: flex; flex-direction: column; gap: 8px; }
+
+@media (min-width: 768px) {
+  .op-hoy { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .op-acceso { margin-top: 40px; }
+}
+@media (min-width: 1024px) {
+  .op-grupos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1200px) {
+  .op-hoy { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
