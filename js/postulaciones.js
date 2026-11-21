@@ -247,7 +247,8 @@ Terna.pagina('postulaciones', async (ctx) => {
     casillaUmbral.addEventListener('change', () => { soloSugeridas = casillaUmbral.checked; dibujar(); });
     notaUmbral = h('span', { class: 'tu-umbral-nota', role: 'status' });
     // Cuántas postuló Terna y cuántas no pudo (brand.md 0.39 §6.5; Francisco, 20/11/2026: «le tiene que decir… Terna postuló por
-    // vos tantas, Terna no pudo postular por vos tantas otras»). Sobre todo lo tuyo, sin filtros.
+    // vos tantas, Terna no pudo postular por vos tantas otras»). Sobre todo lo tuyo, sin filtros, y sin lo que la página no muestra
+    // nunca (lo que quedó debajo del piso). "Te quedan" cuenta lo que Terna te sugiere, como Inicio (diseno.md 0.25 §1.36).
     resumenTerna = h('p', { class: 'suave resumen-terna', role: 'status' });
     cajaVistas.append(resumenTerna, h('div', { class: 'vistas-caja' }, grupo));
     // La línea de arriba de la lista, una por pestaña y en el mismo lugar (diseno.md 0.41 §8.2): en Postuladas, para qué sirve volver;
@@ -263,9 +264,10 @@ Terna.pagina('postulaciones', async (ctx) => {
     const base = filtradas();
     const R = T.postulaciones.resumenTerna;
     const noPudo = (a) => a.motivo_a_mano && a.motivo_a_mano !== 'elegido_por_usuario' && ['a_mano', 'postulado', 'entrevista'].includes(a.estado_postulacion);
-    const enviadas = postulaciones.filter((a) => a.enviada_en || a.estado_postulacion === 'enviada').length;
-    const fallidas = postulaciones.filter(noPudo).length;
-    const quedan = postulaciones.filter((a) => noPudo(a) && a.estado_postulacion === 'a_mano').length;
+    const todas = mostrables();
+    const enviadas = todas.filter((a) => a.enviada_en || a.estado_postulacion === 'enviada').length;
+    const fallidas = todas.filter(noPudo).length;
+    const quedan = todas.filter((a) => noPudo(a) && a.estado_postulacion === 'a_mano' && !quedo(a)).length;
     resumenTerna.textContent = enviadas || fallidas ? R(enviadas, fallidas, quedan) : '';
     resumenTerna.hidden = !(enviadas || fallidas);
     const P = T.postulaciones.partes;
