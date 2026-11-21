@@ -1,7 +1,8 @@
 /* Terna · js/comun.js
-   Lo que usan todas las páginas: el cliente de Supabase, la sesión y sus redirecciones, el encabezado con las
-   pestañas, las bandas, los avisos breves, la hoja/cajón de las fichas, los diálogos y el formato de fechas y números.
-   Sin framework. Los datos de una persona nunca se escriben como HTML: todo va por textContent (función h). */
+   Lo que usan todas las páginas: el cliente de Supabase, la sesión y sus redirecciones, la cáscara (la barra, que desde 64rem es
+   el carril, el muelle del celular y la hoja de Cuenta), las bandas, los avisos breves, la hoja/cajón de las fichas, los
+   diálogos y el formato de fechas y números. Sin framework. Los datos de una persona nunca se escriben como HTML: todo va por
+   textContent (función h). La forma de la cáscara es la de B2 «Sello» (opciones-v3/PLAN-WEB.md §2.1). */
 'use strict';
 
 window.Terna = (function () {
@@ -22,8 +23,13 @@ window.Terna = (function () {
   const PESTANA_DE = { alertas: 'preferencias' };
   const ICONOS_PESTANAS = {
     inicio: 'i-inicio', busqueda: 'i-buscar', avisos: 'i-avisos', postulaciones: 'i-postulaciones', perfil: 'i-perfil',
-    preferencias: 'i-preferencias', invitaciones: 'i-sobre', admin: 'i-admin',
+    preferencias: 'i-preferencias', invitaciones: 'i-sobre',
   };
+  // El muelle del celular (PLAN-WEB.md §2.1): tres destinos y Cuenta. Búsqueda se entra desde Avisos y desde Inicio; lo de la
+  // cuenta, desde la hoja de Cuenta.
+  const MUELLE = ['inicio', 'avisos', 'postulaciones'];
+  const DE_CUENTA = new Set(['perfil', 'preferencias', 'invitaciones', 'alertas']);
+  const CLAVE_TOCAN = 'terna.tocan';
   const SVG = 'http://www.w3.org/2000/svg';
 
   // El hash antes de que supabase-js lo lea y lo limpie (link de cambio de contraseña: #...&type=recovery).
@@ -167,6 +173,7 @@ window.Terna = (function () {
   }
   async function salir() {
     estado.saliendo = true;
+    try { sessionStorage.removeItem(CLAVE_TOCAN); } catch (e) { /* sin almacenamiento */ }
     try { await sb.auth.signOut({ scope: 'local' }); } catch (e) { /* igual se sale */ }
     location.replace('entrar.html');
   }
@@ -176,7 +183,24 @@ window.Terna = (function () {
   });
   function token() { return estado.sesion ? estado.sesion.access_token : null; }
 
-  /* ---------- Encabezado y pie ---------- */
+  /* ---------- La cáscara: barra (carril desde 64rem), muelle y hoja de Cuenta (PLAN-WEB.md §2.1) ---------- */
+  // El logo: los tres trazos en línea (no por el sprite), para que cada uno tome su tinta: sello, medio y lila.
+  function marca(clase) {
+    const svg = document.createElementNS(SVG, 'svg');
+    svg.setAttribute('class', 'icono logo-marca' + (clase ? ' ' + clase : ''));
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    for (const [c, d] of [['trazo-1', 'M3 6h18'], ['trazo-2', 'M3 12h12'], ['trazo-3', 'M3 18h7']]) {
+      const trazo = document.createElementNS(SVG, 'path');
+      trazo.setAttribute('class', c);
+      trazo.setAttribute('d', d);
+      svg.appendChild(trazo);
+    }
+    return svg;
+  }
+  // Un solo DOM para la barra del celular y el carril de escritorio: el CSS decide qué se ve. .pestanas tiene como hijos solo los
+  // links (siete, los mismos para todos desde operacion.md 0.2) y en #barra hay un solo .btn-tema (el banco lo controla).
   function dibujarBarra(pagina) {
     const cont = document.getElementById('barra');
     if (!cont) return;
@@ -187,12 +211,12 @@ window.Terna = (function () {
     const nombre = h('span', { class: 'cuenta-nombre', id: 'cuenta-nombre' });
     const barra = h('div', { class: 'barra' },
       h('a', { class: 'logo', href: 'index.html', 'aria-label': T.comun.logo },
-        icono('i-marca', 'logo-marca'), h('span', { class: 'logo-palabra', 'aria-hidden': 'true', text: 'terna' })),
+        marca(), h('span', { class: 'logo-palabra', 'aria-hidden': 'true', text: 'terna' })),
       nav,
-      h('div', { class: 'cuenta' }, botonTema('btn-barra'), nombre,
-        h('button', { class: 'btn btn-texto btn-barra', type: 'button', onclick: salir }, icono('i-salir'), T.comun.salir)));
+      h('div', { class: 'cuenta' }, nombre, botonTema('btn-barra'),
+        h('button', { class: 'btn btn-texto btn-barra btn-salir', type: 'button', onclick: salir }, icono('i-salir'), T.comun.salir)));
     cont.append(barra);
-    centrarPestana(nav);
+    pintarCuentas();
   }
   /* El sol o la luna (diseno.md 0.30 §10.19): muestra el modo al que pasa y lo dice en su nombre. El modo lo guarda y lo
      aplica js/tema.js; acá solo está el botón, que se repinta cuando el modo cambia (por este botón, por otra pestaña o
@@ -212,19 +236,88 @@ window.Terna = (function () {
     return b;
   }
   document.addEventListener('terna:tema', () => { for (const b of document.querySelectorAll('.btn-tema')) pintarTema(b); });
+  // aria-current: 'page' en la página propia; 'true' en la sección dueña (las guías de alertas marcan Preferencias).
+  function actualDe(clave, pagina) { return clave === pagina ? 'page' : (clave === PESTANA_DE[pagina] ? 'true' : null); }
   function pestana(clave, pagina) {
-    const actual = clave === pagina ? 'page' : (clave === PESTANA_DE[pagina] ? 'true' : null);
-    return h('a', { class: 'pestana', href: PAGINAS[clave], 'aria-current': actual, dataset: { pestana: clave } },
+    return h('a', { class: 'pestana', href: PAGINAS[clave], 'aria-current': actualDe(clave, pagina), dataset: { pestana: clave } },
       icono(ICONOS_PESTANAS[clave]), h('span', { text: T.comun.pestanas[clave] }));
-  }
-  function centrarPestana(nav) {
-    const activa = nav.querySelector('[aria-current]');
-    if (!activa || nav.scrollWidth <= nav.clientWidth) return;
-    nav.scrollLeft = Math.max(0, activa.offsetLeft - (nav.clientWidth - activa.offsetWidth) / 2);
   }
   function completarBarra() {
     const nombre = document.getElementById('cuenta-nombre');
-    if (nombre) nombre.textContent = (estado.perfil && estado.perfil.nombre) || estado.usuario.mail;
+    if (nombre) nombre.textContent = nombrePersona();
+    pintarCuentas();
+  }
+  function nombrePersona() { return (estado.perfil && estado.perfil.nombre) || (estado.usuario && estado.usuario.mail) || ''; }
+
+  // El muelle (celular, hasta 64rem): Inicio, Avisos, Postulaciones y Cuenta, al final del <body> (lo último del orden de foco).
+  // En Búsqueda queda marcado Avisos; en lo de la cuenta, el botón Cuenta. Sus links no llevan la clase pestana.
+  function dibujarMuelle(pagina) {
+    const viejo = document.getElementById('muelle');
+    if (viejo) viejo.remove();
+    const actual = (clave) => (clave === pagina ? 'page' : (pagina === 'busqueda' && clave === 'avisos' ? 'true' : null));
+    const destino = (clave) => h('a', { class: 'muelle-destino', href: PAGINAS[clave], 'aria-current': actual(clave), dataset: { destino: clave } },
+      h('span', { class: 'muelle-pastilla' }, icono(ICONOS_PESTANAS[clave])), h('span', { text: T.comun.pestanas[clave] }));
+    const cuenta = h('button', { class: 'muelle-destino', type: 'button', 'aria-haspopup': 'dialog', 'aria-current': DE_CUENTA.has(pagina) ? 'true' : null,
+      dataset: { destino: 'cuenta' }, onclick: (e) => abrirCuenta(e.currentTarget) },
+    h('span', { class: 'muelle-pastilla' }, icono('i-perfil')), h('span', { text: T.comun.cuenta }));
+    document.body.append(h('nav', { class: 'muelle', id: 'muelle', 'aria-label': T.comun.navegacion }, MUELLE.map(destino), cuenta));
+    pintarCuentas();
+  }
+  // La hoja de Cuenta: las secciones que no van en el muelle, quién sos y Salir. El modo no se repite: está en la barra.
+  function abrirCuenta(origen) {
+    const fila = (clave, extra) => h('a', { class: 'menu-fila', href: PAGINAS[clave], 'aria-current': actualDe(clave, estado.pagina) },
+      icono(ICONOS_PESTANAS[clave]), h('span', null, T.comun.pestanas[clave], extra || null), icono('i-adelante'));
+    const falta = estado.faltantes.length
+      ? h('small', null, icono('i-por-decidir', 'icono-14'), T.perfil.falta(listaFaltantes(estado.faltantes))) : null;
+    const filas = [fila('perfil', falta), fila('preferencias'), fila('invitaciones')];
+    const persona = nombrePersona();
+    abrirHoja({ titulo: T.comun.cuenta, clase: 'hoja-chica', origen,
+      cuerpo: h('div', { class: 'filas menu' }, filas, h('hr', { class: 'menu-separador' }),
+        persona ? h('p', { class: 'menu-persona', text: persona }) : null,
+        h('button', { class: 'menu-fila', type: 'button', onclick: salir }, icono('i-salir'), h('span', { text: T.comun.salir }))) });
+  }
+
+  /* Lo que te toca, en el muelle y en el carril (PLAN-WEB.md §2.1): el número lo conocen Inicio (mi_resumen) y Postulaciones (su
+     lista), que lo pasan con Terna.cuentaToca(n); las demás páginas muestran el último de la sesión. Con 0 o sin dato, nada.
+     «Falta» en Mi perfil sale de estado.faltantes. Los números se agregan solo cuando hay algo: el texto de una pestaña sin
+     nada para hacer sigue siendo su nombre. */
+  function leerTocan() {
+    try {
+      const n = Number(sessionStorage.getItem(CLAVE_TOCAN));
+      return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+  function cuentaToca(n) {
+    const x = Number(n);
+    const valor = Number.isFinite(x) && x > 0 ? Math.round(x) : 0;
+    try {
+      if (valor) sessionStorage.setItem(CLAVE_TOCAN, String(valor));
+      else sessionStorage.removeItem(CLAVE_TOCAN);
+    } catch (e) { /* sin almacenamiento: vale hasta que se cambie de página */ }
+    pintarCuentas(valor);
+  }
+  function quitarCuentas(nodo) { if (nodo) for (const x of nodo.querySelectorAll('.cuenta-toca, .cuenta-toca-texto, .chip-carril')) x.remove(); }
+  function pintarCuentas(forzado) {
+    const n = forzado === undefined ? leerTocan() : forzado;
+    const texto = ', ' + T.postulaciones.partes.tocan(n);
+    const numero = () => h('span', { class: 'cuenta-toca', 'aria-hidden': 'true', text: fNumero.format(n) });
+    const pPost = document.querySelector('.pestana[data-pestana="postulaciones"]');
+    quitarCuentas(pPost);
+    if (pPost && n) pPost.append(numero(), h('span', { class: 'oculto-visual cuenta-toca-texto', text: texto }));
+    const mPost = document.querySelector('.muelle-destino[data-destino="postulaciones"]');
+    quitarCuentas(mPost);
+    if (mPost && n) {
+      mPost.querySelector('.muelle-pastilla').append(numero());
+      mPost.append(h('span', { class: 'oculto-visual cuenta-toca-texto', text: texto }));
+    }
+    const pPerfil = document.querySelector('.pestana[data-pestana="perfil"]');
+    quitarCuentas(pPerfil);
+    if (pPerfil && estado.faltantes.length) {
+      pPerfil.append(h('span', { class: 'chip chip-toca chip-carril', 'aria-hidden': 'true' }, icono('i-por-decidir', 'icono-14'), T.perfil.faltaCorto),
+        h('span', { class: 'oculto-visual cuenta-toca-texto', text: ', ' + T.perfil.falta(listaFaltantes(estado.faltantes)) }));
+    }
   }
   function dibujarPie() {
     const pie = document.querySelector('.pie');
@@ -293,8 +386,9 @@ window.Terna = (function () {
     opciones = opciones || {};
     cerrarBreve(true);
     const cont = contenedorBreves();
+    const iconoBreve = opciones.icono || (opciones.error ? 'i-alerta' : null);
     const caja = h('div', { class: 'aviso-breve' + (opciones.error ? ' aviso-breve-error' : '') },
-      opciones.icono ? icono(opciones.icono) : null, h('span', { text: texto }));
+      iconoBreve ? icono(iconoBreve) : null, h('span', { text: texto }));
     // Con una segunda acción (`accion: { texto, alHacer }`, el "Decir por qué" de "No me interesa"; diseno.md 0.14 §10.9)
     // dura 8 segundos: hay dos cosas para elegir.
     const actual = { caja, opciones, timer: null, restante: opciones.accion ? 8000 : (opciones.deshacer || opciones.error ? 6000 : 3000), inicio: 0 };
@@ -379,10 +473,11 @@ window.Terna = (function () {
     else { const m = document.getElementById('contenido'); if (m) m.focus(); }
   }
 
-  /* ---------- Hoja inferior, cajón y panel (§10.7) ----------
-     Un solo componente: en celular, hoja desde abajo; de 768 a 1199, cajón superpuesto; desde 1200, si la página
-     tiene lugar (opcion enLinea y un contenedor .cajon-linea), cajón en línea, no modal. */
-  const anchoLinea = window.matchMedia('(min-width: 1200px)');
+  /* ---------- Hoja inferior, diálogo, panel y cajón (§10.7; PLAN-WEB.md §2.4) ----------
+     Un solo componente: en celular, hoja desde abajo; de 768 a 1439, diálogo centrado (el panel de un filtro, anclado a su
+     botón); desde 1440, si la página tiene lugar (opción enLinea y un contenedor .cajon-linea), cajón en línea, no modal.
+     Hasta el rediseño B2 el cajón en línea empezaba en 1200: con el carril de 232 px, 1440 deja la misma caja. */
+  const anchoLinea = window.matchMedia('(min-width: 1440px)');
   const anchoEscritorio = window.matchMedia('(min-width: 768px)');
   let fichaAbierta = null;
 
@@ -401,7 +496,8 @@ window.Terna = (function () {
     return { partes: [cerrar, marco], idTitulo: id };
   }
 
-  // opciones: titulo | cabecera (nodo) + idTitulo, cuerpo, acciones, enLinea (bool), panel (nodo ancla), alCerrar, origen, clave.
+  // opciones: titulo | cabecera (nodo) + idTitulo, cuerpo, acciones, enLinea (bool), panel (nodo ancla), alCerrar, origen, clave,
+  // clase (una clase más para el <dialog>: 'hoja-chica' es el diálogo de 440 px, el de Cuenta).
   // `origen` puede ser una función: se pregunta al cerrar adónde vuelve el foco (un filtro que redibuja la tabla mientras está
   // abierto cambia el botón de su encabezado por otro igual; diseno.md 0.21 §10.18).
   function abrirHoja(opciones) {
@@ -421,7 +517,7 @@ window.Terna = (function () {
       foco.setAttribute('tabindex', '-1');
       foco.focus({ preventScroll: true });
     } else {
-      el = h('dialog', { class: 'hoja' + (opciones.panel && anchoEscritorio.matches ? ' panel' : ''), 'aria-labelledby': armado.idTitulo }, armado.partes,
+      el = h('dialog', { class: 'hoja' + (opciones.panel && anchoEscritorio.matches ? ' panel' : '') + (opciones.clase ? ' ' + opciones.clase : ''), 'aria-labelledby': armado.idTitulo }, armado.partes,
         h('div', { class: 'avisos-breves en-hoja', role: 'status', 'aria-live': 'polite' }));
       el.addEventListener('click', (e) => { if (e.target === el) cerrarHoja(true); });
       el.addEventListener('cancel', (e) => { e.preventDefault(); cerrarHoja(true); });
@@ -677,16 +773,20 @@ window.Terna = (function () {
       intro ? h('p', { class: 'campo-ayuda', text: intro }) : null, cuerpo);
   }
 
-  /* ---------- Página por bloques: Mi perfil y Preferencias (diseno.md 0.6 §10.17) ----------
+  /* ---------- Página por bloques: Mi perfil y Preferencias (diseno.md 0.6 §10.17; PLAN-WEB.md §2.12) ----------
      Hasta 767 px cada bloque es un desplegable, cerrado salvo los de `abiertos`. Desde 768 px (modo carril), un carril a
      la izquierda elige el bloque y a la derecha se ve ese bloque entero. El bloque abierto o elegido va en la URL.
      El grupo de "Guardar" va al final del formulario, fijo abajo, en celular, y a la derecha de la cabecera fija desde
      768. Cada bloque se arma una sola vez: el modo solo cambia qué se oculta, así lo escrito nunca se pierde.
      Desde 0.19 un bloque puede traer subtemas (`temas`: [{ hash, titulo, nodo, alias }]): en el carril van debajo de su
      bloque, más chicos, y llevan a ese subtema; su hash (o un alias, como #formularios de antes) abre el bloque y baja
-     hasta él, al entrar y cuando el hash cambia en la misma página. */
+     hasta él, al entrar y cuando el hash cambia en la misma página.
+     Desde el rediseño B2 cada bloque es una carpeta: la lengüeta lila lleva su nombre (y su cuenta) y, al lado, un marbete
+     con «Falta» o el error (`estado`, `marcarErrores`); cerrado, el lomo dice qué hay adentro (`resumen`, una función que
+     devuelve un texto con lo que la persona cargó, o nada). La lógica no cambia. */
   function porBloques({ raiz, cabecera, nombre, abiertos }) {
     const escritorio = window.matchMedia('(min-width: 768px)');
+    const conCarril = window.matchMedia('(min-width: 1024px)');
     const B = {};
     const orden = [];
     const abiertosAlEntrar = abiertos || new Set();
@@ -695,28 +795,67 @@ window.Terna = (function () {
     let grupoGuardar = null;
     const carril = h('nav', { class: 'carril carril-bloques', 'aria-label': nombre });
 
-    // El h2 lleva el botón del desplegable (celular) y el mismo título sin botón (modo carril); el CSS muestra uno.
-    // alAbrir corre cada vez que el bloque se abre o se elige; cuenta, si está, pone la cantidad en el carril.
+    // El h2 lleva el botón del desplegable (celular) y la misma lengüeta sin botón (modo carril); el CSS muestra una.
+    // alAbrir corre cada vez que el bloque se abre o se elige; cuenta, si está, pone la cantidad en la lengüeta y en el carril.
     function bloque(clave, titulo, cuerpo, opciones) {
       const o = opciones || {};
       const idT = 'h-' + clave;
       const idPanel = 'panel-' + (o.hash || clave);
-      const p = { hash: o.hash || clave, abierta: abiertosAlEntrar.has(clave), alAbrir: o.alAbrir, cuenta: o.cuenta };
-      p.panel = h('div', { class: 'seccion', id: idPanel, hidden: !p.abierta }, cuerpo);
+      const p = { hash: o.hash || clave, abierta: abiertosAlEntrar.has(clave), alAbrir: o.alAbrir, cuenta: o.cuenta, resumen: o.resumen, estado: null, error: null };
+      p.panel = h('div', { class: 'seccion carpeta-cuerpo bloque-cuerpo', id: idPanel, hidden: !p.abierta }, cuerpo);
+      p.nLengueta = p.cuenta ? h('span', { class: 'n' }) : null;
+      p.nFijo = p.cuenta ? h('span', { class: 'n' }) : null;
+      p.marbete = h('span', { class: 'marbete', hidden: true });
+      p.marbeteFijo = h('span', { class: 'marbete', hidden: true });
+      p.resumenNodo = h('span', { class: 'bloque-resumen' });
       p.boton = h('button', { class: 'plegable-boton', type: 'button', 'aria-expanded': String(p.abierta), 'aria-controls': idPanel },
-        h('span', { class: 'tarjeta-titulo', id: idT, text: titulo }), icono('i-chevron'));
+        h('span', { class: 'carpeta-cabeza' },
+          h('span', { class: 'lengueta bloque-lengueta' }, h('span', { class: 'tarjeta-titulo', id: idT, text: titulo }), p.nLengueta),
+          p.marbete),
+        h('span', { class: 'bloque-lomo' }, p.resumenNodo, icono('i-chevron')));
       p.boton.addEventListener('click', () => plegar(clave, !p.abierta));
-      p.seccion = h('section', { class: 'tarjeta seccion', 'aria-labelledby': idT, dataset: { plegable: clave } },
-        h('h2', { class: 'plegable-titulo' }, p.boton, h('span', { class: 'tarjeta-titulo titulo-fijo', text: titulo })), p.panel);
+      p.seccion = h('section', { class: 'tarjeta seccion bloque' + (p.abierta ? ' bloque-abierto' : ''), 'aria-labelledby': idT, dataset: { plegable: clave } },
+        h('h2', { class: 'plegable-titulo' }, p.boton,
+          h('span', { class: 'titulo-fijo carpeta-cabeza' },
+            h('span', { class: 'lengueta bloque-lengueta' }, h('span', { class: 'tarjeta-titulo', text: titulo }), p.nFijo), p.marbeteFijo)),
+        p.panel);
       p.n = p.cuenta ? h('span', { class: 'n' }) : null;
       p.alerta = icono('i-alerta', 'icono-16 carril-alerta');
       p.alerta.setAttribute('hidden', ''); // un <svg> no tiene la propiedad hidden: va el atributo
-      p.link = h('a', { href: '#' + p.hash, onclick: (e) => { e.preventDefault(); elegir(clave, true); } }, h('span', { text: titulo }), p.alerta, p.n);
+      p.chip = h('span', { class: 'chip chip-toca chip-carril', hidden: true });
+      p.link = h('a', { href: '#' + p.hash, onclick: (e) => { e.preventDefault(); elegir(clave, true); } }, h('span', { text: titulo }), p.alerta, p.chip, p.n);
       p.temas = (o.temas || []).filter((t) => t && t.nodo);
       p.subLinks = p.temas.map((t) => h('a', { class: 'carril-sub', href: '#' + t.hash, onclick: (e) => { e.preventDefault(); irATema(clave, t); } }, h('span', { text: t.titulo })));
       B[clave] = p;
       orden.push(clave);
       return p.seccion;
+    }
+    // Lo que hay adentro, para el lomo de un bloque cerrado: lo pide cada vez que se cierra y cuando cambian las cuentas.
+    function resumir(k) {
+      const p = B[k];
+      let texto = '';
+      if (p.resumen) { try { texto = String(p.resumen() || '').trim(); } catch (e) { texto = ''; } }
+      if (p.resumenNodo.textContent !== texto) p.resumenNodo.textContent = texto;
+    }
+    // El marbete del bloque: el error manda sobre «Falta». En el carril, un chip con «Falta» y el triángulo del error.
+    function pintarMarbete(k) {
+      const p = B[k];
+      const e = p.error ? { tipo: 'error', texto: p.error } : p.estado;
+      for (const m of [p.marbete, p.marbeteFijo]) {
+        vaciar(m);
+        m.className = 'marbete' + (e ? ' marbete-' + e.tipo : '');
+        m.hidden = !e;
+        if (e) m.append(icono(e.tipo === 'error' ? 'i-alerta' : 'i-por-decidir'), h('span', { class: 'marbete-texto', text: e.texto }));
+      }
+      const falta = p.estado && p.estado.tipo === 'toca' ? p.estado.texto : '';
+      p.chip.textContent = falta;
+      p.chip.hidden = !falta;
+    }
+    // estado(clave, 'toca', T.perfil.faltaCorto) pone el marbete; estado(clave, null) lo saca.
+    function estadoBloque(k, tipo, texto) {
+      if (!B[k]) return;
+      B[k].estado = tipo ? { tipo, texto: texto || '' } : null;
+      pintarMarbete(k);
     }
     // Un subtema: su bloque abierto (celular) o elegido (carril), y la página baja hasta él.
     function irATema(k, t) {
@@ -749,6 +888,8 @@ window.Terna = (function () {
       if (modoCarril) return;
       p.boton.setAttribute('aria-expanded', String(abrir));
       p.panel.hidden = !abrir;
+      p.seccion.classList.toggle('bloque-abierto', abrir);
+      if (!abrir) resumir(k);
       if (abrir && p.alAbrir) p.alAbrir();
     }
     function elegir(k, desdeCarril) {
@@ -770,27 +911,46 @@ window.Terna = (function () {
       const s = el && el.closest('section[data-plegable]');
       if (s && B[s.dataset.plegable] && !modoCarril) plegar(s.dataset.plegable, true);
     }
-    const conError = (k) => Array.from(B[k].seccion.querySelectorAll('.campo-error')).some((e) => e.textContent);
-    function marcarErrores() { for (const k of orden) B[k].alerta.toggleAttribute('hidden', !conError(k)); }
+    const primerError = (k) => Array.from(B[k].seccion.querySelectorAll('.campo-error')).map((e) => e.textContent.trim()).find(Boolean) || null;
+    const conError = (k) => !!primerError(k);
+    function marcarErrores() {
+      for (const k of orden) {
+        const error = primerError(k);
+        B[k].alerta.toggleAttribute('hidden', !error);
+        if (B[k].error !== error) { B[k].error = error; pintarMarbete(k); }
+      }
+    }
     function irAlPrimerError() {
       const k = orden.find(conError);
       if (k && modoCarril && k !== elegido) elegir(k, true);
     }
     function actualizarCuentas() {
-      for (const k of orden) if (B[k].n) B[k].n.textContent = String(B[k].cuenta());
+      for (const k of orden) {
+        const p = B[k];
+        if (p.n) {
+          const n = String(p.cuenta());
+          p.n.textContent = n;
+          p.nLengueta.textContent = n;
+          p.nFijo.textContent = n;
+        }
+        resumir(k);
+      }
       marcarErrores();
     }
 
-    // Desde 768 px la cabecera queda fija: el carril y el desplazamiento al foco se corren su alto (por CSSOM, que la CSP permite).
+    // La cabecera queda fija (en el celular, debajo de la barra; desde 1024, arriba de todo): el carril y el desplazamiento al foco
+    // se corren su alto (por CSSOM, que la CSP permite).
     const topeCabecera = () => parseFloat(getComputedStyle(cabecera).top) || 0;
+    const cabeceraFija = () => getComputedStyle(cabecera).position === 'sticky';
     function medirCabecera() {
       const doc = document.documentElement.style;
-      if (!modoCarril) { doc.removeProperty('scroll-padding-top'); carril.style.removeProperty('top'); return; }
+      if (!cabeceraFija()) { doc.removeProperty('scroll-padding-top'); carril.style.removeProperty('top'); return; }
       const abajo = topeCabecera() + cabecera.offsetHeight;
       doc.setProperty('scroll-padding-top', (abajo + 12) + 'px');
-      carril.style.setProperty('top', (abajo + 16) + 'px');
+      if (modoCarril) carril.style.setProperty('top', (abajo + 16) + 'px');
+      else carril.style.removeProperty('top');
     }
-    function marcarPegada() { cabecera.classList.toggle('pegada', modoCarril && cabecera.getBoundingClientRect().top <= topeCabecera() + 0.5); }
+    function marcarPegada() { cabecera.classList.toggle('pegada', cabeceraFija() && cabecera.getBoundingClientRect().top <= topeCabecera() + 0.5); }
     function aplicarModo() {
       modoCarril = escritorio.matches;
       raiz.classList.toggle('modo-carril', modoCarril);
@@ -800,6 +960,7 @@ window.Terna = (function () {
         p.seccion.hidden = false;
         p.panel.hidden = modoCarril ? false : !p.abierta;
         p.boton.setAttribute('aria-expanded', String(p.abierta));
+        p.seccion.classList.toggle('bloque-abierto', modoCarril || p.abierta);
       }
       if (modoCarril && elegido) elegir(elegido);
       medirCabecera();
@@ -820,11 +981,12 @@ window.Terna = (function () {
       if (desdeUrl && desdeUrl.tema) irATema(desdeUrl.k, desdeUrl.tema);
       else if (desdeUrl && !modoCarril) { plegar(desdeUrl.k, true); B[desdeUrl.k].seccion.scrollIntoView({ block: 'start' }); }
       escritorio.addEventListener('change', aplicarModo);
+      conCarril.addEventListener('change', () => { medirCabecera(); marcarPegada(); });
       if (window.ResizeObserver) new ResizeObserver(medirCabecera).observe(cabecera);
       addEventListener('scroll', marcarPegada, { passive: true });
       addEventListener('hashchange', irAlHash);
     }
-    return { bloque, montar, abrirDe, marcarErrores, irAlPrimerError, actualizarCuentas };
+    return { bloque, montar, abrirDe, marcarErrores, irAlPrimerError, actualizarCuentas, estado: estadoBloque, resumir };
   }
 
   /* ---------- Arranque de una página con sesión ---------- */
@@ -833,6 +995,7 @@ window.Terna = (function () {
     estado.pagina = pagina;
     document.title = T.comun.titulo(T.comun.pestanas[pagina]);
     dibujarBarra(pagina);
+    dibujarMuelle(pagina);
     dibujarPie();
     contenedorBreves();
     bandas();
@@ -907,7 +1070,7 @@ window.Terna = (function () {
     const mail = String((usuario && usuario.mail) || '').trim().toLowerCase();
     return { direccion, dueno: Boolean(buzon) && mail === buzon };
   }
-  function actualizarFaltantes(lista) { estado.faltantes = lista || []; bandas(); }
+  function actualizarFaltantes(lista) { estado.faltantes = lista || []; bandas(); pintarCuentas(); }
   function actualizarPerfil(datos) { Object.assign(estado.perfil, datos); completarBarra(); }
 
   return {
@@ -915,6 +1078,7 @@ window.Terna = (function () {
     hoy, sumarDias, diasEntre, aFechaLocal, fechaCorta, fechaLarga, hora, relativa, numero, decimal,
     leerLocal, guardarLocal, textoError, siSesionVencida, esErrorDeSesion,
     irAEntrar, volverValido, salir, token, dibujarPie, botonTema, listaFaltantes, cambiarEstadoCuenta, bandas,
+    marca, dibujarMuelle, abrirCuenta, cuentaToca,
     avisoBreve, cerrarBreve, cargando, errorDeCarga, dialogo, confirmar, devolverFoco,
     abrirHoja, cerrarHoja, hojaAbierta, reemplazarCuerpoHoja, anchoLinea, anchoEscritorio,
     copiar, urlExterna, nombreDescarga, urlFirmada, linkFirmado, leerConfig, pagina, actualizarFaltantes, actualizarPerfil, porBloques,

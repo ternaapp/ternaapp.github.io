@@ -151,12 +151,45 @@ Terna.pagina('perfil', async (ctx) => {
     return h('button', Object.assign({ class: clase || 'btn btn-texto', type: 'button', onclick: fn }, extra || {}), iconoId ? icono(iconoId) : null, texto);
   }
 
-  /* ---------- Indicador ---------- */
+  /* ---------- Indicador ----------
+     #indicador conserva su texto. Al lado, fuera de él, "Completar perfil" (secundario: el primario de la página es Guardar)
+     abre o elige el bloque del primer faltante y baja hasta él; solo si falta algo. Cada bloque con un faltante lleva el
+     marbete "Falta" (PLAN-WEB.md §3.4). Desde 768 px el botón va en la cabecera fija; en el celular, arriba de los bloques,
+     para que la cabecera pegada no crezca. */
+  const FALTA = { nombre: ['datos', 'dato-nombre'], ciudad: ['datos', 'dato-ciudad'], experiencia: ['exp', 'agregar-exp'], idioma: ['idi', 'agregar-idi'] };
+  const conCarril = window.matchMedia('(min-width: 768px)');
+  const bCompletar = h('button', { class: 'btn btn-chico completar-perfil', type: 'button', hidden: true, text: T.bandas.completar });
+  bCompletar.addEventListener('click', irAlFaltante);
+  function irAlFaltante() {
+    const f = faltantes.find((x) => FALTA[x]);
+    if (!f) return;
+    const [k, idFoco] = FALTA[f];
+    const s = raiz.querySelector('section[data-plegable="' + k + '"]');
+    if (!s) return;
+    if (conCarril.matches) {
+      const a = raiz.querySelector('nav.carril-bloques a[href="#' + HASH[k] + '"]');
+      if (a) a.click();
+    } else {
+      const b = s.querySelector('.plegable-boton');
+      if (b && b.getAttribute('aria-expanded') !== 'true') b.click();
+    }
+    s.scrollIntoView({ block: 'start' });
+    // El campo que falta o, en una lista vacía, "Agregar…"; si no está (la lista llegó a su tope), el bloque ya está a la vista.
+    const el = document.getElementById(idFoco) || s.querySelector('input:not([type=hidden]), select, textarea, button:not(.plegable-boton)');
+    if (el) el.focus({ preventScroll: true });
+  }
+  function ubicarCompletar() {
+    if (conCarril.matches) indicador.after(bCompletar);
+    else raiz.insertBefore(bCompletar, raiz.querySelector('.bloques-cuerpo'));
+  }
   function dibujarIndicador() {
     Terna.vaciar(indicador);
     indicador.className = 'indicador ' + (faltantes.length ? 'falta' : 'completo');
     indicador.append(icono(faltantes.length ? 'i-por-decidir' : 'i-armado', 'icono-18'),
       faltantes.length ? P.falta(Terna.listaFaltantes(faltantes)) : P.completo);
+    bCompletar.hidden = !faltantes.some((x) => FALTA[x]);
+    const conFalta = new Set(faltantes.filter((x) => FALTA[x]).map((x) => FALTA[x][0]));
+    for (const k of ['datos', 'cv', 'exp', 'est', 'idi', 'cuenta']) bloques.estado(k, conFalta.has(k) ? 'toca' : null, P.faltaCorto);
   }
 
   /* ---------- Bloques (diseno.md 0.19 §9.2 y §10.17) ----------
@@ -171,7 +204,19 @@ Terna.pagina('perfil', async (ctx) => {
   // #estructurado, #analitico). Los de antes siguen andando: #formularios (alias de Identificación) y #estructurado.
   const HASH = { datos: 'datos', cv: 'cv', exp: 'experiencia', est: 'estudios', idi: 'idiomas', cuenta: 'cuenta' };
   const CUENTA = { exp: () => listas.exp.length, est: () => listas.est.length, idi: () => listas.idi.length };
-  const seccion = (k, titulo, cuerpo, extra) => bloques.bloque(k, titulo, cuerpo, Object.assign({ hash: HASH[k], cuenta: CUENTA[k] }, extra || {}));
+  // El lomo de un bloque cerrado dice qué hay adentro, con lo que la persona cargó (PLAN-WEB.md §2.12 y §3.4). Sin nada, el
+  // vacío que el bloque ya dice adentro ("Todavía no subiste tu CV."): un lomo en blanco parecía roto y escondía el CV, que es
+  // lo más útil para quien empieza (revisión 2, P2-1).
+  const unidos = (xs, con) => xs.map((x) => String(x || '').trim()).filter(Boolean).join(con || ', ');
+  const RESUMEN = {
+    datos: () => unidos([unidos([datos.nombre, datos.apellido], ' '), datos.ciudad]),
+    cv: () => [cv ? P.cvCargado(Terna.fechaLarga(cv.subido_en)) : P.sinCv, analitico ? P.analiticoCargado(Terna.fechaLarga(analitico.subido_en)) : ''].filter(Boolean).join(' '),
+    exp: () => unidos(listas.exp.map((e) => e.puesto)) || P.sinExperiencia,
+    est: () => unidos(listas.est.map((e) => e.titulo)) || P.sinEstudios,
+    idi: () => unidos(listas.idi.map((e) => e.idioma)) || P.sinIdiomas,
+    cuenta: () => ctx.usuario.mail || '',
+  };
+  const seccion = (k, titulo, cuerpo, extra) => bloques.bloque(k, titulo, cuerpo, Object.assign({ hash: HASH[k], cuenta: CUENTA[k], resumen: RESUMEN[k] }, extra || {}));
   const abrirSeccionDe = (el) => bloques.abrirDe(el);
   const marcarCarril = () => bloques.marcarErrores();
   const irAlPrimerError = () => bloques.irAlPrimerError();
@@ -295,8 +340,9 @@ Terna.pagina('perfil', async (ctx) => {
       listas.exp.forEach((e, i) => {
         const p = 'exp-' + e.clave;
         const ponerTitulo = () => { const t = document.getElementById(p + '-cabeza'); if (t) t.textContent = P.tituloItem(i + 1, e.puesto, e.empresa, P.trabajoNuevo); };
+        // Puesto y empresa, apilados en un teléfono: lado a lado se cortaban (revisión 2, P1-3).
         const b = caja(p, P.tituloItem(i + 1, e.puesto, e.empresa, P.trabajoNuevo),
-          h('div', { class: 'dos' },
+          h('div', { class: 'dos dos-apilable' },
             campo({ id: p + '-puesto', etiqueta: P.puesto, valor: e.puesto, max: 120, alCambiar: (v) => { e.puesto = v; ponerTitulo(); } }),
             campo({ id: p + '-empresa', etiqueta: P.empresa, valor: e.empresa, max: 120, alCambiar: (v) => { e.empresa = v; ponerTitulo(); } })),
           h('div', { class: 'dos dos-apilable' },
@@ -306,8 +352,8 @@ Terna.pagina('perfil', async (ctx) => {
           campo({ id: p + '-descripcion', etiqueta: P.queHiciste, valor: e.descripcion, max: 2000, area: true, ayuda: P.queHicisteAyuda, alCambiar: (v) => { e.descripcion = v; } }),
           h('div', { class: 'botones' },
             boton(P.quitar, 'i-quitar', () => { listas.exp.splice(i, 1); dibujarLista(listas.exp[i] ? 'exp-' + listas.exp[i].clave + '-puesto' : 'agregar-exp'); }, 'btn btn-texto', { id: p + '-quitar' }),
-            boton(P.subir, null, () => { if (i > 0) { moverEn(listas.exp, i, -1); dibujarLista(p + '-subir'); } }, 'btn btn-texto', { id: p + '-subir', 'aria-disabled': i === 0 ? 'true' : null }),
-            boton(P.bajar, null, () => { if (i < listas.exp.length - 1) { moverEn(listas.exp, i, 1); dibujarLista(p + '-bajar'); } }, 'btn btn-texto', { id: p + '-bajar', 'aria-disabled': i === listas.exp.length - 1 ? 'true' : null })));
+            boton(P.subir, 'i-arriba', () => { if (i > 0) { moverEn(listas.exp, i, -1); dibujarLista(p + '-subir'); } }, 'btn btn-texto mover', { id: p + '-subir', 'aria-disabled': i === 0 ? 'true' : null }),
+            boton(P.bajar, 'i-abajo', () => { if (i < listas.exp.length - 1) { moverEn(listas.exp, i, 1); dibujarLista(p + '-bajar'); } }, 'btn btn-texto mover', { id: p + '-bajar', 'aria-disabled': i === listas.exp.length - 1 ? 'true' : null })));
         cont.append(b);
       });
       if (listas.exp.length < MAX.exp) {
@@ -343,7 +389,7 @@ Terna.pagina('perfil', async (ctx) => {
           h('p', { class: 'campo-ayuda', text: P.tipoEstudioAyuda }),
           campo({ id: p + '-titulo', etiqueta: P.titulo_, valor: e.titulo, max: 160, ayuda: P.tituloAyuda, alCambiar: (v) => { e.titulo = v; ponerTitulo(); } }),
           campo({ id: p + '-institucion', etiqueta: P.institucion, valor: e.institucion, max: 160, alCambiar: (v) => { e.institucion = v; ponerTitulo(); } }),
-          h('div', { class: 'dos' },
+          h('div', { class: 'dos dos-apilable' },
             campo({ id: p + '-anio', etiqueta: P.anio, valor: e.anio, tipo: 'number', inputmode: 'numeric', ayuda: P.anioAyuda, alCambiar: (v) => { e.anio = v; } }),
             seleccion({ id: p + '-estado', etiqueta: P.estado, valor: e.estado || 'terminado', opciones: [['terminado', P.terminado], ['en_curso', P.enCurso]], alCambiar: (v) => { e.estado = v; } })),
           promedio,
@@ -589,9 +635,32 @@ Terna.pagina('perfil', async (ctx) => {
   const banda = h('div', { class: 'banda banda-error', role: 'alert', tabindex: '-1', hidden: true });
   const estadoGuardado = h('p', { class: 'estado-guardado', role: 'status' });
   const bGuardar = h('button', { class: 'btn btn-primario btn-ancho', type: 'button' }, T.comun.guardar);
+  /* La banda lleva, debajo, el primer error como link (revisión 2, P1-1; como en B2): "Idioma: Completá este campo." abre su
+     bloque y pone el foco en el campo. En el celular el campo quedaba dos o tres pantallas más abajo. Es navegación dentro de la
+     página: el texto es el del error y el nombre del campo, y el foco sigue yendo primero a la banda. */
+  function linkAlError(err) {
+    const descrito = err.id ? raiz.querySelector('[aria-describedby~="' + err.id + '"]') : null;
+    const zona = err.closest('.campo, .subbloque, .subtema, .seccion');
+    const destino = descrito && descrito.matches('input, select, textarea') ? descrito
+      : (descrito || zona || err).querySelector('input:not([type=hidden]):not([readonly]), select, textarea, button');
+    const leyenda = err.closest('fieldset') && err.closest('fieldset').querySelector('legend');
+    const titulo = err.closest('.subbloque') && err.closest('.subbloque').querySelector('h3, h4');
+    const nombre = ((leyenda && leyenda.textContent) || (destino && destino.labels && destino.labels[0] && destino.labels[0].textContent)
+      || (destino && destino.getAttribute('aria-label')) || (titulo && titulo.textContent) || '').trim();
+    const a = h('a', { class: 'banda-ir', href: '#' + (err.id || '') }, (nombre ? nombre + ': ' : '') + err.textContent.trim());
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      abrirSeccionDe(err);
+      irAlPrimerError();
+      if (destino) destino.focus();
+      else err.scrollIntoView({ block: 'center' });
+    });
+    return a;
+  }
   function mostrarBanda(texto) {
     Terna.vaciar(banda);
-    banda.append(icono('i-alerta'), h('span', { text: texto }));
+    const err = Array.from(raiz.querySelectorAll('.campo-error')).find((e) => e.textContent.trim());
+    banda.append(icono('i-alerta'), h('span', { class: 'banda-textos' }, h('span', { text: texto }), err ? linkAlError(err) : null));
     banda.hidden = false;
     irAlPrimerError();
     banda.focus();
@@ -754,9 +823,11 @@ Terna.pagina('perfil', async (ctx) => {
   bGuardar.addEventListener('click', guardar);
 
   /* ---------- Página ---------- */
-  dibujarIndicador();
   Terna.vaciar(raiz);
   bloqueDatos(); bloqueCv(); bloqueExperiencia(); bloqueEstudios(); bloqueIdiomas(); bloqueCuenta();
-  bloques.montar({ arriba: [banda], debajo: h('p', { class: 'campo-ayuda', text: P.privacidad }),
+  bloques.montar({ arriba: [banda], debajo: h('p', { class: 'campo-ayuda perfil-privacidad', text: P.privacidad }),
     guardar: h('div', { class: 'guardar-fijo' }, estadoGuardado, bGuardar) });
+  dibujarIndicador();
+  ubicarCompletar();
+  conCarril.addEventListener('change', ubicarCompletar);
 });

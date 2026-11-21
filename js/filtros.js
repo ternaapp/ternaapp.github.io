@@ -6,7 +6,9 @@
      · texto: "contiene", sin importar mayúsculas ni tildes; con varias palabras, todas (Puesto, Empresa, Etapa);
      · valores: casillas con lo que hay y cuántos, y "Todos" primero (Paquete, Postulación, Requisitos, Recorrido, Ubicación);
      · fecha: Desde, Hasta o El día (Publicado, Fecha).
-   Cada cuerpo llama a alCambiar con el valor nuevo en el acto, como la barra: la lista se actualiza detrás. */
+   Cada cuerpo llama a alCambiar con el valor nuevo en el acto, como la barra: la lista se actualiza detrás.
+   Desde el rediseño B2 (opciones-v3/PLAN-WEB.md §2.8), «Más filtros»: desde 768 px la barra muestra los cambiados y los primeros
+   hasta completar cuatro, y el resto se abre con un botón al final (Filtros.masFiltros). */
 'use strict';
 
 window.Filtros = (function () {
@@ -184,6 +186,9 @@ window.Filtros = (function () {
   function ubicar({ botones, lista }) {
     const actualizar = () => {
       for (const [k, b] of Object.entries(botones)) b.classList.toggle('en-tabla', seVe(lista.querySelector('th [data-filtro="' + k + '"]')));
+      // Lo que pasó al encabezado no cuenta para «Más filtros»: la barra se vuelve a repartir.
+      const mas = MAS_POR_BOTONES.get(botones);
+      if (mas) repartir(mas);
     };
     if ('ResizeObserver' in window) new ResizeObserver(actualizar).observe(lista);
     return actualizar;
@@ -198,6 +203,8 @@ window.Filtros = (function () {
   // cerrar: el botón puede haberse rehecho (la tabla se redibuja con cada cambio) o haberse ocultado (el filtro cambia de lugar
   // cuando la tabla muestra u oculta su columna).
   function abrir({ clave, titulo, cuerpo, boton, destino, alCerrar }) {
+    // Un filtro escondido detrás de «Más filtros» que se abre desde otro lado (un vacío): la barra se abre sola.
+    if (boton && boton.dataset.masOculto === '1') abrirMas(boton.closest('.filtros-barra'));
     boton.setAttribute('aria-expanded', 'true');
     Terna.abrirHoja({ titulo, cuerpo, panel: boton, origen: destino || boton,
       alCerrar: (porUsuario) => {
@@ -210,9 +217,71 @@ window.Filtros = (function () {
     if (campo) campo.focus();
   }
 
+  /* ---------- «Más filtros» (PLAN-WEB.md §2.8) ----------
+     Desde 768 px quedan a la vista los filtros cambiados y, después, los primeros de la barra hasta completar `aLaVista` (4); el
+     resto lleva `hidden` hasta que se abre con el botón del final de la barra, que dice cuántos hay (si el resto es uno solo, queda
+     a la vista y el botón no aparece). Lo que Filtros.ubicar mandó al
+     encabezado de su columna no cuenta. En el celular van todos, en la fila que se desplaza, y el botón no aparece. Abierto o
+     cerrado no se guarda. La página la llama al armar la barra y cada vez que la actualiza; el DOM de la barra no cambia. */
+  const MAS_POR_BARRA = new WeakMap();
+  const MAS_POR_BOTONES = new WeakMap();
+  const MAS_TODAS = new Set();
+  function cambiadoDe(m, k) {
+    const c = m.cambiado;
+    if (typeof c === 'function') return !!c(k);
+    if (c && typeof c.has === 'function') return c.has(k);
+    return Array.isArray(c) && c.includes(k);
+  }
+  function repartir(m) {
+    if (!m.botones) return;
+    const lista = (m.claves || []).map((k) => [k, m.botones[k]]).filter(([, b]) => b);
+    const enfocado = document.activeElement;
+    for (const [, b] of lista) if (b.dataset.masOculto === '1') { b.hidden = false; delete b.dataset.masOculto; }
+    if (!Terna.anchoEscritorio.matches) { m.boton.hidden = true; m.boton.setAttribute('aria-expanded', 'false'); return; }
+    const candidatos = lista.filter(([, b]) => !b.classList.contains('en-tabla'));
+    const vista = new Set(candidatos.filter(([k]) => cambiadoDe(m, k)).map(([k]) => k));
+    for (const [k] of candidatos) { if (vista.size >= m.aLaVista) break; vista.add(k); }
+    let extra = candidatos.filter(([k]) => !vista.has(k));
+    // «Más filtros» para esconder uno solo no ahorra lugar: ese filtro queda a la vista y el botón no aparece.
+    if (extra.length === 1) extra = [];
+    if (!m.abierto) for (const [, b] of extra) { b.hidden = true; b.dataset.masOculto = '1'; }
+    m.boton.hidden = !extra.length;
+    m.boton.setAttribute('aria-expanded', String(m.abierto && extra.length > 0));
+    m.num.textContent = String(extra.length);
+    m.cuenta.textContent = extra.length ? ': ' + F().masFiltrosCuenta(extra.length) : '';
+    // Si el foco estaba en un filtro que se escondió, pasa al botón.
+    if (enfocado && enfocado.dataset && enfocado.dataset.masOculto === '1' && !m.boton.hidden) m.boton.focus();
+  }
+  function abrirMas(barra) {
+    const m = barra && MAS_POR_BARRA.get(barra);
+    if (m && !m.abierto) { m.abierto = true; repartir(m); }
+  }
+  // { barra, botones, claves, cambiado, aLaVista }: `cambiado` es una función (clave → bool), un Set o una lista de claves.
+  // La primera vez agrega button.filtro-boton.mas-filtros al final de la barra; las siguientes vuelven a repartir con lo de ahora.
+  function masFiltros({ barra, botones, claves, cambiado, aLaVista }) {
+    let m = MAS_POR_BARRA.get(barra);
+    if (!m) {
+      if (!barra.id) barra.id = Terna.idUnico('filtros');
+      const num = h('span', { class: 'num', 'aria-hidden': 'true' });
+      const cuenta = h('span', { class: 'oculto-visual' });
+      const boton = h('button', { class: 'filtro-boton mas-filtros', type: 'button', 'aria-expanded': 'false', 'aria-controls': barra.id, hidden: true },
+        h('span', { class: 'mas-filtros-texto', text: F().masFiltros }), num, cuenta, icono('i-chevron', 'icono-16'));
+      m = { barra, boton, num, cuenta, abierto: false };
+      boton.addEventListener('click', () => { m.abierto = !m.abierto; repartir(m); });
+      barra.append(boton);
+      MAS_POR_BARRA.set(barra, m);
+      MAS_TODAS.add(m);
+    }
+    Object.assign(m, { botones, claves, cambiado, aLaVista: aLaVista || 4 });
+    MAS_POR_BOTONES.set(botones, m);
+    repartir(m);
+    return { boton: m.boton, abrir: () => abrirMas(barra), repartir: () => repartir(m) };
+  }
+  Terna.anchoEscritorio.addEventListener('change', () => { for (const m of MAS_TODAS) repartir(m); });
+
   return {
     normal, contiene, textoValido, hayTexto, listaValida, fechaValida, pasaFecha,
     resumenLista, resumenTexto, resumenFecha,
-    cuerpoTexto, cuerpoValores, cuerpoFecha, botonOrden, encabezado, abrir, ubicar, primero, seVe,
+    cuerpoTexto, cuerpoValores, cuerpoFecha, botonOrden, encabezado, abrir, ubicar, primero, seVe, masFiltros,
   };
 })();

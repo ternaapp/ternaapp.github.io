@@ -1,6 +1,8 @@
 /* Terna · js/cuenta.js
    Las tres páginas sin sesión (brand.md §6.2): Entrar, Crear tu cuenta (con el token del link de invitación) y
-   Cambiar la contraseña (sin SMTP, el texto para escribirle a Francisco). El alta: leer_invitacion antes de signUp. */
+   Cambiar la contraseña (sin SMTP, el texto para escribirle a Francisco). El alta: leer_invitacion antes de signUp.
+   Desde el rediseño B2 «Sello» (opciones-v3/PLAN-WEB.md §3.10 a §3.12), lo de cada página va en la carpeta de las tres
+   lengüetas; lo que la acompaña (quién te invitó, la nota de la invitación, la vuelta a Entrar) va afuera, en #cuenta. */
 'use strict';
 
 (function () {
@@ -35,9 +37,19 @@
     const i = document.getElementById(id);
     if (i) { i.setAttribute('aria-invalid', 'true'); i.focus(); }
   }
-  function banda(texto, error) {
-    return h('div', { class: 'banda' + (error ? ' banda-error' : ''), role: error ? 'alert' : 'status', tabindex: '-1' }, icono(error ? 'i-alerta' : 'i-por-decidir'), h('span', { text: texto }));
+  // `iconoId`: el de una banda que no es un error (por defecto, el círculo de aviso).
+  function banda(texto, error, iconoId) {
+    return h('div', { class: 'banda' + (error ? ' banda-error' : ''), role: error ? 'alert' : 'status', tabindex: '-1' }, icono(error ? 'i-alerta' : (iconoId || 'i-por-decidir')), h('span', { text: texto }));
   }
+  /* La carpeta de las páginas sin sesión (PLAN-WEB.md §3.10): tres lengüetas en las tres tintas del logo (sello, medio, lila),
+     que no son pestañas (aria-hidden), y el cuerpo con lo que va adentro. */
+  function carpeta(...hijos) {
+    return h('div', { class: 'carpeta acceso-carpeta' },
+      h('div', { class: 'tres-lenguetas', 'aria-hidden': 'true' }, h('span'), h('span'), h('span')),
+      h('div', { class: 'carpeta-cuerpo' }, hijos));
+  }
+  // Debajo de la carpeta, la vuelta a Entrar, como texto (Contraseña).
+  const volverAEntrar = () => h('p', { class: 'acceso-volver' }, h('a', { href: 'entrar.html' }, icono('i-volver'), h('span', { text: T.comun.volver })));
   const mailValido = (m) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m);
   function errorAuth(error) {
     const st = error && error.status;
@@ -68,14 +80,15 @@
     };
     const titulo = h('h1', { class: 'titulo', tabindex: '-1', text: C.modoTitulo });
     const form = h('form', { class: 'acceso-form', novalidate: true },
-      h('div', null, titulo, h('p', { text: C.modoAyuda })),
+      h('div', { class: 'acceso-encabezado' }, titulo, h('p', { class: 'acceso-ayuda', text: C.modoAyuda })),
       h('fieldset', { class: 'modos' }, h('legend', { class: 'oculto-visual', text: C.modoGrupo }),
         opcion('dispositivo', 'i-dispositivo', C.modoDispositivo, C.modoDispositivoAhora(tema.delDispositivo() === 'oscuro')),
         opcion('claro', 'i-sol', C.modoClaro),
         opcion('oscuro', 'i-luna', C.modoOscuro)),
       h('button', { class: 'btn btn-primario btn-ancho', type: 'submit' }, C.modoSeguir));
     form.addEventListener('submit', (e) => { e.preventDefault(); seguir(); });
-    cont.append(form);
+    // En la misma carpeta que el formulario de la cuenta: cambia lo de adentro, no la página.
+    cont.append(carpeta(form));
     titulo.focus();
   }
 
@@ -88,7 +101,10 @@
     const { data } = await sb.auth.getSession();
     if (data && data.session) { location.replace(volver); return; }
     const cont = raiz();
-    const avisos = h('div');
+    // La descripción va fuera del formulario (PLAN-WEB.md §3.10): en escritorio, en la columna del logo; en el celular, al final.
+    const descripcion = document.getElementById('descripcion');
+    if (descripcion) descripcion.textContent = T.descripcionLarga;
+    const avisos = h('div', { class: 'acceso-avisos' });
     if (q.get('motivo') === 'sesion') avisos.append(banda(E.sesion, true));
     const bEntrar = h('button', { class: 'btn btn-primario btn-ancho', type: 'submit' }, C.entrar);
     const form = h('form', { class: 'acceso-form', novalidate: true },
@@ -96,9 +112,7 @@
       campo({ id: 'mail', etiqueta: C.mail, tipo: 'email', autocomplete: 'username', max: 254 }),
       campo({ id: 'contrasena', etiqueta: C.contrasena, tipo: 'password', autocomplete: 'current-password', contrasena: true }),
       bEntrar,
-      h('p', null, h('a', { href: 'contrasena.html', text: C.olvide })),
-      h('p', { class: 'acceso-descripcion', text: C.porInvitacion }),
-      h('p', { class: 'acceso-descripcion', text: T.descripcionLarga }));
+      h('p', { class: 'acceso-olvide' }, h('a', { href: 'contrasena.html', text: C.olvide })));
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const mail = document.getElementById('mail').value.trim();
@@ -118,7 +132,7 @@
       }
       location.replace(volver);
     });
-    cont.append(form);
+    cont.append(carpeta(form), h('p', { class: 'acceso-nota', text: C.porInvitacion }));
   }
 
   /* ---------- Crear tu cuenta ---------- */
@@ -139,7 +153,8 @@
       marcaModo(false);
     }
     const titulo = h('h1', { class: 'titulo', text: C.crearTitulo });
-    const fin = (texto) => { cont.append(titulo, banda(texto, true)); };
+    // Lo que corta el alta (invitación usada, vencida, que no existe, o un error): en la carpeta, con la salida a Entrar.
+    const fin = (texto) => { cont.append(carpeta(titulo, banda(texto, true), h('a', { class: 'btn btn-ancho', href: 'entrar.html' }, C.entrar))); };
     if (!/^[a-f0-9]{32}$/.test(token)) { fin(E.invNoExiste); return; }
     const parar = Terna.cargando(cont);
     const { data, error } = await sb.rpc('leer_invitacion', { p_token: token });
@@ -151,16 +166,15 @@
     if (inv.invitacion_estado === 'usada') { fin(E.invUsada); return; }
     if (inv.invitacion_estado !== 'pendiente') { fin(E.invVencida); return; }
 
-    const avisos = h('div');
+    const avisos = h('div', { class: 'acceso-avisos' });
     const bCrear = h('button', { class: 'btn btn-primario btn-ancho', type: 'submit' }, C.crear);
     const form = h('form', { class: 'acceso-form', novalidate: true },
-      h('div', null, titulo, inv.invitador_nombre ? h('p', { text: C.teInvito(inv.invitador_nombre) }) : null),
+      titulo,
       avisos,
       campo({ id: 'nombre', etiqueta: C.nombre, autocomplete: 'given-name', max: 80 }),
       campo({ id: 'mail', etiqueta: C.mail, tipo: 'email', valor: inv.invitacion_mail, readonly: true, ayuda: C.mailInvitacion, autocomplete: 'username' }),
       campo({ id: 'contrasena', etiqueta: C.contrasena, tipo: 'password', autocomplete: 'new-password', ayuda: C.contrasenaAyuda, contrasena: true }),
-      bCrear,
-      h('p', { class: 'acceso-descripcion', text: C.crearNota }));
+      bCrear);
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const nombre = document.getElementById('nombre').value.trim();
@@ -181,7 +195,9 @@
       }
       elegirModo(cont);
     });
-    cont.append(form);
+    // Quién te invitó va arriba de la carpeta, fuera de ella; la nota de privacidad, debajo (PLAN-WEB.md §3.11).
+    if (inv.invitador_nombre) cont.append(h('p', { class: 'acceso-invito', text: C.teInvito(inv.invitador_nombre) }));
+    cont.append(carpeta(form), h('p', { class: 'acceso-nota', text: C.crearNota }));
   }
 
   /* ---------- Cambiar la contraseña ---------- */
@@ -190,20 +206,20 @@
     const cont = raiz();
     const hash = new URLSearchParams(Terna.hashInicial.slice(1));
     if (hash.get('error_code') === 'otp_expired' || hash.get('error') === 'access_denied') {
-      cont.append(h('h1', { class: 'titulo', text: C.cambiarTitulo }), banda(E.linkVencido, true), h('p', null, h('a', { href: 'contrasena.html', text: C.mandarLink })));
+      cont.append(carpeta(h('h1', { class: 'titulo', text: C.cambiarTitulo }), banda(E.linkVencido, true),
+        h('a', { class: 'btn btn-primario btn-ancho', href: 'contrasena.html' }, C.mandarLink)), volverAEntrar());
       return;
     }
     if (hash.get('type') === 'recovery') { await nuevaContrasena(cont); return; }
     if (!Terna.CONFIG.smtp) {
-      cont.append(h('h1', { class: 'titulo', text: C.cambiarTitulo }), h('p', { text: C.sinSmtp }),
-        h('p', null, h('a', { class: 'btn', href: 'entrar.html' }, icono('i-volver'), T.comun.volver)));
+      cont.append(carpeta(h('h1', { class: 'titulo', text: C.cambiarTitulo }), h('p', { class: 'acceso-texto', text: C.sinSmtp })), volverAEntrar());
       return;
     }
-    const resultado = h('div', { role: 'status' });
+    const resultado = h('div', { class: 'acceso-avisos', role: 'status' });
     const bMandar = h('button', { class: 'btn btn-primario btn-ancho', type: 'submit' }, C.mandarLink);
+    const tituloMandar = h('h1', { class: 'titulo', text: C.cambiarTitulo });
     const form = h('form', { class: 'acceso-form', novalidate: true },
-      h('h1', { class: 'titulo', text: C.cambiarTitulo }), campo({ id: 'mail', etiqueta: C.mail, tipo: 'email', autocomplete: 'username', max: 254 }), bMandar, resultado,
-      h('p', null, h('a', { href: 'entrar.html', text: T.comun.volver })));
+      tituloMandar, campo({ id: 'mail', etiqueta: C.mail, tipo: 'email', autocomplete: 'username', max: 254 }), bMandar, resultado);
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const mail = document.getElementById('mail').value.trim();
@@ -213,13 +229,18 @@
       const { error } = await sb.auth.resetPasswordForEmail(mail, { redirectTo: location.origin + location.pathname });
       bMandar.removeAttribute('aria-disabled');
       Terna.vaciar(resultado);
-      resultado.append(error && (error.status === 429) ? banda(E.intentos, true) : banda(C.linkMandado, false));
+      if (error && (error.status === 429)) { resultado.append(banda(E.intentos, true)); return; }
+      // Mandado: en la misma carpeta, el formulario deja lugar a la confirmación (PLAN-WEB.md §3.12).
+      for (const n of [...form.children]) if (n !== tituloMandar && n !== resultado) n.remove();
+      const listo = banda(C.linkMandado, false, 'i-sobre');
+      resultado.append(listo);
+      listo.focus();
     });
-    cont.append(form);
+    cont.append(carpeta(form), volverAEntrar());
   }
   async function nuevaContrasena(cont) {
     const bGuardar = h('button', { class: 'btn btn-primario btn-ancho', type: 'submit' }, C.guardarContrasena);
-    const avisos = h('div');
+    const avisos = h('div', { class: 'acceso-avisos' });
     const form = h('form', { class: 'acceso-form', novalidate: true },
       h('h1', { class: 'titulo', text: C.nuevaTitulo }), avisos,
       campo({ id: 'nueva', etiqueta: C.nueva, tipo: 'password', autocomplete: 'new-password', ayuda: C.contrasenaAyuda, contrasena: true }),
@@ -238,14 +259,16 @@
       if (error) { const bb = banda(error.code === 'weak_password' ? E.contrasenaCorta : E.linkVencido, true); avisos.append(bb); bb.focus(); return; }
       await sb.auth.signOut({ scope: 'local' });
       Terna.vaciar(cont);
-      cont.append(h('h1', { class: 'titulo', text: C.nuevaTitulo }), banda(C.contrasenaGuardada, false), h('p', null, h('a', { class: 'btn btn-primario', href: 'entrar.html' }, C.entrar)));
+      cont.append(carpeta(h('h1', { class: 'titulo', text: C.nuevaTitulo }), banda(C.contrasenaGuardada, false, 'i-tilde'),
+        h('a', { class: 'btn btn-primario btn-ancho', href: 'entrar.html' }, C.entrar)));
     });
-    cont.append(form);
+    cont.append(carpeta(form), volverAEntrar());
   }
 
   function correr() {
     const acceso = document.querySelector('.acceso');
-    if (acceso && window.TernaTema) acceso.prepend(Terna.botonTema('btn-acceso-tema'));
+    // El sol o la luna, arriba a la derecha: el mismo botón de la barra (uno solo en la página).
+    if (acceso && window.TernaTema) acceso.prepend(Terna.botonTema('btn-barra btn-acceso-tema'));
     if (archivo === 'crear-cuenta.html') crearCuenta();
     else if (archivo === 'contrasena.html') contrasena();
     else entrar();

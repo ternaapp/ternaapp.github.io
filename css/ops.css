@@ -1,133 +1,220 @@
+/* Hallmark · shape: app screen · genre: editorial · theme: custom (Sello) (el portal operativo en el diseño v3, 2026-11-20)
+ * nav: a paper bar with the three-ink logo, a lilac «Operación» seal and the mode and exit buttons; under it the ten sections as folder dividers that scroll sideways on the phone · footer: the plain line of the site · hero: none, each section opens on its title with «Actualizar» and the time of the reading · signature: every card is the grey body of a folder; what broke carries the red spine and the falla chip, what needs a look the grey one, what is fine the green one; the sign-in sits in the folder with the three tabs of Entrar · states: roto, mirar and bien on chips with icon and word; empty, loading, load error, field error, disabled while saving · posture: restrained · contrast: pass · modes: light+dark */
+
 /* Terna · css/ops.css
-   El portal operativo (ops.html; operacion.md §5). Lo que no está en terna.css: el encabezado propio (sin las pestañas de la web
-   de usuario), las tarjetas de Hoy con su gravedad, las listas de tarjetas, los filtros y el alta del segundo paso. Reutiliza las
-   fichas de color de terna.css, así anda igual en claro y en oscuro. La única excepción son los dos colores del QR: tienen que ser
-   negro sobre blanco en los dos modos para que la cámara lo lea. */
+   El portal operativo (ops.html; operacion.md §5). Desde el 20/11/2026, en el diseño v3 «Sello» como el resto de la web
+   (diseno-v3.md, en terna-motor/docs): las fichas, las tipografías (css/fonts.css) y las piezas de css/terna.css. Hasta ese día esta hoja leía
+   las fichas de la v2 (--acento, --cascara, --tinta…), que el v3 sacó. Lo propio del portal: el encabezado (sin carril ni muelle:
+   el portal tiene su tira de secciones), las secciones como separadores, las tarjetas de Hoy con su gravedad, las listas, los
+   filtros, el alta del segundo paso y lo que era Admin (casos, empresas, avisos sin texto). Nada de esto cambia ops.js.
+   La única excepción a las fichas son los dos colores del QR: negro sobre blanco en los dos modos, para que la cámara lo lea. */
 
-:root { --qr-claro: #FFFFFF; --qr-oscuro: #000000; }
+:root { --qr-claro: #ffffff; --qr-oscuro: #000000; }
 
-/* Encabezado: la cáscara, una sola línea. */
-#barra-ops { position: sticky; top: 0; z-index: 20; background: var(--cascara); border-bottom: 1px solid var(--cascara-linea); }
-#barra-ops :focus-visible { outline-color: var(--acento); }
-.op-barra { display: flex; align-items: center; gap: 8px; height: 56px; width: 100%; max-width: 1232px; margin: 0 auto; padding-right: 8px; }
-#barra-ops .logo, #barra-ops .logo:hover { color: var(--cascara-tinta); }
-#barra-ops .logo-marca { color: var(--acento); }
-.op-marca {
-  color: var(--acento); font-size: 14px; font-weight: 700; line-height: 1; padding: 6px 8px;
-  border: 1px solid var(--cascara-linea); border-radius: 6px; white-space: nowrap;
+/* ---------- El encabezado: papel, el logo de tres tintas, el sello «Operación» y la cuenta ---------- */
+/* Fija arriba, en papel, con la regla de css/terna.css para #barra; acá solo la regla fina de abajo. */
+#barra-ops { border-bottom: var(--rule-hair) solid var(--color-rule); }
+.op-barra {
+  display: flex; align-items: center; gap: var(--space-sm); width: 100%; max-width: var(--contenido-ancho); min-height: var(--bar);
+  margin: 0 auto; padding: 0 var(--space-xs) 0 var(--gutter);
 }
-.op-cuenta { margin-left: auto; display: flex; align-items: center; gap: 4px; }
-#barra-ops .btn-barra { color: var(--cascara-tinta); }
-#barra-ops .btn-barra:hover { background: var(--cascara-fuerte); color: var(--cascara-tinta); }
-.pagina-ops { scroll-padding-top: 64px; }
-.pagina-ops .subpestanas[hidden] { display: none; }
-#ops { display: flex; flex-direction: column; gap: 14px; }
+/* «Operación», como el sello de un legajo: lila con la letra en violeta. No es un botón. */
+.op-marca {
+  display: inline-flex; align-items: center; min-height: var(--marbete); padding: 0 var(--space-sm); border-radius: var(--radius-chip);
+  background: var(--color-accent-tint); color: var(--color-accent); font: var(--weight-strong) var(--text-xs)/1 var(--font-body); white-space: nowrap;
+}
+.op-cuenta { display: flex; align-items: center; gap: var(--space-2xs); margin-left: auto; }
+.pagina-ops { scroll-padding-top: calc(var(--bar) + var(--space-md)); }
+.pagina-ops .contenido { max-width: var(--contenido-ancho); gap: var(--space-lg); }
+#ops { display: flex; flex-direction: column; gap: var(--space-lg); min-width: 0; }
 
-/* Entrar, el código y el alta del segundo paso. */
-.op-acceso { width: 100%; max-width: 440px; margin: 16px auto 0; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
-.op-acceso-titulo { font-size: 24px; }
-.op-acceso-titulo:focus { outline: none; }
-.op-acceso .banda { border-radius: 8px; }
-.op-codigo { font-size: 22px; letter-spacing: 0.25em; font-variant-numeric: tabular-nums; max-width: 200px; }
-.op-qr-caja { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
-.op-qr { width: 200px; height: 200px; border-radius: 6px; }
+/* ---------- Las secciones: separadores, como los de la ficha ---------- */
+/* Una tira con la regla lila abajo; cada sección con radio 10 arriba; la elegida, lila. En el celular se desplaza de costado
+   y llega a los bordes de la pantalla. */
+.subpestanas {
+  display: flex; gap: var(--space-2xs); margin: 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter);
+  border-bottom: 2px solid var(--color-accent-tint); overflow-x: auto; scrollbar-width: none; scroll-padding-inline: var(--gutter);
+}
+.subpestanas::-webkit-scrollbar { display: none; }
+.pagina-ops .subpestanas[hidden] { display: none; }
+.subpestanas a {
+  flex: none; display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--space-sm);
+  border-radius: var(--radius-tab) var(--radius-tab) 0 0; color: var(--color-muted); font: var(--weight-strong) var(--text-sm)/1.2 var(--font-body);
+  text-decoration: none; white-space: nowrap; transition: background-color var(--dur-pill) var(--ease-out), color var(--dur-pill) var(--ease-out);
+}
+@media (hover: hover) { .subpestanas a:hover { background: var(--color-paper-3); color: var(--color-ink); } }
+.subpestanas a[aria-current="true"] { background: var(--color-accent-tint); color: var(--color-accent); }
+.subpestanas a:focus-visible { outline-offset: -2px; }
+.subpestanas a:active { transform: translateY(1px); }
+
+/* ---------- Entrar, el código y el alta del segundo paso: la carpeta de las tres lengüetas de Entrar ---------- */
+.pagina-ops .tarjeta.op-acceso {
+  position: relative; width: 100%; max-width: 440px; margin: calc(var(--space-md) + var(--marbete)) auto 0;
+  display: flex; flex-direction: column; gap: var(--space-md); padding: var(--space-lg) var(--space-md);
+  border-radius: 0 var(--radius-card) var(--radius-card) var(--radius-card);
+}
+/* Las tres tintas del logo (sello, medio, lila), de 104, 40 y 40 px; la tercera es la sombra de la segunda. No son pestañas. */
+.op-acceso::before, .op-acceso::after { content: ""; position: absolute; bottom: 100%; height: var(--marbete); border-radius: var(--radius-tab) var(--radius-tab) 0 0; }
+.op-acceso::before { left: 0; width: 104px; background: var(--color-accent); }
+.op-acceso::after { left: calc(104px + var(--space-2xs)); width: 40px; background: var(--color-accent-mid); box-shadow: calc(40px + var(--space-2xs)) 0 0 var(--color-accent-tint); }
+.op-acceso-titulo { font-size: var(--text-2xl); }
+.op-acceso-titulo:focus, .op-titulo:focus, .op-subtitulo:focus { outline: none; }
+.acceso-descripcion { max-width: 46ch; color: var(--color-muted); font-size: var(--text-sm); line-height: 1.55; }
+.acceso-descripcion:empty { display: none; }
+.formulario-angosto { display: flex; flex-direction: column; gap: var(--space-md); max-width: 640px; }
+.op-codigo { max-width: 200px; font-size: var(--text-xl); font-variant-numeric: tabular-nums; letter-spacing: 0.25em; }
+.op-qr-caja, .op-clave-caja { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-xs); }
+.op-qr { width: 200px; height: 200px; border-radius: var(--radius-control); }
 .op-qr-fondo { fill: var(--qr-claro); }
 .op-qr-punto { fill: var(--qr-oscuro); }
-.op-clave-caja { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+/* La clave para escribir a mano, como lo que se copia tal cual en el resto de la web: la letra del sistema, sobre gris. */
 .op-clave {
-  display: block; max-width: 100%; padding: 8px 10px; border-radius: 6px; background: var(--seleccion);
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 16px; overflow-wrap: anywhere;
+  display: block; max-width: 100%; padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-control);
+  background: var(--color-paper-3); font: var(--text-md)/1.4 var(--font-mono); overflow-wrap: anywhere;
 }
 
-/* Cada sección: título, «Actualizar» y la hora de la lectura. */
-.op-encabezado { display: flex; flex-direction: column; gap: 6px; }
-.op-encabezado-fila { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
-.op-titulo { font-size: 26px; }
-.op-titulo:focus { outline: none; }
-.op-actualizar { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-.op-subtitulo { font-size: 17px; font-weight: 700; line-height: 1.3; }
-.op-subtitulo:focus { outline: none; }
+/* ---------- Cada sección: el título, «Actualizar» y la hora de la lectura ---------- */
+.op-encabezado { display: flex; flex-direction: column; gap: var(--space-xs); }
+.op-encabezado-fila { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs) var(--space-md); }
+.op-titulo { font-size: var(--text-h1); }
+.op-actualizar { display: flex; align-items: center; gap: var(--space-xs); font-size: var(--text-sm); }
+.op-subtitulo { font: var(--weight-strong) var(--text-lg)/1.3 var(--font-body); }
+.seccion-intro { max-width: 70ch; color: var(--color-ink-2); line-height: 1.5; }
 
-/* Hoy: las tarjetas, primero lo roto. La gravedad va en el chip (con palabra e ícono) y en el borde izquierdo. */
+/* ---------- Las tarjetas: el cuerpo de una carpeta ---------- */
+/* Gris carpeta, sin borde. La gravedad va en el chip (con palabra e ícono) y en el lomo de la izquierda: rojo lo roto, gris lo
+   que hay que mirar, verde lo que está bien. Nunca una carpeta dentro de otra: dentro de una tarjeta, reglas finas. */
+.pagina-ops .tarjeta { padding: var(--pad-carpeta); border: 0; border-radius: var(--radius-card); background: var(--color-paper-2); }
+.pagina-ops .tarjeta .tarjeta { padding: var(--space-sm) 0 0; border-top: var(--rule-hair) solid var(--color-rule); border-radius: 0; background: none; }
 .op-todo-bien {
-  display: flex; align-items: center; gap: 8px; max-width: 860px; padding: 12px 14px; border-radius: 10px;
-  background: var(--accion-tinte); color: var(--accion-oscura); font-weight: 700;
+  display: flex; align-items: center; gap: var(--space-xs); max-width: 860px; padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-card); background: var(--color-paper-2); color: var(--color-done); font-weight: var(--weight-strong);
 }
-.op-tarjetas { display: flex; flex-direction: column; gap: 10px; max-width: 860px; }
+.op-tarjetas { display: flex; flex-direction: column; gap: var(--space-md); max-width: 860px; }
 .op-hoy { display: grid; grid-template-columns: minmax(0, 1fr); max-width: none; }
-.op-tarjeta { display: flex; flex-direction: column; gap: 6px; border-left-width: 4px; }
-.op-roto { border-left-color: var(--error); }
-.op-mirar { border-left-color: var(--espera-oscuro); }
-.op-bien { border-left-color: var(--accion); }
-.op-cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.op-cabeza .chip { flex: 0 0 auto; }
+.op-tarjeta { display: flex; flex-direction: column; gap: var(--space-xs); }
+.op-roto { box-shadow: inset 4px 0 0 var(--color-error); }
+.op-mirar { box-shadow: inset 4px 0 0 var(--color-hold); }
+.op-bien { box-shadow: inset 4px 0 0 var(--color-done); }
+.op-cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); }
+.op-cabeza .chip { flex: none; }
+/* Los colores de significado del v3 en el portal: lo nuevo y lo que está en curso te toca (ámbar; ops.js le pone chip-azul,
+   que en la web es verde de «resuelta»), y «Bien» va calmo, con el contorno y la letra en verde, como Postuladas. */
+.pagina-ops .chip-azul { background: var(--color-turn-tint); color: var(--color-turn); }
+.op-cabeza .chip-accion { border-color: var(--color-done); color: var(--color-done); }
 .op-cabeza .tarjeta-titulo { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
-.op-cifra .cifra-numero { font-size: 28px; }
-.op-linea { font-size: 15px; line-height: 1.45; overflow-wrap: anywhere; }
-.op-ir { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; font-weight: 500; }
-a.op-ir { padding: 0 8px; text-decoration: none; }
-a.op-ir:hover { text-decoration: underline; }
+.pagina-ops .cifra-numero { font: var(--weight-display) var(--text-3xl)/1 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-display); }
+.op-linea { line-height: 1.45; overflow-wrap: anywhere; }
+.op-ir { align-self: flex-start; display: inline-flex; align-items: center; gap: var(--space-2xs); min-height: 44px; font-weight: var(--weight-strong); }
+a.op-ir { padding: 0 var(--space-xs); margin-left: calc(-1 * var(--space-xs)); text-decoration: none; }
+a.op-ir:hover { text-decoration: underline; text-decoration-thickness: 2px; }
 .op-pie { max-width: 70ch; }
 
-/* Listas de tarjetas: sitios, empresas, postulaciones, paquetes. */
-.op-item { display: flex; flex-direction: column; gap: 6px; }
-.op-meta { font-size: 13px; line-height: 1.45; color: var(--tinta-suave); overflow-wrap: anywhere; }
-.op-persona { color: var(--tinta); font-weight: 500; font-variant-numeric: tabular-nums; }
-.op-error { margin: 0; max-height: 180px; overflow: auto; font-size: 12px; }
-.op-acciones { margin-top: 2px; }
-.op-link { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; font-size: 14px; overflow-wrap: anywhere; }
+/* ---------- Las listas: sitios, empresas, postulaciones, paquetes, fallas ---------- */
+.op-item { display: flex; flex-direction: column; gap: var(--space-xs); }
+.op-meta { color: var(--color-muted); font-size: var(--text-sm); line-height: 1.45; overflow-wrap: anywhere; }
+.op-persona { color: var(--color-ink); font-weight: var(--weight-strong); font-variant-numeric: tabular-nums; }
+.op-error { max-height: 180px; margin: 0; overflow: auto; }
+.op-acciones { margin-top: var(--space-3xs); }
+.op-link { display: inline-flex; align-items: center; gap: var(--space-2xs); min-height: 44px; font-size: var(--text-sm); overflow-wrap: anywhere; }
 .op-plegar { align-self: flex-start; }
-.op-plegar .icono { transition: transform var(--mov); }
+.op-plegar .icono { transition: transform var(--dur-state) var(--ease-in-out); }
 .op-plegar[aria-expanded="true"] .icono { transform: rotate(180deg); }
-.op-detalle { display: flex; flex-direction: column; gap: 8px; padding-top: 2px; }
+.op-detalle { display: flex; flex-direction: column; gap: var(--space-xs); padding-top: var(--space-xs); border-top: var(--rule-hair) solid var(--color-rule); }
 .op-detalle[hidden] { display: none; }
-.op-detalle h3 { font-size: 13px; font-weight: 700; color: var(--tinta-suave); margin-bottom: 2px; }
-.op-lista, .op-seccion { display: flex; flex-direction: column; gap: 12px; }
-.op-filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.op-detalle h3 { color: var(--color-muted); font-size: var(--text-sm); }
+.op-lista, .op-seccion { display: flex; flex-direction: column; gap: var(--space-md); }
+.op-filtros { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); }
 .op-buscar { flex: 1 1 220px; max-width: 360px; }
-.op-filtro-campo { display: inline-flex; align-items: center; gap: 6px; }
+.op-filtro-campo { display: inline-flex; align-items: center; gap: var(--space-xs); }
 .op-select { width: auto; min-width: 150px; }
-
-/* Resúmenes y tablas. */
-.op-resumen { display: flex; flex-direction: column; gap: 10px; max-width: 860px; }
-.op-cifras { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin: 0; }
-.op-cifra-caja { display: flex; flex-direction: column; gap: 2px; }
-.op-cifra-caja dt { font-size: 13px; line-height: 1.3; }
-.op-cifra-caja dd { margin: 0; font-size: 24px; }
-.op-grupos { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.op-grupo { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.op-tabla th[scope="row"] { font-weight: 500; text-align: left; white-space: nowrap; }
-.op-tabla td, .op-tabla th[scope="row"] { padding: 8px 10px; border-bottom: 1px solid var(--linea); vertical-align: top; }
-.op-celda-error {
-  min-width: 220px; max-width: 420px; font-size: 12px; color: var(--tinta-suave); overflow-wrap: anywhere;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+.chip-filtro { padding-right: var(--space-3xs); }
+.chip-filtro button {
+  display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; margin: calc(-1 * var(--space-2xs)) 0; padding: 0;
+  border: 0; border-radius: var(--radius-chip); background: transparent; color: inherit;
 }
-.op-fila-error th, .op-fila-error td { background: var(--error-tinte); }
-.op-fila-total th, .op-fila-total td { font-weight: 700; background: var(--seleccion); }
+@media (hover: hover) { .chip-filtro button:hover { background: var(--color-paper-3); } }
+.mas-resultados { display: flex; flex-direction: column; align-items: center; gap: var(--space-xs); padding: var(--space-md) 0 var(--space-2xs); color: var(--color-muted); font-size: var(--text-sm); }
+
+/* ---------- Resúmenes y tablas ---------- */
+.op-resumen { display: flex; flex-direction: column; gap: var(--space-sm); max-width: 860px; }
+.op-cifras { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--space-md); margin: 0; }
+.op-cifra-caja { display: flex; flex-direction: column; gap: var(--space-3xs); padding-top: var(--space-xs); border-top: var(--rule-hair) solid var(--color-rule-2); }
+.op-cifra-caja dt { color: var(--color-muted); font-size: var(--text-sm); line-height: 1.3; }
+.op-cifra-caja dd { margin: 0; font: var(--weight-display) var(--text-2xl)/1.1 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-display); }
+.op-grupos { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); }
+.op-grupo { display: flex; flex-direction: column; gap: var(--space-xs); min-width: 0; }
+.op-tabla th[scope="row"] { font-weight: var(--weight-strong); text-align: left; white-space: nowrap; }
+.op-tabla td, .op-tabla th[scope="row"] { padding: var(--space-xs) var(--space-sm); border-bottom: var(--rule-hair) solid var(--color-rule); vertical-align: top; }
+/* Un botón en una celda («Por persona» en Corridas) no se parte: si la tabla no entra, se desplaza dentro de su caja. */
+.op-tabla td .btn { white-space: nowrap; }
+.op-celda-error { min-width: 220px; max-width: 420px; color: var(--color-muted); font: var(--text-xs)/1.45 var(--font-mono); overflow-wrap: anywhere; }
+.op-fila-error th, .op-fila-error td { background: var(--color-error-tint); }
+.op-fila-total th, .op-fila-total td { background: var(--color-paper-3); font-weight: var(--weight-strong); }
+/* Un botón que se lee como link, en medio de una tabla o de una línea. */
 .btn-enlace {
-  display: inline; min-height: 24px; padding: 0; border: 0; background: none; color: var(--accion);
-  font: inherit; text-align: left; text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
+  display: inline; min-height: 24px; padding: 0; border: 0; background: none; color: var(--color-accent); font: inherit; text-align: left;
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.18em; cursor: pointer;
 }
-.btn-enlace:hover { color: var(--accion-oscura); }
+.btn-enlace:hover { text-decoration-thickness: 2px; }
 .op-factores { max-width: 860px; }
-.op-factores-lista { margin: 0; padding-left: 1.2em; font-size: 15px; line-height: 1.6; }
+.op-factores-lista { margin: 0; padding-left: 1.2em; line-height: 1.6; }
+.op-corrida-detalle { display: flex; flex-direction: column; gap: var(--space-xs); }
 .op-corrida-detalle:empty { display: none; }
-.op-corrida-detalle { display: flex; flex-direction: column; gap: 8px; }
-/* Fallas (operacion.md 0.2 §5): la captura, a lo ancho de la tarjeta, con borde de control. */
+/* Fallas (operacion.md 0.2 §5): la captura, a lo ancho de la tarjeta, con la regla de un control. */
+.op-captura { display: flex; flex-direction: column; gap: var(--space-xs); }
 .op-captura:empty { display: none; }
-.op-captura { display: flex; flex-direction: column; gap: 8px; }
-.op-captura-img { display: block; width: 100%; max-width: 900px; height: auto; border: 1px solid var(--borde-control); border-radius: 6px; }
-/* Lo que era Admin dentro de Operación: sus tarjetas, con el mismo ancho que las demás listas del portal. */
-.op-admin { display: flex; flex-direction: column; gap: 16px; }
-.op-admin .empresas-lista { display: flex; flex-direction: column; gap: 16px; }
+.op-captura-img { display: block; width: 100%; max-width: 900px; height: auto; border: var(--rule-hair) solid var(--color-rule-2); border-radius: var(--radius-control); }
 
-@media (min-width: 768px) {
-  .op-hoy { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .op-acceso { margin-top: 40px; }
+/* ---------- Lo que era Admin: casos, empresas, avisos sin texto, ajustes (js/ops-admin.js) ---------- */
+.op-admin { display: flex; flex-direction: column; gap: var(--space-lg); }
+.empresas-lista { display: flex; flex-direction: column; gap: var(--space-md); width: 100%; max-width: 720px; }
+.empresas-lista > .vacio, .casos-lista + .vacio { margin: 0; }
+.empresa-tarjeta { gap: var(--space-sm); }
+.empresa-tarjeta .tarjeta-titulo { overflow-wrap: anywhere; }
+.empresa-meta { color: var(--color-muted); font-size: var(--text-sm); line-height: 1.4; }
+.empresa-ejemplo { font-size: var(--text-sm); line-height: 1.45; }
+/* El link al aviso, en medio de una línea: su zona de toque crece 12 px arriba y abajo sin mover el renglón (44 px en total). */
+.empresa-ejemplo a {
+  display: inline-flex; align-items: center; gap: var(--space-2xs); padding-block: var(--space-sm); margin-block: calc(-1 * var(--space-sm));
+  font-weight: var(--weight-strong);
 }
-@media (min-width: 1024px) {
+.prefs { display: flex; flex-direction: column; gap: var(--space-sm); max-width: 640px; }
+/* Problemas por casos (problemas.md 0.1 §5; 0042) */
+.caso-cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); }
+.caso-cabeza .chip { flex: none; }
+.caso-cabeza .tarjeta-titulo { flex: 1 1 260px; min-width: 0; overflow-wrap: anywhere; }
+.caso-revision { display: flex; flex-direction: column; gap: var(--space-3xs); max-width: 70ch; }
+.caso-revision p, .caso-revision .caso-texto { font-size: var(--text-sm); line-height: 1.45; }
+.caso-texto { white-space: pre-line; overflow-wrap: anywhere; line-height: 1.5; }
+/* Qué hacer, cuando el caso es para vos: separado por una regla, con el título en ámbar (te toca). No es otra caja con fondo. */
+.caso-que-hacer { display: flex; flex-direction: column; gap: var(--space-2xs); padding-top: var(--space-sm); border-top: var(--rule-hair) solid var(--color-rule); }
+.caso-que-hacer h3 { color: var(--color-turn); font-size: var(--text-sm); }
+.caso-que-hacer .caso-texto { color: var(--color-ink); }
+.caso-boton { min-height: 44px; padding-top: var(--space-xs); border-top: var(--rule-hair) solid var(--color-rule); font-size: var(--text-sm); }
+.caso-detalle { display: flex; flex-direction: column; gap: var(--space-xs); }
+.caso-detalle[hidden] { display: none; }
+.caso-detalle h3 { margin-top: var(--space-2xs); font-size: var(--text-sm); }
+.caso-detalle .campo { margin-top: var(--space-2xs); }
+/* El error de un caso o de un sitio, tal cual: la letra del sistema, sobre gris. */
+.caso-error {
+  padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-control); background: var(--color-paper-3);
+  font: var(--text-xs)/1.45 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.caso-veces .tabla-caja { max-height: 360px; overflow: auto; }
+
+@media (min-width: 48rem) {
+  .subpestanas { margin-inline: 0; padding-inline: 0; }
+  .op-hoy { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pagina-ops .tarjeta.op-acceso { margin-top: calc(var(--space-2xl) + var(--marbete)); padding: var(--space-xl) var(--space-lg); }
+}
+@media (min-width: 64rem) {
   .op-grupos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (min-width: 1200px) {
+@media (min-width: 75rem) {
   .op-hoy { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (forced-colors: active) {
+  .op-acceso::before, .op-acceso::after { border: 1px solid CanvasText; }
+  .pagina-ops .tarjeta { border: 1px solid CanvasText; }
 }

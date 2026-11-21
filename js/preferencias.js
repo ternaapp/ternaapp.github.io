@@ -89,6 +89,8 @@ Terna.pagina('preferencias', async (ctx) => {
   // y la cuenta de la guía del umbral los dicen.
   const defectoPaquetes = config.paquetes_por_dia_default || 3;
   const bloques = Terna.porBloques({ raiz, cabecera: document.getElementById('cabecera'), nombre: T.comun.pestanas.preferencias });
+  // El texto del salto al umbral, arriba de Búsqueda ("Tu umbral: 70"): lo repinta la guía cada vez que el umbral cambia.
+  let textoSaltoUmbral = null;
 
   /* ---------- Piezas (comun.js: las mismas de Mi perfil; diseno.md 0.19 §10.17) ---------- */
   const { id, item, grupoRadios, interruptor, conInterruptor } = Terna.piezas({ prefijo: 'pref', nivel: 'h3' });
@@ -165,6 +167,8 @@ Terna.pagina('preferencias', async (ctx) => {
         const entra = x.f.desde >= u;
         const parcial = !entra && x.f.hasta >= u;
         x.tr.classList.toggle('fuera', !entra && !parcial);
+        // La franja donde cae el umbral, marcada como una opción elegida (PLAN-WEB.md §3.5): ni buena ni mala, la tuya.
+        x.tr.classList.toggle('con-umbral', x.f.desde <= u && u <= x.f.hasta);
         // Para el lector de pantalla, cada franja dice si entra; la del umbral lo dice a la vista: "desde 75".
         x.estado.classList.toggle('oculto-visual', !parcial);
         x.estado.textContent = parcial ? G.desde(u) : (entra ? G.entran : G.noEntran);
@@ -178,6 +182,7 @@ Terna.pagina('preferencias', async (ctx) => {
       // La línea va debajo de la última franja que entra (el umbral va de 50 a 95: siempre entra alguna).
       if (ultima && ultima.nextElementSibling !== marca) ultima.after(marca);
       pastilla.textContent = G.marca(u);
+      if (textoSaltoUmbral) textoSaltoUmbral.textContent = G.marca(u);
       marcaTexto.textContent = !v.armar_paquetes ? '' : (v.postular_sola === false ? G.marcaArma : G.marcaArmaPostula);
       resumen.hidden = !lista;
       if (!lista) { resumen.textContent = ''; return; }
@@ -708,7 +713,15 @@ Terna.pagina('preferencias', async (ctx) => {
       Terna.vaciar(listaSitios);
       // Si la lista no se pudo leer, lo dice: "Todavía ninguna" es solo cuando de verdad no hay.
       const sitios = rSitios.error ? [] : (rSitios.data || []);
-      for (const s of sitios) listaSitios.append(h('li', null, h('span', { class: 'sitio-nombre', text: s.sitio }), h('span', { class: 'sitio-estado', text: '· ' + estadoSitio(s) })));
+      // El estado de cada sitio es un chip (PLAN-WEB.md §3.5): creada y confirmada están hechas; "ya tenías una cuenta" te pide
+      // algo a vos; "no se pudo", falló. El "· " queda en el texto (el banco lo lee así) y el CSS lo cambia por aire.
+      const ESTILO_SITIO = { creada: ['chip-listo', 'i-tilde'], confirmada: ['chip-listo', 'i-tilde'], ya_existia: ['chip-toca', 'i-por-decidir'], fallo: ['chip-error', 'i-alerta'] };
+      for (const s of sitios) {
+        const [clase, iconoId] = ESTILO_SITIO[s.estado] || ['chip-suave', null];
+        listaSitios.append(h('li', null, h('span', { class: 'sitio-nombre', text: s.sitio }),
+          h('span', { class: 'sitio-estado chip ' + clase }, h('span', { class: 'sitio-punto', 'aria-hidden': 'true', text: '· ' }),
+            iconoId ? icono(iconoId) : null, h('span', { text: estadoSitio(s) }))));
+      }
       listaSitios.hidden = !sitios.length;
       sinSitios.hidden = !!sitios.length || !!rSitios.error;
       errSitios.textContent = rSitios.error && !Terna.esErrorDeSesion(rSitios.error) ? Terna.textoError(rSitios.error) : '';
@@ -789,8 +802,9 @@ Terna.pagina('preferencias', async (ctx) => {
     const opciones = h('div', { class: 'opciones' }, radio('no_responder', D.noResponder), radio('no', D.no), radio('si', D.si));
     // Qué cuenta como discapacidad, plegado con <details> (nativo: teclado y lector de pantalla sin código, y no se confunde con el
     // botón que pliega el bloque, que es el único .plegable-boton de cada bloque).
-    const referencia = h('details', { class: 'discapacidad-referencia', id: 'discapacidad-referencia' },
-      h('summary', { text: D.queCuenta }),
+    // Con la forma de los plegables de la web (details.plegable, PLAN-WEB.md §2.11): el chevrón a la derecha y una regla arriba y abajo.
+    const referencia = h('details', { class: 'plegable plegable-pozo discapacidad-referencia', id: 'discapacidad-referencia' },
+      h('summary', null, h('span', { text: D.queCuenta }), icono('i-chevron')),
       h('div', { class: 'seccion' }, h('p', { text: D.definicion }), h('ul', null, D.lista.map((x) => h('li', { text: x }))),
         h('p', { class: 'campo-ayuda', text: D.confidencial })));
     async function responder(val) {
@@ -925,9 +939,10 @@ Terna.pagina('preferencias', async (ctx) => {
   }
   const filaPortal = ([clave, nombre, guia]) => {
     const e = estadoPortal(clave);
+    // "Llegaron mails, pero sin avisos" te pide algo (avisarle a Francisco): lleva el ícono de lo que te toca, no solo otro color.
     return h('li', null, h('a', { class: 'portal', href: 'alertas.html#' + guia },
       h('span', { class: 'portal-nombre', text: nombre }),
-      e ? h('span', { class: 'portal-estado' + (e.revisar ? ' revisar' : ''), text: e.texto }) : null,
+      e ? h('span', { class: 'portal-estado' + (e.revisar ? ' revisar' : '') }, e.revisar ? icono('i-por-decidir', 'icono-16') : null, h('span', { text: e.texto })) : null,
       h('span', { class: 'portal-ir' }, h('span', { text: P.comoCrearla }), icono('i-adelante', 'icono-16'))));
   };
   const linkGuia = ([texto, guia]) => h('a', { class: 'btn', href: 'alertas.html#' + guia }, h('span', { text: texto }), icono('i-adelante', 'icono-16'));
@@ -944,9 +959,30 @@ Terna.pagina('preferencias', async (ctx) => {
   /* ---------- Guardar ---------- */
   const banda = h('div', { class: 'banda banda-error', role: 'alert', tabindex: '-1', hidden: true });
   const bGuardar = h('button', { class: 'btn btn-primario btn-ancho', type: 'button' }, P.guardar);
+  /* La banda lleva, debajo, el primer error como link (revisión 2, P1-1): "Modalidades: Elegí al menos una." abre su bloque y
+     pone el foco en su primer control. En el celular el ítem quedaba varias pantallas más abajo. Es navegación dentro de la
+     página: el texto es el del error y el título de su ítem, y el foco sigue yendo primero a la banda. */
+  function linkAlError(err) {
+    const descrito = raiz.querySelector('[aria-describedby~="' + err.id + '"]');
+    const item = err.closest('.subbloque');
+    const destino = descrito && descrito.matches('input, select, textarea') ? descrito
+      : (descrito || item || err).querySelector('input:not([type=hidden]):not([readonly]), select, textarea');
+    const titulo = item && (item.querySelector(':scope > .tarjeta-titulo, :scope > .interruptor-fila > .tarjeta-titulo, :scope > h3, :scope > h4'));
+    const nombre = ((titulo && titulo.textContent) || '').trim();
+    const a = h('a', { class: 'banda-ir', href: '#' + err.id }, (nombre ? nombre + ': ' : '') + err.textContent.trim());
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      bloques.abrirDe(err);
+      bloques.irAlPrimerError();
+      if (destino) destino.focus();
+      else err.scrollIntoView({ block: 'center' });
+    });
+    return a;
+  }
   function mostrarBanda(texto) {
     Terna.vaciar(banda);
-    banda.append(icono('i-alerta'), h('span', { text: texto }));
+    const err = Array.from(raiz.querySelectorAll('.campo-error')).find((e) => e.textContent.trim());
+    banda.append(icono('i-alerta'), h('span', { class: 'banda-textos' }, h('span', { text: texto }), err ? linkAlError(err) : null));
     banda.hidden = false;
     bloques.irAlPrimerError();
     banda.focus();
@@ -1025,17 +1061,47 @@ Terna.pagina('preferencias', async (ctx) => {
 
   /* ---------- Página ---------- */
   Terna.vaciar(raiz);
+  // El lomo de cada bloque cerrado dice qué hay adentro, con lo que la persona eligió (PLAN-WEB.md §2.12): el umbral y los
+  // puestos; armar y postular; la última alerta que llegó.
+  const siNo = (x) => (x ? T.comun.si : T.comun.no);
+  const nombrePortal = (clave) => (P.portales.find((x) => x[0] === clave) || [clave, clave])[1];
+  function resumenAlertas() {
+    if (!alertas) return '';
+    const conAvisos = alertas.filter((a) => a.avisos_detectados > 0)
+      .sort((x, y) => Date.parse(y.recibido_en || y.procesado_en) - Date.parse(x.recibido_en || x.procesado_en))[0];
+    if (conAvisos) return nombrePortal(conAvisos.portal) + ' · ' + P.alertaUltima(Terna.fechaCorta(conAvisos.recibido_en || conAvisos.procesado_en), conAvisos.avisos_detectados);
+    return alertas.length ? nombrePortal(alertas[0].portal) + ' · ' + P.alertaSinAvisos : P.alertaNinguna;
+  }
+  /* Saltos dentro de un bloque largo (revisión 2, P2-5 y P2-6). El orden de los ítems no cambia (el banco lo controla): arriba de
+     Búsqueda, "Tu umbral: 70" lleva al umbral, que es lo que más cambia lo que Terna hace y quedaba al fondo; arriba de Paquetes y
+     postulación, en el celular (en escritorio están en el carril), un salto a cada subtema. Navegación dentro de la página. */
+  function salto(texto, alTocar) {
+    const nombre = h('span', { text: texto });
+    const a = h('a', { class: 'salto', href: '#' }, nombre, icono('i-abajo', 'icono-16'));
+    a.addEventListener('click', (e) => { e.preventDefault(); alTocar(); });
+    return { a, nombre };
+  }
+  const saltoUmbral = salto(P.guiaUmbral.marca(v.umbral), () => { sUmbral.scrollIntoView({ block: 'start' }); rango.focus({ preventScroll: true }); });
+  textoSaltoUmbral = saltoUmbral.nombre;
+  const irATema = (nodo, hash) => () => {
+    history.replaceState(null, '', '#' + hash);
+    nodo.scrollIntoView({ block: 'start' });
+    const t = nodo.querySelector('.subtema-titulo');
+    if (t) { t.setAttribute('tabindex', '-1'); t.focus({ preventScroll: true }); }
+  };
+  const saltosPaquetes = h('div', { class: 'saltos saltos-celular' },
+    salto(P.temas.paquetes, irATema(temaPaquetes, 'paquetes')).a, salto(P.temas.postulacion, irATema(temaPostulacion, 'postulacion')).a);
   // Desde 0.26, con dos subtemas en el carril: los puestos y, con 0034, las empresas (#puestos y #empresas, los links de Inicio).
-  bloques.bloque('busqueda', P.grupos.busqueda, [sPue, sEmp, sNiv, sJor, sMod, sAlc, sUmbral].filter(Boolean), { temas: [
+  bloques.bloque('busqueda', P.grupos.busqueda, [h('div', { class: 'saltos' }, saltoUmbral.a), sPue, sEmp, sNiv, sJor, sMod, sAlc, sUmbral].filter(Boolean), { temas: [
     { hash: 'puestos', titulo: P.puestos, nodo: sPue },
     sEmp ? { hash: 'empresas', titulo: P.empresas.titulo, nodo: sEmp } : null,
-  ].filter(Boolean) });
+  ].filter(Boolean), resumen: () => [P.guiaUmbral.marca(v.umbral), v.puestos_objetivo.join(', ')].filter(Boolean).join(' · ') });
   // Paquetes es el principio del bloque: usa su mismo hash, así #paquetes (el link "Ir a mis palabras clave" de la ficha y los de
   // antes) sigue llevando al bloque, que arranca en él. Postulación tiene el suyo.
-  bloques.bloque('paquetes', P.grupos.paquetes, [temaPaquetes, temaPostulacion], { temas: [
+  bloques.bloque('paquetes', P.grupos.paquetes, [saltosPaquetes, temaPaquetes, temaPostulacion], { temas: [
     { hash: 'paquetes', titulo: P.temas.paquetes, nodo: temaPaquetes },
     { hash: 'postulacion', titulo: P.temas.postulacion, nodo: temaPostulacion },
-  ] });
-  bloques.bloque('alertas', P.alertas, cAlertas);
+  ], resumen: () => P.armar + ': ' + siNo(v.armar_paquetes) + ' · ' + P.postularSola + ': ' + siNo(v.postular_sola) });
+  bloques.bloque('alertas', P.alertas, cAlertas, { resumen: resumenAlertas });
   bloques.montar({ arriba: [banda], guardar: h('div', { class: 'guardar-fijo' }, bGuardar) });
 });

@@ -1,0 +1,35 @@
+/* Hallmark · shape: app screen · genre: editorial · theme: custom (Sello) (paquete P5 de opciones-v3/PLAN-WEB.md: Invitaciones, 2026-11-20)
+ * nav: the site shell of css/terna.css (bar and dock under 64rem, rail from 64rem) · footer: the two plain lines of the site · hero: none, Invitaciones opens on the form to invite · signature: the invitation just created is a folder: the lilac tab holds the mail, with the state label beside it · states: te toca, espera, resuelta and falló on chips and labels with icon and word; empty, loading, load error, field error, disabled while saving · posture: restrained · contrast: pass · modes: light+dark */
+
+/* Terna · css/p-invitaciones.css · Invitaciones
+   Las reglas propias de invitaciones.html; se carga después de css/terna.css (las fichas, la cáscara y las piezas comunes:
+   .carpeta, .lengueta, .marbete, .pozo, .vacio, .chip). Paquete P5 de opciones-v3/PLAN-WEB.md (§3.8). B2 no maquetó esta
+   página: va en el mismo sistema. Una columna de 640 px; el formulario en un pozo, la recién creada como carpeta y la lista por
+   reglas finas. Hasta el 20/11/2026 este archivo era css/p-admin.css y traía también Admin, que desde operacion.md 0.2 vive en
+   ops.html (con css/ops.css, del chat de Operación). */
+
+#invitaciones { display: flex; flex-direction: column; gap: var(--space-lg); width: 100%; max-width: 640px; }
+.invitar { gap: var(--space-md); }
+.invitar-crear { width: 100%; }
+/* La recién creada: en la lengüeta, el mail (si no entra, con puntos suspensivos: entero está en la lista); en el marbete, Pendiente. */
+.invitacion-creada { width: 100%; }
+.invitacion-creada:focus-visible { outline-offset: 4px; border-radius: var(--radius-card); }
+.invitacion-creada .marbete { flex: none; }
+.invitacion-creada .carpeta-cuerpo { gap: var(--space-sm); }
+/* El mensaje arranca en el borde de arriba del cuerpo: sin la regla de arriba, que quedaba pegada a la lengüeta. */
+.invitacion-creada .mensaje-invitacion { align-self: stretch; padding-top: 0; border-top: 0; }
+.invitacion-creada .botones { gap: var(--space-xs) var(--space-md); }
+.lengueta-texto { flex: 0 1 auto; align-items: center; padding-block: 0; }
+.lengueta-texto > span { min-width: 0; overflow: hidden; color: var(--color-ink); font: var(--weight-strong) var(--text-sm)/1.2 var(--font-body); text-overflow: ellipsis; white-space: nowrap; }
+/* La lista: una fila por invitación, separadas por reglas finas. El mail y su chip; las fechas en tinta suave; las acciones, texto. */
+.lista-invitaciones { display: flex; flex-direction: column; }
+.invitacion { display: flex; flex-direction: column; gap: var(--space-2xs); padding: var(--space-sm) 0; border-top: var(--rule-hair) solid var(--color-rule); }
+.invitacion-cabecera { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2xs) var(--space-sm); }
+.invitacion-cabecera strong { min-width: 0; overflow-wrap: anywhere; }
+.invitacion .botones { gap: 0 var(--space-md); margin-left: calc(-1 * var(--space-2xs)); }
+/* «Usada» es un dato que no pide nada: el contorno y la letra, un paso más suaves que en Postulaciones. */
+.invitacion .chip-listo { border-color: var(--color-rule-2); color: var(--color-ink-2); }
+
+@media (min-width: 48rem) {
+  .invitar-crear { width: auto; }
+}

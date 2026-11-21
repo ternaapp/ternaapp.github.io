@@ -1,0 +1,118 @@
+/* Hallmark · shape: app screen · genre: editorial · theme: custom (Sello) (paquete P5 de opciones-v3/PLAN-WEB.md: Entrar, Crear cuenta y Contraseña, 2026-11-20)
+ * nav: none, these pages have no session; only the mode button at the top right · footer: the two plain lines of the site under the folder · hero: none, the folder with the form is the first thing on the screen; on Entrar from 48rem the wordmark at 72px, the motto and the description take the left column · signature: the folder with three tabs in the three inks of the logo (seal 104px, mid and lilac 40px), aria-hidden, holding every form of the three pages · states: field error with its triangle, sign-in error, link sent, password saved, invitation used, expired or missing, the one-time mode step · posture: restrained · contrast: pass · modes: light+dark */
+
+/* Terna · css/p-acceso.css · Entrar, Crear cuenta y Contraseña
+   Las reglas propias de entrar.html, crear-cuenta.html y contrasena.html; se carga después de css/terna.css (las fichas, la cáscara
+   y las piezas comunes: .carpeta, .carpeta-cuerpo, .banda, .campo, .control, .btn). Paquete P5 de opciones-v3/PLAN-WEB.md
+   (§3.10 a §3.12); referencia: opciones-v3/b2/entrar.html y legajo.css §18.
+   Celular: el modo arriba a la derecha, el logo, el lema, la carpeta, lo que la acompaña, la descripción y el pie, en una columna.
+   Desde 48rem, Entrar va en dos columnas sobre 1120 px (el logo a 72, el lema y la descripción a la izquierda; la carpeta, de
+   420, a la derecha y centrada en alto); Crear cuenta y Contraseña, que no traen lema ni descripción, en una columna de 420. */
+
+/* ---------- El marco ---------- */
+.acceso {
+  flex: 1; display: flex; flex-direction: column; gap: var(--space-xl);
+  width: 100%; max-width: 1120px; margin-inline: auto; padding: var(--space-xs) var(--gutter) var(--space-lg);
+}
+.btn-acceso-tema { align-self: flex-end; }
+.acceso-logo { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-sm); }
+.acceso-logo .logo { gap: var(--space-sm); }
+.acceso-logo .logo-marca { width: 40px; height: 40px; stroke-width: 3; }
+.acceso-logo .logo-palabra { font-size: var(--text-5xl); letter-spacing: -0.03em; }
+.acceso-lema { color: var(--color-ink-2); font-size: var(--text-lg); line-height: 1.35; }
+.acceso #contenido { display: block; }
+.acceso #contenido:focus { outline: none; }
+#cuenta { display: flex; flex-direction: column; gap: var(--space-md); }
+.acceso-descripcion { max-width: 46ch; color: var(--color-muted); font-size: var(--text-sm); line-height: 1.55; }
+.acceso-descripcion:empty { display: none; }
+.acceso .pie { max-width: none; margin: auto 0 0; padding: var(--space-lg) 0 0; }
+
+/* ---------- La carpeta de las tres lengüetas ---------- */
+/* El logo hecho carpeta: tres lengüetas en las tres tintas (sello, medio, lila), de 104, 40 y 40 px. No son pestañas. */
+.acceso-carpeta { width: 100%; }
+.tres-lenguetas { display: flex; gap: var(--space-2xs); }
+.tres-lenguetas span { width: 40px; height: var(--marbete); border-radius: var(--radius-tab) var(--radius-tab) 0 0; background: var(--color-accent-tint); }
+.tres-lenguetas span:first-child { width: 104px; background: var(--color-accent); }
+.tres-lenguetas span:nth-child(2) { background: var(--color-accent-mid); }
+.acceso-carpeta .carpeta-cuerpo { align-items: stretch; gap: var(--space-md); padding: var(--space-lg) var(--space-md); }
+.acceso-carpeta h1 { font-size: var(--text-2xl); text-wrap: balance; }
+.acceso-form { display: flex; flex-direction: column; gap: var(--space-md); }
+/* El título del paso del modo recibe el foco por código, para que el lector de pantalla lo anuncie: sin anillo, no es un control. */
+.acceso-form .titulo:focus { outline: none; }
+.acceso-encabezado { display: flex; flex-direction: column; gap: var(--space-xs); }
+.acceso-ayuda { color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.45; }
+.acceso-texto { line-height: 1.5; }
+/* Las bandas del formulario: vacías no ocupan lugar. La de «role=status» queda en el árbol (es la región que anuncia). */
+.acceso-avisos:empty { display: none; }
+.acceso-avisos[role="status"]:empty { display: block; margin-top: calc(-1 * var(--space-md)); }
+/* Con el error a la vista, la ayuda que dice lo mismo («Al menos 8 caracteres») se va; vuelve al escribir. Sigue en el
+   aria-describedby del campo, que la lee aunque no se vea. */
+.acceso .campo:has([aria-invalid="true"]) .campo-ayuda { display: none; }
+/* Lo que sale bien (el link mandado, la contraseña guardada) no te toca a vos: el ícono va en tinta, no en ámbar. */
+.acceso-carpeta .banda:not(.banda-error) > .icono { color: var(--color-ink-2); }
+/* Los links de texto de la carpeta y de abajo: 44 px de alto para el dedo, el subrayado del sistema. */
+.acceso-olvide a, .acceso-volver a {
+  display: inline-flex; align-items: center; gap: var(--space-2xs); min-height: 44px;
+  font-weight: var(--weight-strong); transition: transform var(--dur-tab) var(--ease-out);
+}
+.acceso-olvide a:active, .acceso-volver a:active { transform: translateY(1px); }
+.acceso-volver .icono { width: 16px; height: 16px; }
+
+/* ---------- Lo que acompaña a la carpeta ---------- */
+.acceso-invito { color: var(--color-ink); font-size: var(--text-lg); line-height: 1.35; }
+.acceso-nota { color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.45; }
+
+/* ---------- El modo, al crear la cuenta (PLAN-WEB.md §3.11) ---------- */
+/* Tres filas de 56 px con el radio a la vista (el banco los marca con check()). Dentro de la carpeta, cada fila es un relleno un
+   paso más oscuro; la elegida, con contorno en tinta y fondo de elegido. El modo cambia en el acto al elegir. */
+.modos { display: flex; flex-direction: column; gap: var(--space-2xs); min-width: 0; margin: 0; padding: 0; border: 0; }
+.modo {
+  display: flex; align-items: center; gap: var(--space-sm); min-height: 56px; padding: var(--space-xs) var(--space-sm);
+  border: var(--rule-hair) solid transparent; border-radius: var(--radius-control); background: var(--color-paper-3); cursor: pointer;
+  transition: background-color var(--dur-pill) var(--ease-out), border-color var(--dur-pill) var(--ease-out);
+}
+.modo:hover { background: var(--color-paper-4); }
+.modo:active { transform: scale(0.99); }
+.modo:has(input:checked) { border-color: var(--color-ink-2); background: var(--color-elegido); }
+.modo:has(input:focus-visible) { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.modo input { flex: none; width: 20px; height: 20px; margin: 0; accent-color: var(--color-accent); cursor: pointer; }
+.modo input:focus-visible { outline: none; }
+.modo .icono { color: var(--color-muted); }
+.modo:has(input:checked) .icono { color: var(--color-ink); }
+.modo-texto { display: flex; flex-direction: column; gap: var(--space-3xs); min-width: 0; font-weight: var(--weight-strong); line-height: 1.3; }
+.modo-texto small { color: var(--color-muted); font-size: var(--text-sm); font-weight: var(--weight-body); }
+
+/* ---------- Escritorio ---------- */
+@media (min-width: 48rem) {
+  .acceso { padding-bottom: var(--space-xl); }
+  /* Entrar: dos columnas. A la izquierda el logo, el lema y la descripción; a la derecha la carpeta, centrada en alto. */
+  .acceso:has(> #descripcion) {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto 1fr auto auto 1fr auto;
+    grid-template-areas: "modo modo" ". lado" "marca lado" "texto lado" ". lado" "pie pie";
+    gap: var(--space-lg) var(--space-3xl);
+  }
+  .acceso:has(> #descripcion) > .btn-acceso-tema { grid-area: modo; justify-self: end; }
+  .acceso:has(> #descripcion) > .acceso-logo { grid-area: marca; gap: var(--space-lg); }
+  .acceso:has(> #descripcion) > #contenido { grid-area: lado; align-self: center; justify-self: center; width: 100%; max-width: 420px; }
+  .acceso:has(> #descripcion) > #descripcion { grid-area: texto; color: var(--color-ink-2); font-size: var(--text-md); }
+  .acceso:has(> #descripcion) > .pie { grid-area: pie; }
+  .acceso:has(> #descripcion) .logo-marca { width: 64px; height: 64px; }
+  .acceso:has(> #descripcion) .logo-palabra { font-size: var(--text-8xl); }
+  .acceso:has(> #descripcion) .acceso-lema { font-size: var(--text-2xl); }
+  /* Crear cuenta y Contraseña: la carpeta sola, de 420 px, con el logo arriba; el grupo, centrado en alto. El modo queda en el
+     borde derecho de esa columna, no en el de la pantalla. */
+  .acceso:not(:has(> #descripcion)) { max-width: calc(420px + 2 * var(--gutter)); }
+  .acceso:not(:has(> #descripcion)) > .acceso-logo { margin-top: auto; }
+  .acceso-carpeta .carpeta-cuerpo { padding: var(--space-xl) var(--space-lg); }
+}
+
+/* Sin movimiento si la persona lo pidió: los tiempos ya bajan a casi cero en terna.css; acá, además, nada se desplaza al tocar. */
+@media (prefers-reduced-motion: reduce) {
+  .modo, .acceso-olvide a, .acceso-volver a { transition: none; }
+  .modo:active, .acceso-olvide a:active, .acceso-volver a:active { transform: none; }
+}
+
+@media (forced-colors: active) {
+  .tres-lenguetas span { border: 1px solid CanvasText; }
+  .modo:has(input:checked) { outline: 2px solid CanvasText; outline-offset: -2px; }
+}

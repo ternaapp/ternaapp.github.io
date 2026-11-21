@@ -12,7 +12,10 @@
    La versión 0.2 sale de mirar la 0.1 como usuaria y como diseño (busqueda.md §8): lo escrito se busca por palabras enteras y
    en tres grupos (lo dice el puesto, la empresa o el lugar; lo nombra la descripción; tiene las palabras por separado, que va
    aparte), "Tu puesto" y "Empresa que seguís" sin pedir nada, el filtro Empresa para cientos de empresas, "Ver los avisos de
-   esta empresa" en la ficha y menos renglones arriba de la lista. */
+   esta empresa" en la ficha y menos renglones arriba de la lista.
+   Desde el rediseño B2 «Sello» (opciones-v3/PLAN-WEB.md §3.7) cambia solo lo que se dibuja: casi todo son líneas sueltas (un aviso
+   de Búsqueda no tiene paquete tuyo; el que no está en tu lista lleva la lupa donde iría el match), el que tiene paquete va en su
+   carpeta, como en Avisos; lo escrito, en sus tres grupos con título; «Más filtros», y la ficha como carpeta. */
 'use strict';
 
 Terna.pagina('busqueda', async (ctx) => {
@@ -79,15 +82,18 @@ Terna.pagina('busqueda', async (ctx) => {
     if (a.en_lista && a.interes === 'no_me_interesa') return 'no_interesa';
     return a.en_lista ? 'en_lista' : 'fuera';
   }
-  const ESTILO_LISTA = { en_lista: ['', 'i-avisos'], pedido: ['chip-espera', 'i-pedido'], con_paquete: ['chip-accion', 'i-armado'], postulada: ['chip-azul', 'i-enviada'], no_interesa: ['chip-suave', 'i-no-interesa'] };
-  // El chip dice qué es y, si Terna ya lo puntuó, el match: "En tus avisos · 79".
+  // Los cuatro estados de PLAN-WEB.md §2.7: lo pedido espera (la tiene Terna, con el reloj); lo postulado está resuelto (con el
+  // avión si lo mandó Terna, con el tilde si fue a mano); «Con paquete» es un dato del paquete, como «Armado»; estar en tus avisos
+  // o no interesarte, un dato sin estado.
+  const ESTILO_LISTA = { en_lista: ['chip-suave', 'i-avisos'], pedido: ['chip-espera', 'i-pedido'], con_paquete: ['chip-listo', 'i-tilde'], postulada: ['chip-resuelta', 'i-tilde'], no_interesa: ['chip-suave', 'i-no-interesa'] };
+  // El chip dice qué es: «En tus avisos», «Paquete pedido». Sin el match adentro (PLAN-WEB.md §2.7: el número nunca va sobre un
+  // color de estado): va en la columna de la línea, en la lengüeta de la carpeta y de la ficha, y en la tabla al lado del chip.
   function chipLista(a) {
     const e = estadoDe(a);
     if (e === 'fuera') return null;
-    const [clase, ic] = ESTILO_LISTA[e];
-    if (a.match === null) return Aviso.chip(clase, ic, B.lista[e]);
-    return h('span', { class: 'chip' + (clase ? ' ' + clase : '') }, icono(ic, 'icono-14'),
-      h('span', { 'aria-hidden': 'true', text: B.listaConMatch(B.lista[e], a.match) }), oculto(B.listaConMatchAccesible(B.lista[e], a.match)));
+    const [clase, ic0] = ESTILO_LISTA[e];
+    const ic = e === 'postulada' && a.estado_postulacion === 'enviada' ? 'i-enviada' : ic0;
+    return Aviso.chip(clase, ic, B.lista[e]);
   }
   // Se puede pedir lo que no tiene paquete ni pedido (como en Avisos: lo que no se pudo armar espera una decisión, estado.md §5).
   const puedePedir = (a) => armar && a.estado_paquete === 'sin_armar' && !a.con_paquete && !HECHAS.includes(a.estado_postulacion);
@@ -357,6 +363,10 @@ Terna.pagina('busqueda', async (ctx) => {
   const ubicarFiltros = Filtros.ubicar({ botones, lista });
   const primerFiltro = () => Filtros.primero({ botones, claves: CLAVES, lista });
   const estadoFiltros = h('div', { class: 'filtros-estado' });
+  // «Más filtros» (PLAN-WEB.md §2.8): desde 768 px quedan a la vista los cambiados y los primeros de la barra, hasta cuatro (y nunca
+  // esconde uno solo: js/filtros.js).
+  let barraFiltros = null;
+  const repartirBarra = () => Filtros.masFiltros({ barra: barraFiltros, botones, claves: CLAVES, cambiado, aLaVista: 4 });
   function armarBarra() {
     const barra = h('div', { class: 'filtros-barra', role: 'group', 'aria-label': B.filtros.barra });
     for (const k of CLAVES) {
@@ -368,6 +378,8 @@ Terna.pagina('busqueda', async (ctx) => {
       barra.append(b);
     }
     cajaFiltros.append(h('div', { class: 'filtros-caja' }, barra), estadoFiltros);
+    barraFiltros = barra;
+    repartirBarra();
   }
   function actualizarBarra() {
     for (const k of CLAVES) {
@@ -376,6 +388,7 @@ Terna.pagina('busqueda', async (ctx) => {
       b.querySelector('.filtro-cambiado').textContent = cambiado(k) ? F.cambiadoAccesible : '';
       b.classList.toggle('cambiado', cambiado(k));
     }
+    if (barraFiltros) repartirBarra();
     const enfocado = estadoFiltros.contains(document.activeElement);
     Terna.vaciar(estadoFiltros);
     if (algoCambiado()) {
@@ -423,8 +436,18 @@ Terna.pagina('busqueda', async (ctx) => {
       return;
     }
     const pagina = vis.slice(0, cuantos);
-    if (Terna.anchoEscritorio.matches) lista.append(tabla(pagina));
-    else lista.append(h('ul', { class: 'lista-tarjetas', role: 'list' }, pagina.map((a) => h('li', null, tarjeta(a)))));
+    // Con algo escrito y más de un grupo a la vista, cada grupo va con su título (como los grupos de Postulaciones): lo dice el
+    // puesto, la empresa o el lugar; lo nombra la descripción; tiene las palabras por separado. Sin eso, una sola lista.
+    const cuentas = [0, r.directos, r.descripcion, r.conSueltas ? r.sueltas : 0];
+    const conTitulos = palabras.length > 0 && cuentas.filter((x) => x > 0).length > 1;
+    const grupos = enGrupos(pagina, conTitulos);
+    if (Terna.anchoEscritorio.matches) lista.append(tabla(pagina, null, conTitulos ? grupos.map((g) => Object.assign(g, { n: cuentas[g.g] })) : null));
+    else {
+      for (const g of grupos) {
+        if (conTitulos) lista.append(tituloGrupo(g.g, cuentas[g.g]));
+        lista.append(h('ul', { class: 'lista-tarjetas', role: 'list' }, g.items.map((a) => h('li', null, tarjeta(a)))));
+      }
+    }
     if (vis.length > pagina.length) {
       const quedan = Math.min(PASO, vis.length - pagina.length);
       lista.append(h('div', { class: 'mas-resultados' },
@@ -469,23 +492,66 @@ Terna.pagina('busqueda', async (ctx) => {
     return null;
   }
 
+  /* Los grupos de lo escrito. `conTitulos`: si van separados (más de uno a la vista); si no, uno solo con todo. */
+  function enGrupos(items, conTitulos) {
+    if (!conTitulos) return [{ g: 1, items }];
+    const grupos = [];
+    for (const a of items) {
+      const ultimo = grupos[grupos.length - 1];
+      if (ultimo && ultimo.g === a.coincide) ultimo.items.push(a); else grupos.push({ g: a.coincide, items: [a] });
+    }
+    return grupos;
+  }
+  // El título de un grupo, con cuántos tiene (con los filtros puestos). Los textos propios de los títulos son una propuesta
+  // (T.busqueda.grupos, a cargar en js/textos.js); mientras no estén, los de hoy: los dos primeros, lo que dice el estado del
+  // buscador para ese grupo solo; el tercero, la marca de esos avisos con su cuenta.
+  function tituloGrupo(g, n) {
+    const G = B.grupos;
+    if (G) return h('h2', { class: 'grupo-titulo' }, ({ 1: G.directos, 2: G.descripcion, 3: G.sueltas })[g](n));
+    if (g === 3) return h('h2', { class: 'grupo-titulo' }, h('span', { text: B.buscador.porSeparado }), h('span', { class: 'num', text: Terna.numero(n) }));
+    return h('h2', { class: 'grupo-titulo', text: g === 1 ? B.buscador.resultado(n, 0) : B.buscador.resultado(0, n) });
+  }
+
+  /* La lista del celular (PLAN-WEB.md §3.7): casi todo son líneas sueltas, porque un aviso de Búsqueda no tiene paquete tuyo. El que
+     no está en tu lista no tiene match: su columna lleva la lupa. El que está en tu lista con el paquete armado va en su carpeta,
+     con la lengüeta y el marbete, como en Avisos. Un clic en cualquier lugar que no sea un control abre la ficha, como el puesto.
+     Sin ningún .chip en un aviso que no está en tu lista: «nuevo», la lengüeta y el marbete no son chips. */
   function tarjeta(a) {
-    const art = h('article', { class: 'tarjeta tarjeta-aviso', dataset: { aviso: a.aviso_id } });
-    const boton = h('button', { class: 'tarjeta-boton', type: 'button', dataset: { control: 'abrir' }, onclick: () => abrirFicha(a, boton) },
-      h('span', { class: 'aviso-datos' },
-        h('span', { class: 'aviso-puesto', text: a.puesto }),
-        a.empresa ? h('span', { class: 'aviso-empresa', text: a.empresa }) : null,
-        Aviso.atributos(a, { sinFuente: true }),
-        Aviso.lineaDonde(a, prefs),
-        Aviso.etiquetas(a, false, false, null)));
-    const chips = [chipLista(a), chipsTuyos(a), chipCoincide(a)].flat().filter(Boolean);
-    Terna.agregar(art, [boton, chips.length ? h('div', { class: 'chips' }, chips) : null,
-      h('div', { class: 'tarjeta-pie' }, fechaDe(a), h('span', { class: 'acciones-tarjeta' }, linkLista(a), accion(a)))]);
+    const boton = h('button', { class: 'tarjeta-boton puesto', type: 'button', dataset: { control: 'abrir' }, onclick: () => abrirFicha(a, boton) },
+      h('span', { class: 'aviso-puesto puesto-texto', text: a.puesto }), icono('i-adelante', 'puesto-flecha'));
+    // En la carpeta el marbete ya dice la etapa: lo postulado no la repite en un chip.
+    const marbete = a.con_paquete ? Aviso.marbete(a) : null;
+    const marcas = [marbete && estadoDe(a) === 'postulada' ? null : chipLista(a), chipCoincide(a)].filter(Boolean);
+    const chips = marcas.length ? h('div', { class: 'chips' }, marcas) : null;
+    const tuyos = chipsTuyos(a);
+    const pie = h('div', { class: 'tarjeta-pie' }, fechaDe(a), h('span', { class: 'acciones-tarjeta' }, linkLista(a), accion(a)));
+    const donde = Aviso.lineaDonde(a, prefs);
+    const etiquetas = Aviso.etiquetas(a, false, false, null);
+    let art;
+    if (a.con_paquete) {
+      pie.classList.add('carpeta-acciones');
+      art = h('article', { class: 'tarjeta-aviso carpeta', dataset: { aviso: a.aviso_id } },
+        h('div', { class: 'carpeta-cabeza' }, Aviso.lengueta(a, umbral), marbete),
+        h('div', { class: 'carpeta-cuerpo aviso-datos' }, boton,
+          a.empresa ? h('span', { class: 'aviso-empresa empresa', text: a.empresa }) : null,
+          h('div', { class: 'aviso-linea' }, Aviso.atributos(a, { sinFuente: true }), tuyos),
+          donde, etiquetas, chips, pie));
+    } else {
+      const columna = estadoDe(a) === 'fuera'
+        ? h('span', { class: 'linea-match linea-lupa' }, icono('i-buscar'))
+        : Aviso.lengueta(a, umbral, { linea: true });
+      art = h('article', { class: 'tarjeta-aviso linea', dataset: { aviso: a.aviso_id } }, columna,
+        h('div', { class: 'linea-datos aviso-datos' }, boton,
+          h('div', { class: 'linea-apoyo' }, a.empresa ? h('span', { class: 'aviso-empresa', text: a.empresa }) : null, Aviso.atributos(a, { sinFuente: true }), tuyos),
+          donde, etiquetas, chips, pie));
+    }
+    art.addEventListener('click', (e) => { if (!e.target.closest('button, a, input, label, select')) abrirFicha(a, boton); });
     return art;
   }
 
   let filtroAbierto = null;
-  function tabla(vis, aviso) {
+  // `grupos` ([{ g, n, items }]): con lo escrito, un cuerpo por grupo, cada uno con su título en una fila de encabezado.
+  function tabla(vis, aviso, grupos) {
     const C = T.avisos.columnas;
     const th = (texto, clave, clase, sort) => Filtros.encabezado({ texto, clave, clase, activo: cambiado(clave), abierto: filtroAbierto === clave, sort,
       titulo: F.boton(NOMBRES[clave], resumen(clave)), alAbrir: (b) => abrirFiltro(clave, b, true) });
@@ -494,8 +560,21 @@ Terna.pagina('busqueda', async (ctx) => {
       th(C.donde, 'donde', 'col-donde'), th(B.columnas.lista, 'lista', 'col-lista'), h('th', { scope: 'col', class: 'col-paquete', text: B.columnas.paquete }),
       th(C.publicado, 'publicado', 'col-publicado', orden === 'nuevos' ? 'descending' : 'none'),
       h('th', { scope: 'col', text: C.aviso })));
-    const tbody = aviso ? h('tbody', null, h('tr', null, h('td', { class: 'tabla-vacia', colspan: '8' }, aviso))) : h('tbody', null, vis.map(fila));
-    return h('div', { class: 'tabla-caja tabla-busqueda' }, h('table', { class: 'tabla' }, thead, tbody));
+    let cuerpos;
+    if (aviso) cuerpos = h('tbody', null, h('tr', null, h('td', { class: 'tabla-vacia', colspan: '8' }, aviso)));
+    else if (grupos) {
+      cuerpos = grupos.map((g) => h('tbody', null,
+        h('tr', { class: 'grupo' }, h('th', { scope: 'rowgroup', colspan: '8' }, tituloGrupo(g.g, g.n))), g.items.map(fila)));
+    } else cuerpos = h('tbody', null, vis.map(fila));
+    return h('div', { class: 'tabla-caja tabla-busqueda' }, h('table', { class: 'tabla' }, thead, cuerpos));
+  }
+  // La celda «En tu lista»: el chip con qué es y, al lado y fuera de él, tu match (PLAN-WEB.md §2.7: el número nunca va sobre un
+  // color de estado). La tabla de Búsqueda no tiene columna de match.
+  function estadoEnLista(a) {
+    const chip = chipLista(a);
+    if (!chip || a.match === null) return chip;
+    return h('span', { class: 'lista-estado' }, chip, h('span', { class: 'lista-match' + (Aviso.llega(a, umbral) ? '' : ' bajo') },
+      h('span', { 'aria-hidden': 'true', text: String(a.match) }), oculto(T.avisos.matchAccesible(a.match, Aviso.llega(a, umbral)))));
   }
   // Lo que dicen las columnas que la tabla esconde cuando no le alcanza el ancho, debajo del puesto (como en Avisos).
   function lineaApoyo(a) {
@@ -514,7 +593,7 @@ Terna.pagina('busqueda', async (ctx) => {
       h('td', { class: 'col-ubicacion' }, h('span', { class: 'atributos' }, icono(a.alcance === 'exterior' ? 'i-exterior' : 'i-local', 'icono-16'),
         h('span', { title: tituloLugar(a), text: conModalidad(a, lugarCorto(a)) }))),
       h('td', { class: 'col-donde' }, Aviso.celdaDonde(a, prefs)),
-      h('td', { class: 'col-lista' }, h('div', { class: 'celda-paquete' }, chipLista(a), linkLista(a))),
+      h('td', { class: 'col-lista' }, h('div', { class: 'celda-paquete' }, estadoEnLista(a), linkLista(a))),
       h('td', { class: 'col-paquete' }, accion(a)),
       h('td', { class: 'col-publicado' }, fechaDe(a)),
       h('td', null, h('a', { class: 'btn btn-texto btn-chico', href: Terna.urlExterna(a.url), target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(a.fuente) }, icono('i-abrir'))));
@@ -691,11 +770,12 @@ Terna.pagina('busqueda', async (ctx) => {
   /* ---------- Ficha del aviso ----------
      Lo que Terna sabe del aviso sin su texto (que se lee en el aviso original: arquitectura.md §7.6), qué es para la persona,
      dónde se postula y Pedir paquete. */
+  // La cabecera es una carpeta (PLAN-WEB.md §3.7): la lengüeta con tu match y el marbete con la etapa. Si el aviso no está en tu
+  // lista (o todavía no tiene match ni etapa), sin lengüeta ni marbete: el cuerpo de la carpeta solo. Aquí la lengüeta no es un
+  // botón: Búsqueda no sabe por qué ajusta.
   function cabeceraFicha(a, idTitulo) {
-    return h('div', { class: 'ficha-cabecera' },
-      h('div', null, h('h2', { class: 'ficha-titulo', id: idTitulo, text: a.puesto }),
-        a.empresa ? h('p', { class: 'ficha-empresa', text: a.empresa }) : null, Aviso.atributos(a, { fuente: true, tag: 'p' })),
-      a.match === null ? null : Aviso.bloqueMatch(a, umbral, true));
+    const sinLengueta = estadoDe(a) === 'fuera' || (a.match === null && !Aviso.estadoDe(a));
+    return Aviso.cabezaFicha({ a, idTitulo, umbral, sinLengueta });
   }
   function seccionLista(a) {
     const E = B.ficha.estado;
@@ -743,7 +823,9 @@ Terna.pagina('busqueda', async (ctx) => {
         icono('i-empresa', 'icono-16'), D.masDeEmpresa(deLaEmpresa, a.empresa))) : null);
   }
   function cuerpoFicha(a) {
-    const chips = [chipLista(a), chipsTuyos(a), chipCoincide(a), fechaDe(a)].flat().filter(Boolean);
+    // Con el marbete en la cabecera, lo postulado no repite la etapa en un chip (como en la carpeta de la lista).
+    const marbete = estadoDe(a) !== 'fuera' && !!Aviso.estadoDe(a);
+    const chips = [marbete && estadoDe(a) === 'postulada' ? null : chipLista(a), chipsTuyos(a), chipCoincide(a), fechaDe(a)].flat().filter(Boolean);
     // "Fuera de tus preferencias" va acá, explicado, y no en cada fila: en Búsqueda lo está buena parte de la lista.
     return [h('div', { class: 'chips' }, chips), Aviso.etiquetas(a, false, true, estadoDe(a) === 'fuera' || estadoDe(a) === 'en_lista' ? Aviso.motivosFuera(a, dePrefs) : null),
       seccionLista(a), seccionDonde(a), seccionDatos(a)];

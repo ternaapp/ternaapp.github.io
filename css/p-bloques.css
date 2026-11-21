@@ -1,0 +1,238 @@
+/* Hallmark · shape: app screen · genre: editorial · theme: custom (Sello) (paquete P4 de opciones-v3/PLAN-WEB.md: Mi perfil, Preferencias y Guías de alertas sobre la página por bloques de css/terna.css, 2026-11-20) */
+
+/* Terna · css/p-bloques.css · Mi perfil, Preferencias y Guías de alertas
+   Las reglas propias de perfil.html, preferencias.html y alertas.html (PLAN-WEB.md §3.4 a §3.6). Se carga después de
+   css/terna.css, que trae las fichas, la cáscara y la página por bloques (§2.12: cada bloque es una carpeta con su lengüeta y
+   un lomo que resume lo de adentro; subtemas, ítems y Guardar). Acá va solo lo de estas tres páginas, con las fichas nuevas y
+   selectores que parten de lo suyo. Celular primero; cortes en 30rem (un renglón para la contraseña de los sitios) y 48rem
+   (el carril de bloques y las filas de portales en tres columnas). */
+
+/* ---------- 1. La página: la raíz, el indicador y «Completar perfil» ---------- */
+#perfil, #preferencias, #guias { display: flex; flex-direction: column; gap: var(--space-md); min-width: 0; }
+/* Lo que falta va primero, al lado del título: el ícono en ámbar (te toca) y el texto en tinta. Completo, en tinta suave: ya no
+   pide nada. */
+.indicador { display: inline-flex; align-items: center; gap: var(--space-xs); min-width: 0; color: var(--color-ink); font: var(--weight-strong) var(--text-sm)/1.3 var(--font-body); }
+.indicador.falta .icono { color: var(--color-turn); }
+.indicador.completo { color: var(--color-muted); font-weight: var(--weight-body); }
+/* «Completar perfil»: secundario, porque el primario de la página es Guardar. En el celular va arriba de los bloques; desde
+   48rem, en la cabecera fija, al lado del indicador. */
+.completar-perfil { flex: none; }
+#perfil > .completar-perfil { align-self: flex-start; }
+.perfil-privacidad { max-width: 65ch; }
+/* La banda de error al guardar lleva, debajo, el primer error como link que baja a su campo: 44 px de alto, con el color de la banda. */
+.banda-textos { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3xs); }
+.banda-ir { display: inline-flex; align-items: center; min-height: 44px; color: inherit; font-weight: var(--weight-strong); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+.banda-ir:hover { color: inherit; text-decoration-thickness: 2px; }
+.banda-ir:active { transform: translateY(1px); }
+/* Saltos dentro de un bloque largo (Preferencias): links de texto con la flecha hacia abajo como un ícono aparte. Los de
+   Paquetes y postulación son solo del celular: en escritorio esos subtemas están en el carril. */
+.saltos { display: flex; flex-wrap: wrap; gap: 0 var(--space-md); }
+.salto { display: inline-flex; align-items: center; gap: var(--space-xs); min-height: 44px; color: var(--color-accent); font-weight: var(--weight-strong); text-decoration: none; }
+.salto > span { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; font-variant-numeric: tabular-nums; }
+.salto:hover > span { text-decoration-thickness: 2px; }
+.salto:active { transform: translateY(1px); }
+.salto .icono { color: var(--color-muted); }
+
+/* ---------- 2. Mi perfil: los ítems de una lista ---------- */
+/* Un trabajo, un estudio o un idioma: sin caja, separados por una regla fina. El título en 600; abajo, Quitar a la izquierda y
+   Subir y Bajar a la derecha, de 44 px. */
+.bloque-lista { display: flex; flex-direction: column; gap: var(--space-sm); min-width: 0; }
+.bloque-lista + .bloque-lista { padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); }
+.bloque-lista-titulo { font: var(--weight-strong) var(--text-md)/1.35 var(--font-body); overflow-wrap: anywhere; }
+.bloque-lista .botones { gap: 0 var(--space-sm); }
+.bloque-lista .botones > :not(.mover) + .mover { margin-left: auto; }
+/* La dirección: un ítem después de tres campos sueltos, con su regla arriba. */
+.subbloque.direccion-postal { margin-top: var(--space-2xs); padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); }
+
+/* ---------- 3. Preferencias ---------- */
+/* Las listas numeradas (puestos, empresas, palabras clave): el número en tinta suave, el campo y «Quitar» adentro, a la derecha.
+   La última casilla, vacía y punteada, es para la siguiente. */
+.puestos { display: flex; flex-direction: column; gap: var(--space-xs); max-width: 520px; }
+.puestos > li.puesto { display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: center; gap: var(--space-2xs) var(--space-xs); }
+.puesto-numero { color: var(--color-muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; text-align: right; }
+.puesto-nuevo .control { border-style: dashed; }
+.puestos-cuenta { flex: none; color: var(--color-muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.puestos-llenos { color: var(--color-muted); }
+/* Si el nombre de una empresa ya encuentra algo en tus avisos: un dato, no un estado (un chip suave), debajo de su casilla. */
+.empresa-coincide {
+  grid-column: 2; justify-self: start; display: inline-flex; align-items: center; min-height: 24px; padding: var(--space-3xs) var(--space-xs);
+  border: var(--rule-hair) solid var(--color-rule-2); border-radius: var(--radius-chip); color: var(--color-muted);
+  font: var(--weight-strong) var(--text-xs)/1.3 var(--font-body); font-variant-numeric: tabular-nums;
+}
+.empresa-coincide:empty { display: none; }
+/* Priorizar mis puestos y mis empresas: una fila con su interruptor, pegada a su lista. */
+.subbloque .priorizar { gap: var(--space-2xs); padding-top: var(--space-xs); }
+.priorizar .campo-etiqueta { font-weight: var(--weight-strong); }
+/* Lo que no aplica mientras algo está en No: el ítem se lee igual; sus controles, apagados. */
+.atenuado .interruptor { opacity: 0.5; }
+.interruptor:disabled { cursor: not-allowed; }
+
+/* El umbral: el número en Lexend 500 a 20 px, como el match de una lengüeta, porque es el mismo número. */
+.umbral-valor { flex: none; font: var(--weight-display) var(--text-xl)/1 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-display); }
+/* La guía: la intro, las cinco franjas y la nota, arriba del deslizador; debajo, la cuenta de lo que llega. */
+.umbral-guia { display: flex; flex-direction: column; gap: var(--space-sm); }
+.umbral-intro { max-width: 65ch; line-height: 1.45; }
+.umbral-resumen { max-width: 65ch; color: var(--color-ink); font-size: var(--text-sm); line-height: 1.45; }
+.umbral-resumen:empty { display: none; }
+/* Las franjas: la tabla de las tablas de escritorio (§2.10), con filas de 56 px. Lo que llega al umbral va en tinta y lo que no,
+   en tinta suave, como el match; ninguna franja lleva un color de estado: no es ni buena ni mala. */
+.umbral-tabla { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--text-sm); line-height: 1.4; }
+.umbral-tabla caption { padding-bottom: var(--space-xs); color: var(--color-ink); font-weight: var(--weight-strong); text-align: left; }
+.umbral-tabla thead th {
+  padding: 0 var(--space-xs) var(--space-xs); border-bottom: var(--rule-hair) solid var(--color-rule-2); color: var(--color-muted);
+  font-weight: var(--weight-strong); text-align: left; white-space: nowrap;
+}
+.umbral-tabla .der { text-align: right; }
+.umbral-tabla tbody :is(th, td) { height: 56px; padding: var(--space-xs); border-bottom: var(--rule-hair) solid var(--color-rule); font-weight: var(--weight-body); text-align: left; vertical-align: middle; }
+.umbral-tabla tbody th { white-space: nowrap; }
+.umbral-tabla tbody .franja-lista { text-align: right; white-space: nowrap; }
+.umbral-tabla tbody tr:last-child > *, .umbral-tabla tbody tr:has(+ .umbral-marca) > *, .umbral-tabla tbody tr:has(+ .con-umbral) > * { border-bottom-color: transparent; }
+/* El nombre de la franja es un botón que pone su número: subrayado siempre, porque en el celular no hay hover. */
+.franja-boton {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; border-radius: var(--radius-inner); background: none;
+  color: var(--color-accent); font: var(--weight-strong) var(--text-sm)/1.3 var(--font-body); font-variant-numeric: tabular-nums; text-align: left;
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em;
+}
+.franja-boton:hover { text-decoration-thickness: 2px; }
+.franja-boton:active { transform: translateY(1px); }
+.franja-boton:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.franja-estado { display: block; color: var(--color-muted); font-size: var(--text-xs); line-height: 1.2; }
+.franja-que { color: var(--color-ink-2); }
+.franja-numero { display: block; color: var(--color-ink); font-weight: var(--weight-strong); font-variant-numeric: tabular-nums; }
+.franja-barra { display: block; width: 44px; height: 6px; margin: var(--space-2xs) 0 0 auto; border-radius: var(--radius-inner); background: var(--color-paper-3); overflow: hidden; }
+.franja-barra > span { display: block; width: calc(var(--cuenta, 0) * 1%); height: 100%; border-radius: var(--radius-inner); background: var(--color-muted); }
+.umbral-tabla .fuera :is(.franja-que, .franja-numero) { color: var(--color-muted); }
+.umbral-tabla .fuera .franja-barra > span { background: var(--color-rule-2); }
+/* La franja donde cae el umbral, como una opción elegida: contorno en tinta y fondo «elegido». */
+.umbral-tabla tbody tr.con-umbral > * {
+  border-bottom-color: transparent; background: var(--color-elegido);
+  box-shadow: inset 0 var(--rule-hair) 0 var(--color-ink), inset 0 calc(-1 * var(--rule-hair)) 0 var(--color-ink);
+}
+.umbral-tabla tbody tr.con-umbral > :first-child {
+  border-radius: var(--radius-control) 0 0 var(--radius-control);
+  box-shadow: inset var(--rule-hair) var(--rule-hair) 0 var(--color-ink), inset 0 calc(-1 * var(--rule-hair)) 0 var(--color-ink);
+}
+.umbral-tabla tbody tr.con-umbral > :last-child {
+  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+  box-shadow: inset calc(-1 * var(--rule-hair)) var(--rule-hair) 0 var(--color-ink), inset 0 calc(-1 * var(--rule-hair)) 0 var(--color-ink);
+}
+/* La línea del umbral: una regla de 2 px en tinta, con su rótulo. */
+.umbral-tabla .umbral-marca td { height: auto; padding: var(--space-2xs) 0 0; border-bottom: 0; }
+.umbral-tabla .umbral-linea {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2xs) var(--space-xs); padding: var(--space-xs) 0;
+  border-top: 2px solid var(--color-ink); border-bottom: var(--rule-hair) solid var(--color-rule); color: var(--color-ink-2); font-size: var(--text-xs); line-height: 1.3;
+}
+.umbral-tabla tbody tr.umbral-marca:last-child .umbral-linea { border-bottom: 0; }
+.umbral-pastilla { padding: var(--space-3xs) var(--space-xs); border-radius: var(--radius-chip); background: var(--color-ink); color: var(--color-paper); font-weight: var(--weight-strong); font-variant-numeric: tabular-nums; }
+
+/* ¿Terna crea cuentas por vos?: la pregunta con radios; con Sí, el detalle anidado, con su regla a la izquierda. */
+.cuentas > p:not([class]) { line-height: 1.45; }
+.cuentas-detalle { display: flex; flex-direction: column; gap: var(--space-md); padding-left: var(--space-md); border-left: var(--rule-hair) solid var(--color-rule-2); }
+.contrasena-sitios { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); }
+.contrasena-sitios .control { flex: 1 1 100%; min-width: 0; font-family: var(--font-mono); }
+/* Los sitios: una fila por sitio y su estado en un chip (creada y confirmada, hechas; ya tenías una, te toca; no se pudo, falló). */
+.sitios { display: flex; flex-direction: column; }
+.sitios > li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2xs) var(--space-sm); min-height: 56px; padding-block: var(--space-xs); line-height: 1.35; }
+.sitios > li + li { border-top: var(--rule-hair) solid var(--color-rule); }
+.sitio-nombre { flex: 1 1 12rem; min-width: 0; overflow-wrap: anywhere; }
+.sitio-estado.chip { white-space: normal; padding-block: var(--space-2xs); }
+.sitio-punto { display: none; }
+/* Qué cuenta como discapacidad: un plegable de la web, con la lista con viñetas. */
+.discapacidad-referencia { border-bottom: 0; }
+.discapacidad-referencia > .seccion { padding-bottom: var(--space-md); }
+.discapacidad-referencia ul { display: flex; flex-direction: column; gap: var(--space-2xs); padding-left: var(--space-lg); list-style: disc; line-height: 1.45; }
+
+/* Alertas por mail: un portal por fila de 56 px, con su estado y la flecha a su guía. «Cómo crearla» se lee en escritorio; en el
+   celular la fila entera es el link y queda para el lector de pantalla. */
+.portales { display: flex; flex-direction: column; }
+.portales > li + li { border-top: var(--rule-hair) solid var(--color-rule); }
+.portal {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nombre ir" "estado ir"; align-items: center; gap: var(--space-3xs) var(--space-sm);
+  min-height: 56px; padding-block: var(--space-xs); color: var(--color-ink); text-decoration: none;
+}
+.portal-nombre { grid-area: nombre; font-weight: var(--weight-strong); }
+.portal-estado { grid-area: estado; display: flex; align-items: flex-start; gap: var(--space-2xs); min-width: 0; color: var(--color-muted); font-size: var(--text-sm); line-height: 1.35; }
+.portal-estado.revisar { color: var(--color-ink); }
+.portal-estado .icono { margin-top: var(--space-3xs); color: var(--color-turn); }
+.portal-ir { grid-area: ir; display: inline-flex; align-items: center; gap: var(--space-xs); color: var(--color-muted); font-size: var(--text-sm); white-space: nowrap; }
+.portal-ir > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.portal:hover { color: var(--color-ink); }
+.portal:hover .portal-nombre { text-decoration: underline; text-decoration-color: var(--color-accent); text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
+.portal:hover .portal-ir { color: var(--color-accent); }
+.portal:active { transform: translateY(1px); }
+.portal:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; border-radius: var(--radius-control); }
+.guias-correo { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+
+/* ---------- 4. Lo que se copia: tu dirección de Terna y los remitentes ---------- */
+/* Un campo de solo lectura con «Copiar» adentro, a la derecha; si no entra, «Copiar» baja a su renglón dentro del mismo campo.
+   Los remitentes de a uno (Outlook) son una lista por reglas, cada uno con su «Copiar». */
+.direccion {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-xs); min-height: var(--control);
+  padding: var(--space-3xs) var(--space-3xs) var(--space-3xs) var(--space-sm);
+  border: var(--rule-hair) solid var(--color-rule-2); border-radius: var(--radius-control); background: var(--color-paper-3);
+}
+.direccion code { flex: 1 1 14rem; min-width: 0; padding-block: var(--space-xs); color: var(--color-ink); font-family: var(--font-mono); font-size: var(--text-sm); line-height: 1.4; overflow-wrap: anywhere; }
+.direccion > .btn { flex: none; margin-left: auto; min-height: var(--control-s); padding-inline: var(--space-sm); border-color: transparent; background: transparent; font-size: var(--text-sm); }
+.direccion > .btn:hover { background: var(--color-paper-4); }
+.remitentes { display: flex; flex-direction: column; }
+.remitentes > li + li { border-top: var(--rule-hair) solid var(--color-rule); }
+.remitentes .direccion { padding-left: 0; border: 0; border-radius: 0; background: none; }
+
+/* ---------- 5. Guías de alertas: para leer y copiar, un paso por vez ---------- */
+.guia { display: flex; flex-direction: column; gap: var(--space-md); }
+.guia > p { line-height: 1.55; }
+.guia-pasos > li { max-width: calc(65ch + 40px); }
+.guia-lista > li { max-width: 65ch; }
+/* Las partes de una guía larga (Gmail: la etiqueta, la dirección, el filtro) empiezan con una regla fina, como un subtema. */
+.guia-subtitulo { margin-top: var(--space-xs); padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); font: var(--weight-strong) var(--text-md)/1.3 var(--font-body); }
+/* Cuidado: una nota con el triángulo en tinta, entre dos reglas finas. Sin ámbar: no es el estado de una postulación. */
+.guia-cuidado { display: flex; align-items: flex-start; gap: var(--space-sm); padding-block: var(--space-sm); border-block: var(--rule-hair) solid var(--color-rule); color: var(--color-ink); }
+.guia-cuidado .icono { margin-top: var(--space-3xs); color: var(--color-ink); }
+/* Una parte que empieza justo después de un cuidado ya tiene su regla: la de abajo del cuidado. */
+.guia-cuidado + .guia-subtitulo { margin-top: 0; padding-top: 0; border-top: 0; }
+.guia-cuidado:last-child { padding-bottom: 0; border-bottom: 0; }
+.guia-cuidado p { line-height: 1.5; }
+/* Ir a otra guía y volver a Preferencias: botones de texto, con la flecha como un ícono aparte, nunca pegada al texto. */
+.guia-ir { display: inline-flex; align-items: center; gap: var(--space-xs); min-height: 44px; color: var(--color-accent); font-weight: var(--weight-strong); text-decoration: none; }
+.guia-ir > span { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+.guia-ir:hover > span { text-decoration-thickness: 2px; }
+.guia-ir:active { transform: translateY(1px); }
+.guia-volver { margin-left: auto; }
+/* El índice de Cómo funciona: una guía por fila de 56 px, con la flecha. */
+.guia-indice { display: flex; flex-direction: column; }
+.guia-indice > li + li { border-top: var(--rule-hair) solid var(--color-rule); }
+.guia-indice .guia-ir { display: flex; justify-content: space-between; gap: var(--space-sm); width: 100%; min-height: 56px; color: var(--color-ink); }
+.guia-indice .guia-ir > span { text-decoration-color: transparent; text-decoration-thickness: 2px; }
+.guia-indice .guia-ir:hover > span { text-decoration-color: var(--color-accent); }
+.guia-indice .guia-ir .icono { color: var(--color-muted); }
+.guia-indice .guia-ir:hover .icono { color: var(--color-accent); }
+/* Qué buscar: los puestos de la persona, como datos (chips suaves). */
+.guia-puestos { display: flex; flex-direction: column; gap: var(--space-xs); }
+.chips-puestos { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.chips-puestos .chip { white-space: normal; padding-block: var(--space-2xs); }
+/* «Cambiar en Preferencias» y «Cargalos en Preferencias», dentro de una ayuda: el blanco de toque llega a 44 px sin mover el texto. */
+.guia-puestos .campo-ayuda a, .guia > .campo-ayuda a { display: inline-block; padding-block: var(--space-sm); margin-block: calc(-1 * var(--space-sm)); }
+
+/* ---------- 6. Anchos ---------- */
+/* En un teléfono angosto la columna de lo que suele haber se queda con el aire de las otras: 4 px entre celdas, 8 en los bordes. */
+@media (max-width: 29.99rem) {
+  .umbral-tabla :is(thead, tbody) :is(th, td) { padding-inline: var(--space-2xs); }
+  .umbral-tabla thead .der { white-space: normal; }
+  .umbral-tabla :is(thead, tbody) tr:not(.umbral-marca) > :first-child { padding-left: var(--space-xs); }
+  .umbral-tabla :is(thead, tbody) tr:not(.umbral-marca) > :last-child { padding-right: var(--space-xs); }
+}
+@media (min-width: 30rem) {
+  .contrasena-sitios .control { flex-basis: 12rem; max-width: 340px; }
+}
+/* Colores forzados: el fondo y el contorno por sombra se van; la franja del umbral y su rótulo conservan una línea. */
+@media (forced-colors: active) {
+  .umbral-tabla tbody tr.con-umbral > * { border-block: var(--rule-hair) solid CanvasText; }
+  .umbral-pastilla { border: var(--rule-hair) solid CanvasText; }
+}
+@media (min-width: 48rem) {
+  .saltos-celular { display: none; }
+  .bloque-cuerpo > .saltos-celular:first-child + .subtema { padding-top: 0; border-top: 0; }
+  .portal { grid-template-columns: 10rem minmax(0, 1fr) auto; grid-template-areas: "nombre estado ir"; }
+  .portal-ir { color: var(--color-accent); }
+  .portal-ir > span { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+}

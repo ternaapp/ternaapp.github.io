@@ -30,7 +30,7 @@ Terna.pagina('invitaciones', async (ctx) => {
     const idMail = 'mail-invitacion';
     const input = h('input', { class: 'control', id: idMail, type: 'email', autocomplete: 'off', inputmode: 'email', maxlength: '254', 'aria-describedby': idMail + '-ayuda ' + idMail + '-error' });
     const err = h('p', { class: 'campo-error', id: idMail + '-error', role: 'alert' });
-    const bCrear = h('button', { class: 'btn btn-primario', type: 'submit' }, icono('i-sobre'), I.crear);
+    const bCrear = h('button', { class: 'btn btn-primario invitar-crear', type: 'submit' }, icono('i-sobre'), I.crear);
     const form = h('form', { class: 'formulario', novalidate: true },
       h('div', { class: 'campo' }, h('label', { for: idMail, text: I.mailPersona }), input, h('p', { class: 'campo-ayuda', id: idMail + '-ayuda', text: I.mailAyuda }), err),
       h('div', null, bCrear));
@@ -56,19 +56,34 @@ Terna.pagina('invitaciones', async (ctx) => {
       const caja = document.getElementById('invitacion-creada');
       if (caja) caja.focus();
     });
-    return h('section', { class: 'tarjeta seccion', 'aria-labelledby': 'h-nueva' }, h('h2', { id: 'h-nueva', class: 'tarjeta-titulo', text: I.nueva }), form);
+    // Un pozo: el título, el campo y el primario de la pantalla (PLAN-WEB.md §3.8).
+    return h('section', { class: 'pozo invitar', 'aria-labelledby': 'h-nueva' }, h('h2', { id: 'h-nueva', text: I.nueva }), form);
   }
 
+  // Estado de una invitación: el chip de la lista (o el marbete de la recién creada), con ícono y palabra. Pendiente espera a
+  // otra persona (no hay nada para hacer); Usada es un dato, en tinta; Vencida, un chip de dato. El verde pleno no se usa acá.
+  const ESTADO = {
+    pendiente: { clase: 'chip-espera', icono: 'i-pedido' },
+    usada: { clase: 'chip-listo', icono: 'i-tilde' },
+    vencida: { clase: 'chip-suave', icono: 'i-viejo' },
+  };
+
+  /* La recién creada es lo que se hizo: va como carpeta. En la lengüeta, el mail; en el marbete, «Pendiente»; en el cuerpo, el
+     mensaje listo para mandar y cómo copiarlo. */
   function creada(inv) {
     const link = linkDe(inv.token);
     const mensaje = I.mensaje(link, dias);
-    const texto = h('p', { class: 'mensaje-invitacion', text: mensaje });
-    return h('section', { class: 'tarjeta seccion', id: 'invitacion-creada', tabindex: '-1', 'aria-label': inv.mail },
-      texto,
-      h('div', { class: 'botones' },
-        h('button', { class: 'btn btn-primario', type: 'button', onclick: () => Terna.copiar(mensaje, texto) }, icono('i-pegar'), I.copiarMensaje),
-        h('button', { class: 'btn', type: 'button', onclick: () => Terna.copiar(link, texto) }, icono('i-pegar'), I.copiarLink)),
-      h('p', { class: 'campo-ayuda', text: I.mandalo }));
+    const texto = h('p', { class: 'mensaje-invitacion texto-aviso', text: mensaje });
+    return h('section', { class: 'carpeta invitacion-creada', id: 'invitacion-creada', tabindex: '-1', 'aria-label': inv.mail },
+      h('div', { class: 'carpeta-cabeza' },
+        h('span', { class: 'lengueta lengueta-texto', title: inv.mail }, h('span', { text: inv.mail })),
+        h('span', { class: 'marbete marbete-espera' }, icono(ESTADO.pendiente.icono), h('span', { class: 'marbete-texto', text: I.estados.pendiente }))),
+      h('div', { class: 'carpeta-cuerpo' },
+        texto,
+        h('div', { class: 'botones' },
+          h('button', { class: 'btn', type: 'button', onclick: () => Terna.copiar(mensaje, texto) }, icono('i-pegar'), I.copiarMensaje),
+          h('button', { class: 'btn btn-texto', type: 'button', onclick: () => Terna.copiar(link, texto) }, icono('i-pegar'), I.copiarLink)),
+        h('p', { class: 'campo-ayuda', text: I.mandalo })));
   }
 
   function lineaFechas(inv) {
@@ -78,15 +93,22 @@ Terna.pagina('invitaciones', async (ctx) => {
     if (inv.estado === 'vencida') partes.push(I.vencio(Terna.fechaCorta(inv.vence_en)));
     return partes.join(' · ');
   }
+  function chipEstado(estado) {
+    const e = ESTADO[estado];
+    return h('span', { class: 'chip' + (e ? ' ' + e.clase : '') }, e ? icono(e.icono) : null, h('span', { text: I.estados[estado] || estado }));
+  }
+  // La lista: filas separadas por reglas finas; el mail y su chip, las fechas en tinta suave y las acciones como texto.
   function lista() {
-    if (!invitaciones.length) return h('p', { class: 'suave', text: I.vacio });
-    return h('ul', { class: 'tarjeta tarjeta-plana lista-invitaciones', role: 'list' }, invitaciones.map((inv) => {
+    if (!invitaciones.length) return h('p', { class: 'vacio', text: I.vacio });
+    return h('ul', { class: 'lista-invitaciones', role: 'list' }, invitaciones.map((inv) => {
       const li = h('li', { class: 'invitacion' },
-        h('div', { class: 'invitacion-cabecera' }, h('strong', { text: inv.mail }), h('span', { class: 'chip', text: I.estados[inv.estado] || inv.estado })),
+        h('div', { class: 'invitacion-cabecera' }, h('strong', { text: inv.mail }), chipEstado(inv.estado)),
         h('p', { class: 'campo-ayuda', text: lineaFechas(inv) }));
+      // La recién creada ya tiene «Copiar link» en su carpeta, justo arriba: su fila no lo repite (queda «Cancelar invitación»).
+      const esRecien = !!recien && (recien.id === inv.id || recien.token === inv.token);
       if (inv.estado === 'pendiente') {
         li.append(h('div', { class: 'botones' },
-          h('button', { class: 'btn btn-texto', type: 'button', onclick: () => Terna.copiar(linkDe(inv.token)) }, icono('i-pegar'), I.copiarLink),
+          esRecien ? null : h('button', { class: 'btn btn-texto', type: 'button', onclick: () => Terna.copiar(linkDe(inv.token)) }, icono('i-pegar'), I.copiarLink),
           h('button', { class: 'btn btn-destructivo-texto', type: 'button', onclick: (e) => cancelar(inv, e.currentTarget) }, I.cancelar)));
       }
       return li;

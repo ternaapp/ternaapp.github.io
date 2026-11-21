@@ -1,0 +1,113 @@
+/* Hallmark · shape: app screen · genre: editorial · theme: custom (Sello) · page sheet: Postulaciones, over css/terna.css (opciones-v3/PLAN-WEB.md, paquete P3) */
+/* Terna · css/p-postulaciones.css · Postulaciones
+   Las reglas propias de postulaciones.html; se carga después de css/terna.css (las fichas, la cáscara y las piezas comunes: la
+   carpeta, el marbete, la tabla, la ficha). Paquete P3 de opciones-v3/PLAN-WEB.md §3.3; referencia, opciones-v3/b2/postulaciones.html.
+   Solo fichas nuevas. Celular primero; la tabla desde 48rem, y se adapta al ancho de su caja (@container tabla), no al de la ventana. */
+
+/* ---------- Arriba de la lista: las dos pestañas, la línea de la vista y los filtros ---------- */
+.post-principal { display: flex; flex-direction: column; gap: var(--space-sm); min-width: 0; }
+/* Por postular lleva la clase te-toca cuando algo te toca a vos, pero su número es el total de la pestaña (en cola incluidas): en
+   la pastilla ámbar del muelle diría otra cifra que la del muelle, que cuenta solo lo que te toca. Va en tinta, como el de
+   Postuladas; lo que te toca lo dicen el muelle, el carril y el renglón de la pestaña. */
+/* Una línea por pestaña, en el mismo lugar: en Postuladas, para qué sirve volver; en Por postular, «Tu umbral» con su nota. */
+.linea-vista { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-md); min-height: var(--control-s); }
+.linea-vista > [hidden] { display: none; }
+/* Sin nada que decir (Postuladas vacía), la línea no ocupa lugar. */
+.linea-vista:not(:has(> :not([hidden]))) { display: none; }
+.etapa-nota { max-width: 70ch; color: var(--color-muted); font-size: var(--text-sm); line-height: 1.45; }
+.tu-umbral-caja { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-sm); }
+.tu-umbral-nota { color: var(--color-muted); font-size: var(--text-sm); line-height: 1.4; }
+.tu-umbral-nota:empty { display: none; }
+
+/* ---------- La lista del celular: una carpeta por postulación, en grupos ---------- */
+#lista section.grupo { display: flex; flex-direction: column; gap: var(--space-sm); }
+/* El título del grupo es un texto corrido («3 te tocan a vos»), con la cifra en tinta: sin el aire entre piezas del flex común. */
+#lista .grupo-titulo { display: block; }
+#lista section.grupo + section.grupo { margin-top: var(--space-xl); }
+/* La fila es un solo botón: la carpeta entera abre la ficha. La lengüeta va como texto, no como otro botón. */
+button.fila-postulacion {
+  width: 100%; padding: 0; border: 0; border-radius: var(--radius-card); background: none; color: var(--color-ink);
+  font: inherit; text-align: left; cursor: pointer; transition: transform var(--dur-tab) var(--ease-out);
+}
+.fila-postulacion > .linea-etapa { display: flex; flex-direction: column; min-width: 0; }
+.fila-postulacion .carpeta-cuerpo { gap: var(--space-2xs); }
+.fila-postulacion-puesto { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-xs); width: 100%; }
+.fila-postulacion-puesto .aviso-puesto { min-width: 0; font: var(--weight-strong) var(--text-lg)/1.25 var(--font-body); overflow-wrap: break-word; }
+.fila-postulacion-puesto .puesto-flecha { margin-top: var(--space-3xs); }
+.fila-postulacion .empresa { font-size: var(--text-md); }
+.fila-postulacion-chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2xs) var(--space-sm); margin-top: var(--space-3xs); }
+.fila-postulacion-chips:empty { display: none; }
+.fila-postulacion .traba { margin-top: var(--space-3xs); }
+.fila-postulacion:active { transform: translateY(1px); }
+.fila-postulacion:focus-visible { outline-offset: 4px; }
+@media (hover: hover) {
+  .fila-postulacion:hover .puesto-texto { text-decoration-color: var(--color-accent); }
+  .fila-postulacion:hover .puesto-flecha { color: var(--color-accent); }
+}
+/* Sin movimiento: la carpeta no baja al tocarla (las duraciones ya van a cero desde css/terna.css). */
+@media (prefers-reduced-motion: reduce) {
+  .fila-postulacion:active { transform: none; }
+}
+
+/* ---------- La tabla (escritorio) ---------- */
+/* Se adapta a su propio ancho (diseno.md 0.8 §7.6 y §8.6): con el carril o con el cajón abierto, lo que no entra pasa a la línea de
+   apoyo debajo del puesto en vez de desplazarse. Los cortes de caja son los de siempre. */
+.tabla-postulaciones { display: none; container-type: inline-size; container-name: tabla; }
+.tabla-postulaciones .apoyo-empresa, .tabla-postulaciones .apoyo-porque { display: none; }
+/* El puesto en 14 px, como el resto de la tabla: con los chips de B2 (28 px, 600) la etapa pide más ancho que antes. */
+.tabla-postulaciones .aviso-puesto { font-weight: var(--weight-strong); font-size: var(--text-sm); line-height: 1.35; overflow-wrap: break-word; }
+.tabla-postulaciones .atributos { display: block; margin-top: var(--space-3xs); }
+/* Con las ocho columnas, el puesto se lleva un cuarto: sin eso la etapa y el veredicto lo dejaban en tres o cuatro renglones. */
+.tabla-postulaciones .col-puesto { width: 24%; }
+/* El título de un grupo ocupa toda la fila: que parta si hace falta, así no le pide ancho a la primera columna. */
+.tabla-postulaciones .grupo th { white-space: normal; }
+.tabla-postulaciones .grupo th .num { color: var(--color-ink); }
+.tabla .sin-corte { white-space: nowrap; }
+.etapa-chip { margin-bottom: var(--space-2xs); }
+.linea-sugerencia { margin-top: var(--space-2xs); }
+@media (min-width: 48rem) {
+  .tabla-postulaciones { display: block; }
+}
+@container tabla (max-width: 940px) {
+  .tabla-postulaciones .col-empresa, .tabla-postulaciones .col-porque { display: none; }
+  .tabla-postulaciones .apoyo-empresa { display: inline; }
+  .tabla-postulaciones .apoyo-porque { display: block; }
+  .tabla-postulaciones .tabla th, .tabla-postulaciones .tabla td { padding-left: var(--space-xs); padding-right: var(--space-xs); }
+  .tabla-postulaciones .col-puesto { width: 40%; }
+}
+/* Un corte más, de caja: a 720 px o menos el veredicto parte en dos renglones; con él en uno, entre 652 y 696 la tabla de Por
+   postular desbordaba (el chip de la etapa, «Para postular a mano», mide 168 px). */
+@container tabla (max-width: 720px) {
+  .tabla-postulaciones .col-requisitos .chip-texto { white-space: normal; align-items: flex-start; }
+}
+@container tabla (max-width: 650px) {
+  .tabla-postulaciones td.col-fecha { white-space: normal; }
+  /* Desde 0.21 los encabezados llevan la flecha de su filtro: 4 px de relleno a los lados (a 768 px la tabla necesitaba 516 y la
+     caja medía 498; con esto, 492). */
+  .tabla-postulaciones .tabla th, .tabla-postulaciones .tabla td { padding-left: var(--space-2xs); padding-right: var(--space-2xs); }
+}
+
+/* ---------- La ficha ---------- */
+/* El chip de la etapa, en la sección de la etapa, repetía el marbete de la cabecera (§2.7; revisión del 20/11, P2-3): queda para el
+   lector de pantalla y para el banco, que lo lee ahí, y sale de la vista. Una pendiente no tiene marbete: su «Pendiente» se ve. */
+.hoja .ficha-seccion > .chips > .chip:first-child:is(.chip-toca, .chip-espera, .chip-resuelta) {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+.hoja .ficha-seccion > .chips:has(> .chip:only-child) { display: contents; }
+.ficha-seccion .etapa-nota { margin: 0; }
+/* El CV y la carta de una postulación a mano, debajo de «Todo está listo»: abrir el aviso y marcar postulado están en el pie. */
+.docs-a-mano { max-width: 400px; }
+/* Los links sueltos de la ficha (dónde completar lo que trabó, ver la captura): su zona de toque llega a 44 px sin mover el texto. */
+.hoja .ficha-seccion > p > a:only-child { display: inline-block; padding-block: var(--space-sm); margin-block: calc(-1 * var(--space-sm)); }
+.captura { overflow: hidden; border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-control); background: var(--color-paper); }
+.captura img { width: 100%; max-height: 240px; object-fit: cover; object-position: top; }
+/* El pie de la ficha en el celular (revisión del 20/11, P1-3): el primario a todo el ancho y los secundarios de a dos por renglón,
+   en 14 px para que entren; «No me interesa», link, al costado o debajo. Los botones son los de siempre, todos a la vista. */
+.hoja:has(.ficha-carpeta) .hoja-acciones > .botones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xs); }
+.hoja:has(.ficha-carpeta) .hoja-acciones > .botones > :is(.btn-primario, .btn-ancho) { grid-column: 1 / -1; }
+.hoja:has(.ficha-carpeta) .hoja-acciones > .botones > .btn:not(.btn-primario, .btn-texto) { padding-inline: var(--space-sm); font-size: var(--text-sm); }
+.hoja:has(.ficha-carpeta) .hoja-acciones > .botones > .btn-texto { justify-self: start; }
+@media (min-width: 48rem) {
+  .hoja:has(.ficha-carpeta) .hoja-acciones > .botones { display: flex; }
+  .hoja:has(.ficha-carpeta) .hoja-acciones > .botones > .btn:not(.btn-primario, .btn-texto) { padding-inline: var(--space-md); font-size: var(--text-md); }
+}

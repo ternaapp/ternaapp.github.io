@@ -18,6 +18,8 @@ window.T = (function () {
       logo: 'Terna, ir a Inicio',
       pestanas: { inicio: 'Inicio', busqueda: 'Búsqueda', avisos: 'Avisos', postulaciones: 'Postulaciones', perfil: 'Mi perfil', preferencias: 'Preferencias', invitaciones: 'Invitaciones', admin: 'Admin', alertas: 'Guías de alertas' },
       navegacion: 'Secciones',
+      // propuesta PLAN-WEB §4.1 (brand.md §6.1): el cuarto destino del muelle y el título de su hoja.
+      cuenta: 'Cuenta',
       salir: 'Salir',
       // El botón del sol o la luna (brand.md 0.17 §6.1): su nombre dice a qué modo pasa.
       tema: { aOscuro: 'Pasar a modo oscuro', aClaro: 'Pasar a modo claro' },
@@ -62,7 +64,10 @@ window.T = (function () {
       cuentaCreada: 'Cuenta creada. Ahora cargá tu perfil.',
       // Elegir el modo, una vez, después de Crear cuenta (brand.md 0.17 §6.2).
       modoTitulo: '¿Cómo querés ver Terna?',
-      modoAyuda: 'Lo podés cambiar cuando quieras con el sol o la luna de arriba.',
+      // propuesta PLAN-WEB §4.1 (brand.md §6.2): que el paso del modo diga que es el segundo y el último (FEEDBACK-2, textos).
+      modoUltimo: 'Último paso.',
+      // propuesta PLAN-WEB §4.1 (brand.md §6.2): sin "de arriba", porque en escritorio el botón va abajo, en el carril.
+      modoAyuda: 'Lo podés cambiar cuando quieras con el sol o la luna.',
       modoGrupo: 'Modo',
       modoDispositivo: 'Igual que tu dispositivo',
       modoDispositivoAhora: (oscuro) => (oscuro ? 'Ahora está en oscuro.' : 'Ahora está en claro.'),
@@ -103,6 +108,14 @@ window.T = (function () {
       aMano: (x) => plural(x, '1 postulación para hacer a mano', n(x) + ' postulaciones para hacer a mano'),
       paraRevisar: (x) => plural(x, '1 para revisar antes de enviar', n(x) + ' para revisar antes de enviar'),
       porDecidir: (x) => plural(x, '1 aviso por decidir si te interesa', n(x) + ' avisos por decidir si te interesan'),
+      // propuesta PLAN-WEB §4.1 (brand.md §6.3): el título de lo que te toca, sin cifra (FEEDBACK-1 P2-2: «15 te tocan a vos» arriba
+      // contradecía las filas de «Qué hay para hacer», que suman otra cosa; la cifra ya está en el muelle y en Postulaciones).
+      tocanTitulo: 'Te tocan a vos',
+      // propuesta PLAN-WEB §4.1 (brand.md §6.3): el título de «Los tres de hoy», los paquetes de la última corrida.
+      hoy: {
+        titulo: (x) => (x === 3 ? 'Los tres de hoy' : 'Los paquetes de hoy'),
+        tituloUltima: 'Los de la última corrida',
+      },
       enCola: (x) => (x === 1 ? '1' : n(x)) + ' en cola: Terna postula en la próxima corrida',
       nadaPendiente: 'Nada pendiente. Terna sigue sola.',
       umbralActual: (u) => 'Umbral actual: ' + u + '.',
@@ -232,6 +245,10 @@ window.T = (function () {
           jornada: 'Si un aviso no dice la jornada, aparece igual.',
         },
         listo: 'Listo',
+        // propuesta PLAN-WEB §4.1 (brand.md §6.4): «Más filtros», desde 768 px, en Avisos, Búsqueda y Postulaciones; a la vista va
+        // solo el número, y la cuenta entera es para el lector de pantalla.
+        masFiltros: 'Más filtros',
+        masFiltrosCuenta: (x) => plural(x, '1 filtro más', n(x) + ' filtros más'),
         // Filtros por columna (brand.md 0.8 §6.4 y §6.5; diseno.md 0.21 §10.18): cada encabezado de la tabla abre el suyo.
         columnas: {
           puesto: 'Puesto', empresa: 'Empresa', ubicacion: 'Ubicación', publicado: 'Publicado',
@@ -316,6 +333,11 @@ window.T = (function () {
       matchAccesible: (m, llega) => 'Match ' + m + ' de 100, ' + (llega ? 'llega a tu umbral' : 'no llega a tu umbral'),
       sinMatch: 'Sin match todavía',
       matchPalabra: 'match',
+      // propuesta PLAN-WEB §4.1 (brand.md §6.4): el botón del cartel «por decidir» de Avisos y su nombre accesible.
+      porDecidir: {
+        ver: 'Ver',
+        verAccesible: (x) => (x === 1 ? 'Ver el aviso por decidir' : 'Ver los ' + n(x) + ' avisos por decidir'),
+      },
       bajoUmbral: 'Bajo tu umbral',
       viejo: 'Aviso viejo o republicado',
       viejoAccesible: 'Aviso viejo o republicado: puede que ya no esté vigente',
@@ -547,6 +569,13 @@ window.T = (function () {
         enDescripcion: 'Coincide en la descripción',
         porSeparado: 'Tiene las palabras por separado',
       },
+      // propuesta PLAN-WEB §4.1 (brand.md §6.3.1): el título de cada uno de los tres grupos de lo escrito, con su cuenta (con los
+      // filtros puestos), cuando hay más de uno a la vista.
+      grupos: {
+        directos: (x) => plural(x, '1 coincide en el puesto, la empresa o el lugar', n(x) + ' coinciden en el puesto, la empresa o el lugar'),
+        descripcion: (x) => plural(x, '1 coincide en la descripción', n(x) + ' coinciden en la descripción'),
+        sueltas: (x) => plural(x, '1 tiene las palabras por separado', n(x) + ' tienen las palabras por separado'),
+      },
       filtros: {
         barra: 'Filtros',
         lista: 'En tu lista',
@@ -740,6 +769,8 @@ window.T = (function () {
       intro: 'Terna usa este perfil para elegir avisos, armar tus documentos y responder formularios. Cuanto más completo, mejor elige y mejor responde.',
       completo: 'Perfil completo.',
       falta: (lista) => 'Falta: ' + lista + '.',
+      // propuesta PLAN-WEB §4.1 (brand.md §6.6): el marbete de un bloque de Mi perfil y el chip de Mi perfil en el carril.
+      faltaCorto: 'Falta',
       // Los bloques y sus subtemas (brand.md 0.7 §6.6; diseno.md 0.19 §9.2): Datos junta Contacto, Identificación y Respuestas para
       // formularios (antes en Preferencias); CV junta el CV original, el perfil estructurado y el analítico.
       datos: 'Datos',
@@ -1406,7 +1437,9 @@ window.T = (function () {
       borrarUsuario: 'Borrar usuario',
       borrado: 'Usuario borrado.',
       invitacionesAbiertas: 'Invitaciones abiertas',
-      invitacionesAyuda: 'Cerradas: nadie puede crear invitaciones nuevas. Las pendientes siguen valiendo hasta que venzan.',
+      // propuesta PLAN-WEB §4.1 (brand.md §6.9; FEEDBACK-2, textos): con la forma de las otras ayudas de un interruptor («En Sí, …»).
+      // Hasta ahora: 'Cerradas: nadie puede crear invitaciones nuevas. Las pendientes siguen valiendo hasta que venzan.'
+      invitacionesAyuda: 'En No, nadie puede crear invitaciones nuevas. Las pendientes siguen valiendo hasta que venzan.',
       dias: { 7: 'Últimos 7 días', 30: 'Últimos 30 días' },
       uso: { fecha: 'Fecha', usuarios: 'Usuarios corridos', revisados: 'Avisos revisados', puntuados: 'Puntuados', paquetes: 'Paquetes', enviadas: 'Enviadas', aMano: 'A mano', tokens: 'Tokens', usd: 'US$ est.', tope: 'Tope', alcanzado: 'Alcanzado', no: 'No', total: (d) => d + ' días' },
       // Admin › Problemas. Las primeras ocho claves son la tabla de antes, que se ve con una base sin 0042. Lo demás, los casos con

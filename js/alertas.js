@@ -39,7 +39,7 @@ Terna.pagina('alertas', async (ctx) => {
     }
     return h('div', { class: 'guia-puestos' },
       h('p', { text: G.tusPuestos }),
-      h('ul', { class: 'chips-puestos' }, puestos.map((x) => h('li', { class: 'chip', text: x }))),
+      h('ul', { class: 'chips-puestos' }, puestos.map((x) => h('li', { class: 'chip chip-suave', text: x }))),
       h('p', { class: 'campo-ayuda' }, G.puestosAyuda, ' ', h('a', { href: 'preferencias.html#busqueda', text: G.cambiarPuestos })));
   }
   const PIEZAS = {
@@ -61,9 +61,26 @@ Terna.pagina('alertas', async (ctx) => {
 
   cabecera.append(h('a', { class: 'btn btn-texto guia-volver', href: 'preferencias.html#alertas' }, icono('i-volver'), G.volver));
   const bloques = Terna.porBloques({ raiz, cabecera, nombre: G.carril, abiertos: new Set(['como-funciona']) });
+  // El lomo de una guía cerrada dice cómo empieza: su primer párrafo, o el primer paso de su lista (sin las marcas de negrita).
+  const primerTexto = (piezas) => {
+    const x = piezas.find(([tipo]) => tipo === 'p' || tipo === 'pasos' || tipo === 'lista');
+    return x ? String(Array.isArray(x[1]) ? x[1][0] : x[1]).replace(/\*/g, '') : '';
+  };
+  // En Cómo funciona, «Las guías» (su subtítulo y el índice) va enseguida de los tres pasos, antes de la dirección: el índice es
+  // lo primero que se busca acá y en el celular quedaba a 1.450 px (PLAN-WEB.md §3.6; revisión 2, P2-7). Solo cambia el orden de
+  // armado: las piezas y sus textos son los de T.guias.
+  function indiceArriba(piezas) {
+    const i = piezas.findIndex(([tipo]) => tipo === 'indice');
+    const j = piezas.findIndex(([tipo]) => tipo === 'pasos');
+    if (i < 1 || j < 0 || j > i || piezas[i - 1][0] !== 'subtitulo') return piezas;
+    const indice = piezas.slice(i - 1, i + 1);
+    const resto = piezas.slice(0, i - 1).concat(piezas.slice(i + 1));
+    return resto.slice(0, j + 1).concat(indice, resto.slice(j + 1));
+  }
   for (const s of G.secciones) {
-    const piezas = s.piezas.filter((p) => !p[2] || p[2] === quien);
-    bloques.bloque(s.clave, s.titulo, h('div', { class: 'guia' }, piezas.map(([tipo, valor]) => PIEZAS[tipo](valor))));
+    const visibles = s.piezas.filter((p) => !p[2] || p[2] === quien);
+    const piezas = s.clave === 'como-funciona' ? indiceArriba(visibles) : visibles;
+    bloques.bloque(s.clave, s.titulo, h('div', { class: 'guia' }, piezas.map(([tipo, valor]) => PIEZAS[tipo](valor))), { resumen: () => primerTexto(piezas) });
   }
   bloques.montar({});
 

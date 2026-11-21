@@ -1,7 +1,9 @@
 /* Terna · js/aviso.js
    Las piezas de un aviso que comparten Avisos y Postulaciones (diseno.md §7.3 a §7.5, §8.3 a §8.5, §10.2,
    §10.12 y §10.13): chips, atributos, match, etiquetas, control de interés, paquete con sus cuatro fichas y sus dos
-   desplegables (notas y "Ver por qué"), recorrido de cuatro puntos y la línea de cada etapa. */
+   desplegables (notas y "Ver por qué"), recorrido de cuatro tramos y la línea de cada etapa.
+   Desde el rediseño B2 «Sello» (opciones-v3/PLAN-WEB.md §2.5 a §2.9), también la carpeta: la lengüeta con el match, el marbete
+   con el estado, «nuevo», la fecha sola, la cabecera de la ficha y sus saltos. Las funciones de antes siguen, con la misma firma. */
 'use strict';
 
 window.Aviso = (function () {
@@ -14,15 +16,20 @@ window.Aviso = (function () {
     if (a.match === null && a.texto_origen === 'usuario') return 'por_puntuar';
     return a.estado_paquete;
   }
+  // Los cuatro estados (PLAN-WEB.md §2.7): te toca (chip-toca), espera (chip-espera, con el reloj), resuelta (chip-resuelta) y
+  // falló (chip-error). «Armado» es un dato del paquete (chip-listo, con el tilde); «Sin armar», un dato sin estado (chip-suave).
   const ESTILO_PAQUETE = {
-    armado: ['chip-accion', 'i-armado'], sin_armar: ['', 'i-sin-armar'], pedido: ['chip-espera', 'i-pedido'],
+    armado: ['chip-listo', 'i-tilde'], sin_armar: ['chip-suave', 'i-sin-armar'], pedido: ['chip-espera', 'i-pedido'],
     no_se_pudo_armar: ['chip-error', 'i-alerta'], sin_texto: ['chip-espera', 'i-sin-texto'], por_puntuar: ['chip-espera', 'i-pedido'],
   };
+  // «Postulada a mano» lleva el tilde: el avión queda para lo que manda Terna.
   const ESTILO_POSTULACION = {
-    en_cola: ['chip-espera', 'i-pedido'], para_revisar: ['chip-espera', 'i-revisar'],
-    enviada: ['chip-azul', 'i-enviada'], a_mano: ['chip-espera', 'i-a-mano'],
-    postulado: ['chip-azul', 'i-enviada'],
+    en_cola: ['chip-espera', 'i-pedido'], para_revisar: ['chip-toca', 'i-revisar'],
+    enviada: ['chip-resuelta', 'i-enviada'], a_mano: ['chip-toca', 'i-a-mano'],
+    postulado: ['chip-resuelta', 'i-tilde'],
   };
+  // El estado que sube al marbete de una carpeta: el de la postulación (lo del paquete va en la línea suelta).
+  const MARBETE = { a_mano: 'toca', para_revisar: 'toca', en_cola: 'espera', enviada: 'resuelta', postulado: 'resuelta' };
   function llega(a, umbral) { return a.match !== null && a.match !== undefined && a.match >= umbral; }
 
   /* ---------- Chips y etiquetas ---------- */
@@ -43,7 +50,7 @@ window.Aviso = (function () {
     return chip(c, i, T.avisos.postulacion[e], T.chips[e]);
   }
   function chipInteres(a, config) {
-    if (a.interes === 'por_decidir') return chip('chip-espera', 'i-por-decidir', T.avisos.interes.por_decidir, T.chips.por_decidir);
+    if (a.interes === 'por_decidir') return chip('chip-toca', 'i-por-decidir', T.avisos.interes.por_decidir, T.chips.por_decidir);
     if (a.interes === 'no_me_interesa') {
       return chip('chip-suave', 'i-no-interesa', T.avisos.interes.no_me_interesa, T.chips.no_me_interesa((config && config.retencion_no_interesa_dias) || 30));
     }
@@ -201,11 +208,12 @@ window.Aviso = (function () {
     const partes = [[a.alcance === 'exterior' ? 'i-exterior' : 'i-local', lugar(a)]];
     if (a.modalidad) partes.push(['i-' + a.modalidad, T.avisos.modalidadMin[a.modalidad]]);
     if (!opciones.sinFuente && (opciones.fuente || DE_ALERTAS.has(a.fuente))) partes.push([null, DE_ALERTAS.has(a.fuente) ? T.avisos.deAlerta(a.fuente) : a.fuente]);
+    // Cada parte, con su ícono, va en su .atributo: así el ícono no se separa de su texto al partir el renglón. Los puntos medios
+    // quedan en el texto (el banco lo lee) y el CSS los cambia por aire.
     const nodo = h(opciones.tag || 'span', { class: 'atributos' });
     partes.forEach(([ic, tx], i) => {
       if (i) nodo.append(h('span', { 'aria-hidden': 'true', text: '·' }), oculto(', '));
-      if (ic) nodo.append(icono(ic, 'icono-16'));
-      nodo.append(h('span', { text: tx }));
+      nodo.append(h('span', { class: 'atributo' }, ic ? icono(ic, 'icono-16') : null, h('span', { text: tx })));
     });
     return nodo;
   }
@@ -297,17 +305,17 @@ window.Aviso = (function () {
     const idNotas = Terna.idUnico('notas');
     const idSalario = Terna.idUnico('salario');
     const cv = Terna.linkFirmado(a.cv_path, Terna.nombreDescarga('cv', idioma),
-      h('a', { class: 'ficha-doc' }, icono('i-cv'), h('strong', { text: T.avisos.ficha.cv }), h('span', { text: T.avisos.ficha.pdfIdioma(idiomaTxt) })));
+      h('a', { class: 'ficha-doc' }, icono('i-cv'), h('strong', { text: T.avisos.ficha.cv }), h('span', { text: T.avisos.ficha.pdfIdioma(idiomaTxt) }), icono('i-descargar', 'ficha-doc-fin')));
     const carta = Terna.linkFirmado(a.carta_path, Terna.nombreDescarga('carta', idioma),
-      h('a', { class: 'ficha-doc' }, icono('i-sobre'), h('strong', { text: T.avisos.ficha.carta }), h('span', { text: T.avisos.ficha.pdfIdioma(idiomaTxt) })));
+      h('a', { class: 'ficha-doc' }, icono('i-sobre'), h('strong', { text: T.avisos.ficha.carta }), h('span', { text: T.avisos.ficha.pdfIdioma(idiomaTxt) }), icono('i-descargar', 'ficha-doc-fin')));
     const sinMonto = a.salario_monto === null || a.salario_monto === undefined;
     const tituloSalario = sinMonto ? T.avisos.ficha.sinDatos : T.avisos.ficha.salarioCorto(Terna.numero(Number(a.salario_monto)), a.salario_moneda);
     const subSalario = sinMonto ? T.avisos.ficha.verPorQue
       : (a.salario_periodo === 'anual' ? T.avisos.ficha.porAnio : T.avisos.ficha.porMes) + ' · ' + T.avisos.ficha.verPorQue;
     const bNotas = h('button', { class: 'ficha-doc', type: 'button', 'aria-expanded': 'false', 'aria-controls': idNotas },
-      icono('i-notas'), h('strong', { text: T.avisos.ficha.notas }), h('span', { text: T.avisos.ficha.notasSub }));
+      icono('i-notas'), h('strong', { text: T.avisos.ficha.notas }), h('span', { text: T.avisos.ficha.notasSub }), icono('i-chevron', 'ficha-doc-fin'));
     const bSalario = h('button', { class: 'ficha-doc', type: 'button', 'aria-expanded': 'false', 'aria-controls': idSalario },
-      icono('i-salario'), oculto(textoSalario(a) + '. '), h('strong', { class: 'num', 'aria-hidden': 'true', text: tituloSalario }), h('span', { text: subSalario }));
+      icono('i-salario'), oculto(textoSalario(a) + '. '), h('strong', { class: 'num', 'aria-hidden': 'true', text: tituloSalario }), h('span', { text: subSalario }), icono('i-chevron', 'ficha-doc-fin'));
     const pNotas = panelNotas(a.notas, idNotas);
     const pSalario = h('div', { class: 'panel-paquete', id: idSalario, hidden: true, role: 'region', 'aria-label': T.avisos.ficha.verPorQue },
       h('p', { class: 'num', text: textoSalario(a) + '.' }), a.salario_motivo ? h('p', { text: a.salario_motivo }) : null);
@@ -342,13 +350,14 @@ window.Aviso = (function () {
     const tramos = [0, 1, 2].map((i) => (lleno(p[i]) && lleno(p[i + 1]) ? ({ 'punto-tinta': 'tramo-tinta', 'punto-accion': 'tramo-accion', 'punto-azul': 'tramo-azul' })[p[i]] || '' : ''));
     return { p, tramos };
   }
+  // Desde el rediseño B2 (PLAN-WEB.md §2.9): cuatro tramos. Los pasos llenos de `puntos` son «hecho»; el primero que no lo está, «ahora».
+  const LLENO = new Set(['punto-tinta', 'punto-accion', 'punto-azul']);
   function recorridoGrande(a) {
-    const { p, tramos } = puntos(a);
+    const { p } = puntos(a);
     const etiquetas = T.postulaciones.recorrido;
+    const ahora = p.findIndex((c) => !LLENO.has(c));
     return h('div', { class: 'recorrido-grande', 'aria-hidden': 'true' }, p.map((c, i) =>
-      h('div', { class: 'recorrido-paso' },
-        h('div', { class: 'recorrido-pista' }, h('i', { class: i === 0 ? 'nada' : tramos[i - 1] }), h('span', { class: 'punto ' + c }), h('i', { class: i === p.length - 1 ? 'nada' : tramos[i] })),
-        h('small', { text: etiquetas[i] }))));
+      h('div', { class: 'recorrido-paso' + (LLENO.has(c) ? ' hecho' : (i === ahora ? ' ahora' : '')) }, h('small', { text: etiquetas[i] }))));
   }
 
   /* ---------- Etapa y su línea (brand.md §6.5) ---------- */
@@ -749,7 +758,97 @@ window.Aviso = (function () {
     return { data: null, error: null, conEvaluacion: false, conDonde: false, conTextoEstado: false };
   }
 
+  /* ---------- La carpeta (PLAN-WEB.md §2.5 y §2.9) ----------
+     La lengüeta es de Terna: lila siempre, con el match; es la puerta a «Por qué ajusta». El marbete lleva el estado de la
+     postulación, con su ícono y su nombre; no es un botón. El número nunca va sobre un color de estado. */
+  // opciones: alTocar (función: un button.lengueta[data-control=porque]), href (un a.lengueta), grande (la de la ficha), linea (la
+  // columna de 44 px de una línea suelta: la misma pieza con la clase linea-match en vez de lengueta, sin fondo).
+  // Sin alTocar ni href, un span (por ejemplo, adentro del botón de una fila de Postulaciones).
+  function lengueta(a, umbral, opciones) {
+    const o = opciones || {};
+    const sinMatch = a.match === null || a.match === undefined;
+    const ok = llega(a, umbral);
+    const clase = (o.linea ? 'linea-match' : 'lengueta') + (ok ? '' : ' bajo') + (o.grande ? ' lengueta-grande' : '');
+    const nombre = sinMatch ? T.avisos.sinMatch : T.avisos.matchAccesible(a.match, ok);
+    const hijos = [
+      h('span', { class: 'lengueta-numero', 'aria-hidden': 'true', text: sinMatch ? '—' : String(a.match) }),
+      h('span', { class: 'lengueta-palabra', 'aria-hidden': 'true', text: T.avisos.matchPalabra }),
+    ];
+    if (o.alTocar) {
+      return h('button', { class: clase, type: 'button', title: T.chips.match, dataset: { control: 'porque' }, onclick: o.alTocar },
+        hijos, oculto(nombre + '. ' + T.avisos.ficha.verPorQue));
+    }
+    if (o.href) return h('a', { class: clase, href: o.href, title: T.chips.match }, hijos, oculto(nombre + '. ' + T.avisos.ficha.verPorQue));
+    return h('span', { class: clase, title: T.chips.match }, hijos, oculto(nombre));
+  }
+  // { tipo: 'toca' | 'espera' | 'resuelta', icono, texto } o null (pendiente, o sin postulación).
+  function estadoDe(a) {
+    const e = a && a.estado_postulacion;
+    if (!MARBETE[e] || !ESTILO_POSTULACION[e]) return null;
+    return { tipo: MARBETE[e], icono: ESTILO_POSTULACION[e][1], texto: T.avisos.postulacion[e] };
+  }
+  // El marbete de la etapa, o null. `chip`: suma la clase chip (Postulaciones, por el banco). `explicacion`: suma el texto oculto
+  // de T.chips, como chipPostulacion (no adentro de un botón, cuyo texto entero es su nombre).
+  function marbete(a, opciones) {
+    const e = estadoDe(a);
+    if (!e) return null;
+    const o = opciones || {};
+    const explicacion = T.chips[a.estado_postulacion];
+    return h('span', { class: 'marbete marbete-' + e.tipo + (o.chip ? ' chip' : ''), title: explicacion || null },
+      icono(e.icono), h('span', { class: 'marbete-texto', text: e.texto }), o.explicacion && explicacion ? oculto(': ' + explicacion) : null);
+  }
+  // «nuevo», al lado del puesto: una marca de texto (no un .chip: el banco cuenta los chips de una tarjeta).
+  function nuevo(a) { return a && a.nuevo ? h('b', { class: 'nuevo', text: T.avisos.nuevo }) : null; }
+  // La fecha relativa, sin «nuevo».
+  function fechaSola(a) { return h('span', { class: 'fecha', text: Terna.relativa(a.publicado_en || a.visto_en) }); }
+  // La cabecera de una ficha (va en .hoja-cabecera): la ficha es una carpeta, con la lengüeta grande (un botón que baja a «Por qué
+  // ajusta», con `alPorQue`) y el marbete. `sinLengueta`: un aviso que no está en tu lista (Búsqueda), el cuerpo solo.
+  function cabezaFicha({ a, idTitulo, umbral, alPorQue, sinLengueta }) {
+    const leng = sinLengueta ? null : lengueta(a, umbral, { grande: true, alTocar: alPorQue });
+    const marb = sinLengueta ? null : marbete(a, { explicacion: true });
+    return h('div', { class: 'ficha-cabecera ficha-carpeta' },
+      leng || marb ? h('div', { class: 'carpeta-cabeza chips' }, leng, marb) : null,
+      h('div', { class: 'carpeta-cuerpo' + (leng || marb ? '' : ' sola') },
+        h('h2', { class: 'ficha-titulo', id: idTitulo, text: a.puesto }),
+        a.empresa ? h('p', { class: 'ficha-empresa', text: a.empresa }) : null,
+        atributos(a, { fuente: true, tag: 'p' })));
+  }
+  // Baja hasta una sección de la ficha (dentro de su hoja o su cajón) y le pasa el foco, sin moverla otra vez. En una hoja
+  // (<dialog>) se desplaza solo .hoja-desplazable, hasta donde llega: con scrollIntoView, si la sección no llegaba arriba (el cuerpo
+  // ya estaba al final) se corría también el <dialog>, que tiene overflow: hidden, y la cabecera, los saltos y la cruz quedaban
+  // afuera. Respeta el scroll-margin-top de la sección (lo que mide la tira de saltos pegada). En el cajón en línea, como siempre.
+  function bajarA(nodo) {
+    if (!nodo) return;
+    const quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const caja = nodo.closest('dialog .hoja-desplazable');
+    if (caja) {
+      const margen = parseFloat(getComputedStyle(nodo).scrollMarginTop) || 0;
+      const y = caja.scrollTop + nodo.getBoundingClientRect().top - caja.getBoundingClientRect().top - margen;
+      caja.scrollTo({ top: Math.max(0, Math.round(y)), behavior: quieto ? 'auto' : 'smooth' });
+    } else nodo.scrollIntoView({ block: 'start', behavior: quieto ? 'auto' : 'smooth' });
+    if (!nodo.hasAttribute('tabindex')) nodo.setAttribute('tabindex', '-1');
+    nodo.focus({ preventScroll: true });
+  }
+  // Los saltos de la ficha: una tira con un botón por sección ({ nodo, texto }), que baja hasta ella; todo queda a la vista. Son
+  // botones y no links: el hash de la página es de la ficha (#aviso-…, #postulacion-…). Con menos de dos secciones, nada.
+  function saltos(secciones) {
+    const lista = (secciones || []).filter((x) => x && x.nodo && x.texto);
+    if (lista.length < 2) return null;
+    const botones = lista.map((x) => {
+      if (!x.nodo.id) x.nodo.id = Terna.idUnico('seccion');
+      const b = h('button', { class: 'separador', type: 'button', 'aria-controls': x.nodo.id, text: x.texto });
+      b.addEventListener('click', () => {
+        for (const o of botones) o.removeAttribute('aria-current');
+        b.setAttribute('aria-current', 'true');
+        bajarA(x.nodo);
+      });
+      return b;
+    });
+    return h('div', { class: 'separadores-lista', role: 'group', 'aria-label': T.comun.navegacion }, botones);
+  }
+
   return {
+    lengueta, estadoDe, marbete, nuevo, fechaSola, cabezaFicha, saltos, bajarA,
     estadoPaquete, llega, chip, chipPaquete, chipPostulacion, chipInteres, chipFaltan, fecha, etiquetas,
     evaluacion, chipCalificacion, REQUISITOS, categoriaRequisitos, pedirMotivo, lineaMotivo, MOTIVOS, leerConEvaluacion,
     MODALIDADES, ALCANCES, NIVELES, JORNADAS, TODOS_BUSQUEDA, busquedaDe, pasaBusqueda, motivosFuera,

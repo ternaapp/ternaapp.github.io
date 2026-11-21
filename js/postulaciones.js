@@ -10,7 +10,10 @@
    que las acciones con "Deshacer" se escriben cuando el aviso breve se va (6 s); si la página se cierra antes,
    se mandan igual con fetch keepalive.
    Desde diseno.md 0.21 cada encabezado de la tabla abre su filtro (js/filtros.js) y "No me interesa" pide confirmación, con el
-   motivo opcional adentro (brand.md 0.8 §6.5). */
+   motivo opcional adentro (brand.md 0.8 §6.5).
+   Desde el rediseño B2 «Sello» (opciones-v3/PLAN-WEB.md §3.3) cambia solo el dibujo: cada fila del celular es una carpeta (la
+   lengüeta con el match y el marbete con la etapa), Por postular va en dos grupos (te tocan a vos, la tiene Terna) en la lista y en
+   la tabla, la ficha es una carpeta con sus saltos y, a mano, el CV y la carta a la vista; la cuenta de lo que te toca va al muelle y al carril. */
 'use strict';
 
 Terna.pagina('postulaciones', async (ctx) => {
@@ -285,6 +288,9 @@ Terna.pagina('postulaciones', async (ctx) => {
       // Por postular resalta su número cuando alguna te toca a vos: queda segunda y no se tiene que perder (con el texto, no solo el color).
       if (v === 'por_postular') r.input.closest('.vista').classList.toggle('te-toca', cuantas(l, (a) => !laTieneTerna(a)) > 0);
     }
+    // Lo que te toca, en el muelle y en el carril (PLAN-WEB.md §2.1): lo que "te tocan a vos" cuenta al entrar, con "Tu umbral"
+    // marcada y sin filtros, así no cambia con cada filtro ni con la casilla. Inicio pasa el mismo número.
+    Terna.cuentaToca(postulaciones.filter((a) => vistaDe(a) === 'por_postular' && !laTieneTerna(a) && !quedo(a)).length);
     cajaUmbral.hidden = vista !== 'por_postular';
     notaPostuladas.hidden = vista !== 'postuladas' || enVista(base, 'postuladas').length === 0;
     // Cuántas quedaron entre el piso y tu umbral, con los filtros puestos: lo que la casilla esconde o deja ver.
@@ -304,6 +310,10 @@ Terna.pagina('postulaciones', async (ctx) => {
   const ubicarFiltros = Filtros.ubicar({ botones, lista });
   const primerFiltro = () => Filtros.primero({ botones, claves: CLAVES, lista });
   const estadoFiltros = h('div', { class: 'filtros-estado', hidden: true });
+  // «Más filtros» (PLAN-WEB.md §2.8), desde 768 px. Con la tabla entera la barra lleva cinco (Modalidad, Alcance, Nivel, Jornada y
+  // Paquete, que no tienen columna): quedan los cinco a la vista y el botón aparece recién cuando la tabla manda a la barra los de
+  // una columna que esconde (Empresa, Por qué). Con cuatro, el botón escondería uno solo para ocupar su mismo lugar.
+  let masFiltros = null;
   function armarBarra() {
     const barra = h('div', { class: 'filtros-barra', role: 'group', 'aria-label': F.barra });
     for (const k of CLAVES) {
@@ -317,6 +327,7 @@ Terna.pagina('postulaciones', async (ctx) => {
     estadoFiltros.append(h('button', { class: 'btn btn-texto btn-chico', type: 'button', onclick: () => { limpiarFiltros(); primerFiltro().focus(); } },
       icono('i-deshacer', 'icono-16'), F.limpiarFiltros));
     cajaFiltros.append(h('div', { class: 'filtros-caja' }, barra), estadoFiltros);
+    masFiltros = Filtros.masFiltros({ barra, botones, claves: CLAVES, cambiado, aLaVista: 5 });
   }
   function actualizarBarra() {
     for (const k of CLAVES) {
@@ -325,6 +336,7 @@ Terna.pagina('postulaciones', async (ctx) => {
       b.querySelector('.filtro-cambiado').textContent = cambiado(k) ? F.cambiadoAccesible : '';
       b.classList.toggle('cambiado', cambiado(k));
     }
+    if (masFiltros) masFiltros.repartir();
     const enfocado = estadoFiltros.contains(document.activeElement);
     estadoFiltros.hidden = !algoCambiado();
     if (enfocado && estadoFiltros.hidden) primerFiltro().focus();
@@ -336,8 +348,32 @@ Terna.pagina('postulaciones', async (ctx) => {
     return h('div', { class: 'vacio' }, texto, h('button', { class: 'btn', type: 'button',
       onclick: () => { cambiarVista('por_postular'); refVistas.por_postular.input.focus(); } }, T.postulaciones.vistas.por_postular));
   }
+  // Por postular va en dos grupos (PLAN-WEB.md §3.3): lo que te toca a vos y lo que la tiene Terna, cada uno con su cuenta y, adentro,
+  // en el orden de siempre. Un grupo vacío no se dibuja; Postuladas va sin grupos. Devuelve [[título o null, lista], …].
+  function grupos(vis) {
+    if (vista !== 'por_postular') return [[null, vis]];
+    const P = T.postulaciones.partes;
+    const tocan = vis.filter((a) => !laTieneTerna(a));
+    const terna = vis.filter(laTieneTerna);
+    return [[P.tocan(tocan.length), tocan], [P.terna(terna.length), terna]].filter(([, l]) => l.length);
+  }
+  // "3 te tocan a vos": la cifra en tinta y el resto en tinta suave. El texto queda igual.
+  function conCifra(texto) {
+    const m = /^(\d[\d.]*)(\s[\s\S]*)$/.exec(texto);
+    return m ? [h('span', { class: 'num', text: m[1] }), m[2]] : texto;
+  }
+  function listaCelular(vis) {
+    const ul = (l) => h('ul', { class: 'lista-postulaciones carpetas', role: 'list' }, l.map((a) => h('li', null, filaCelular(a))));
+    return grupos(vis).map(([titulo, l]) => {
+      if (!titulo) return ul(l);
+      const id = Terna.idUnico('grupo');
+      return h('section', { class: 'grupo', 'aria-labelledby': id }, h('h2', { class: 'grupo-titulo', id }, conCifra(titulo)), ul(l));
+    });
+  }
   function dibujarLista() {
     Terna.vaciar(lista);
+    // El marbete y el chip resueltos van calmos en Postuladas, donde todo está resuelto (PLAN-WEB.md §2.7).
+    lista.dataset.vista = vista;
     const todas = filtradas();
     const vis = ordenar(enVista(todas, vista));
     const hay = mostrables().length > 0;
@@ -355,7 +391,7 @@ Terna.pagina('postulaciones', async (ctx) => {
       return;
     }
     if (Terna.anchoEscritorio.matches) lista.append(tabla(vis));
-    else lista.append(h('ul', { class: 'lista-postulaciones', role: 'list' }, vis.map((a) => h('li', null, filaCelular(a)))));
+    else lista.append(...listaCelular(vis));
     ubicarFiltros();
     marcarElegida();
   }
@@ -366,19 +402,22 @@ Terna.pagina('postulaciones', async (ctx) => {
     if (!estilo) return h('span', { class: 'chip-texto', text: T.avisos.postulacion.pendiente });
     return conExplicacion === false ? Aviso.chip(estilo[0], estilo[1], etiquetaEtapa(a)) : Aviso.chipPostulacion(a);
   }
-  // La fila (§8.3): el match, el puesto, los atributos, el veredicto, el chip de la etapa con por qué está en tu lista, y su línea.
+  // La fila (§8.3), desde B2 una carpeta (PLAN-WEB.md §3.3): arriba la lengüeta con el match y el marbete con la etapa (el chip de la
+  // etapa, mudado arriba); en el cuerpo el puesto, la empresa, los atributos, por qué está en tu lista, el veredicto y la línea de la
+  // etapa. Sigue siendo un solo botón que abre la ficha: la lengüeta va como texto, no como otro botón. `.linea-etapa` envuelve todo
+  // (el banco busca ahí el chip de la etapa y el de por qué). Una pendiente no tiene marbete: su "Pendiente" va en el cuerpo.
   function filaCelular(a) {
     const linea = Aviso.lineaCorta(a, config);
-    const boton = h('button', { class: 'fila-postulacion', type: 'button', dataset: { match: a.match_id, control: 'abrir', etapa: a.estado_postulacion }, onclick: () => abrirFicha(a, boton) },
-      Aviso.bloqueMatch(a, umbral, false, true),
-      h('span', { class: 'fila-postulacion-datos' },
-        h('span', { class: 'aviso-puesto', text: a.puesto }),
-        h('span', { class: 'atributos' }, a.empresa ? [h('span', { text: a.empresa }), h('span', { 'aria-hidden': 'true', text: '·' }), oculto(', ')] : null,
-          h('span', { text: Aviso.lugar(a) }), a.modalidad ? [h('span', { 'aria-hidden': 'true', text: '·' }), oculto(', '), h('span', { text: T.avisos.modalidadMin[a.modalidad] })] : null),
-        lineaCalificacion(a),
-        h('span', { class: 'linea-etapa' }, chipEtapa(a, false), chipPorQue(a, false)),
-        linea ? h('span', { class: 'traba', text: linea }) : null),
-      icono('i-adelante', 'i-adelante'));
+    const marbete = Aviso.marbete(a, { chip: true });
+    const boton = h('button', { class: 'fila-postulacion carpeta', type: 'button', dataset: { match: a.match_id, control: 'abrir', etapa: a.estado_postulacion }, onclick: () => abrirFicha(a, boton) },
+      h('span', { class: 'linea-etapa' },
+        h('span', { class: 'carpeta-cabeza' }, Aviso.lengueta(a, umbral), marbete ? [oculto(', '), marbete] : null),
+        h('span', { class: 'carpeta-cuerpo fila-postulacion-datos' }, oculto(', '),
+          h('span', { class: 'fila-postulacion-puesto' }, h('span', { class: 'aviso-puesto puesto-texto', text: a.puesto }), icono('i-adelante', 'puesto-flecha')),
+          a.empresa ? [oculto(', '), h('span', { class: 'empresa', text: a.empresa })] : null,
+          oculto(', '), Aviso.atributos(a, { sinFuente: true }),
+          h('span', { class: 'fila-postulacion-chips' }, marbete ? null : chipEtapa(a, false), chipPorQue(a, false), lineaCalificacion(a)),
+          linea ? h('span', { class: 'traba', text: linea }) : null)));
     return boton;
   }
   // El veredicto de requisitos (diseno.md 0.17 §8.3 y §8.6; brand.md 0.5.3 §6.5): en la fila de celular, una línea debajo de los
@@ -396,8 +435,11 @@ Terna.pagina('postulaciones', async (ctx) => {
     return h('div', { class: 'tabla-caja tabla-postulaciones' }, h('table', { class: 'tabla' },
       h('thead', null, h('tr', null, columnas.map(([texto, clave, clase]) => Filtros.encabezado({ texto, clave, clase, activo: cambiado(clave), abierto: filtroAbierto === clave,
         titulo: F.boton(nombreFiltro(clave), resumen(clave)), alAbrir: (b) => abrirFiltro(clave, b, true) })), h('th', { scope: 'col', text: C.aviso }))),
-      // Sin filas, una sola celda con el aviso de vacío, debajo de los encabezados.
-      vacio ? h('tbody', null, h('tr', null, h('td', { class: 'tabla-vacia', colspan: '8' }, vacio))) : h('tbody', null, vis.map(filaTabla))));
+      // Sin filas, una sola celda con el aviso de vacío, debajo de los encabezados. En Por postular, un cuerpo por grupo, con su
+      // título en la primera fila (PLAN-WEB.md §3.3); las filas de datos no cambian.
+      vacio ? h('tbody', null, h('tr', null, h('td', { class: 'tabla-vacia', colspan: '8' }, vacio)))
+        : grupos(vis).map(([titulo, l]) => h('tbody', null,
+          titulo ? h('tr', { class: 'grupo' }, h('th', { scope: 'rowgroup', colspan: '8' }, conCifra(titulo))) : null, l.map(filaTabla)))));
   }
   function filaTabla(a) {
     const llega = Aviso.llega(a, umbral);
@@ -505,7 +547,21 @@ Terna.pagina('postulaciones', async (ctx) => {
     actualizarVistas();
     dibujarLista();
     const abierta = Terna.hojaAbierta();
-    if (abierta && abierta.clave === a.match_id) Terna.reemplazarCuerpoHoja(cuerpoFicha(a), accionesFicha(a));
+    if (abierta && abierta.clave === a.match_id) { Terna.reemplazarCuerpoHoja(cuerpoFicha(a), accionesFicha(a)); marbeteFicha(abierta.el, a); }
+  }
+  // La cabecera de la ficha no se rehace: su marbete cambia en el lugar, así pasa de un color al otro (220 ms, solo el color) y el
+  // foco y el desplazamiento no se mueven. Una pendiente no tiene marbete.
+  function marbeteFicha(el, a) {
+    const cabeza = el.querySelector('.hoja-cabecera .carpeta-cabeza');
+    if (!cabeza) return;
+    const viejo = cabeza.querySelector('.marbete');
+    const nuevo = Aviso.marbete(a, { explicacion: true });
+    if (viejo && nuevo) {
+      viejo.className = nuevo.className;
+      if (nuevo.title) viejo.title = nuevo.title; else viejo.removeAttribute('title');
+      viejo.replaceChildren(...nuevo.childNodes);
+    } else if (viejo) viejo.remove();
+    else if (nuevo) cabeza.append(nuevo);
   }
   // Después de Deshacer: el foco vuelve al botón con el mismo texto que el que se tocó (si sigue estando), o al primero.
   function enfocarFicha(a, etiqueta) {
@@ -596,31 +652,61 @@ Terna.pagina('postulaciones', async (ctx) => {
     }
   }
 
-  /* ---------- Ficha de la postulación (§8.5) ---------- */
-  function cabeceraFicha(a, idTitulo) {
-    return h('div', { class: 'ficha-cabecera' },
-      h('div', null, h('h2', { class: 'ficha-titulo', id: idTitulo, text: a.puesto }),
-        a.empresa ? h('p', { class: 'ficha-empresa', text: a.empresa }) : null, Aviso.atributos(a, { fuente: true, tag: 'p' })),
-      Aviso.bloqueMatch(a, umbral, true));
+  /* ---------- Ficha de la postulación (§8.5) ----------
+     Desde B2 (PLAN-WEB.md §2.9 y §3.3) la cabecera es una carpeta (Aviso.cabezaFicha): la lengüeta grande, que baja a «Por qué
+     ajusta», y el marbete de la etapa. El cuerpo, en el orden de siempre, empieza con los saltos: Paquete, Por qué ajusta y
+     Requisitos, todo a la vista. El pie (las acciones) queda como estaba. */
+  // La sección «Por qué ajusta» de la ficha abierta (o la de requisitos, si no hay razones): adonde baja la lengüeta.
+  let fichaPorQue = null;
+  // Una sección plegada se abre al llegar a ella por un salto o por la lengüeta (con el botón de siempre, así queda su aria-expanded).
+  function desplegar(sec) {
+    const b = sec && sec.querySelector(':scope > .plegable-boton[aria-expanded="false"]');
+    if (b) b.click();
   }
-  // `conCaptura` en false: la captura va más abajo (la ficha de una postulada).
-  function seccionEtapa(a, conCaptura) {
+  function alPorQue() {
+    const nodo = fichaPorQue;
+    if (!nodo || !nodo.isConnected) return;
+    const salto = nodo.id ? document.querySelector('.separador[aria-controls="' + nodo.id + '"]') : null;
+    if (salto) { salto.click(); return; }
+    desplegar(nodo);
+    Aviso.bajarA(nodo);
+  }
+  // El CV y la carta de una postulación a mano, a la vista debajo de "Todo está listo" (PLAN-WEB.md §3.3). El plan sumaba dos pasos
+  // más, abrir el aviso y marcar postulado, pero son los mismos botones del pie, que en el celular queda justo debajo: repetidos,
+  // no se sabía cuál tocar (revisión del 20/11, P1-3). Pasan el toque a los links del paquete: no piden otra firma.
+  function docsAMano(a, paquete) {
+    const docs = paquete ? paquete.querySelectorAll('.fichas-paquete a.ficha-doc') : [];
+    const doc = (origen, texto) => {
+      const l = h('a', { class: 'btn', href: origen.getAttribute('href') || '#', target: '_blank', rel: 'noopener noreferrer' }, icono('i-descargar'), texto);
+      new MutationObserver(() => l.setAttribute('href', origen.getAttribute('href') || '#')).observe(origen, { attributes: true, attributeFilter: ['href'] });
+      l.addEventListener('click', (e) => { e.preventDefault(); origen.click(); });
+      return l;
+    };
+    return docs.length >= 2 ? h('div', { class: 'par-docs docs-a-mano' }, doc(docs[0], T.avisos.ficha.cvPdf), doc(docs[1], T.avisos.ficha.cartaPdf)) : null;
+  }
+  // `conCaptura` en false: la captura va más abajo (la ficha de una postulada). `paquete`: la sección del paquete, para el CV y la carta.
+  function seccionEtapa(a, conCaptura, paquete) {
     const sec = h('section', { class: 'ficha-seccion' });
     sec.append(h('div', { class: 'chips' }, chipEtapa(a), chipPorQue(a, false)), oculto(T.postulaciones.recorridoAccesible(etiquetaEtapa(a))));
     // Por qué está en tu lista, cuando no es lo de siempre: es de tus puestos, la pediste o quedó bajo tu umbral (diseno.md 0.33 §8.5).
     const k = porQue(a);
     if (k && k !== 'sobre_umbral') sec.append(h('p', { class: 'etapa-nota', text: explicacionPorQue(a, k) }));
     const linea = Aviso.lineaEtapa(a, config);
-    if (linea) sec.append(h('p', { text: linea }));
     // Cuántas veces lo intentó Terna (brand.md 0.28 §6.5; Francisco, 13/11/2026: «que los cuente en algún lado y diga la cantidad
     // de veces que lleva intentando»). Los intentos los cuenta el motor; desde 0041 no tienen tope y cada uno después del primero lo
     // pide Francisco con "Volver a probar" desde Operación (operacion.md 0.2; hasta 0.1, la persona).
     const intentos = Number(a.intentos) || 0;
-    if (intentos > 0) sec.append(h('p', { class: 'suave intentos', text: T.postulaciones.intentos(intentos) }));
+    // Cuando la línea de la etapa es la de los intentos ("Terna ya lo intentó 3 veces."), decía lo mismo que la de abajo ("Terna lo
+    // intentó 3 veces."), una sobre otra (revisión del 20/11, P2-11): queda una sola, la de los intentos, en tinta.
+    const repetida = intentos > 0 && linea === T.postulaciones.trabas.intentos_agotados(intentos);
+    if (linea && !repetida) sec.append(h('p', { text: linea }));
+    if (intentos > 0) sec.append(h('p', { class: (repetida ? '' : 'suave ') + 'intentos', text: T.postulaciones.intentos(intentos) }));
     if (a.estado_postulacion === 'a_mano') {
       sec.append(h('p', { text: T.postulaciones.linea.todoListo }));
       const link = linkTraba(a);
       if (link) sec.append(h('p', null, link));
+      const docs = docsAMano(a, paquete);
+      if (docs) sec.append(docs);
     }
     if (a.estado_postulacion === 'enviada' && a.confirmacion_texto) sec.append(h('blockquote', { class: 'suave', text: a.confirmacion_texto }));
     if (a.captura_path && conCaptura !== false) sec.append(captura(a));
@@ -725,11 +811,22 @@ Terna.pagina('postulaciones', async (ctx) => {
   // Una postulada es adonde se vuelve si llaman para una entrevista (brand.md 0.21 §6.5; Francisco, 12/11/2026: "entra, se fija y ve
   // el paquete que le armó específico para esa entrevista"): después de la etapa, el paquete con las notas abiertas; el texto del
   // aviso, plegado (desde diseno.md 0.34); lo que Terna respondió y, al final, la captura.
+  // Arriba de todo, los saltos (Aviso.saltos): uno por sección que exista, y la que estaba plegada se abre al llegar.
   function cuerpoFicha(a) {
+    const paquete = seccionPaquete(a, hecha(a));
+    const razones = Aviso.razones(a, true);
+    const tituloDe = (s) => { const t = s.querySelector(':scope > .plegable-boton > span, :scope > h3'); return t ? t.textContent : ''; };
+    const porQue = razones.find((s) => tituloDe(s) === T.avisos.ficha.porQue) || null;
+    const requisitos = razones.find((s) => tituloDe(s) === T.avisos.ficha.requisitos) || null;
+    fichaPorQue = porQue || requisitos;
+    const secciones = [{ nodo: paquete, texto: T.avisos.columnas.paquete }, { nodo: porQue, texto: T.avisos.ficha.porQue },
+      { nodo: requisitos, texto: T.avisos.ficha.requisitos }].filter((x) => x.nodo);
+    const tira = Aviso.saltos(secciones);
+    if (tira) tira.querySelectorAll('.separador').forEach((b, i) => b.addEventListener('click', () => desplegar(secciones[i].nodo)));
     if (hecha(a)) {
-      return [Aviso.recorridoGrande(a), seccionEtapa(a, false), seccionPaquete(a, true), seccionTextoAviso(a), seccionRespuestas(a), a.captura_path ? captura(a) : null, ...Aviso.razones(a, true)];
+      return [tira, Aviso.recorridoGrande(a), seccionEtapa(a, false), paquete, seccionTextoAviso(a), seccionRespuestas(a), a.captura_path ? captura(a) : null, ...razones];
     }
-    return [Aviso.recorridoGrande(a), seccionEtapa(a), seccionPaquete(a), seccionRespuestas(a), ...Aviso.razones(a, true)];
+    return [tira, Aviso.recorridoGrande(a), seccionEtapa(a, true, paquete), paquete, seccionRespuestas(a), ...razones];
   }
   function accionesFicha(a) {
     const B = T.postulaciones.botones;
@@ -742,23 +839,25 @@ Terna.pagina('postulaciones', async (ctx) => {
       case 'a_mano':
         // Desde operacion.md 0.2 (0054; Francisco, 20/11/2026): «Volver a probar» es de Operación. La persona ve la traba como
         // siempre y le queda postular a mano; la falla le llega a Francisco, que la vuelve a probar desde ops.html.
-        cont.append(Aviso.abrirAviso(a), b(B.marcarPostulado, 'i-enviada', () => conDeshacer(a, 'postulado', H.postulado)), noInteresa);
+        cont.append(Aviso.abrirAviso(a), b(B.marcarPostulado, 'i-tilde', () => conDeshacer(a, 'postulado', H.postulado)), noInteresa);
         break;
       case 'para_revisar':
         cont.append(b(B.enviar, 'i-enviar', () => conDeshacer(a, 'en_cola', H.aprobada), 'btn btn-primario'),
           b(B.postularYo, 'i-a-mano', () => enElActo(a, 'a_mano', H.aMano)), noInteresa);
         break;
+      // En cola, enviada o postulada no queda nada para hacer afuera: "Abrir aviso" va como secundario (PLAN-WEB.md §3.2; revisión
+      // del 20/11, P2-4). Mismo link, misma acción.
       case 'en_cola':
-        cont.append(Aviso.abrirAviso(a), b(B.cancelarEnvio, null, () => enElActo(a, 'pendiente', H.cancelado)), noInteresa);
+        cont.append(Aviso.abrirAviso(a, 'btn btn-ancho'), b(B.cancelarEnvio, null, () => enElActo(a, 'pendiente', H.cancelado)), noInteresa);
         break;
       case 'enviada':
-        cont.append(Aviso.abrirAviso(a), noInteresa);
+        cont.append(Aviso.abrirAviso(a, 'btn btn-ancho'), noInteresa);
         break;
       case 'postulado':
-        cont.append(Aviso.abrirAviso(a), b(B.volverAPendiente, null, () => enElActo(a, 'pendiente', H.pendiente)), noInteresa);
+        cont.append(Aviso.abrirAviso(a, 'btn btn-ancho'), b(B.volverAPendiente, null, () => enElActo(a, 'pendiente', H.pendiente)), noInteresa);
         break;
       default:
-        cont.append(Aviso.abrirAviso(a), b(B.marcarPostulado, 'i-enviada', () => conDeshacer(a, 'postulado', H.postulado)), noInteresa);
+        cont.append(Aviso.abrirAviso(a), b(B.marcarPostulado, 'i-tilde', () => conDeshacer(a, 'postulado', H.postulado)), noInteresa);
     }
     return [cont, notas];
   }
@@ -777,7 +876,7 @@ Terna.pagina('postulaciones', async (ctx) => {
       else history.pushState({ ficha: a.match_id }, '', '#postulacion-' + a.match_id);
     }
     const idTitulo = Terna.idUnico('ficha');
-    Terna.abrirHoja({ cabecera: cabeceraFicha(a, idTitulo), idTitulo, cuerpo: cuerpoFicha(a), acciones: accionesFicha(a), enLinea: true,
+    Terna.abrirHoja({ cabecera: Aviso.cabezaFicha({ a, idTitulo, umbral, alPorQue }), idTitulo, cuerpo: cuerpoFicha(a), acciones: accionesFicha(a), enLinea: true,
       origen: origen || lista.querySelector('[data-match="' + a.match_id + '"]'), clave: a.match_id,
       alCerrar: (porUsuario) => { marcarElegida(); if (porUsuario) limpiarHash(); } });
     marcarElegida();

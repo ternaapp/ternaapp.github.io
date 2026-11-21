@@ -1,0 +1,249 @@
+/* Hallmark · shape: app screen · genre: editorial · theme: custom (Sello) (paquete P2 de opciones-v3/PLAN-WEB.md: Avisos y Búsqueda sobre las piezas de css/terna.css, 2026-11-20)
+ * nav: the site shell of css/terna.css (bar and dock under 64rem, rail from 64rem); Avisos adds «Buscar entre todos» beside its h1 · footer: the two plain lines of the site · hero: none, Avisos opens on its h1 and the lilac «por decidir» banner, Búsqueda on its h1 and the search field · signature: postings with a package are folders (lilac tab with the match, state label beside it), the rest are loose lines with the match (or a magnifier) in a 44px column · states: te toca (amber wash on the line), espera (neutral with a clock), resuelta (solid green), falló (red tint), empty, loading, error
+ * axes: neutral-cool-paper/rounded-geometric-humanist/restrained-violet · posture: restrained · contrast: pass · modes: light+dark · data: live */
+
+/* Terna · css/p-avisos.css · Avisos y Búsqueda
+   Las reglas propias de avisos.html y busqueda.html; se carga después de css/terna.css, que trae las fichas, la cáscara y las
+   piezas comunes (la carpeta, la línea suelta, el cartel .toca, las vistas, los filtros, la tabla, la ficha). Es del paquete P2
+   (opciones-v3/PLAN-WEB.md §3.2 y §3.7): acá va solo cómo se ordenan esas piezas en estas dos páginas, con las fichas nuevas.
+   Celular primero; desde 48rem, la tabla y la franja de arriba en dos columnas. Las tablas se adaptan a su caja (@container
+   tabla), con los mismos cortes de antes. */
+
+/* ---------- 1. La cabeza de la página ---------- */
+/* Avisos: el título y, a la derecha, «Buscar entre todos» (la puerta a Búsqueda; en el celular no está en el muelle). */
+.cabecera-pagina > .btn-buscar { margin-left: auto; gap: var(--space-xs); }
+.btn-buscar .icono { width: 16px; height: 16px; color: var(--color-muted); }
+/* Búsqueda: «de 61 empresas» no entra en el renglón del título del celular. */
+.cuenta-empresas { display: none; }
+
+/* ---------- 2. Avisos, arriba de la lista: el cartel, las vistas y Próximos paquetes ---------- */
+.avisos-arriba { display: flex; flex-direction: column; gap: var(--space-sm); min-width: 0; }
+.avisos-arriba:not(:has(> :not([hidden]))) { display: none; }
+.vistas-nota { color: var(--color-muted); font-size: var(--text-sm); line-height: 1.4; }
+.vistas-nota:empty { display: none; }
+
+/* Próximos paquetes: un plegable abierto, por reglas; el título y la cuenta en la línea que lo pliega. */
+#proximos { min-width: 0; }
+#proximos summary h2 { font: var(--weight-strong) var(--text-lg)/1.3 var(--font-body); text-wrap: balance; }
+#proximos summary:hover h2 { text-decoration: underline; text-decoration-color: var(--color-accent); text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
+#proximos .plegable-cuerpo { gap: var(--space-xs); }
+.proximos-lista { display: flex; flex-direction: column; }
+.proximo { display: grid; grid-template-columns: var(--space-lg) minmax(0, 1fr) auto; align-items: center; gap: var(--space-2xs) var(--space-sm); padding: var(--space-xs) 0; border-top: var(--rule-hair) solid var(--color-rule); }
+.proximo:first-child { border-top: 0; }
+.proximo-lugar { color: var(--color-muted); font: var(--weight-strong) var(--text-md)/1 var(--font-body); font-variant-numeric: tabular-nums; text-align: right; }
+.proximo-datos { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3xs); min-width: 0; }
+.proximo-datos .puesto { font-size: var(--text-md); }
+.proximo-detalle { display: flex; flex-wrap: wrap; column-gap: var(--space-sm); color: var(--color-muted); font-size: var(--text-sm); line-height: 1.35; }
+/* En el celular va al final de la página, después de la lista (js/avisos.js mueve el elemento): aire arriba. */
+#contenido > #proximos { margin-top: var(--space-lg); }
+/* «Próxima corrida» es espera: la tiene Terna. Tinta suave con el reloj, sin ámbar. */
+.proximo-cuando { display: inline-flex; align-items: center; gap: var(--space-3xs); font-weight: var(--weight-strong); white-space: nowrap; }
+.proximo-acciones { display: flex; gap: var(--space-2xs); }
+.proximo-acciones .btn { width: var(--control-s); padding: 0; }
+/* En un teléfono angosto los tres botones van debajo del puesto: al lado le dejaban 100 px y partía en cuatro renglones. */
+@media (max-width: 24rem) {
+  .proximo { grid-template-columns: var(--space-lg) minmax(0, 1fr); }
+  .proximo-acciones { grid-column: 2; }
+}
+.proximos-pie { padding-top: var(--space-xs); border-top: var(--rule-hair) solid var(--color-rule); color: var(--color-muted); font-size: var(--text-sm); line-height: 1.4; }
+
+/* ---------- 3. Filtros y orden ---------- */
+/* En el celular, la barra que se desplaza y, debajo, lo que dice el estado de los filtros con el orden a la derecha (parte en dos
+   renglones si no entra). En Avisos el contenedor lo arma js/avisos.js (.controles-lista); en Búsqueda está en su .html. */
+:is(.controles-lista, .busqueda-controles) { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2xs) var(--space-md); min-width: 0; }
+:is(.controles-lista, .busqueda-controles) > .filtros { display: contents; }
+:is(.controles-lista, .busqueda-controles) .filtros-caja { flex: 0 0 calc(100% + 2 * var(--gutter)); min-width: 0; }
+:is(.controles-lista, .busqueda-controles) .filtros-estado { flex: 1 1 auto; }
+:is(.controles-lista, .busqueda-controles) > .herramientas { flex: 0 1 auto; margin-left: auto; }
+.filtro-prefs { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3xs) var(--space-xs); }
+.filtro-prefs .btn { margin-left: calc(-1 * var(--space-xs)); }
+
+/* ---------- 4. La lista del celular: carpetas y líneas sueltas ---------- */
+/* Entre dos carpetas, aire; las líneas van una debajo de otra, separadas por su regla; una línea después de una carpeta, cerca. */
+.lista-tarjetas { display: flex; flex-direction: column; }
+.lista-tarjetas > li { min-width: 0; }
+.lista-tarjetas > li + li { margin-top: var(--space-md); }
+.lista-tarjetas > li:has(> .linea) + li:has(> .linea) { margin-top: 0; }
+.lista-tarjetas > li:has(> .carpeta) + li:has(> .linea) { margin-top: var(--space-xs); }
+.lista-tarjetas > li:has(> .linea) + li:has(> .toca-fila), .lista-tarjetas > li:has(> .toca-fila) + li:has(> .linea) { margin-top: var(--space-2xs); }
+/* «No me interesa» la saca con un fundido corto, sin corrimiento: lo que se va no parece algo que llega. */
+.tarjeta-aviso.saliendo { opacity: 0; transition: opacity var(--dur-pill) var(--ease-in); }
+
+/* El puesto abre la ficha: su texto, «nuevo» pegado a él y la flecha al final. */
+.tarjeta-aviso .puesto .nuevo { margin-right: auto; }
+.tarjeta-aviso .puesto-texto { flex: 0 1 auto; }
+
+/* La carpeta: debajo de la empresa, una sola línea con el lugar, la modalidad, «Tu puesto» y la fecha al final. */
+.aviso-linea { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2xs) var(--space-sm); color: var(--color-muted); font-size: var(--text-sm); line-height: 1.35; }
+.aviso-linea > .atributos, .tarjeta-aviso .linea-apoyo > .atributos { display: contents; }
+.aviso-linea > .fecha { margin-left: auto; }
+/* Más baja que la de P1 (FEEDBACK-1 P2-5): 4 px entre renglones y la regla de las acciones más cerca. */
+.tarjeta-aviso .carpeta-cuerpo { gap: var(--space-2xs); padding-block: var(--space-sm); }
+.tarjeta-aviso .carpeta-acciones { margin-top: var(--space-2xs); padding-top: var(--space-xs); }
+/* Me interesa y No me interesa, del mismo ancho, al pie de la carpeta; a 320 px siguen en un renglón. */
+.carpeta-acciones.interes > .chip-opcion { flex: 1 1 0; }
+.carpeta-acciones.interes .chip-opcion-cara { flex: 1; justify-content: center; }
+@media (max-width: 23rem) {
+  .carpeta-acciones.interes { flex-wrap: nowrap; }
+  .carpeta-acciones.interes .chip-opcion-cara { padding-inline: var(--space-xs); }
+}
+
+/* La línea: el match a la izquierda; a la derecha el puesto, la empresa con el lugar y la modalidad, los chips y la fecha. */
+.tarjeta-aviso .linea-apoyo { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2xs) var(--space-sm); }
+.tarjeta-aviso .linea-apoyo .aviso-empresa { color: var(--color-ink-2); }
+.linea-pie > .chips { flex: 1 1 auto; min-width: 0; }
+.linea-pie > .fecha { flex: none; align-self: flex-start; margin-left: auto; padding-top: var(--space-2xs); }
+/* «Pedir» al lado de los chips mide 36 px a la vista, como ellos, con 44 de zona de toque (FEEDBACK-1 P2-6). */
+.linea-pie .btn-fila { position: relative; min-height: calc(var(--space-xl) + var(--space-2xs)); }
+.linea-pie .btn-fila::after { content: ""; position: absolute; inset: calc(-1 * var(--space-2xs)) 0; }
+@media (min-width: 22rem) {
+  .linea-pie { flex-wrap: nowrap; }
+}
+.acciones-tarjeta { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-xs); }
+.linea-acciones.acciones-tarjeta { justify-content: flex-start; }
+
+/* Lo que se hace con el paquete, al lado de su chip: el lugar de un pedido o quién busca el texto. Es espera: tinta suave. */
+.pedido-lugar, .sin-texto-linea { color: var(--color-muted); font-size: var(--text-sm); line-height: 1.3; }
+.celda-paquete { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2xs); }
+/* «Tu puesto» y «Empresa que seguís» debajo del puesto, en la tabla: un aviso puede llevar los dos. */
+.linea-tuya { display: flex; flex-wrap: wrap; gap: 0 var(--space-sm); }
+
+/* Búsqueda: el pie de cada aviso, con la fecha a la izquierda y, a la derecha, adónde seguirlo y Pedir paquete. */
+.tarjeta-pie { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs) var(--space-sm); align-self: stretch; min-height: var(--space-xl); }
+.linea .tarjeta-pie { margin-top: var(--space-2xs); }
+.tarjeta-pie > .fecha-aviso { margin-left: 0; }
+.tarjeta-pie > .acciones-tarjeta { margin-left: auto; }
+.link-lista { font-size: var(--text-sm); white-space: nowrap; }
+/* Los links sueltos de estas páginas con 44 px de zona de toque (FEEDBACK-1 P2-9): el relleno agranda la zona y el margen
+   negativo lo descuenta, así el renglón no crece. En la tabla, con puntero, alcanza con 28. */
+:is(.link-lista, .filtros-estado a, .avisos-busqueda a, .busqueda-pie a, .vacio p a) { padding-block: var(--space-sm); margin-block: calc(-1 * var(--space-sm)); }
+.tabla .link-lista { padding-block: var(--space-2xs); margin-block: calc(-1 * var(--space-2xs)); }
+/* Búsqueda, tabla: tu match va al lado del chip de la celda «En tu lista», no adentro (PLAN-WEB.md §2.7). */
+.lista-estado { display: inline-flex; align-items: center; gap: var(--space-xs); }
+.lista-match { font: var(--weight-display) var(--text-md)/1 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-display); }
+.lista-match.bajo { color: var(--color-muted); }
+.en-descripcion .icono { color: var(--color-muted); }
+/* La lupa, donde iría el match: el aviso no está en tu lista y Terna todavía no lo puntuó para vos. */
+.linea-lupa { padding-top: var(--space-2xs); }
+
+/* Los tres grupos de lo escrito, cada uno con su título. */
+#lista > .grupo-titulo { margin-bottom: var(--space-xs); }
+#lista > .grupo-titulo ~ .grupo-titulo { margin-top: var(--space-xl); }
+.grupo-titulo .num { font-variant-numeric: tabular-nums; }
+
+/* ---------- 5. Búsqueda: el buscador ---------- */
+/* A todo el ancho en el celular: 48 px, la lupa a la izquierda y «Borrar» adentro, a la derecha. */
+.buscador { display: flex; flex-direction: column; gap: var(--space-2xs); }
+.buscador-caja { position: relative; display: flex; align-items: center; max-width: 760px; }
+.buscador-icono { position: absolute; left: var(--space-sm); width: 20px; height: 20px; color: var(--color-muted); pointer-events: none; }
+.buscador-campo { min-height: var(--space-2xl); padding: 0 var(--space-2xl) 0 calc(var(--space-sm) + var(--space-ml) + var(--space-xs)); }
+.buscador-campo::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.buscador-borrar { position: absolute; right: var(--space-3xs); width: 44px; min-height: 44px; padding: 0; color: var(--color-muted); text-decoration: none; }
+.buscador-borrar:hover { color: var(--color-ink); }
+/* El foco de «Borrar» va por dentro del campo: por fuera tapaba su borde. */
+.buscador-borrar:focus-visible { outline-offset: calc(-1 * var(--space-2xs)); }
+.buscador-borrar:active { transform: scale(0.94); }
+.buscador-borrar[hidden] { display: none; }
+.buscador-estado { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3xs) var(--space-xs); min-height: var(--space-ml); color: var(--color-muted); font-size: var(--text-sm); line-height: 1.4; }
+.buscador-estado .btn { margin-left: calc(-1 * var(--space-2xs)); }
+.buscador-estado:empty { display: none; }
+.mas-resultados { display: flex; flex-direction: column; align-items: center; gap: var(--space-xs); padding: var(--space-md) 0 var(--space-2xs); font-size: var(--text-sm); }
+dl.respuestas.datos-aviso { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xs) var(--space-md); }
+dl.respuestas.datos-aviso > div { padding: 0; border-top: 0; }
+/* La cruz de la ficha sin lengüeta (Aviso.cabezaFicha con sinLengueta, que solo usa Búsqueda) está en css/terna.css §6, con la de
+   las demás fichas. */
+
+/* ---------- 6. Debajo de la lista ---------- */
+.avisos-busqueda, .busqueda-pie { color: var(--color-muted); font-size: var(--text-sm); line-height: 1.45; }
+
+/* ---------- 7. Las tablas (escritorio) ---------- */
+/* Se adaptan a su caja y no a la ventana: con el carril o el cajón abierto, lo que no entra pasa a la línea de apoyo, debajo del
+   puesto, en vez de desplazarse. Densas: 14 px con 6 de relleno a los costados (son once columnas). */
+.tabla-avisos, .tabla-busqueda { display: none; container: tabla / inline-size; }
+.tabla-avisos .linea-apoyo, .tabla-busqueda .linea-apoyo { display: none; }
+.tabla-vacia .vacio { padding-top: 0; border-top: 0; }
+.puesto-linea .nuevo { margin-left: var(--space-xs); }
+/* En la tabla «nuevo» va con contorno: la fila elegida y la que está bajo el puntero toman el gris de su relleno. */
+.tabla .nuevo { background: transparent; box-shadow: inset 0 0 0 var(--rule-hair) var(--color-rule-2); }
+.tabla .aviso-puesto { font-weight: var(--weight-strong); line-height: 1.35; }
+.tabla tbody:first-of-type .grupo th { padding-top: var(--space-sm); }
+.tabla .grupo .grupo-titulo { font-size: var(--text-sm); }
+/* En una celda angosta el ícono del lugar o de la modalidad queda al lado de su texto, que parte en dos renglones. */
+:is(.tabla-avisos, .tabla-busqueda) td > .atributos { flex-wrap: nowrap; align-items: flex-start; }
+:is(.tabla-avisos, .tabla-busqueda) td > .atributos > .icono { margin-top: var(--space-3xs); }
+
+@media (min-width: 48rem) {
+  .cuenta-empresas { display: inline; }
+  .tabla-avisos, .tabla-busqueda { display: block; }
+
+  /* Avisos: el cartel y las vistas a la izquierda, Próximos paquetes a la derecha, en la misma franja. */
+  .avisos-arriba { display: grid; grid-template-columns: minmax(20rem, 5fr) minmax(0, 7fr); grid-template-rows: auto 1fr; gap: var(--space-sm) var(--space-xl); align-items: start; }
+  .avisos-arriba > #por-decidir, .avisos-arriba > #vistas { grid-column: 1; }
+  .avisos-arriba > #proximos { grid-column: 2; grid-row: 1 / span 2; }
+
+  /* Avisos: la barra en un renglón, con «Más filtros»; debajo, el estado de los filtros y, a la derecha, el orden. */
+  .controles-lista { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+  .controles-lista .filtros-caja { grid-column: 1 / -1; }
+  /* Búsqueda: los filtros y su estado a la izquierda; el orden arriba a la derecha, al lado de la barra. */
+  .busqueda-controles { flex-wrap: nowrap; align-items: flex-start; }
+  .busqueda-controles > .filtros { display: flex; flex: 1 1 auto; }
+  .busqueda-controles .filtros-caja { flex: none; }
+  :is(.controles-lista, .busqueda-controles) > .herramientas { flex: none; }
+  :is(.controles-lista, .busqueda-controles) .orden { white-space: nowrap; }
+
+  .tabla-avisos .tabla th, .tabla-avisos .tabla td, .tabla-busqueda .tabla th, .tabla-busqueda .tabla td { padding: var(--space-xs) calc(var(--space-2xs) + var(--space-3xs)); }
+  .tabla-avisos .tabla :is(td.tabla-match, th.der) { padding-right: var(--space-sm); }
+  .tabla-avisos .chip-opcion-cara { min-height: calc(var(--space-lg) + var(--space-2xs)); padding: 0 var(--space-xs); font-size: var(--text-xs); white-space: nowrap; }
+  /* Debajo del puesto, el veredicto, «Tu puesto» y «Empresa que seguís» comparten renglón si entran (FEEDBACK-1 P2-1). */
+  .tabla-avisos .col-puesto > :is(div:not([class]), .linea-tuya) { display: inline-flex; margin-right: var(--space-sm); vertical-align: top; }
+  #proximos .proximo { padding: var(--space-2xs) 0; }
+  /* Densas también en los chips: 8 de relleno en vez de 12, y lo que va debajo del puesto («Cumplís los requisitos», «Tu puesto»)
+     parte en dos renglones antes de ensanchar la columna. Así a 768 y a 1024 la tabla entra en su caja. */
+  :is(.tabla-avisos, .tabla-busqueda) .chip { padding-inline: var(--space-xs); }
+  :is(.tabla-avisos, .tabla-busqueda) .col-puesto .chip-texto { white-space: normal; }
+  .tabla-avisos .btn-fila, .tabla-busqueda .btn-fila { padding: 0 var(--space-xs); font-size: var(--text-xs); }
+  .tabla-avisos .interes { flex-direction: row; flex-wrap: nowrap; align-items: center; gap: var(--space-2xs); }
+  /* Dónde se postula parte su palabra en dos renglones antes de ensanchar la tabla. */
+  .tabla-avisos td.col-donde { max-width: 120px; }
+  .tabla-busqueda td.col-donde { max-width: 150px; }
+  .tabla-busqueda td.col-empresa { max-width: 220px; overflow-wrap: anywhere; }
+  .tabla-busqueda td.col-ubicacion { max-width: 240px; }
+  .tabla-busqueda td.col-publicado { white-space: nowrap; }
+
+  /* Las tres opciones de Match según el umbral, en un renglón del panel de 360 px. */
+  .hoja.panel .chips-modos .chip-opcion-cara { min-height: var(--space-xl); padding: 0 calc(var(--space-2xs) + var(--space-3xs)); font-size: var(--text-xs); }
+  .hoja.panel .chips-modos { gap: var(--space-2xs); }
+}
+@container tabla (max-width: 1340px) {
+  .tabla-avisos .interes { flex-direction: column; align-items: stretch; }
+}
+@container tabla (max-width: 1240px) {
+  .tabla-avisos .col-modalidad, .tabla-avisos .col-ubicacion { display: none; }
+  .tabla-avisos .linea-apoyo { display: block; margin-top: var(--space-3xs); }
+  .tabla-avisos .apoyo-empresa, .tabla-avisos .apoyo-donde { display: none; }
+}
+@container tabla (max-width: 1060px) {
+  .tabla-avisos .col-donde { display: none; }
+  .tabla-avisos .apoyo-donde { display: inline; }
+}
+@container tabla (max-width: 930px) {
+  .tabla-avisos .col-publicado { display: none; }
+  .tabla-avisos .tabla th, .tabla-avisos .tabla td { padding-left: var(--space-2xs); padding-right: var(--space-2xs); }
+}
+@container tabla (max-width: 780px) {
+  .tabla-avisos .col-empresa { display: none; }
+  .tabla-avisos .apoyo-empresa { display: inline; }
+}
+@container tabla (max-width: 1000px) {
+  .tabla-busqueda .col-publicado { display: none; }
+}
+@container tabla (max-width: 880px) {
+  .tabla-busqueda .col-ubicacion, .tabla-busqueda .col-donde { display: none; }
+  .tabla-busqueda .linea-apoyo { display: block; margin-top: var(--space-3xs); }
+  .tabla-busqueda .apoyo-empresa { display: none; }
+}
+@container tabla (max-width: 640px) {
+  .tabla-busqueda .col-empresa { display: none; }
+  .tabla-busqueda .apoyo-empresa { display: inline; }
+  .tabla-busqueda .tabla th, .tabla-busqueda .tabla td { padding-left: var(--space-2xs); padding-right: var(--space-2xs); }
+}
