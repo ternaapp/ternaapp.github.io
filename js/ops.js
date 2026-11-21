@@ -17,7 +17,7 @@
 (function () {
   const { h, icono, vaciar } = Terna;
   const O = window.TO;
-  const SECCIONES = ['hoy', 'fallas', 'busqueda', 'postulaciones', 'paquetes', 'problemas', 'personas', 'corridas', 'ajustes', 'registro'];
+  const SECCIONES = ['hoy', 'fallas', 'busqueda', 'postulaciones', 'paquetes', 'problemas', 'personas', 'contratar', 'corridas', 'ajustes', 'registro'];
   const FRESCO_S = 12 * 3600 - 120; // la base pide un código de las últimas 12 horas (ops_exigir)
 
   /* ---------- La sesión propia del portal ---------- */
@@ -36,6 +36,7 @@
       fallas: leer('ventana.fallas', 30), uso: leer('ventana.uso', 7) },
     fallas: { estado: 'abiertas', motivo: null, sitio: null, buscar: '' },
     personas: leer('personas.vista', 'usuarios'),
+    contratar: leer('contratar.vista', 'revisar'),
     busqueda: leer('busqueda.vista', 'sitios'),
     sitios: { filtro: 'problemas', fuente: '', buscar: '' },
     directorio: { filtro: 'pendientes', buscar: '' },
@@ -111,6 +112,8 @@
     },
   };
   const admin = window.OpsAdmin(api);
+  // Terna para contratar (contratar.md 0.1 §7; 0055): js/ops-contratar.js. Sin ese archivo, la sección no se ofrece.
+  const contrata = window.OpsContratar ? window.OpsContratar(api) : null;
 
   /* ---------- Encabezado propio ---------- */
   function dibujarCabecera(conSesion) {
@@ -355,6 +358,7 @@
       else if (estado.seccion === 'paquetes') await paquetes();
       else if (estado.seccion === 'problemas') await problemas();
       else if (estado.seccion === 'personas') await personas();
+      else if (estado.seccion === 'contratar') await contratar();
       else if (estado.seccion === 'corridas') await corridas();
       else if (estado.seccion === 'ajustes') await ajustes();
       else await registro();
@@ -535,6 +539,17 @@
         if (g === 'bien' && Number(uc.duracion_s) >= 0.8 * max * 60) g = 'mirar';
       }
       tarjetas.push({ g, titulo: H.capacidad.titulo, cifra: num(pe.activas), etiqueta: H.capacidad.etiqueta(pe.activas), lineas, ir: H.capacidad.ir, destino: () => ir('corridas') });
+    }
+    // Terna para contratar (contratar.md 0.1 §7): los avisos que esperan tu revisión o que alguien marcó, solo si hay.
+    if (contrata) {
+      const rc = await api.rpc('ops_contrata_por_revisar');
+      const pc = rc.error ? [] : rc.data || [];
+      if (pc.length) {
+        const HC = O.contratar.hoy;
+        const enRev = pc.filter((x) => x.estado === 'en_revision').length;
+        tarjetas.push({ g: 'mirar', titulo: HC.titulo, cifra: num(pc.length), etiqueta: HC.etiqueta(pc.length),
+          lineas: [enRev ? HC.enRevision(enRev) : null, pc.length - enRev ? HC.marcados(pc.length - enRev) : null].filter(Boolean), ir: HC.ir, destino: () => { estado.contratar = 'revisar'; ir('contratar'); } });
+      }
     }
     const orden = { roto: 0, mirar: 1, bien: 2 };
     tarjetas.sort((a, b) => orden[a.g] - orden[b.g]);
@@ -1251,6 +1266,17 @@
         vista === 'uso' ? selectorVentana('uso', [7, 30]) : null),
       cont);
     if (vista === 'uso') await admin.uso(cont, estado.ventana.uso); else await admin.usuarios(cont);
+  }
+  async function contratar() {
+    const V = O.contratar;
+    const vista = Object.keys(V.vistas).includes(estado.contratar) ? estado.contratar : 'revisar';
+    const cont = h('div', { class: 'op-lista op-admin op-contratar' });
+    vaciar(raiz);
+    raiz.append(encabezado(O.secciones.contratar, V.intro),
+      h('div', { class: 'herramientas' }, segmentado(V.vistasNombre, Object.entries(V.vistas), vista, (v) => { estado.contratar = v; guardar('contratar.vista', v); cargar(); })),
+      cont);
+    if (!contrata) return;
+    await contrata[vista](cont);
   }
   async function ajustes() {
     const cont = h('div', { class: 'op-lista op-admin' });

@@ -824,9 +824,9 @@ Terna.pagina('postulaciones', async (ctx) => {
     const tira = Aviso.saltos(secciones);
     if (tira) tira.querySelectorAll('.separador').forEach((b, i) => b.addEventListener('click', () => desplegar(secciones[i].nodo)));
     if (hecha(a)) {
-      return [tira, Aviso.recorridoGrande(a), seccionEtapa(a, false), paquete, seccionTextoAviso(a), seccionRespuestas(a), a.captura_path ? captura(a) : null, ...razones];
+      return [tira, Aviso.recorridoGrande(a), seccionEtapa(a, false), Aviso.seccionTerna(a), paquete, seccionTextoAviso(a), seccionRespuestas(a), a.captura_path ? captura(a) : null, ...razones];
     }
-    return [tira, Aviso.recorridoGrande(a), seccionEtapa(a, true, paquete), paquete, seccionRespuestas(a), ...razones];
+    return [tira, Aviso.recorridoGrande(a), seccionEtapa(a, true, paquete), Aviso.seccionTerna(a), paquete, seccionRespuestas(a), ...razones];
   }
   function accionesFicha(a) {
     const B = T.postulaciones.botones;

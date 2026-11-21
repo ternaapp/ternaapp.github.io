@@ -1,0 +1,56 @@
+/* Terna · css/contratar.css
+   Terna para contratar (contratar.html; contratar.md §7). Toma de css/terna.css las fichas y las piezas del v3 «Sello», y de
+   css/ops.css el encabezado en papel, las secciones como separadores, la carpeta de acceso y las tarjetas (la página usa
+   `pagina-ops` además de `pagina-contratar`). Acá, solo lo propio: la cuenta en el encabezado, las cifras de un aviso, el match
+   como lengüeta lila, lo que cumple, la grilla del formulario y el link para copiar. Todo color sale de una ficha, en claro y oscuro. */
+
+/* La cuenta, al lado del sello: el nombre, o la lista si la persona maneja más de una. */
+.co-nombre-cuenta { min-width: 0; overflow: hidden; color: var(--color-ink-2); font-weight: var(--weight-strong); font-size: var(--text-sm); text-overflow: ellipsis; white-space: nowrap; }
+.co-cuenta { max-width: 40vw; min-height: var(--control-s); font-size: var(--text-sm); }
+
+.co-fila { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-md); }
+
+/* Las cifras de un aviso: cifras grandes en Lexend, la etiqueta debajo; dos columnas en el celular, tres desde 768. */
+.co-cifras { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); margin: var(--space-xs) 0; }
+.co-cifra { display: flex; flex-direction: column; gap: var(--space-3xs); min-width: 0; }
+.co-cifra .cifra-numero { font-size: var(--text-2xl); }
+.co-cifra-etiqueta { color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.35; }
+@media (min-width: 768px) { .co-cifras { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* El match de una persona: el número sobre la lengüeta lila, como en la web de quien busca (nunca sobre un color de estado). */
+.co-lengueta {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; min-width: 48px; min-height: var(--marbete);
+  padding: 0 var(--space-xs); border-radius: var(--radius-tab); background: var(--color-accent-tint); color: var(--color-accent);
+  font: var(--weight-display) var(--text-lg)/1 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-display);
+}
+
+/* Lo que cumple de tu aviso: una lista con el tilde de «resuelta». */
+.co-cumple { display: flex; flex-direction: column; gap: var(--space-3xs); margin: 0; padding: 0; list-style: none; font-size: var(--text-sm); }
+.co-cumple li { display: flex; gap: var(--space-xs); line-height: 1.4; overflow-wrap: anywhere; }
+.co-cumple li::before { content: "✓"; flex: none; color: var(--color-done); font-weight: var(--weight-strong); }
+
+.co-marcar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); }
+.co-marcar .control { width: auto; min-width: 160px; }
+
+/* El formulario del aviso: en una columna en el celular; los datos cortos en dos o tres columnas desde 768. */
+.co-form { max-width: 760px; }
+.co-grilla { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-md); }
+@media (min-width: 768px) { .co-grilla { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .co-form .co-grilla { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.co-salario { display: flex; flex-direction: column; gap: var(--space-xs); margin: 0; padding: 0; border: 0; }
+.co-salario legend { padding: 0; font-weight: var(--weight-strong); }
+.co-contador { text-align: right; font-variant-numeric: tabular-nums; }
+.pagina-contratar textarea.control { min-height: 8lh; resize: vertical; line-height: 1.5; }
+
+/* El texto del aviso, como lo escribió quien contrata (con sus saltos de línea). */
+.co-parrafos { max-width: 70ch; white-space: pre-wrap; line-height: 1.55; overflow-wrap: anywhere; }
+.co-texto { display: flex; flex-direction: column; gap: var(--space-sm); }
+
+/* El link de una invitación al equipo, para copiar. */
+.co-link-caja { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-xs); }
+.co-link-caja:empty { display: none; }
+.co-ya-tengo { display: flex; flex-direction: column; gap: var(--space-sm); }
+.co-ya-tengo[hidden] { display: none; }
+#contratar { display: flex; flex-direction: column; gap: var(--space-lg); min-width: 0; }
+/* «Tus avisos», arriba del detalle: a la izquierda, no estirado al ancho de la columna. */
+#contratar > .btn-texto { align-self: flex-start; }

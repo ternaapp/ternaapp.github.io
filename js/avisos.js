@@ -585,6 +585,8 @@ Terna.pagina('avisos', async (ctx) => {
 
   function nodoDe(a) { return lista.querySelector('[data-match="' + a.match_id + '"]'); }
   // Rehace la tarjeta o la fila de un aviso y devuelve el foco al mismo control.
+  // Un aviso publicado en Terna (contratar.md 0.1 §5): después de postular, retirar, responder o avisar, se rehace en el lugar.
+  Aviso.alCambiarTerna((a) => refrescar(a));
   function refrescar(a) {
     const viejo = nodoDe(a);
     if (viejo) {
@@ -1026,7 +1028,7 @@ Terna.pagina('avisos', async (ctx) => {
     ];
     if (a.match !== null && a.tiene_texto) partes.push(accionesAviso(a, 'ficha'));
     if (conMotivo && a.interes === 'no_me_interesa') partes.push(Aviso.lineaMotivo(a, () => refrescar(a)));
-    partes.push(...razones, paquete, Aviso.seccionPostulacion(a, config, prefs));
+    partes.push(...razones, paquete, Aviso.seccionTerna(a), Aviso.seccionPostulacion(a, config, prefs));
     return partes;
   }
   // «Abrir aviso en …» es el primario solo cuando hay algo para hacer afuera (PLAN-WEB.md §3.2): con la postulación enviada,

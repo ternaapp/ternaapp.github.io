@@ -251,6 +251,9 @@ b.nuevo, .nuevo {
 .donde { display: inline-flex; align-items: flex-start; gap: var(--space-2xs); color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.35; }
 .donde .icono { width: 16px; height: 16px; margin-top: var(--space-3xs); color: var(--color-muted); }
 .donde-terna, .donde-confirmar, .donde-hecha { color: var(--color-muted); }
+/* Publicado en Terna (contratar.md 0.1 §5): la línea que ocupa el lugar del botón y la propuesta de postular. */
+.terna-nota { align-self: center; font-size: var(--text-sm); }
+.terna-propuesta { font-weight: var(--weight-strong); }
 .donde-linea { display: flex; margin-top: var(--space-2xs); }
 .donde-linea.donde-easy_apply, .donde-linea.donde-empresa, .donde-linea.donde-portal { color: var(--color-ink); font-weight: var(--weight-strong); }
 .donde-ficha .donde { color: var(--color-ink); font-size: var(--text-md); font-weight: var(--weight-strong); }

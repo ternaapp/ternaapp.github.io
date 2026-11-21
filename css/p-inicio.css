@@ -158,3 +158,8 @@ a.barra-link:hover { color: var(--color-ink); }
   .barra-relleno, .semana-col.actual .semana-barra { forced-color-adjust: none; background: CanvasText; }
   .barra-resto, .semana-barra { forced-color-adjust: none; background: GrayText; }
 }
+
+/* Las propuestas de postular de quien contrata en Terna (contratar.md 0.1 §5): un pozo con un link por aviso. */
+.propuestas-terna p { max-width: 65ch; line-height: 1.45; }
+.propuestas-lista { display: flex; flex-direction: column; gap: var(--space-2xs); margin: 0; padding: 0; list-style: none; }
+.propuestas-lista a { display: inline-flex; align-items: center; gap: var(--space-xs); min-height: var(--control-s); font-weight: var(--weight-strong); }

@@ -567,6 +567,19 @@ Terna.pagina('inicio', async (ctx) => {
   Terna.cuentaToca(tocan.length);
   if (tocan.length && !secHoy.isConnected) (tarjetaCuentas && tarjetaCuentas.isConnected ? tarjetaCuentas : tablero).before(secHoy);
   dibujarHoy(tocan);
+  // Las propuestas de postular sin responder (contratar.md 0.1 §5; datos.md 0.44, 0055): quien publicó un aviso en Terna vio el
+  // perfil, sin el nombre, y propone postular. Un pozo arriba del tablero, con un link a la ficha de cada aviso; sin 0055, nada.
+  // Solo si hay algún aviso publicado en Terna entre los tuyos: sin eso no hay propuestas y no se pregunta.
+  if (avisos.some(Aviso.deTerna)) Aviso.propuestasTerna().then((lista) => {
+    const P = T.terna.inicio;
+    const filas = lista.map((x) => avisos.find((a) => a.match_id === x.match_id)).filter(Boolean);
+    if (!filas.length) return;
+    const sec = h('section', { class: 'pozo propuestas-terna', 'aria-labelledby': 'h-propuestas' },
+      h('h2', { id: 'h-propuestas', text: P.titulo(filas.length) }), h('p', { text: P.texto }),
+      h('ul', { class: 'propuestas-lista' }, filas.map((a) => h('li', null,
+        h('a', { href: 'avisos.html#aviso-' + a.match_id, 'aria-label': P.verAccesible(a.puesto) }, h('span', { text: a.puesto + (a.empresa ? ' · ' + a.empresa : '') }), icono('i-adelante', 'icono-16'))))));
+    tablero.before(sec);
+  }, () => {});
   const lugares = {};
   function dibujarTablero() {
     const L = Lista.crear(avisos, { prefs, piso, seguidas: seguidas.filas });

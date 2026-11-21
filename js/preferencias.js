@@ -1011,6 +1011,10 @@ Terna.pagina('preferencias', async (ctx) => {
       if (v.salario_min === null || v.salario_max === null || !v.salario_moneda) { marcar('err-sal', T.errores.salarioIncompleto); ok = false; }
       else if (v.salario_min > v.salario_max) { marcar('err-sal', T.errores.minimoMayor); ok = false; }
     }
+    if (conContratar) {
+      const lista = leerNoMostrar();
+      if (lista.length > MAX_NO_MOSTRAR || lista.some((x) => x.length > 80)) { marcar('err-no-mostrar', PC.noMostrarError(MAX_NO_MOSTRAR)); ok = false; }
+    }
     if (!ok) { mostrarBanda(T.errores.guardarCampos); return; }
     bGuardar.setAttribute('aria-disabled', 'true');
     const fila = {
@@ -1042,6 +1046,10 @@ Terna.pagina('preferencias', async (ctx) => {
       fila.empresas_seguidas = v.empresas_seguidas;
       fila.priorizar_empresas = !!v.priorizar_empresas;
     }
+    if (conContratar) {
+      fila.visible_para_contratar = !!v.visible_para_contratar;
+      fila.no_mostrarme_a = leerNoMostrar();
+    }
     const { error: e } = await sb.from('preferencias').update(fila).eq('usuario_id', uid);
     bGuardar.removeAttribute('aria-disabled');
     if (e) {
@@ -1058,6 +1066,32 @@ Terna.pagina('preferencias', async (ctx) => {
     if (clavesCambiaron) clavesGuardadas = huellaClaves();
     Terna.avisoBreve(P.guardado);
   });
+
+  /* ---------- Para quien contrata (contratar.md §6.3; datos.md 0.44, 0055) ----------
+     Apagado por defecto. Con Sí, quien publica avisos en Terna te ve en «Personas que ajustan» de sus avisos, sin tu nombre ni dónde
+     trabajás, y te puede proponer postular. Nunca te ve la empresa donde trabajás hoy, ni las que pongas en la lista. Se guarda con
+     «Guardar preferencias», como los demás interruptores. Sin la 0055, el bloque no aparece. */
+  const conContratar = Object.prototype.hasOwnProperty.call(data, 'visible_para_contratar');
+  const MAX_NO_MOSTRAR = 10;
+  let cContratar = null;
+  const enContratar = Terna.piezas({ prefijo: 'con', nivel: 'h3' });
+  const PC = T.preferencias.contratar;
+  let textoNoMostrar = null;
+  if (conContratar) {
+    v.visible_para_contratar = data.visible_para_contratar === true;
+    v.no_mostrarme_a = (data.no_mostrarme_a || []).slice();
+    const que = h('ul', { class: 'campo-ayuda' }, ...PC.queVen.map((t) => h('li', { text: t })));
+    const sVisible = enContratar.conInterruptor(PC.visible, PC.visibleAyuda, v.visible_para_contratar, (x) => { v.visible_para_contratar = x; });
+    sVisible.append(h('p', { class: 'campo-ayuda', text: PC.queVenTitulo }), que, h('p', { class: 'campo-ayuda', text: PC.reconocer }));
+    const idNo = enContratar.id('no-mostrar');
+    textoNoMostrar = h('textarea', { class: 'control', id: idNo, rows: '3', 'aria-describedby': 'ayuda-no-mostrar err-no-mostrar' });
+    textoNoMostrar.value = v.no_mostrarme_a.join('\n');
+    textoNoMostrar.addEventListener('input', () => limpiar('err-no-mostrar'));
+    const sNo = enContratar.item(PC.noMostrar, h('div', { class: 'campo' }, h('label', { class: 'oculto-visual', for: idNo, text: PC.noMostrar }), textoNoMostrar,
+      h('p', { class: 'campo-ayuda', id: 'ayuda-no-mostrar', text: PC.noMostrarAyuda }), error('err-no-mostrar')));
+    cContratar = [sVisible, sNo];
+  }
+  const leerNoMostrar = () => (textoNoMostrar ? textoNoMostrar.value.split('\n').map((x) => x.trim()).filter(Boolean) : []);
 
   /* ---------- Página ---------- */
   Terna.vaciar(raiz);
@@ -1102,6 +1136,7 @@ Terna.pagina('preferencias', async (ctx) => {
     { hash: 'paquetes', titulo: P.temas.paquetes, nodo: temaPaquetes },
     { hash: 'postulacion', titulo: P.temas.postulacion, nodo: temaPostulacion },
   ], resumen: () => P.armar + ': ' + siNo(v.armar_paquetes) + ' · ' + P.postularSola + ': ' + siNo(v.postular_sola) });
+  if (cContratar) bloques.bloque('contratar', PC.titulo, cContratar, { resumen: () => PC.visible + ': ' + siNo(v.visible_para_contratar) });
   bloques.bloque('alertas', P.alertas, cAlertas, { resumen: resumenAlertas });
   bloques.montar({ arriba: [banda], guardar: h('div', { class: 'guardar-fijo' }, bGuardar) });
 });
