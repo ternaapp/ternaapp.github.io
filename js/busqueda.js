@@ -1236,11 +1236,12 @@ Terna.pagina('busqueda', async (ctx) => {
     const soloEsa = filtros.empresa && filtros.empresa.length === 1 && filtros.empresa[0] === a.empresa && !palabras.length && !extraCambiado();
     return h('section', { class: 'ficha-seccion' }, h('h3', { text: D.datos }),
       h('dl', { class: 'respuestas datos-aviso' }, filas.map(([k, v]) => h('div', null, h('dt', { text: k }), h('dd', { text: v })))),
-      h('p', { class: 'suave', text: D.fuenteNota(a.fuente) }),
+      h('p', { class: 'suave', text: Aviso.deTerna(a) ? D.fuenteNotaTerna : D.fuenteNota(a.fuente) }),
       deLaEmpresa > 1 && !soloEsa ? h('div', { class: 'botones' }, h('button', { class: 'btn btn-fila', type: 'button', dataset: { control: 'ver-empresa' }, onclick: () => verEmpresa(a) },
         icono('i-empresa', 'icono-16'), D.masDeEmpresa(deLaEmpresa, a.empresa))) : null);
   }
   function cuerpoFicha(a) {
+    Aviso.registrarVista(a);  // un aviso publicado en Terna cuenta la vista (contratar.md 0.1 §5)
     // Con el marbete en la cabecera, lo postulado no repite la etapa en un chip (como en la carpeta de la lista). «Tu puesto» y
     // «Empresa que seguís» no van como chips: los dicen los dos botones de lo tuyo, que están justo debajo (filaTuya).
     const marbete = estadoDe(a) !== 'fuera' && !!Aviso.estadoDe(a);

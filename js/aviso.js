@@ -559,8 +559,10 @@ window.Aviso = (function () {
      interesa). Cada diálogo nombra el aviso y dice qué va a pasar; el foco arranca en Cancelar. Después sigue el aviso breve con
      Deshacer, como siempre. */
   const ATS_POSTULABLES = ['greenhouse', 'lever', 'ashby', 'workable'];
-  // Terna puede postular sola en este aviso: formulario abierto de uno de los cuatro ATS (la misma regla que seleccion.postulable).
-  function postulable(a) { return a.postulacion === 'formulario' && ATS_POSTULABLES.includes(a.ats_formulario); }
+  // Terna puede postular sola en este aviso: formulario abierto de uno de los cuatro ATS (la misma regla que seleccion.postulable),
+  // o un aviso publicado en Terna, que no tiene formulario: la postulación le llega a quien lo publicó (contratar.md 0.1 §5; 0055).
+  const deTerna = (a) => a.ats_formulario === 'terna';
+  function postulable(a) { return a.postulacion === 'formulario' && (ATS_POSTULABLES.includes(a.ats_formulario) || deTerna(a)); }
 
   /* ---------- Dónde se postula (brand.md 0.10 §6.4; diseno.md 0.23 §7.5 y §7.6; datos.md 0.27, 0031) ----------
      Francisco, 06/11/2026: "que diga Easy Apply de LinkedIn, o una columna nueva que diga dónde se debe aplicar". Sale de lo que la
@@ -593,6 +595,8 @@ window.Aviso = (function () {
     const hecha = HECHAS.has(a.estado_postulacion);
     if (postulable(a)) {
       const no = !!prefs && prefs.postular_sola === false;
+      // Publicado en Terna: sin «Terna postula por vos» lo manda la persona desde la ficha, en Terna; el filtro lo cuenta a mano.
+      if (deTerna(a)) return !hecha && (no || a.estado_postulacion === 'a_mano') ? { clave: 'empresa', enTerna: true, url: null, hecha } : { clave: 'terna', enTerna: true, url: null, hecha };
       if (!hecha && (no || a.estado_postulacion === 'a_mano')) return { clave: 'empresa', url: otro ? u : null, ternaNo: no, ternaNoPudo: !no, hecha };
       return { clave: 'terna', url: otro ? u : null, hecha };
     }
@@ -610,11 +614,13 @@ window.Aviso = (function () {
   function textoDonde(d) {
     const D = T.avisos.donde;
     if (d.clave === 'portal') return D.portal(d.nombre);
+    if (d.enTerna && d.clave === 'empresa') return D.enTernaVos;
     return d.clave === 'empresa' && d.cuenta ? D.empresaCuenta : D[d.clave];
   }
   // La explicación de la ficha y del título de la celda: quién lo hace, dónde y, si es a mano, por qué.
   function explicacionDonde(a, d, prefs) {
     const E = T.avisos.dondeExplicacion;
+    if (d.enTerna) return d.clave === 'empresa' ? E.enTernaVos : prefs && prefs.revisar_antes_de_enviar ? E.enTernaRevisa : E.enTerna;
     switch (d.clave) {
       case 'terna': return prefs && prefs.revisar_antes_de_enviar ? E.ternaRevisa : E.terna;
       case 'easy_apply': return E.easy_apply;
@@ -700,6 +706,7 @@ window.Aviso = (function () {
   // datos que salen de Terna: solo http y https (Terna.urlExterna; informe de seguridad del 06/11/2026, H8). Si la del
   // formulario no sirve, el botón va a la página del aviso, como cuando no hay.
   function abrirAviso(a, clase, prefs) {
+    if (deTerna(a)) return botonTerna(a, clase);
     const d = donde(a, prefs);
     const destino = Terna.urlExterna(d.url);
     const clases = clase || 'btn btn-primario btn-ancho';
@@ -715,6 +722,7 @@ window.Aviso = (function () {
       'aria-label': T.avisos.abrirEnAccesible(a.fuente) }, T.avisos.abrirEn(a.fuente), icono('i-abrir'));
   }
   function verAviso(a, prefs) {
+    if (deTerna(a)) return null;
     const d = donde(a, prefs);
     if (!Terna.urlExterna(d.url) || (d.clave !== 'empresa' && d.clave !== 'portal')) return null;
     return h('a', { class: 'btn btn-texto', href: Terna.urlExterna(a.url), target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(a.fuente) },
@@ -949,6 +957,151 @@ window.Aviso = (function () {
     return h('div', { class: 'docs-fila', role: 'group', 'aria-label': D.grupo(a.puesto) }, piezas);
   }
 
+  /* ---------- Publicado en Terna (contratar.md 0.1 §5 y §6.2; brand.md 0.27 §6.4; datos.md 0.44, 0055) ----------
+     Un aviso que alguien publicó en Terna para contratar no tiene página afuera ni formulario: la postulación le llega a quien lo
+     publicó, con el CV y la carta del paquete, y ahí ve los datos de contacto. Con «Terna postula por vos» en Sí la manda el motor
+     cuando arma el paquete; si no, la persona, con «Postular en Terna». La ficha suma una sección: quién lo publicó, la propuesta de
+     postular si se la hicieron, la postulación (con «Retirar») y «Avisar que algo está mal». Abrir la ficha cuenta como una vista
+     (registrar_vista, una por persona y aviso). Después de un cambio, la página vuelve a leer: por defecto recarga (la ficha se
+     reabre sola desde el hash); Avisos rehace la ficha en el lugar (alCambiarTerna). Sin 0055 la función no existe y no se ve nada. */
+  let ternaDatos = null;
+  let ternaAlCambiar = () => location.reload();
+  function alCambiarTerna(fn) { ternaAlCambiar = fn; }
+  function datosTerna(fresco) {
+    if (!ternaDatos || fresco) {
+      ternaDatos = Terna.sb.rpc('mis_avisos_terna').then(({ data, error }) => {
+        const m = new Map();
+        if (!error) for (const x of data || []) m.set(x.match_id, x);
+        return m;
+      }, () => new Map());
+    }
+    return ternaDatos;
+  }
+  const vistos = new Set();
+  function registrarVista(a) {
+    if (!deTerna(a) || !a.aviso_id || vistos.has(a.aviso_id)) return;
+    vistos.add(a.aviso_id);
+    Terna.sb.rpc('registrar_vista', { p_aviso: a.aviso_id }).then(() => {}, () => {});
+  }
+  async function cambioTerna(a, texto) {
+    datosTerna(true);
+    if (texto) Terna.avisoBreve(texto, { icono: 'i-tilde' });
+    ternaAlCambiar(a);
+  }
+  function errorTerna(error) {
+    if (!Terna.siSesionVencida(error)) Terna.avisoBreve(Terna.textoError(error), { error: true });
+  }
+  // El botón principal: «Postular en Terna» cuando hay paquete y todavía no salió; si no, una línea que dice cómo se postula.
+  const TERNA_HECHAS = new Set(['enviada', 'postulado', 'entrevista', 'en_cola', 'para_revisar']);
+  function botonTerna(a, clase) {
+    const TT = T.terna;
+    if (!a.match_id || !a.paquete_id || TERNA_HECHAS.has(a.estado_postulacion)) return h('span', { class: 'suave terna-nota', text: TT.enTerna });
+    return h('button', { class: clase || 'btn btn-primario btn-ancho', type: 'button', dataset: { control: 'postular-terna' },
+      'aria-label': TT.postularAccesible(a.puesto), onclick: (e) => postularEnTerna(a, e.currentTarget) }, icono('i-enviar'), TT.postular);
+  }
+  async function postularEnTerna(a, boton) {
+    const C = T.terna.confirmar;
+    const si = await Terna.confirmar({ titulo: C.titulo, si: C.si, clase: 'dialogo-confirmar',
+      cuerpo: [lineaAviso(a), h('p', { text: C.texto }), h('p', { text: T.terna.queVe })] });
+    if (!si) return;
+    if (boton) boton.setAttribute('aria-disabled', 'true');
+    const { error } = await Terna.sb.rpc('postular_en_terna', { p_match: a.match_id });
+    if (boton) boton.removeAttribute('aria-disabled');
+    if (error) { errorTerna(error); return; }
+    a.estado_postulacion = 'postulado';
+    a.postulado_en = new Date().toISOString();
+    cambioTerna(a, T.terna.hecho);
+  }
+  async function retirarDeTerna(a) {
+    const C = T.terna.confirmarRetirar;
+    const si = await Terna.confirmar({ titulo: C.titulo, si: C.si, destructivo: true, clase: 'dialogo-confirmar', cuerpo: [lineaAviso(a), h('p', { text: C.texto })] });
+    if (!si) return;
+    const { error } = await Terna.sb.rpc('retirar_postulacion_terna', { p_match: a.match_id });
+    if (error) { errorTerna(error); return; }
+    cambioTerna(a, T.terna.retirada);
+  }
+  async function responderPropuesta(a, x, acepta) {
+    if (acepta) {
+      const C = T.terna.confirmar;
+      const si = await Terna.confirmar({ titulo: C.titulo, si: C.si, clase: 'dialogo-confirmar',
+        cuerpo: [lineaAviso(a), h('p', { text: a.paquete_id ? C.texto : T.terna.propuestaPedida }), h('p', { text: T.terna.queVe })] });
+      if (!si) return;
+    }
+    const { data, error } = await Terna.sb.rpc('responder_propuesta', { p_propuesta: x.propuesta_id, p_acepta: acepta });
+    if (error) { errorTerna(error); return; }
+    const TT = T.terna;
+    if (data === 'postulada') { a.estado_postulacion = 'postulado'; a.postulado_en = new Date().toISOString(); }
+    if (data === 'pedida') a.estado_paquete = 'pedido';
+    cambioTerna(a, data === 'postulada' ? TT.propuestaPostulada : data === 'pedida' ? TT.propuestaPedida : TT.propuestaRechazada);
+  }
+  function denunciarTerna(a) {
+    const D = T.terna.dialogoDenunciar;
+    const id = Terna.idUnico('denuncia');
+    const texto = h('textarea', { class: 'control', id, rows: '4', maxlength: '500', 'aria-describedby': id + '-ayuda ' + id + '-error' });
+    const err = h('p', { class: 'campo-error', id: id + '-error' });
+    const origen = document.activeElement;
+    const bNo = h('button', { class: 'btn', type: 'button', onclick: () => dlg.close() }, T.comun.cancelar);
+    const bSi = h('button', { class: 'btn btn-primario', type: 'button', onclick: async () => {
+      const motivo = texto.value.trim();
+      if (motivo.length < 3 || motivo.length > 500) { err.textContent = D.error; texto.setAttribute('aria-invalid', 'true'); texto.focus(); return; }
+      bSi.setAttribute('aria-disabled', 'true');
+      const { error } = await Terna.sb.rpc('denunciar_aviso', { p_aviso: a.aviso_id, p_motivo: motivo });
+      bSi.removeAttribute('aria-disabled');
+      if (error) { err.textContent = Terna.textoError(error); return; }
+      dlg.close();
+      cambioTerna(a, T.terna.denunciaEnviada);
+    } }, D.si);
+    const dlg = Terna.dialogo({ titulo: D.titulo, clase: 'dialogo-confirmar', botones: [bNo, bSi],
+      cuerpo: [lineaAviso(a), h('div', { class: 'campo' }, h('label', { class: 'campo-etiqueta', for: id, text: D.etiqueta }), texto,
+        h('p', { class: 'campo-ayuda', id: id + '-ayuda', text: D.ayuda }), err)] });
+    texto.addEventListener('input', () => { err.textContent = ''; texto.removeAttribute('aria-invalid'); });
+    dlg.addEventListener('close', () => Terna.devolverFoco(origen));
+    dlg.showModal();
+    texto.focus();
+  }
+  // La sección de la ficha: se arma vacía y se completa cuando llega mis_avisos_terna. null si el aviso no es de Terna.
+  function seccionTerna(a) {
+    if (!deTerna(a)) return null;
+    registrarVista(a);
+    const TT = T.terna;
+    const cuerpo = h('div', { class: 'ficha-seccion-cuerpo terna-cuerpo' }, h('p', { class: 'suave', text: T.comun.cargando || '…' }));
+    const sec = h('section', { class: 'ficha-seccion ficha-terna' }, h('h3', { text: TT.titulo }), cuerpo);
+    datosTerna().then((mapa) => {
+      Terna.vaciar(cuerpo);
+      const x = mapa.get(a.match_id);
+      if (!x) { cuerpo.append(h('p', { text: TT.enTerna })); return; }
+      cuerpo.append(h('p', { text: TT.quien[x.cuenta_tipo === 'persona' ? 'persona' : 'empresa'] }));
+      const botones = h('div', { class: 'botones' });
+      const recibida = x.recibida_en && !x.retirada_en;
+      if (x.propuesta_estado === 'enviada' && !recibida) {
+        cuerpo.append(h('p', { class: 'terna-propuesta', text: TT.propuesta(Terna.fechaCorta(x.propuesta_en)) }));
+        if (x.publicacion_abierta) {
+          botones.append(h('button', { class: 'btn btn-primario', type: 'button', dataset: { control: 'propuesta-si' }, onclick: () => responderPropuesta(a, x, true) }, icono('i-enviar'), TT.propuestaSi),
+            h('button', { class: 'btn', type: 'button', dataset: { control: 'propuesta-no' }, onclick: () => responderPropuesta(a, x, false) }, TT.propuestaNo));
+        }
+      } else if (x.propuesta_estado === 'aceptada' && !recibida) cuerpo.append(h('p', { text: TT.propuestaAceptada }));
+      else if (x.propuesta_estado === 'rechazada') cuerpo.append(h('p', { class: 'suave', text: TT.propuestaDijisteNo }));
+      if (recibida) {
+        cuerpo.append(h('p', { text: TT.recibida(Terna.fechaCorta(x.recibida_en)) }));
+        botones.append(h('button', { class: 'btn', type: 'button', dataset: { control: 'retirar-terna' }, onclick: () => retirarDeTerna(a) }, TT.retirar));
+      } else if (x.retirada_en) {
+        cuerpo.append(h('p', { text: TT.retiradaEl(Terna.fechaCorta(x.retirada_en)) }));
+        if (x.publicacion_abierta && a.paquete_id) botones.append(h('button', { class: 'btn', type: 'button', onclick: (e) => postularEnTerna(a, e.currentTarget) }, TT.volver));
+      } else if (!x.publicacion_abierta) cuerpo.append(h('p', { text: TT.cerrada }));
+      else if (!a.paquete_id && x.propuesta_estado !== 'enviada') cuerpo.append(h('p', { text: TT.sinPaquete }));
+      if (!recibida && x.publicacion_abierta) cuerpo.append(h('p', { class: 'campo-ayuda', text: TT.queVe }));
+      if (x.denunciado) cuerpo.append(h('p', { class: 'suave', text: TT.denunciado }));
+      else botones.append(h('button', { class: 'btn btn-texto btn-chico', type: 'button', dataset: { control: 'denunciar' }, onclick: () => denunciarTerna(a) }, icono('i-alerta', 'icono-16'), TT.denunciar));
+      if (botones.childNodes.length) cuerpo.append(botones);
+    });
+    return sec;
+  }
+  // Las propuestas sin responder, para la tarjeta de Inicio: [{ match_id, aviso_id, propuesta_en }].
+  async function propuestasTerna() {
+    const mapa = await datosTerna();
+    return [...mapa.values()].filter((x) => x.propuesta_estado === 'enviada' && x.publicacion_abierta && !(x.recibida_en && !x.retirada_en));
+  }
+
   return {
     pestanas, tituloGrupo, interes, filaDocumentos,
     lengueta, estadoDe, marbete, nuevo, fechaSola, cabezaFicha, saltos, bajarA,
@@ -960,5 +1113,6 @@ window.Aviso = (function () {
     traba, lineaEtapa, lineaCorta, topeIntentos, puedeVolverAProbar, seccionPostulacion, razones, abrirAviso, verAviso,
     ESTILO_POSTULACION, postulable, confirmarPedir, confirmarNoInteresa, marcarNoInteresa,
     DONDES, donde, textoDonde, explicacionDonde, celdaDonde, etiquetaDonde, lineaDonde,
+    deTerna, seccionTerna, alCambiarTerna, datosTerna, propuestasTerna, registrarVista,
   };
 })();

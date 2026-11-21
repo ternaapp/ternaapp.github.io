@@ -702,6 +702,8 @@ Terna.pagina('avisos', async (ctx) => {
       if (x) x.focus();
     }
   }
+  // Un aviso publicado en Terna (contratar.md 0.1 §5): después de postular, retirar, responder o avisar, se rehace en el lugar.
+  Aviso.alCambiarTerna((a) => refrescar(a));
   // Rehace una fila sola (el motivo de No me interesa cambió): mismo grupo, mismo lugar.
   function refrescar(a) {
     const viejo = nodoDe(a);
@@ -1156,11 +1158,11 @@ Terna.pagina('avisos', async (ctx) => {
     const motivo = conMotivo && a.interes === 'no_me_interesa' ? Aviso.lineaMotivo(a, () => refrescar(a)) : null;
     if (enArmados) {
       return [Aviso.saltos([{ nodo: paquete, texto: T.avisos.columnas.paquete }, { nodo: porQue, texto: FI.porQue }, { nodo: requisitos, texto: FI.requisitos }]),
-        chips, etiquetas, motivo, paquete, ...razones, lineaEstado(a)];
+        chips, etiquetas, motivo, paquete, ...razones, Aviso.seccionTerna(a), lineaEstado(a)];
     }
     const decidir = grupoDe(a) === 'decidir' ? accionInteres(a, 'ficha') : null;
     return [Aviso.saltos([{ nodo: porQue, texto: FI.porQue }, { nodo: requisitos, texto: FI.requisitos }, { nodo: paquete, texto: T.avisos.columnas.paquete }]),
-      chips, etiquetas, decidir, motivo, ...razones, paquete, Aviso.seccionPostulacion(a, config, prefs)];
+      chips, etiquetas, decidir, motivo, ...razones, paquete, Aviso.seccionTerna(a), Aviso.seccionPostulacion(a, config, prefs)];
   }
   // «Abrir aviso en …» es el primario solo cuando hay algo para hacer afuera: con la postulación enviada, postulada o en cola de Terna,
   // va como secundario. «No me interesa» va al pie, salvo en lo que te toca decidir (los dos botones están en el cuerpo); lo que no te

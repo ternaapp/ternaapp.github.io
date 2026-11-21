@@ -538,7 +538,21 @@ Terna.pagina('inicio', async (ctx) => {
     cont.append(paraEmpezar());
     return;
   }
-  cont.append(seccionToca(tocan));
+  const secToca = seccionToca(tocan);
+  cont.append(secToca);
+  // Las propuestas de postular sin responder (contratar.md 0.1 §5; datos.md 0.44, 0055): quien publicó un aviso en Terna vio el
+  // perfil, sin el nombre, y propone postular. Te toca responder, así que van justo debajo de «Te toca a vos», con un link a la
+  // ficha de cada aviso en Paquetes. Solo si hay algún aviso publicado en Terna entre los tuyos; sin 0055, nada.
+  if (avisos && avisos.some(Aviso.deTerna)) Aviso.propuestasTerna().then((lista) => {
+    const P = T.terna.inicio;
+    const filas = lista.map((x) => avisos.find((a) => a.match_id === x.match_id)).filter(Boolean);
+    if (!filas.length) return;
+    const sec = h('section', { class: 'pozo propuestas-terna', 'aria-labelledby': 'h-propuestas' },
+      h('h2', { id: 'h-propuestas', text: P.titulo(filas.length) }), h('p', { text: P.texto }),
+      h('ul', { class: 'propuestas-lista' }, filas.map((a) => h('li', null,
+        h('a', { href: 'avisos.html#aviso-' + a.match_id, 'aria-label': P.verAccesible(a.puesto) }, h('span', { text: a.puesto + (a.empresa ? ' · ' + a.empresa : '') }), icono('i-adelante', 'icono-16'))))));
+    secToca.after(sec);
+  }, () => {});
   const ultimo = seccionUltimo(ultimosDeLaCorrida());
   if (ultimo) cont.append(ultimo);
   const empleos = entradaEmpleos();

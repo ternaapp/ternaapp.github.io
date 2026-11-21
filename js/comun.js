@@ -1092,10 +1092,12 @@ window.Terna = (function () {
     const error = u.error || p.error || f.error || c.error;
     if (error) { errorDeCarga(document.getElementById('contenido'), error); return null; }
     if (!u.data) {
-      // La cuenta ya no existe (la borró Francisco): la sesión que quedó no sirve.
+      // La cuenta ya no existe (la borró Francisco): la sesión que quedó no sirve. Si es de alguien que solo contrata (entró acá con
+      // la cuenta de Terna para contratar; contratar.md 0.1 §4.2), va a su portal, que tiene su propia sesión.
       estado.saliendo = true;
+      const rC = await sb.rpc('contrata_mis_cuentas').then((x) => x, () => ({ data: null }));
       await sb.auth.signOut({ scope: 'local' });
-      location.replace('entrar.html');
+      location.replace(rC && Array.isArray(rC.data) && rC.data.length ? 'contratar.html' : 'entrar.html');
       return null;
     }
     estado.usuario = u.data;

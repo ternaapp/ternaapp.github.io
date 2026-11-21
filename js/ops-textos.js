@@ -50,7 +50,7 @@ window.TO = (function () {
 
     secciones: {
       hoy: 'Hoy', fallas: 'Fallas', busqueda: 'Búsqueda', postulaciones: 'Postulaciones', paquetes: 'Paquetes', problemas: 'Problemas',
-      personas: 'Personas', corridas: 'Corridas', ajustes: 'Ajustes', registro: 'Registro',
+      personas: 'Personas', contratar: 'Contratar', corridas: 'Corridas', ajustes: 'Ajustes', registro: 'Registro',
     },
 
     comun: {
@@ -424,6 +424,62 @@ window.TO = (function () {
       vacioCostos: 'No hubo llamadas a Claude en este período.',
     },
 
+    // Terna para contratar (contratar.md 0.1 §7; datos.md 0.44, 0055): invitar, revisar cada aviso antes de que se publique y las cuentas.
+    contratar: {
+      intro: 'Quienes publican avisos en Terna para contratar: los avisos para revisar antes de que se publiquen, las cuentas y las invitaciones. Los datos de las personas que postulan no se ven acá.',
+      vistas: { revisar: 'Para revisar', cuentas: 'Cuentas', invitar: 'Invitar' },
+      vistasNombre: 'Qué ver',
+      hoy: {
+        titulo: 'Contratar', ir: 'Revisar',
+        etiqueta: (x) => plural(x, 'aviso para mirar', 'avisos para mirar'),
+        enRevision: (x) => plural(x, '1 espera que lo revises para publicarse.', n(x) + ' esperan que los revises para publicarse.'),
+        marcados: (x) => plural(x, 'En 1 alguien avisó que algo está mal.', 'En ' + n(x) + ' alguien avisó que algo está mal.'),
+      },
+      revisar: {
+        vacio: 'No hay avisos para revisar.',
+        enRevision: 'Para publicar',
+        conDenuncias: (x) => (x === 1 ? 'Alguien avisó que algo está mal' : n(x) + ' personas avisaron que algo está mal'),
+        de: (cuenta, tipo) => cuenta + ' · ' + (tipo === 'particular' ? 'particular' : 'empresa'),
+        cuando: (fecha) => 'Cambiado el ' + fecha,
+        requisitos: 'Requisitos',
+        descripcion: 'Descripción',
+        motivos: 'Lo que dijeron',
+        aprobar: 'Aprobar y publicar', rechazar: 'Rechazar', pausar: 'Pausar', descartar: 'Está bien, descartar los avisos',
+        motivo: 'Por qué (lo ve quien publicó)', motivoAyuda: 'Hasta 300 letras. Opcional.',
+        rechazarTitulo: '¿Rechazar este aviso?', pausarTitulo: '¿Pausar este aviso?',
+        hecho: { abierta: 'Publicado.', rechazada: 'Rechazado.', pausada: 'Pausado.', otro: 'Listo.' },
+      },
+      cuentas: {
+        vacio: 'Todavía no hay cuentas.',
+        cols: ['Cuenta', 'Tipo', 'Estado', 'Personas', 'Abiertos', 'Para revisar', 'Cerrados', 'Postulaciones', 'Propuestas', 'Algo mal', ''],
+        tipo: { empresa: 'Empresa', particular: 'Particular' },
+        estado: { activa: 'Activa', pausada: 'Pausada' },
+        confianza: 'De confianza',
+        confianzaAyuda: 'Sus avisos se publican sin pasar por tu revisión.',
+        pausar: 'Pausar', activar: 'Activar', confiar: 'Marcar de confianza', noConfiar: 'Sacar la confianza',
+        pausarTitulo: (x) => '¿Pausar ' + x + '?',
+        pausarTexto: 'Sus avisos dejan de verse y nadie de la cuenta puede publicar ni ver postulaciones hasta que la actives.',
+        hecho: 'Listo.',
+      },
+      invitar: {
+        titulo: 'Invitar a contratar',
+        ayuda: 'La invitación es para crear la cuenta de una empresa o de una persona que contrata. Le mandás el link vos: Terna no manda mails.',
+        mail: 'Mail de quien va a usar la cuenta',
+        nombre: 'Nombre de la empresa o de la persona',
+        tipo: 'Es', tipos: { empresa: 'Una empresa', particular: 'Una persona que contrata (un particular)' },
+        crear: 'Crear invitación',
+        link: 'El link de la invitación',
+        linkAyuda: (fecha) => 'Vence el ' + fecha + '. Copialo y mandáselo: es la única vez que se ve.',
+        copiar: 'Copiar el link',
+        abiertas: 'Invitaciones',
+        cols: ['Mail', 'Cuenta', 'Estado', 'Creada', 'Vence', ''],
+        estados: { pendiente: 'Pendiente', usada: 'Usada', cancelada: 'Cancelada', vencida: 'Vencida' },
+        cancelar: 'Cancelar',
+        vacio: 'Todavía no hay invitaciones.',
+        errores: { mail: 'Ese mail no parece válido.', nombre: 'De 2 a 80 letras, sin mails, teléfonos ni links.', tipo: 'Elegí qué es.', yaInvitado: 'Ese mail ya tiene una invitación pendiente.' },
+      },
+    },
+
     registro: {
       intro: 'Lo que hiciste desde esta página: lo que sumaste, cambiaste o volviste a probar, el detalle y las capturas de otras personas que miraste y a quién le viste el mail.',
       cols: ['Cuándo', 'Qué', 'Sobre qué', 'Detalle'],
@@ -432,6 +488,10 @@ window.TO = (function () {
         ver_postulaciones: 'Miraste postulaciones de todos', ver_paquetes: 'Miraste paquetes de todos', ver_quien_es: 'Viste quién es',
         ver_fallas: 'Miraste fallas de todos', ver_fallas_resumen: 'Miraste el resumen de fallas', ver_captura: 'Miraste una captura',
         volver_a_probar: 'Volviste a probar una postulación',
+        contrata_invitar: 'Invitaste a contratar', contrata_cancelar_invitacion: 'Cancelaste una invitación a contratar',
+        contrata_pausar: 'Pausaste en Contratar', contrata_activar: 'Activaste una cuenta de Contratar',
+        contrata_confianza_si: 'Marcaste una cuenta de confianza', contrata_confianza_no: 'Sacaste la confianza a una cuenta',
+        contrata_aprobar: 'Aprobaste un aviso', contrata_rechazar: 'Rechazaste un aviso', contrata_descartar_denuncias: 'Descartaste avisos de algo mal',
       },
       vacio: 'Todavía no hay nada en el registro.',
       factoresTitulo: 'Tus apps de códigos',

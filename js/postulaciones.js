@@ -917,9 +917,9 @@ Terna.pagina('postulaciones', async (ctx) => {
     const respuestas = seccionRespuestas(a);
     fichaRespuestas = respuestas;
     if (hecha(a)) {
-      return [tira, seccionEtapa(a, false), paquete, seccionTextoAviso(a), respuestas, a.captura_path ? captura(a) : null, ...razones];
+      return [tira, seccionEtapa(a, false), Aviso.seccionTerna(a), paquete, seccionTextoAviso(a), respuestas, a.captura_path ? captura(a) : null, ...razones];
     }
-    return [tira, seccionEtapa(a, true, paquete), paquete, respuestas, ...razones];
+    return [tira, seccionEtapa(a, true, paquete), Aviso.seccionTerna(a), paquete, respuestas, ...razones];
   }
   function accionesFicha(a) {
     const B = T.postulaciones.botones;

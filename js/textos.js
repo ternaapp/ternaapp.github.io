@@ -385,6 +385,8 @@ window.T = (function () {
         empresaCuenta: 'A mano en el sitio (pide cuenta)',
         portal: (nombre) => 'A mano en ' + nombre,
         confirmar: 'LinkedIn, a confirmar',
+        // Un aviso que alguien publicó en Terna para contratar (contratar.md 0.1 §8.2; datos.md 0.44, 0055).
+        enTernaVos: 'A mano, desde Terna',
       },
       dondeFiltro: { terna: 'Postula Terna', easy_apply: 'A mano en LinkedIn (Easy Apply)', empresa: 'A mano en el sitio de la empresa', portal: 'A mano en un portal de empleo', confirmar: 'LinkedIn, a confirmar' },
       dondeExplicacion: {
@@ -402,6 +404,10 @@ window.T = (function () {
         confirmar: 'Terna todavía no leyó la página del aviso en LinkedIn. La lee en las próximas corridas (una por día): trae el texto y te dice si se postula con Easy Apply o en el sitio de la empresa.',
         linkedin: 'Se postula desde el aviso en LinkedIn: su página no dice si es con Easy Apply o en el sitio de la empresa. Lo ves al abrirlo.',
         portal: (nombre) => 'Se postula con tu cuenta de ' + nombre + '. Terna no usa tus cuentas: lo hacés vos.',
+        // Los avisos publicados en Terna (contratar.md 0.1 §8.2): no hay formulario, la postulación le llega a quien lo publicó.
+        enTerna: 'Lo publicaron en Terna: cuando arma el paquete, Terna le manda tu postulación a quien lo publicó, sin formularios.',
+        enTernaRevisa: 'Lo publicaron en Terna: cuando arma el paquete, Terna espera que lo revises en Postulaciones y, al enviarlo, le llega a quien lo publicó.',
+        enTernaVos: 'Lo publicaron en Terna. Con «Terna postula por vos» en No, lo mandás vos con «Postular en Terna», en la ficha del aviso.',
       },
       abrirEnEmpresa: 'Abrir aviso en el sitio de la empresa',
       abrirEnEmpresaAccesible: 'Abrir aviso en el sitio de la empresa, abre en otra pestaña',
@@ -713,6 +719,8 @@ window.T = (function () {
         datos: 'Datos del aviso',
         nivel: 'Nivel', jornada: 'Jornada', modalidad: 'Modalidad', publicado: 'Publicado', fuente: 'Fuente',
         fuenteNota: (fuente) => 'Terna lo leyó en ' + fuente + '. El texto completo está en el aviso original.',
+        // Un aviso publicado en Terna para contratar (contratar.md 0.1 §8.2): no tiene un original afuera.
+        fuenteNotaTerna: 'Lo publicaron en Terna, para contratar: no tiene página afuera. Pedí el paquete para postular.',
         masDeEmpresa: (x, empresa) => 'Ver los ' + n(x) + ' avisos abiertos de ' + empresa,
         estado: {
           // propuesta PLAN-UX §5.4 (brand.md §6.3.1): más cortos; el armado está en Paquetes.
@@ -788,6 +796,47 @@ window.T = (function () {
       // En Avisos, debajo de la lista (busqueda.md §4.6): qué diferencia hay entre las dos pestañas, con el link.
       // propuesta PLAN-UX §5.3 (brand.md §6.4): el renglón de cierre de Paquetes › Por armar; el link dice «Empleos».
       enAvisos: '¿Buscás otro? Todo lo abierto está en',
+    },
+
+    // Los avisos que alguien publicó en Terna para contratar, en la ficha de la persona (contratar.md 0.1 §5 y §8.2; datos.md 0.44, 0055).
+    terna: {
+      titulo: 'Publicado en Terna',
+      quien: { empresa: 'Lo publicó una empresa, en Terna.', persona: 'Lo publicó en Terna una persona que contrata.' },
+      queVe: 'Si postulás, quien lo publicó ve tu nombre, tu mail, tu teléfono, tu LinkedIn, tu CV y tu carta de este paquete y tu salario pretendido.',
+      postular: 'Postular en Terna',
+      postularAccesible: (puesto) => 'Postular en Terna a ' + puesto,
+      enTerna: 'Se postula desde Terna.',
+      sinPaquete: 'Para postular hace falta el paquete de este aviso. Cuando Terna lo arma, postula por vos si «Terna postula por vos» está en Sí; si no, lo mandás desde acá.',
+      confirmar: { titulo: '¿Postular en Terna?', si: 'Postular', texto: 'Tu postulación le llega en el momento, con el CV y la carta de este paquete.' },
+      hecho: 'Listo: tu postulación llegó.',
+      recibida: (fecha) => 'Tu postulación llegó el ' + fecha + '.',
+      retirar: 'Retirar mi postulación',
+      confirmarRetirar: { titulo: '¿Retirar tu postulación?', si: 'Retirar', texto: 'Quien publicó el aviso deja de ver tu postulación y tus datos. Podés volver a postular mientras el aviso esté abierto.' },
+      retirada: 'Retiraste tu postulación.',
+      retiradaEl: (fecha) => 'Retiraste tu postulación el ' + fecha + '. Podés volver a postular mientras el aviso esté abierto.',
+      volver: 'Volver a postular',
+      cerrada: 'Este aviso ya no recibe postulaciones.',
+      propuesta: (fecha) => 'Quien publicó este aviso vio tu perfil, sin tu nombre ni tus datos, y el ' + fecha + ' te propuso postular.',
+      propuestaSi: 'Postular',
+      propuestaNo: 'No, gracias',
+      propuestaPostulada: 'Listo: tu postulación llegó.',
+      propuestaPedida: 'Listo. Terna arma el paquete de este aviso y postula apenas esté.',
+      propuestaRechazada: 'Listo. No le decimos por qué.',
+      propuestaAceptada: 'Aceptaste la propuesta de postular.',
+      propuestaDijisteNo: 'Le dijiste que no a la propuesta de postular.',
+      denunciar: 'Avisar que algo está mal',
+      denunciado: 'Ya nos avisaste de este aviso. Francisco lo revisa.',
+      dialogoDenunciar: { titulo: '¿Qué está mal en este aviso?', si: 'Avisar', etiqueta: 'Contanos qué pasa',
+        ayuda: 'Por ejemplo: pide plata, no parece un trabajo real o pide datos que no hacen falta. Lo lee Francisco.',
+        error: 'Escribí entre 3 y 500 letras.' },
+      denunciaEnviada: 'Gracias por avisar. Francisco lo revisa.',
+      // La tarjeta de Inicio: las propuestas sin responder.
+      inicio: {
+        titulo: (x) => (x === 1 ? 'Te propusieron postular' : 'Te propusieron postular en ' + n(x) + ' avisos'),
+        texto: 'Quien publicó estos avisos en Terna vio tu perfil, sin tu nombre, y te propone postular. Decidís vos.',
+        ver: 'Ver la propuesta',
+        verAccesible: (puesto) => 'Ver la propuesta para ' + puesto,
+      },
     },
 
     postulaciones: {
@@ -1226,6 +1275,20 @@ window.T = (function () {
         sitios: 'Sitios donde Terna creó una cuenta',
         estado: { creada: (fecha) => 'Creada el ' + fecha, confirmada: 'Confirmada', ya_existia: 'Ya tenías una cuenta: Terna no entró', fallo: 'No se pudo crear' },
         ninguna: 'Todavía ninguna.',
+      },
+      // «Para quien contrata» (contratar.md 0.1 §6.3 y §8.3; datos.md 0.44, 0055): nace en No. Con Sí, quien publica un aviso en
+      // Terna te ve entre las personas que ajustan, sin tu nombre ni dónde trabajás, y te puede proponer postular.
+      contratar: {
+        titulo: 'Para quien contrata',
+        visible: 'Que me encuentren quienes contratan en Terna',
+        visibleAyuda: 'Hay personas y empresas que publican sus avisos en Terna. Con Sí, si ajustás bien con uno, quien lo publicó te ve en una lista, sin tu nombre, y te puede proponer postular. Postular es siempre decisión tuya: nadie ve tu nombre ni tus datos hasta que postulás.',
+        queVenTitulo: 'Lo que ve de vos, sin que postules:',
+        queVen: ['Un código en lugar de tu nombre (por ejemplo, C-4F2A9).', 'El título de tu perfil, tus años de experiencia, tu ciudad y tus idiomas.',
+          'Las modalidades que buscás y qué requisitos del aviso cumplís.'],
+        reconocer: 'No ve tu nombre, tu mail, tu teléfono, tu LinkedIn, dónde trabajás ni tu CV. Igual, en un lugar chico alguien te podría reconocer por lo que ve: tenelo en cuenta.',
+        noMostrar: 'Empresas que no te tienen que ver',
+        noMostrarAyuda: 'Una por línea, hasta 10. Terna ya te oculta de la empresa donde trabajás hoy (la de tu experiencia actual) y de quien contrata con un mail de la misma empresa que el tuyo.',
+        noMostrarError: (max) => 'Hasta ' + max + ' empresas, de hasta 80 letras cada una.',
       },
       // «¿Tenés una discapacidad?» (brand.md 0.24 §6.7; diseno.md 0.36 §9.3; datos.md 0.35, 0039): Francisco, 12/11/2026. Para los
       // formularios que lo preguntan (la autoidentificación de los de EE. UU., CC-305). Nace en «Prefiero no responder», que es lo que
@@ -1902,6 +1965,13 @@ window.T = (function () {
       // Empresas que seguís (datos.md 0.30 §11, 0034).
       empresasDemasiadas: (max) => 'Hasta ' + max + ' empresas. Para sumar otra, quitá una.',
       empresaNombre: 'Cada empresa, de 2 a 80 caracteres.',
+      // Los avisos publicados en Terna (datos.md 0.44 §11, 0055).
+      ternaCerrado: 'Este aviso ya no recibe postulaciones.',
+      ternaPropio: 'Este aviso lo publicaste vos (o tu equipo).',
+      ternaSinPaquete: 'Para postular hace falta el paquete de este aviso.',
+      ternaYaRecibida: 'Tu postulación ya llegó.',
+      ternaNoExiste: 'Terna no encontró eso. Recargá la página.',
+      ternaDenuncia: 'Escribí entre 3 y 500 letras.',
       completa: 'Completá este campo.',
       mailInvalido: 'Ese mail no parece válido.',
       contrasenaCorta: 'La contraseña tiene que tener al menos 8 caracteres.',
@@ -2002,6 +2072,9 @@ window.T = (function () {
         intentos_agotados: e.agotados(c.max_reintentos_postulacion || 3), reintento_en_operacion: e.reintento,
         no_se_puede_borrar_admin: e.borrarUsuario, usuario_no_existe: e.borrarUsuario,
         empresas_demasiadas: e.empresasDemasiadas(c.max_empresas_seguidas || 10), empresa_nombre_invalido: e.empresaNombre,
+        contrata_publicacion_no_abierta: e.ternaCerrado, contrata_cerrado: e.ternaCerrado, no_es_de_terna: e.ternaNoExiste,
+        aviso_propio: e.ternaPropio, postulacion_sin_paquete: e.ternaSinPaquete, postulacion_ya_recibida: e.ternaYaRecibida,
+        postulacion_no_existe: e.ternaNoExiste, propuesta_no_existe: e.ternaNoExiste, denuncia_invalida: e.ternaDenuncia,
       };
       return mapa[clave] || e.general;
     },
