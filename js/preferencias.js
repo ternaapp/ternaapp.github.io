@@ -106,6 +106,15 @@ Terna.pagina('preferencias', async (ctx) => {
     bloques.marcarErrores();
   }
   const limpiar = (idE) => { const e = document.getElementById(idE); if (e && e.textContent) marcar(idE, ''); };
+  // Al lado del umbral, de «Me interesa por defecto» y de «Armar paquetes», el link a su tema de Cómo funciona (PLAN-UX §3.5),
+  // al final de la ayuda: la ayuda dice qué hace el interruptor y el tema cuenta el resto. Los tres se llaman igual, así que
+  // cada uno lleva el título de su ítem como descripción, para el lector de pantalla.
+  const linkComo = (tema, idTitulo) => h('a', { class: 'ayuda-como', href: 'como-funciona.html#' + tema, 'aria-describedby': idTitulo, text: P.comoFunciona });
+  function conComo(sub, tema) {
+    const ayuda = sub.querySelector(':scope > .campo-ayuda');
+    (ayuda || sub).append(' ', linkComo(tema, sub.dataset.titulo));
+    return sub;
+  }
 
   /* ---------- Búsqueda: umbral (con su guía), modalidades y alcance ---------- */
   /* La guía del umbral (diseno.md 0.15 §9.3; brand.md 0.5.1 §6.7). Arriba del deslizador, el cuadro de cinco franjas con lo que
@@ -212,9 +221,11 @@ Terna.pagina('preferencias', async (ctx) => {
   });
   rango.setAttribute('aria-describedby', guia.resumen.id);
   rango.addEventListener('input', () => { v.umbral = Number(rango.value); valorUmbral.textContent = rango.value; guia.actualizar(); limpiar('err-umbral'); });
+  const idTituloUmbral = id('umbral-t');
   const sUmbral = h('div', { class: 'subbloque' },
-    h('div', { class: 'interruptor-fila' }, h('label', { class: 'tarjeta-titulo', for: idUmbral, text: P.umbral }), valorUmbral),
-    guia.arriba, rango, guia.resumen, h('p', { class: 'campo-ayuda', text: P.umbralAyuda(config.piso_match || 50) }), error('err-umbral'));
+    h('div', { class: 'interruptor-fila' }, h('label', { class: 'tarjeta-titulo', id: idTituloUmbral, for: idUmbral, text: P.umbral }), valorUmbral),
+    guia.arriba, rango, guia.resumen,
+    h('p', { class: 'campo-ayuda' }, P.umbralAyuda(config.piso_match || 50), ' ', linkComo('match', idTituloUmbral)), error('err-umbral'));
 
   const idMod = id('mod');
   const sMod = h('div', { class: 'subbloque', role: 'group', 'aria-labelledby': idMod, 'aria-describedby': 'ayuda-mod err-mod' }, h('h3', { id: idMod, class: 'tarjeta-titulo', text: P.modalidades }));
@@ -479,9 +490,9 @@ Terna.pagina('preferencias', async (ctx) => {
   /* ---------- Paquetes y postulación, en dos subtemas (diseno.md 0.20 §9.3; brand.md 0.7.1 §6.7) ----------
      Paquetes: qué avisos te interesan, armar (3 por día), el idioma, las palabras clave y, desde 0.27, el salario.
      Postulación: postular y revisar. */
-  const sInt = enTema.conInterruptor(P.interesDefecto, P.interesDefectoAyuda, v.interes_por_defecto, (x) => { v.interes_por_defecto = x; });
+  const sInt = conComo(enTema.conInterruptor(P.interesDefecto, P.interesDefectoAyuda, v.interes_por_defecto, (x) => { v.interes_por_defecto = x; }), 'paquetes');
   const sIdeal = conIdeal ? enTema.conInterruptor(P.cvIdeal, P.cvIdealAyuda, v.cv_ideal === true, (x) => { v.cv_ideal = x; }) : null;
-  const sArm = enTema.conInterruptor(P.armar, P.armarAyuda(defectoPaquetes), v.armar_paquetes, (x) => { v.armar_paquetes = x; atenuar(); });
+  const sArm = conComo(enTema.conInterruptor(P.armar, P.armarAyuda(defectoPaquetes), v.armar_paquetes, (x) => { v.armar_paquetes = x; atenuar(); }), 'paquetes');
   const sIdi = enTema.grupoRadios(P.idiomaDocs, 'idioma', [['aviso', P.idiomaAviso], ['espanol', P.idiomaEspanol]], v.idioma_documentos, (x) => { v.idioma_documentos = x; });
   /* Palabras clave, a la vista (brand.md 0.6 §6.7; datos.md 0.23, 0026; cv-ats.md 0.5 §3.7). Dos interruptores:
      - "Palabras clave del aviso", en Sí por defecto: en cada CV, Terna pone en Habilidades las del aviso que el perfil respalda.

@@ -1,0 +1,58 @@
+/* Hallmark · shape: app screen · genre: editorial · theme: custom (Sello) (paquete P5 de opciones-v3/PLAN-UX.md: Cómo funciona, la página 13, 2026-11-21)
+ * nav: the site shell of css/terna.css (bar with the Cuenta button and a four-slot dock under 64rem, rail from 64rem) · footer: none, the signed-in pages drop it · hero: none, Cómo funciona opens on its h1 and the first topic · signature: the page by blocks of Mi perfil and Preferencias, each topic a folder with its lilac tab, short lines and the numbers read from config, never written · states: empty, loading, load error · posture: restrained · contrast: pass · modes: light+dark */
+
+/* Terna · css/p-como.css · Cómo funciona (como-funciona.html)
+   Las reglas propias de Cómo funciona (PLAN-UX.md §4). Se carga después de css/terna.css, que trae la página por bloques (§12:
+   cada tema es una carpeta con su lengüeta lila y, cerrada, un lomo que dice qué hay adentro; desde 48rem, el carril de temas),
+   los pasos numerados y las listas con viñetas (.pasos). Acá va solo lo que suma esta página: el aire de un tema, el link adonde
+   se hace cada cosa, la tabla «Si querés… / Andá a…» y las preguntas cortas. Celular primero; sin cortes propios: desde 48rem
+   el tema vive en el carril y la tabla ya tiene lugar. */
+
+/* ---------- 1. La página y un tema ---------- */
+#como { display: flex; flex-direction: column; gap: var(--space-md); min-width: 0; }
+/* Un tema se lee de corrido: renglones cortos, a lo sumo 65 caracteres, con más aire entre líneas que un formulario. */
+.como { display: flex; flex-direction: column; gap: var(--space-md); min-width: 0; }
+.como > p { max-width: 65ch; line-height: 1.55; }
+.como-lista > li { max-width: 65ch; }
+.como-pasos > li { max-width: calc(65ch + 40px); }
+
+/* ---------- 2. El link adonde se hace ---------- */
+/* Un botón de texto, con la flecha como un ícono aparte y nunca pegada al texto (como «Ir a otra guía»). Va en bloque y tan ancho
+   como su texto: si el texto se parte, la flecha sigue a la última palabra en vez de irse al borde. 44 px de alto o más: dos
+   seguidos se tocan sin hueco entre sí. */
+.como-ir {
+  display: block; width: fit-content; max-width: 100%; padding-block: var(--space-sm); color: var(--color-accent); font-weight: var(--weight-strong);
+  line-height: 1.25; text-decoration: none; overflow-wrap: anywhere;
+}
+.como-ir > span { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+.como-ir > .icono { margin-left: var(--space-xs); vertical-align: -0.125em; }
+.como-ir:hover > span { text-decoration-thickness: 2px; }
+.como-ir:active { transform: translateY(1px); }
+.como-link + .como-link { margin-top: calc(-1 * var(--space-md)); }
+
+/* ---------- 3. «Lo que manejás vos»: lo que querés y adónde ir ---------- */
+/* La tabla de las tablas de la página por bloques (el umbral de Preferencias): encabezados en tinta suave sobre una regla firme,
+   filas separadas por reglas finas, sin cajas. Dos columnas también a 320 px: cada renglón es corto y el link llega a 44 px. */
+.como-tabla { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--text-sm); line-height: 1.4; }
+.como-tabla thead th {
+  padding: 0 var(--space-xs) var(--space-xs) 0; border-bottom: var(--rule-hair) solid var(--color-rule-2); color: var(--color-muted);
+  font-weight: var(--weight-strong); text-align: left; white-space: nowrap;
+}
+.como-tabla tbody :is(th, td) { padding: var(--space-3xs) var(--space-xs) var(--space-3xs) 0; border-bottom: var(--rule-hair) solid var(--color-rule); text-align: left; vertical-align: middle; }
+.como-tabla :is(thead, tbody) :is(th, td):last-child { padding-right: 0; }
+.como-tabla tbody th { width: 42%; color: var(--color-ink); font-weight: var(--weight-body); overflow-wrap: anywhere; }
+.como-tabla tbody tr:last-child > * { border-bottom-color: transparent; }
+/* Adónde ir: el link en 600, sin flecha (toda la columna es «andá a»), con 44 px de alto. Lo que no es un link (sacar un aviso se
+   hace desde el aviso mismo), en tinta y con el mismo alto. */
+.como-destino, .como-donde { display: block; width: fit-content; max-width: 100%; padding-block: var(--space-sm); line-height: 1.35; overflow-wrap: anywhere; }
+.como-destino { font-weight: var(--weight-strong); }
+.como-destino:active { transform: translateY(1px); }
+.como-donde { color: var(--color-ink-2); }
+
+/* ---------- 4. Preguntas cortas ---------- */
+/* La pregunta en 600 y la respuesta debajo, separadas de la siguiente por una regla fina, como los ítems de Preferencias. */
+.como-pregunta { display: flex; flex-direction: column; gap: var(--space-2xs); }
+.como-pregunta + .como-pregunta { padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); }
+.como-pregunta-titulo { font: var(--weight-strong) var(--text-md)/1.35 var(--font-body); letter-spacing: 0; }
+.como-pregunta > p { max-width: 65ch; color: var(--color-ink-2); line-height: 1.5; }
+.como-pregunta > p > .como-ir { margin-block: calc(-1 * var(--space-sm)); line-height: inherit; }

@@ -66,7 +66,8 @@ Terna.pagina('alertas', async (ctx) => {
     const x = piezas.find(([tipo]) => tipo === 'p' || tipo === 'pasos' || tipo === 'lista');
     return x ? String(Array.isArray(x[1]) ? x[1][0] : x[1]).replace(/\*/g, '') : '';
   };
-  // En Cómo funciona, «Las guías» (su subtítulo y el índice) va enseguida de los tres pasos, antes de la dirección: el índice es
+  // En «Cómo funcionan las alertas» (#como-funciona; desde PLAN-UX §3.5 se llama así, para no chocar con la página Cómo funciona),
+  // «Las guías» (su subtítulo y el índice) va enseguida de los tres pasos, antes de la dirección: el índice es
   // lo primero que se busca acá y en el celular quedaba a 1.450 px (PLAN-WEB.md §3.6; revisión 2, P2-7). Solo cambia el orden de
   // armado: las piezas y sus textos son los de T.guias.
   function indiceArriba(piezas) {

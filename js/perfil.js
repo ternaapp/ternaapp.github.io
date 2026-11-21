@@ -20,6 +20,9 @@ Terna.pagina('perfil', async (ctx) => {
   const P = T.perfil;
   const raiz = document.getElementById('perfil');
   const indicador = document.getElementById('indicador');
+  // La intro, en una oración (PLAN-UX §3.5; T.perfil.intro): el texto es el de T, no el que trae el .html.
+  const intro = document.querySelector('#contenido > p.intro');
+  if (intro) intro.textContent = P.intro;
   const primerUso = new URLSearchParams(location.search).get('bienvenida') === '1';
   const MAX = { exp: config.max_experiencias || 15, est: config.max_estudios || 15, idi: config.max_idiomas || 10, cvMb: config.cv_max_mb || 5 };
   const RUTA_CV = uid + '/cv-original.pdf';

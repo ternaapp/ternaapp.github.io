@@ -16,10 +16,19 @@ window.T = (function () {
     comun: {
       irAlContenido: 'Ir al contenido',
       logo: 'Terna, ir a Inicio',
-      pestanas: { inicio: 'Inicio', busqueda: 'Búsqueda', avisos: 'Avisos', postulaciones: 'Postulaciones', perfil: 'Mi perfil', preferencias: 'Preferencias', invitaciones: 'Invitaciones', admin: 'Admin', alertas: 'Guías de alertas' },
+      // propuesta PLAN-UX §5.1 (brand.md §6.1): Búsqueda pasa a «Empleos» y Avisos a «Paquetes» (decisión D4 de PLAN-UX §10; los
+      // archivos y las claves no cambian), y nace «Cómo funciona», la página 13, en la hoja de Cuenta y en el carril.
+      pestanas: { inicio: 'Inicio', busqueda: 'Empleos', avisos: 'Paquetes', postulaciones: 'Postulaciones', perfil: 'Mi perfil', preferencias: 'Preferencias', invitaciones: 'Invitaciones', admin: 'Admin', alertas: 'Guías de alertas', comoFunciona: 'Cómo funciona' },
       navegacion: 'Secciones',
-      // propuesta PLAN-WEB §4.1 (brand.md §6.1): el cuarto destino del muelle y el título de su hoja.
+      // propuesta PLAN-WEB §4.1 (brand.md §6.1): el título de la hoja de Cuenta. Desde PLAN-UX §2.1 ya no es un destino del muelle:
+      // es el botón de la persona en la barra de arriba del celular.
       cuenta: 'Cuenta',
+      // propuesta PLAN-UX §5.1 (brand.md §6.1): el nombre del botón de Cuenta de la barra, que es solo un ícono.
+      cuentaAccesible: 'Tu cuenta',
+      // propuesta PLAN-UX §5.1 (brand.md §6.1): lo que dicen las cuentas de Paquetes en el muelle y el carril, para el lector de
+      // pantalla (lila, los paquetes nuevos; ámbar, los avisos por decidir: decisión D3).
+      paquetesNuevos: (x) => (x === 1 ? ', 1 paquete nuevo' : ', ' + n(x) + ' paquetes nuevos'),
+      porDecidirCuenta: (x) => (x === 1 ? ', 1 por decidir' : ', ' + n(x) + ' por decidir'),
       salir: 'Salir',
       // El botón del sol o la luna (brand.md 0.17 §6.1): su nombre dice a qué modo pasa.
       tema: { aOscuro: 'Pasar a modo oscuro', aClaro: 'Pasar a modo claro' },
@@ -32,6 +41,9 @@ window.T = (function () {
       copiarFallo: 'Seleccioná el texto y copialo.',
       cargando: 'Cargando…',
       sigueCargando: 'Sigue cargando. Si no aparece nada, probá de nuevo.',
+      // propuesta PLAN-UX §5.1 (brand.md §2): el lema y la línea de privacidad salen del pie de las páginas con sesión
+      // (Terna.dibujarPie ya no dibuja nada) y quedan en Entrar, Crear cuenta y Contraseña, que los traen escritos en su HTML.
+      // Sin uso en el código mientras tanto.
       pie1: 'Pocos avisos, bien armados.',
       pie2: 'Web privada, por invitación. Tus datos solo los ves vos.',
       titulo: (pestana) => pestana + ' | Terna',
@@ -89,10 +101,10 @@ window.T = (function () {
       // Desde brand.md 0.13: días corridos (revisión de UX del 07/11/2026: del 1 al 7 de cada mes "Esta semana" y "Este mes" daban
       // lo mismo y el control parecía roto). Las claves siguen siendo las de antes, así el período guardado se respeta.
       periodos: { semana: '7 días', mes: '30 días', todo: 'Desde el inicio' },
-      corrioHoy: (h) => 'Terna corrió hoy a las ' + h + '.',
-      corrioAyer: (h) => 'Terna corrió ayer a las ' + h + '.',
-      corrioEl: (f, h) => 'Terna corrió el ' + f + ' a las ' + h + '.',
-      noCorrio: 'Terna todavía no corrió para vos. Corre una vez por día.',
+      // propuesta PLAN-UX §5.2 (brand.md §6.3): la corrida se dice solo como excepción. «Corrió hoy» y «corrió ayer» salieron; de
+      // antes de ayer, «La última corrida fue el {f}.»; sin corrida, «…a la mañana.».
+      corrioEl: (f) => 'La última corrida fue el ' + f + '.',
+      noCorrio: 'Terna todavía no corrió para vos. Corre una vez por día, a la mañana.',
       resultado: {
         sin_umbral: (u) => 'Ningún aviso llegó a tu umbral (' + u + ').',
         limite_usuario: (p) => 'Ya se armaron tus ' + p + ' paquetes del día.',
@@ -104,23 +116,45 @@ window.T = (function () {
       },
       comoViene: 'Cómo viene',
       cifras: { nuevos: 'Avisos nuevos sobre tu umbral', total: (x) => n(x) + ' en total', armados: 'Paquetes armados', enviadas: 'Enviadas por Terna', aMano: 'Postuladas a mano' },
-      queHay: 'Qué hay para hacer',
-      aMano: (x) => plural(x, '1 postulación para hacer a mano', n(x) + ' postulaciones para hacer a mano'),
-      paraRevisar: (x) => plural(x, '1 para revisar antes de enviar', n(x) + ' para revisar antes de enviar'),
-      porDecidir: (x) => plural(x, '1 aviso por decidir si te interesa', n(x) + ' avisos por decidir si te interesan'),
+      // propuesta PLAN-UX §5.2 (brand.md §6.3): las filas de «Te toca a vos», más cortas.
+      aMano: (x) => plural(x, '1 para postular a mano', n(x) + ' para postular a mano'),
+      paraRevisar: (x) => plural(x, '1 para revisar y enviar', n(x) + ' para revisar y enviar'),
+      porDecidir: (x) => plural(x, '1 aviso por decidir', n(x) + ' avisos por decidir'),
       // propuesta PLAN-WEB §4.1 (brand.md §6.3): el título de lo que te toca, sin cifra (FEEDBACK-1 P2-2: «15 te tocan a vos» arriba
       // contradecía las filas de «Qué hay para hacer», que suman otra cosa; la cifra ya está en el muelle y en Postulaciones).
-      tocanTitulo: 'Te tocan a vos',
+      // propuesta PLAN-UX §5.2 (brand.md §6.3): en singular, porque es una sola sección.
+      tocanTitulo: 'Te toca a vos',
       // propuesta PLAN-WEB §4.1 (brand.md §6.3): el título de «Los tres de hoy», los paquetes de la última corrida.
+      // propuesta PLAN-UX §5.2 (brand.md §6.3): en uso en «Lo último de Terna», sin la variante «Los tres de hoy».
       hoy: {
-        titulo: (x) => (x === 3 ? 'Los tres de hoy' : 'Los paquetes de hoy'),
+        titulo: 'Los paquetes de hoy',
         tituloUltima: 'Los de la última corrida',
+        verPaquetes: 'Ver en Paquetes',
       },
+      // propuesta PLAN-UX §5.2 (brand.md §6.3): el mismo texto, dentro de «Lo último de Terna».
       enCola: (x) => (x === 1 ? '1' : n(x)) + ' en cola: Terna postula en la próxima corrida',
       nadaPendiente: 'Nada pendiente. Terna sigue sola.',
+      // propuesta PLAN-UX §5.2 (brand.md §6.3): sale de Inicio (el umbral está en «Cómo viene» › Por match); la sigue usando
+      // Paquetes, en la ayuda del filtro Match (js/avisos.js).
       umbralActual: (u) => 'Umbral actual: ' + u + '.',
-      // La pregunta de las cuentas (brand.md 0.16 §6.3; diseno.md 0.29 §6, 1b): una tarjeta arriba de "Qué hay para hacer", solo
-      // mientras no tiene respuesta y "Terna postula por vos" está en Sí. Los botones son los de la pregunta de Preferencias.
+      // propuesta PLAN-UX §5.2 (brand.md §6.3): «Para empezar», en lugar de todo lo demás, para quien Terna todavía no corrió.
+      empezar: {
+        titulo: 'Para empezar',
+        perfil: 'Completá tu perfil',
+        preferencias: 'Revisá tus preferencias',
+        empleos: 'Mientras tanto, mirá los empleos abiertos',
+        como: 'Cómo funciona Terna',
+        // propuesta PLAN-UX §3.1 (brand.md §6.3): el estado de cada paso. El del perfil es «Falta: …» (T.perfil.falta) o esto; el de
+        // Preferencias dice qué revisar; el de Empleos, cuántos hay (T.busqueda.enInicio).
+        hecho: 'Hecho',
+        // propuesta PLAN-UX (brand.md §6.3), FEEDBACK-UX P2-3 (a): el «Falta: …» del paso 1 (T.perfil.falta) dice además que sin eso
+        // Terna no busca. Hasta acá: «Falta: la ciudad, un trabajo o un estudio y un idioma.»
+        perfilFalta: (lista) => 'Falta: ' + lista + '. Terna empieza a buscar cuando lo completes.',
+        preferenciasAyuda: 'Tu umbral, los puestos que buscás y la modalidad.',
+      },
+      // La pregunta de las cuentas (brand.md 0.16 §6.3; diseno.md 0.29 §6, 1b): una tarjeta (desde PLAN-UX §3.1, debajo de la entrada
+      // a Empleos), solo mientras no tiene respuesta y "Terna postula por vos" está en Sí. Los botones son los de la pregunta de
+      // Preferencias.
       cuentas: {
         titulo: '¿Terna crea cuentas por vos?',
         texto: 'Muchas empresas grandes (las que usan Workday, SuccessFactors u Oracle) piden crear una cuenta en su sitio para postular. Si querés, Terna la crea con tu mail y postula por vos.',
@@ -128,19 +162,18 @@ window.T = (function () {
         saber: 'Qué conviene saber',
         listo: 'Listo. Lo cambiás cuando quieras en Preferencias › Postulación.',
       },
-      asiFunciona: 'Así funciona',
-      asi1: 'Una vez por día Terna busca avisos que ajusten con tu perfil, arma el CV y la carta para los mejores y postula por vos donde el formulario es público y conocido.',
-      asi2a: 'Lo que no puede hacer te lo deja listo en ',
-      asi2b: ', con el link y los documentos, para que lo termines vos.',
-      asi3: 'Nunca entra con tus cuentas, nunca resuelve captchas y nunca inventa una respuesta.',
+      // propuesta PLAN-UX §5.2 (brand.md §6.3): «Así funciona» salió de Inicio; su contenido, ampliado, es la página Cómo funciona
+      // (T.como), con el link «Cómo funciona Terna» de «Para empezar».
       // El tablero (brand.md 0.13 §6.3; diseno.md 0.26 §6): pedido de Francisco del 07/11/2026, "más dashboard". Todo se cuenta en
       // el navegador con lo que la página ya puede leer: cero tokens.
       empresas: {
         titulo: 'Empresas que seguís',
         editar: 'Editar', editarAccesible: 'Editar las empresas que seguís',
-        // "Nuevo" es lo mismo que en Avisos: llegó en la última corrida (mis_avisos.nuevo).
-        nuevos: (x) => plural(x, '1 aviso nuevo en la última corrida', n(x) + ' avisos nuevos en la última corrida'),
-        enLista: (x) => (x === 0 ? 'Ningún aviso en tu lista' : plural(x, '1 aviso en tu lista', n(x) + ' avisos en tu lista')),
+        // "Nuevo" es lo mismo que en Paquetes: llegó en la última corrida (mis_avisos.nuevo).
+        // propuesta PLAN-UX §5.2 (brand.md §6.3): salió la lista de arriba de las empresas (queda el «N nuevos» de cada una, nuevosCorto).
+        // propuesta PLAN-UX (brand.md §6.3), FEEDBACK-UX P2-6: «en Paquetes», adonde lleva el link de la fila (también la de Puestos).
+        // Hasta acá: «Ningún aviso en tu lista» / «1 aviso en tu lista» / «N avisos en tu lista».
+        enLista: (x) => (x === 0 ? 'Ninguno en Paquetes' : n(x) + ' en Paquetes'),
         nuevosCorto: (x) => plural(x, '1 nuevo', n(x) + ' nuevos'),
         vacio: 'Todavía no seguís ninguna empresa.',
         vacioAyuda: 'Escribí las que te interesan y Terna marca sus avisos cuando llegan, aunque no lleguen a tu umbral.',
@@ -156,21 +189,17 @@ window.T = (function () {
         escribir: 'Escribir puestos',
         apagado: 'Priorizar mis puestos está en No: Terna los cuenta, pero no los pone primero.',
       },
+      // propuesta PLAN-UX §5.2 (brand.md §6.3): «Tu lista hoy» salió de Inicio con su intro, «Dónde se postula», «Empresas con más
+      // avisos» y el vacío. Queda «Por match» (franjas), plegado en «Cómo viene»; seguir, seguirAccesible, laSeguis, siguiendo y
+      // dejaste pasan a la ficha de Empleos.
       lista: {
-        titulo: 'Tu lista hoy',
-        intro: 'Lo que ves en Avisos con tus preferencias, sin otros filtros.',
-        vacia: 'Tu lista está vacía por ahora. Terna la llena en la próxima corrida.',
         franjas: 'Por match',
         franjasNota: (piso) => 'Cuenta también los que no llegan a tu umbral, desde ' + piso + '.',
         cambiarUmbral: 'Cambiar el umbral',
-        donde: 'Dónde se postula',
-        porcentaje: (x) => x + ' %',
-        empresasTop: 'Empresas con más avisos',
         seguir: 'Seguir', seguirAccesible: (e) => 'Seguir ' + e,
         laSeguis: 'La seguís',
         siguiendo: (e) => 'Ahora seguís a ' + e + '.',
         dejaste: (e) => 'Dejaste de seguir a ' + e + '.',
-        avisos: (x) => plural(x, '1 aviso', n(x) + ' avisos'),
       },
       semanas: {
         titulo: 'Semana a semana',
@@ -186,8 +215,10 @@ window.T = (function () {
     },
 
     avisos: {
-      titulo: 'Avisos',
-      cuenta: (x) => plural(x, '1 aviso', n(x) + ' avisos'),
+      // propuesta PLAN-UX §5.3 (brand.md §6.4): la página es «Paquetes» (decisión D4) y la cuenta sale del título (`cuenta`, «1 aviso /
+      // N avisos», la sacó P2).
+      titulo: 'Paquetes',
+      // propuesta PLAN-UX §5.3 (brand.md §6.4): en uso en el botón único de filtros del celular (Filtros.botonUnico).
       filtrar: 'Filtrar',
       filtrarCon: (x) => 'Filtrar (' + x + ')',
       ordenarPor: 'Ordenar por',
@@ -333,11 +364,8 @@ window.T = (function () {
       matchAccesible: (m, llega) => 'Match ' + m + ' de 100, ' + (llega ? 'llega a tu umbral' : 'no llega a tu umbral'),
       sinMatch: 'Sin match todavía',
       matchPalabra: 'match',
-      // propuesta PLAN-WEB §4.1 (brand.md §6.4): el botón del cartel «por decidir» de Avisos y su nombre accesible.
-      porDecidir: {
-        ver: 'Ver',
-        verAccesible: (x) => (x === 1 ? 'Ver el aviso por decidir' : 'Ver los ' + n(x) + ' avisos por decidir'),
-      },
+      // propuesta PLAN-UX §5.3 (brand.md §6.4): sale el cartel «por decidir» de Avisos con su botón (`porDecidir.ver`,
+      // `porDecidir.verAccesible`; lo sacó P2): pasa a ser el grupo «Te toca decidir» y el punto de la pestaña Por armar.
       bajoUmbral: 'Bajo tu umbral',
       viejo: 'Aviso viejo o republicado',
       viejoAccesible: 'Aviso viejo o republicado: puede que ya no esté vigente',
@@ -366,7 +394,9 @@ window.T = (function () {
         ternaNoPudo: 'Terna intentó postular y no pudo (el motivo está en la postulación): lo hacés vos en el sitio de la empresa.',
         easy_apply: 'Se postula desde tu cuenta de LinkedIn, con Easy Apply (Solicitud sencilla). Terna no usa tus cuentas: lo hacés vos, en un par de minutos.',
         empresa: 'Se postula en el sitio de la empresa, en un formulario que Terna todavía no sabe completar: lo hacés vos.',
-        empresaCuenta: 'El sitio de la empresa pide crear una cuenta para postular. Terna no crea ni usa cuentas: lo hacés vos.',
+        // propuesta PLAN-UX (brand.md §6.10): desde que Terna crea cuentas por vos (js/cuentas.js, PARA_TODOS en true) ya no es cierto
+        // que «no crea ni usa cuentas». Hasta acá: «…Terna no crea ni usa cuentas: lo hacés vos.»
+        empresaCuenta: 'El sitio de la empresa pide crear una cuenta para postular, y esta Terna no la crea: lo hacés vos. Terna crea cuentas solo en algunos sitios y si se lo pediste en Preferencias › Postulación.',
         empresaViaLinkedin: 'El botón "Postularse" del aviso en LinkedIn lleva al sitio de la empresa, y ahí Terna no encontró un formulario que sepa completar: lo hacés vos.',
         // Desde brand.md 0.23 sin "Si no querés esperar, pegá el texto.": la persona ya no pega textos.
         confirmar: 'Terna todavía no leyó la página del aviso en LinkedIn. La lee en las próximas corridas (una por día): trae el texto y te dice si se postula con Easy Apply o en el sitio de la empresa.',
@@ -386,43 +416,78 @@ window.T = (function () {
       // Debajo de "Sin texto" (brand.md 0.23 §6.4; Francisco, 12/11/2026: "que muestre sin texto en cola para evaluar… no quiero que
       // tenga el usuario final el permiso para pegar el texto"): quién lo está buscando. Hasta 0.22, el botón "Pegar texto".
       sinTextoLinea: { buscando: 'Terna lo busca', admin: 'Lo busca Francisco' },
-      // La franja de arriba de Avisos (brand.md 0.23 §6.4; diseno.md 0.35 §7.10; Francisco, 12/11/2026: "algo similar" a Por postular y
-      // Postuladas, "7 nuevos empleos esta semana… qué es lo nuevo semanalmente, mensualmente"): dos tarjetas que muestran la lista
-      // entera o lo que llegó en los últimos 7 días, con de qué está hecha cada una, y al lado lo de los últimos 30 días.
+      // El nombre del grupo de las pestañas de Paquetes, para el lector de pantalla (hasta PLAN-UX, de la franja Todos / Esta semana).
       mostrar: 'Mostrar',
-      vistas: { todos: 'Todos', semana: 'Esta semana' },
-      vistaSemanaExplicacion: 'Lo que llegó a tu lista en los últimos 7 días.',
-      partes: {
-        conPaquete: (x) => x + ' con paquete',
-        sinPaquete: (x) => x + ' sin paquete',
-        sinTexto: (x) => x + ' sin texto',
+      // propuesta PLAN-UX §5.3 (brand.md §6.4): las dos pestañas de Paquetes, Armados y Por armar (PLAN-UX §2.2). Con la franja Todos /
+      // Esta semana salieron (P2) `vistas.todos` y `vistas.semana`, `vistaSemanaExplicacion`, `partes` («N con paquete · N sin paquete
+      // · N sin texto»), `mes` («En los últimos 30 días llegaron N.»), `vacioSemana` y `verTodos`.
+      vistas: { armados: 'Armados', por_armar: 'Por armar' },
+      // propuesta PLAN-UX §5.3 (brand.md §6.4): los grupos de las dos pestañas (PLAN-UX §3.2). En Armados, por fecha de armado y,
+      // arriba, lo que no se pudo armar; en Por armar, lo que te toca decidir, tus pedidos, lo que sigue Terna, lo que espera y,
+      // plegado, lo que Terna no arma sola.
+      grupos: {
+        hoy: 'Hoy',
+        semana: 'Esta semana',
+        antes: 'Antes',
+        noSePudo: 'No se pudo armar',
+        // agregado por P0 (PLAN-UX §3.2: «rojo, "Terna lo reintenta mañana"»): la ayuda del grupo.
+        noSePudoAyuda: 'Terna lo reintenta mañana.',
+        decidir: 'Te toca decidir',
+        decidirAyuda: 'Terna espera tu marca para armarlos.',
+        pedidos: 'Tus pedidos',
+        sigue: 'Después sigue Terna',
+        // propuesta PLAN-UX (brand.md §6.4), FEEDBACK-UX P3-1: la ayuda da una razón, no promete una lista. Hasta acá: «Más o menos
+        // en este orden: Terna arma uno por empresa por día y antes prueba cada formulario.»
+        sigueAyuda: 'El orden es aproximado: Terna arma uno por empresa por día y antes prueba cada formulario.',
+        esperan: 'Esperan',
+        noArma: (x) => plural(x, 'Ver 1 que Terna no arma sola', 'Ver ' + n(x) + ' que Terna no arma sola'),
       },
-      mes: (x) => (x === 1 ? 'En los últimos 30 días llegó 1.' : 'En los últimos 30 días llegaron ' + n(x) + '.'),
-      vacioSemana: 'En los últimos 7 días no llegó ningún aviso que entre en esta lista.',
-      verTodos: 'Ver todos',
+      // propuesta PLAN-UX §5.3 (brand.md §6.4): cuándo se armó, al pie de cada carpeta de Armados.
+      armadoEl: (f, dias) => (dias === 0 ? 'Armado hoy' : dias === 1 ? 'Armado ayer' : 'Armado el ' + f),
+      // agregado por P2 (PLAN-UX §3.2): el nombre accesible de «Ver en Postulaciones» al pie de cada carpeta de Armados (en una lista
+      // hay muchos; lo visible es T.avisos.ficha.verEnPostulaciones).
+      verEnPostulacionesAccesible: (puesto) => 'Ver ' + puesto + ' en Postulaciones',
+      // agregado por P0 (PLAN-UX §3.2 y §8, P0.4: la fila de documentos de una carpeta): lo visible son los nombres de la ficha
+      // (T.avisos.ficha.cv, carta, notas y salarioCorto); el nombre accesible suma el puesto, porque en una lista hay muchos «CV».
+      docs: {
+        grupo: (puesto) => 'Documentos de ' + puesto,
+        cv: (puesto) => 'CV de ' + puesto,
+        carta: (puesto) => 'Carta de ' + puesto,
+        notas: (puesto) => 'Notas para la entrevista de ' + puesto,
+      },
       noMeInteresaAccesible: (puesto) => 'No me interesa ' + puesto,
       // Hasta brand.md 0.7 decía "Pedido. Terna lo arma en la próxima corrida y usa uno de tus {3} paquetes del día."
       pedido: (lugar, corridas) => (corridas <= 1 ? 'Pedido. Terna lo arma en la próxima corrida.'
         : 'Pedido. Va ' + lugar + '.º: Terna lo arma dentro de ' + corridas + ' corridas.'),
+      // propuesta PLAN-UX (brand.md §6.4), FEEDBACK-UX P2-3 (c): con el perfil incompleto Terna no corre, así que no hay «próxima
+      // corrida» que prometer (el par de confirmarPedir.lugarIncompleto).
+      pedidoIncompleto: 'Pedido. Terna lo arma cuando completes tu perfil.',
       pedidoLugar: (lugar, corridas) => lugar + '.º · ' + (corridas <= 1 ? 'próxima corrida' : 'en ' + corridas + ' corridas'),
-      pedidoLugarAccesible: (lugar, corridas) => 'Lugar ' + lugar + ' de tus próximos paquetes: ' + (corridas <= 1 ? 'Terna lo arma en la próxima corrida' : 'Terna lo arma dentro de ' + corridas + ' corridas'),
+      // propuesta PLAN-UX §5.3 (brand.md §6.4): «Próximos paquetes» pasa a «Tus pedidos» en todos los textos que la nombran.
+      pedidoLugarAccesible: (lugar, corridas) => 'Lugar ' + lugar + ' de tus pedidos: ' + (corridas <= 1 ? 'Terna lo arma en la próxima corrida' : 'Terna lo arma dentro de ' + corridas + ' corridas'),
       cancelarPedido: 'Cancelar pedido',
       pedidoCancelado: 'Pedido cancelado.',
       confirmarPedir: {
         titulo: 'Pedir el paquete',
         si: 'Pedir paquete',
+        // propuesta PLAN-UX §5.3 y §5.4 (brand.md §6.4): «tus pedidos» en lugar de «tus próximos paquetes», y la regla en una oración
+        // corta (el diálogo pasa de cinco renglones a tres).
         lugar: (lugar, corridas, cupo) => (corridas <= 1
-          ? (lugar === 1 ? 'Va primero en tus próximos paquetes: Terna lo arma en la próxima corrida.' : 'Va ' + lugar + '.º en tus próximos paquetes: Terna lo arma en la próxima corrida.')
-          : 'Va ' + lugar + '.º en tus próximos paquetes. Terna arma ' + cupo + ' por día, así que lo arma dentro de ' + corridas + ' corridas.'),
-        regla: (cupo) => 'Lo que pedís va antes que lo que Terna elige sola, en el orden en que lo pediste, y usa uno de los ' + cupo + ' paquetes de ese día.',
+          ? (lugar === 1 ? 'Va primero en tus pedidos: Terna lo arma en la próxima corrida.' : 'Va ' + lugar + '.º en tus pedidos: Terna lo arma en la próxima corrida.')
+          : 'Va ' + lugar + '.º en tus pedidos. Terna arma ' + cupo + ' por día, así que lo arma dentro de ' + corridas + ' corridas.'),
+        // propuesta PLAN-UX (brand.md §6.4 y §6.3.1), FEEDBACK-UX P2-3 (c): el primer renglón con el perfil incompleto. Hasta acá
+        // decía, también entonces, «…Terna lo arma en la próxima corrida.»
+        lugarIncompleto: (lugar) => (lugar === 1 ? 'Va primero en tus pedidos.' : 'Va ' + lugar + '.º en tus pedidos.') + ' Terna lo arma cuando completes tu perfil.',
+        regla: (cupo) => 'Usa uno de tus ' + cupo + ' paquetes de ese día y va antes que lo que Terna elige sola.',
         postula: 'Después, si el formulario lo permite, Terna postula por vos.',
         revisa: 'Después, si el formulario lo permite, Terna lo llena y te lo deja para revisar antes de enviar.',
       },
       confirmarNoInteresa: {
         titulo: 'No me interesa',
         si: 'No me interesa',
-        texto: (dias) => 'Terna no arma ni postula este aviso y lo saca de tu lista. Durante ' + dias + ' días lo ves en Avisos, con el filtro Interés, y podés volver atrás; después se borra.',
-        conDocs: (dias) => 'Terna no arma ni postula este aviso y lo saca de tu lista. Durante ' + dias + ' días lo ves en Avisos, con el filtro Interés, y podés volver atrás; después se borra, con sus documentos y lo que Terna respondió.',
+        // propuesta PLAN-UX §5.3 (brand.md §6.4): «en Paquetes» por el nombre nuevo de la página.
+        texto: (dias) => 'Terna no arma ni postula este aviso y lo saca de tu lista. Durante ' + dias + ' días lo ves en Paquetes, con el filtro Interés, y podés volver atrás; después se borra.',
+        conDocs: (dias) => 'Terna no arma ni postula este aviso y lo saca de tu lista. Durante ' + dias + ' días lo ves en Paquetes, con el filtro Interés, y podés volver atrás; después se borra, con sus documentos y lo que Terna respondió.',
         pedido: 'También se cancela el pedido de su paquete.',
         en_cola: 'También se cancela el envío que estaba en cola.',
         para_revisar: 'También se cancela la postulación que esperaba tu revisión.',
@@ -430,9 +495,11 @@ window.T = (function () {
         motivo: 'Por qué (opcional)',
       },
       // Próximos paquetes (brand.md 0.8 §6.4; diseno.md 0.21 §7.8; datos.md 0.25, 0029): la cola de lo que la persona pidió.
+      // propuesta PLAN-UX §5.3 (brand.md §6.4): «Tus pedidos», dentro de Paquetes › Por armar y arriba también en el celular (el id
+      // #proximos no cambia).
       proximos: {
-        titulo: 'Próximos paquetes',
-        intro: (cupo) => 'Terna arma ' + cupo + ' por día y empieza por lo que pediste, en este orden.',
+        titulo: 'Tus pedidos',
+        intro: (cupo) => 'Terna arma ' + cupo + ' por día y empieza por acá.',
         cuando: (corridas) => (corridas <= 1 ? 'Próxima corrida' : 'En ' + corridas + ' corridas'),
         subir: (puesto) => 'Subir ' + puesto,
         bajar: (puesto) => 'Bajar ' + puesto,
@@ -507,7 +574,8 @@ window.T = (function () {
         faltanAyuda: 'Tu perfil no las menciona, así que Terna no las puso. Si sabés usar alguna, sumala a tus palabras clave personalizadas: desde ahí va sola en tus próximos CV.',
         faltanLink: 'Ir a mis palabras clave',
         sinDocs: 'Todavía no hay documentos para este aviso.',
-        loArma: 'Lo pediste. Terna lo arma antes que los que elige sola, en el orden de tus próximos paquetes.',
+        // propuesta PLAN-UX §5.3 (brand.md §6.4): «tus pedidos» en lugar de «tus próximos paquetes».
+        loArma: 'Lo pediste. Terna lo arma antes que los que elige sola, en el orden de tus pedidos.',
         noSePudo: 'No se pudo armar el paquete. Terna lo reintenta mañana.',
         armarNo: 'Armar paquetes está en No.',
         postulacion: 'Postulación',
@@ -529,7 +597,14 @@ window.T = (function () {
         { titulo: 'Salario', icono: 'i-salario', nombre: 'salario' },
       ],
       notasVacio: 'Nada para marcar en este aviso.',
-      vacioSinCorrida: 'Todavía no hay avisos. Terna corre una vez por día; los primeros aparecen después de la próxima corrida.',
+      // propuesta PLAN-UX §5.3 (brand.md §6.4): los vacíos de las dos pestañas de Paquetes. vacioSinCorrida es el de Por armar
+      // antes de la primera corrida.
+      vacioSinCorrida: 'Todavía no hay nada por armar. Terna corre una vez por día; lo primero aparece después de la próxima corrida.',
+      // propuesta PLAN-UX (brand.md §6.4), FEEDBACK-UX P2-3 (b): el mismo vacío con el perfil incompleto, con «Completar perfil»
+      // (T.bandas.completar) en lugar de «Revisar preferencias»: Terna no corre hasta que esté completo.
+      vacioIncompleto: 'Todavía no hay nada por armar. Terna corre una vez por día, cuando tu perfil está completo.',
+      vacioArmados: (cupo) => 'Todavía no hay paquetes armados. Terna arma hasta ' + cupo + ' por día; mirá lo que viene en Por armar.',
+      vacioPorArmar: 'Nada en cola. Terna arma lo próximo que llegue a tu umbral.',
       vacioSinAvisos: 'Hoy no apareció ningún aviso que ajuste con tu perfil. Mañana se vuelve a buscar. Si querés ver más, podés bajar el umbral o sumar modalidades.',
       vacioFiltros: 'Ningún aviso coincide con estos filtros.',
       vacioPreferencias: 'Ningún aviso entra en tus preferencias de búsqueda. Podés abrir uno de los filtros de arriba o cambiar tus preferencias.',
@@ -541,7 +616,8 @@ window.T = (function () {
     // el paquete de cualquiera. Lo que ya decía Avisos (Pedir paquete, Dónde se postula, los filtros) se dice igual y sale de ahí.
     // 0.2 es la segunda versión, después de la revisión como usuaria y como diseño (busqueda.md §8).
     busqueda: {
-      titulo: 'Búsqueda',
+      // propuesta PLAN-UX §5.4 (brand.md §6.3.1): la página es «Empleos» (decisión D4); el archivo sigue siendo busqueda.html.
+      titulo: 'Empleos',
       cuenta: (x) => plural(x, '1 aviso abierto', n(x) + ' avisos abiertos'),
       cuentaEmpresas: (x) => 'de ' + n(x) + ' empresas',
       cuentaDe: (x, total) => n(x) + ' de ' + n(total) + ' avisos abiertos',
@@ -578,8 +654,11 @@ window.T = (function () {
       },
       filtros: {
         barra: 'Filtros',
-        lista: 'En tu lista',
+        // propuesta PLAN-UX (brand.md §6.3.1), FEEDBACK-UX P2-6: el filtro lleva el nombre de su columna (columnas.lista). Hasta acá,
+        // «En tu lista».
+        lista: 'Estado',
         todosLista: 'Todos',
+        // propuesta PLAN-UX §5.4 (brand.md §6.3.1): sale (lo saca P3); la clave queda sin uso.
         sinFiltros: 'Sin filtros: ves todo lo abierto.',
         conPreferencias: 'Con tus preferencias de búsqueda.',
         usarPreferencias: 'Usar mis preferencias',
@@ -592,14 +671,19 @@ window.T = (function () {
         elegidas: 'Elegidas',
       },
       // Qué es cada aviso para la persona: nada todavía, uno de sus avisos, un paquete pedido, uno armado o una postulación hecha.
-      lista: { fuera: 'No está en tu lista', en_lista: 'En tus avisos', pedido: 'Paquete pedido', con_paquete: 'Con paquete', postulada: 'Postulada', no_interesa: 'No te interesa' },
-      listaFiltro: { fuera: 'No están en tu lista', en_lista: 'En tus avisos', pedido: 'Paquete pedido', con_paquete: 'Con paquete', postulada: 'Postuladas', no_interesa: 'No te interesan' },
+      // propuesta PLAN-UX §5.4 (brand.md §6.3.1): «En tu cola» en lugar de «En tus avisos» (ya no hay una página Avisos).
+      // propuesta PLAN-UX (brand.md §6.3.1), FEEDBACK-UX P2-6: un solo nombre para lo tuyo («tu lista», «tu cola» y «tus avisos» eran
+      // lo mismo). Hasta acá: lista.fuera «No está en tu lista», listaFiltro.fuera «No están en tu lista» (ahora el nombre del
+      // atajo, «Que no tengo») y columnas.lista «En tu lista».
+      lista: { fuera: 'No lo tenés', en_lista: 'En tu cola', pedido: 'Paquete pedido', con_paquete: 'Con paquete', postulada: 'Postulada', no_interesa: 'No te interesa' },
+      listaFiltro: { fuera: 'Que no tengo', en_lista: 'En tu cola', pedido: 'Paquete pedido', con_paquete: 'Con paquete', postulada: 'Postuladas', no_interesa: 'No te interesan' },
       listaConMatch: (estado, m) => estado + ' · ' + m,
       listaConMatchAccesible: (estado, m) => estado + ', match ' + m,
       ordenEmpresa: 'Empresa (A a Z)',
       ordenMatch: 'Tu match',
-      columnas: { lista: 'En tu lista', paquete: 'Paquete' },
-      verEnAvisos: 'Ver en Avisos',
+      columnas: { lista: 'Estado', paquete: 'Paquete' },
+      // propuesta PLAN-UX §5.4 (brand.md §6.3.1): por el nombre nuevo de la página.
+      verEnAvisos: 'Ver en Paquetes',
       verEnPostulaciones: 'Ver en Postulaciones',
       mostrarMas: (x) => 'Mostrar ' + n(x) + ' más',
       mostrando: (x, total) => 'Mostrando ' + n(x) + ' de ' + n(total) + '.',
@@ -608,70 +692,144 @@ window.T = (function () {
       // Lo que se sabe sin pedir nada (busqueda.md §8, F5): el título nombra uno de tus puestos, o la empresa es una que seguís.
       tuPuestoExplicacion: (puesto) => 'El título nombra uno de tus puestos ("' + puesto + '").',
       tuEmpresaExplicacion: (empresa) => 'Es de una empresa que seguís ("' + empresa + '").',
+      // propuesta PLAN-UX §5.4 (brand.md §6.3.1): el diálogo de Pedir paquete en tres renglones. pasaALista («Pasa a tus avisos: lo
+      // seguís en Paquetes, en Tus pedidos.») salió (FEEDBACK-UX P2-6: no se usaba): lo dice el aviso breve, pedidoBreve.
       confirmar: {
-        sinMatch: 'Este aviso todavía no tiene tu match: Terna lo calcula en la próxima corrida, antes de armar el paquete.',
-        pasaALista: 'Pasa a tus avisos: lo seguís en Avisos, en Próximos paquetes.',
+        sinMatch: 'Todavía no tiene tu match: Terna lo calcula antes de armar.',
       },
+      // agregado por P0 (PLAN-UX §5.4 lo cita: «lo dice el aviso breve: "Pedido. Lo seguís en Paquetes."»): el aviso breve después
+      // de pedir desde Empleos.
+      // propuesta PLAN-UX (brand.md §6.3.1), FEEDBACK-UX P2-1: dice en qué pestaña quedó (Paquetes abre en Armados) y suma «Ver»,
+      // que lleva a Tus pedidos (avisos.html#proximos). Hasta acá: «Pedido. Lo seguís en Paquetes.», solo con Deshacer.
+      pedidoBreve: 'Pedido. Está en Paquetes › Por armar.',
+      pedidoVer: 'Ver',
+      pedidoVerAccesible: 'Ver tus pedidos en Paquetes › Por armar',
       ficha: {
-        enTuLista: 'En tu lista',
+        // propuesta PLAN-UX (brand.md §6.3.1), FEEDBACK-UX P2-6: el título de la sección y sus estados nombran Paquetes, adonde lleva
+        // su link. Hasta acá: enTuLista «En tu lista»; estado.en_lista «Está en tus avisos…»; fueraConMatch «…no lo dejó en tu
+        // lista…»; no_interesa «…vuelve a tus avisos.»; sumar «Sumar a mis avisos».
+        enTuLista: 'Para vos',
         donde: 'Dónde se postula',
         datos: 'Datos del aviso',
         nivel: 'Nivel', jornada: 'Jornada', modalidad: 'Modalidad', publicado: 'Publicado', fuente: 'Fuente',
         fuenteNota: (fuente) => 'Terna lo leyó en ' + fuente + '. El texto completo está en el aviso original.',
         masDeEmpresa: (x, empresa) => 'Ver los ' + n(x) + ' avisos abiertos de ' + empresa,
         estado: {
-          fuera: 'Todavía no está en tu lista: Terna no lo eligió para vos. Si pedís el paquete, pasa a tus avisos y Terna calcula tu match en la próxima corrida.',
-          fueraConMatch: (m) => 'Terna ya lo puntuó para vos (match ' + m + ') y no lo dejó en tu lista. Si pedís el paquete, lo arma igual.',
-          en_lista: (m) => (m === null ? 'Está en tus avisos.' : 'Está en tus avisos, con match ' + m + '.'),
+          // propuesta PLAN-UX §5.4 (brand.md §6.3.1): más cortos; el armado está en Paquetes.
+          fuera: 'Terna no lo eligió para vos. Si pedís el paquete, calcula tu match y lo arma.',
+          fueraConMatch: (m) => 'Terna ya lo puntuó para vos (match ' + m + ') y no lo dejó en Paquetes. Si pedís el paquete, lo arma igual.',
+          en_lista: (m) => (m === null ? 'Está en Paquetes › Por armar.' : 'Está en Paquetes › Por armar, con match ' + m + '.'),
           pedidoSinMatch: 'Antes de armarlo, Terna calcula tu match.',
-          con_paquete: 'Ya tiene el paquete armado: el CV, la carta, el salario sugerido y las notas están en Postulaciones.',
+          con_paquete: 'Ya tiene el paquete armado: está en Paquetes.',
           postulada: 'Ya está postulada. La seguís en Postulaciones.',
-          no_interesa: 'Lo marcaste "No me interesa". Si pedís el paquete, vuelve a tus avisos.',
+          no_interesa: 'Lo marcaste "No me interesa". Si pedís el paquete, vuelve a Paquetes.',
           no_se_pudo: 'Terna no pudo armar el paquete. Podés volver a pedirlo.',
         },
         armarNo: 'Armar paquetes está en No: Terna no arma nada, tampoco lo que pidas acá.',
         cambiarlo: 'Cambiarlo en Preferencias',
+        // propuesta PLAN-UX §5.4 (brand.md §6.3.1): seguir a la empresa y sumar el puesto desde la ficha. «La seguís», el aviso breve
+        // y Deshacer son los de Inicio (T.inicio.lista.laSeguis, siguiendo, dejaste).
+        seguir: (empresa) => 'Seguir a ' + empresa,
+        sumarPuesto: 'Sumar a mis puestos',
+        // propuesta PLAN-UX §5.4 (brand.md §6.3.1), con §6.1: escrito y apagado hasta que exista sumar_aviso en la base (decisión D5).
+        sumar: 'Sumar a Paquetes',
+        sumarAyuda: 'Terna calcula tu match en la próxima corrida. No usa ninguno de tus paquetes.',
       },
+      // propuesta PLAN-UX §5.4 (brand.md §6.3.1): el diálogo chico de «Sumar a mis puestos», con el título del aviso en un campo.
+      sumarPuesto: {
+        titulo: 'Sumar a tus puestos',
+        ayuda: 'Terna pone primero los avisos que tengan estas palabras en el título. Dejá solo el nombre del puesto.',
+        general: 'Es muy general: está en casi todos los avisos. Sumale una palabra.',
+        lleno: (max) => 'Ya tenés ' + max + ' puestos. Sacá uno en Preferencias.',
+        hecho: (puesto) => '«' + puesto + '» está en tus puestos.',
+        // agregado por P3 (PLAN-UX §3.3, la ficha): el campo vacío al tocar Sumar, y el aviso breve de Deshacer o de sacar el puesto
+        // desde «Tu puesto» (el par de T.inicio.lista.dejaste para las empresas).
+        vacio: 'Escribí el nombre del puesto.',
+        sacado: (puesto) => '«' + puesto + '» ya no está en tus puestos.',
+      },
+      // propuesta PLAN-UX §5.4 (brand.md §6.3.1): los atajos, una fila de chips que se prenden y se apagan («Que no tengo», prendido
+      // de entrada).
+      atajos: { puestos: 'Mis puestos', empresas: 'Empresas que sigo', terna: 'Postula Terna', semana: 'De esta semana', noTengo: 'Que no tengo' },
+      // agregado por P3: el nombre de la fila de atajos para el lector de pantalla (a la vista no lleva título).
+      atajosNombre: 'Atajos',
+      // propuesta PLAN-UX §5.4 (brand.md §6.3.1; decisión D6): los rubros, deducidos del título del puesto (js/rubros.js). Un rubro sin
+      // avisos no se dibuja. Las claves son las del campo avisos.rubro que se propone al motor (PLAN-UX §6.4).
+      rubros: {
+        titulo: 'Por el nombre del puesto',
+        valores: {
+          administracion: 'Administración y finanzas', ventas: 'Ventas y comercio', atencion: 'Atención al cliente',
+          tecnologia: 'Tecnología y datos', logistica: 'Logística y transporte', oficios: 'Producción y oficios',
+          gastronomia: 'Gastronomía y hotelería', salud: 'Salud', educacion: 'Educación', construccion: 'Construcción y mantenimiento',
+          limpieza_seguridad: 'Limpieza y seguridad', otros: 'Otros',
+        },
+      },
+      // propuesta PLAN-UX §5.4 (brand.md §6.3.1): «Cerca», por la ciudad de tu perfil, y la jornada parcial.
+      cercaTuyo: (ciudad) => 'Cerca: ' + ciudad,
+      parcial: 'Jornada parcial',
+      // propuesta PLAN-UX §5.4 (brand.md §6.3.1): el vacío de un rubro o de un oficio, que dice la verdad y ofrece la salida.
+      vacioRubro: 'Terna todavía lee sobre todo sitios de empresas: de esto tiene poco o nada. Si te llegan alertas de Bumeran, Computrabajo, Zonajobs o Indeed, reenviáselas a Terna y entran a Paquetes.',
+      vacioRubroLink: 'Cómo reenviar alertas',
       vacioBase: 'Terna todavía no tiene avisos abiertos. Busca todos los días: volvé después de la próxima corrida.',
       vacioBusqueda: (q) => 'Ningún aviso abierto coincide con "' + q + '".',
       vacioFiltros: 'Ningún aviso abierto coincide con estos filtros.',
       vacioAyuda: 'Probá con otra palabra o con menos filtros. Terna suma avisos todos los días.',
       // Francisco, 16/11/2026, buscó los avisos de una empresa cuyo sitio Terna todavía no lee: que la página lo diga (§8, F2).
       queTiene: 'Terna muestra los avisos de los sitios que sabe leer: de algunas empresas todavía no tiene ninguno, o tiene pocos.',
-      seguirEmpresa: 'Si buscás una empresa en particular, sumala en Preferencias › Búsqueda › Empresas que seguís: Terna prioriza sus avisos cuando los encuentra.',
+      // propuesta PLAN-UX §5.4 (brand.md §6.3.1): desde la ficha de Empleos se sigue a la empresa (ficha.seguir).
+      seguirEmpresa: 'Si buscás una empresa en particular, seguila: Terna prioriza sus avisos cuando los encuentra.',
       irAPreferencias: 'Ir a Preferencias',
-      pie: 'Acá buscás vos, entre todo lo que Terna tiene abierto y no solo lo que eligió para vos. Lo que Terna busca sola se cambia en',
-      piePreferencias: 'Preferencias › Búsqueda',
       // En Inicio (busqueda.md §4.6): cuánto hay para buscar, con el link. Sin la cuenta de empresas desde 0.3: la base y la página
       // no juntan igual dos nombres de la misma empresa (652 y 653 el 17/11/2026) y dos números distintos para lo mismo confunden.
-      enInicio: (avisos, semana) => 'Terna tiene hoy ' + plural(avisos, '1 aviso abierto', n(avisos) + ' avisos abiertos')
-        + (semana > 0 ? '; ' + plural(semana, '1 es', n(semana) + ' son') + ' de esta semana' : '') + '.',
-      enInicioLink: 'Buscar entre todos',
+      // propuesta PLAN-UX §5.2 (brand.md §6.3): la entrada a Empleos de Inicio, una fila con ícono y el botón (también el de
+      // Paquetes, #ir-busqueda).
+      enInicio: (avisos, semana) => plural(avisos, '1 empleo abierto', n(avisos) + ' empleos abiertos')
+        + (semana > 0 ? ', ' + n(semana) + ' de esta semana' : ''),
+      enInicioLink: 'Buscar en Empleos',
       // En Avisos, debajo de la lista (busqueda.md §4.6): qué diferencia hay entre las dos pestañas, con el link.
-      enAvisos: 'Estos son los avisos que Terna eligió para vos. Todo lo que tiene abierto está en',
+      // propuesta PLAN-UX §5.3 (brand.md §6.4): el renglón de cierre de Paquetes › Por armar; el link dice «Empleos».
+      enAvisos: '¿Buscás otro? Todo lo abierto está en',
     },
 
     postulaciones: {
       titulo: 'Postulaciones',
-      cuenta: (x) => plural(x, '1 postulación', n(x) + ' postulaciones'),
-      // Dos pestañas (brand.md 0.21 §6.5; diseno.md 0.33 §1.41): lo que falta postular y lo ya postulado, cada una con de qué está hecha.
+      // propuesta PLAN-UX §5.5 (brand.md §6.5): la cuenta salió del título (`cuenta`, «N postulaciones»: cada número vive en su pestaña).
+      // El nombre del grupo de pestañas, para el lector de pantalla.
       mostrar: 'Mostrar',
-      vistas: { por_postular: 'Por postular', postuladas: 'Postuladas' },
+      // propuesta PLAN-UX §5.5 (brand.md §6.5): tres pestañas, Postuladas · Postula Terna · A mano (PLAN-UX §2.2 y §10); hasta acá, Por
+      // postular y Postuladas.
+      vistas: { postuladas: 'Postuladas', terna: 'Postula Terna', a_mano: 'A mano' },
+      // propuesta PLAN-UX §5.5 (brand.md §6.5): lo para revisar dentro de Postula Terna, en el punto ámbar de su pestaña, para el lector
+      // de pantalla (como T.comun.porDecidirCuenta en Paquetes).
+      paraRevisarCuenta: (x) => ', ' + n(x) + ' para revisar',
+      // propuesta PLAN-UX §5.5 (brand.md §6.5): los grupos de Postula Terna, con su ayuda (las dos ayudas las agrega P0: PLAN-UX §3.4
+      // las cita y §5.5 no las lista).
+      grupos: {
+        revisar: 'Para revisar',
+        revisarAyuda: 'Terna completó el formulario. Mirá las respuestas y tocá Enviar.',
+        cola: 'En cola',
+        colaAyuda: 'Terna la envía en la próxima corrida.',
+      },
+      // propuesta PLAN-UX §5.5 (brand.md §6.5): el renglón del final de Postula Terna, con el link a Paquetes (avisos.html?donde=terna).
+      // propuesta PLAN-UX (brand.md §6.5), FEEDBACK-UX P2-5: sin el número, que no coincidía con ninguno de los grupos de Por armar
+      // (sumaba tus pedidos y lo que sigue Terna). Hasta acá: «Lo próximo que Terna va a armar y postular: {x} en Paquetes.»
+      proximos: 'Lo próximo que Terna va a armar y postular está en',
+      proximosLink: 'Paquetes › Por armar',
+      // propuesta PLAN-UX §5.5 (brand.md §6.5): las partes salieron de debajo de las pestañas (`terna`, `enviadas`, `aMano`); `tocan`
+      // sigue, en el muelle y el carril (js/comun.js) y en Inicio.
       partes: {
         tocan: (x) => plural(x, '1 te toca a vos', n(x) + ' te tocan a vos'),
-        terna: (x) => plural(x, '1 la tiene Terna', n(x) + ' las tiene Terna'),
-        enviadas: (x) => plural(x, '1 enviada por Terna', n(x) + ' enviadas por Terna'),
-        aMano: (x) => n(x) + ' a mano',
       },
-      // Arriba de las pestañas (brand.md 0.39 §6.5; operacion.md 0.2): cuántas postuló Terna y cuántas no pudo. Desde 0.39 la persona
-      // no tiene «Volver a probar» (lo hace Francisco desde Operación): lo que Terna no pudo, lo postula ella.
-      resumenTerna: (env, noPudo, quedan) => 'Terna postuló por vos en ' + n(env) + '. No pudo en ' + n(noPudo)
-        + (quedan ? ': ' + plural(quedan, 'te queda 1', 'te quedan ' + n(quedan)) + ' para postular a mano.' : '.'),
-      postuladasNota: 'Si te llaman de alguna, abrila: ahí están el CV y la carta de esa postulación, las notas para la entrevista, el texto del aviso y lo que Terna respondió.',
-      // "Tu umbral" (brand.md 0.21 §6.5): marcada, Por postular muestra solo lo que Terna te sugiere; sin marcar, también lo que quedó a
-      // mano entre el piso y tu umbral. Debajo del piso, eso no se ve en ningún lado.
+      // propuesta PLAN-UX §5.5 (brand.md §6.5; decisión D7): salió `resumenTerna`, «Terna postuló por vos en N. No pudo en M…», que
+      // Operación había sumado arriba de las pestañas el 20/11 (brand.md 0.39): con tres pestañas sus números están a la vista, y lo
+      // que hizo Terna por vos se cuenta en Inicio. Se le avisa a ese chat en estado.md.
+      // propuesta PLAN-UX §5.5 (brand.md §6.5): más corta.
+      postuladasNota: 'Si te llaman, abrila: están el CV, la carta y lo que Terna respondió.',
+      // "Tu umbral" (brand.md 0.21 §6.5): marcada, A mano (hasta PLAN-UX §3.4, Por postular) muestra solo lo que Terna te sugiere; sin
+      // marcar, también lo que quedó a mano entre el piso y tu umbral. Debajo del piso, eso no se ve en ningún lado.
       tuUmbral: {
         etiqueta: (u) => 'Tu umbral: ' + u,
+        // propuesta PLAN-UX §5.5 (brand.md §6.5): el mismo texto, detrás de un «?» (ayudaAccesible es su nombre; lo agrega P0).
+        ayudaAccesible: 'Qué muestra Tu umbral',
         explicacion: (piso, conPuestos) => 'Marcada, ves lo que llega a tu umbral' + (conPuestos ? ', lo de tus puestos' : '') + ' y lo que pediste. Sin marcar, también lo que quedó entre '
           + piso + ' y tu umbral.',
         hayMas: (x) => plural(x, '1 más bajo tu umbral.', n(x) + ' más bajo tu umbral.'),
@@ -688,8 +846,7 @@ window.T = (function () {
         bajoUmbralHecha: (u, conPuestos) => 'Hoy no llega a tu umbral (' + u + ')' + (conPuestos ? ' ni es de tus puestos' : '') + ': el match se volvió a calcular o cambiaste el umbral después.',
       },
       // Desde brand.md 0.21, cuatro puntos, sin Entrevista, y solo en la ficha.
-      recorrido: ['Encontrado', 'Me interesa', 'Paquete', 'Enviada o Postulada'],
-      recorridoAccesible: (etapa) => 'Recorrido: ' + etapa,
+      // propuesta PLAN-UX §5.5 (brand.md §6.5): el recorrido salió de la ficha, con `recorrido` y `recorridoAccesible`.
       linea: {
         en_cola: 'En cola. Terna postula en la próxima corrida.',
         // brand.md 0.24 §6.5 (Francisco, 12/11/2026: «dejemos en claro que está todo hecho y que solo como usuario final tenés que
@@ -727,6 +884,8 @@ window.T = (function () {
       // Cuántas veces lo intentó Terna, en la ficha (brand.md 0.28 §6.5).
       intentos: (n) => 'Terna lo intentó ' + n + (n === 1 ? ' vez.' : ' veces.'),
       botones: {
+        // propuesta PLAN-UX §5.5 (brand.md §6.5): Revisar, en la tarjeta de una para revisar.
+        revisar: 'Revisar',
         marcarPostulado: 'Marcar postulado', noMeInteresa: 'No me interesa',
         enviar: 'Enviar', postularYo: 'Postular yo', cancelarEnvio: 'Cancelar envío',
         volverAPendiente: 'Volver a pendiente',
@@ -757,16 +916,19 @@ window.T = (function () {
       capturaAlt: (etapa) => 'Captura del intento de postular: ' + etapa,
       vacio: 'Todavía no hay postulaciones. Aparecen cuando Terna arma el primer paquete.',
       vacioFiltros: 'Ninguna postulación coincide con estos filtros.',
+      // propuesta PLAN-UX §5.5 (brand.md §6.5): los vacíos de las tres pestañas (el de Por postular salió con su pestaña).
       vacioVista: {
-        por_postular: 'Nada por postular.',
         postuladas: 'Todavía no hay ninguna postulada. Acá quedan las que envía Terna y las que marcás como postuladas.',
+        terna: 'Terna no tiene ninguna en marcha. Cuando arma un paquete donde puede postular, lo envía en la misma corrida.',
+        a_mano: 'Nada para postular a mano.',
       },
       columnas: { match: 'Match', puesto: 'Puesto', empresa: 'Empresa', porque: 'Por qué', requisitos: 'Requisitos', etapa: 'Etapa', fecha: 'Fecha', aviso: 'Aviso' },
     },
 
     perfil: {
       titulo: 'Mi perfil',
-      intro: 'Terna usa este perfil para elegir avisos, armar tus documentos y responder formularios. Cuanto más completo, mejor elige y mejor responde.',
+      // propuesta PLAN-UX §5.6 (brand.md §6.6): en una oración.
+      intro: 'Con este perfil Terna elige avisos, arma tus documentos y responde formularios.',
       completo: 'Perfil completo.',
       falta: (lista) => 'Falta: ' + lista + '.',
       // propuesta PLAN-WEB §4.1 (brand.md §6.6): el marbete de un bloque de Mi perfil y el chip de Mi perfil en el carril.
@@ -916,7 +1078,11 @@ window.T = (function () {
       // lo de postular.
       temas: { paquetes: 'Paquetes', postulacion: 'Postulación' },
       umbral: 'Umbral de match',
-      umbralAyuda: (min) => 'Terna arma paquetes y postula solo en avisos que lleguen a este número, salvo los de tus puestos si los priorizás. Los que quedan entre ' + min + ' y tu umbral igual aparecen en la lista, sin paquete, y podés pedirlo.',
+      // propuesta PLAN-UX §5.6 (brand.md §6.7): dice dónde aparecen ahora (Paquetes › Por armar).
+      umbralAyuda: (min) => 'Terna arma paquetes y postula solo en avisos que lleguen a este número, salvo los de tus puestos si los priorizás. Los que quedan entre ' + min + ' y tu umbral igual aparecen en Paquetes › Por armar, y podés pedirlo.',
+      // propuesta PLAN-UX §5.6 (brand.md §6.7): el link al tema de Cómo funciona, al lado de «Me interesa por defecto», «Tu umbral» y
+      // «Armar paquetes».
+      comoFunciona: 'Cómo funciona',
       // La guía del umbral (brand.md 0.5.1 §6.7; diseno.md 0.15 §9.3): las franjas siguen la rúbrica de match.v2.
       guiaUmbral: {
         intro: (defecto) => 'Cuanto más alto, menos avisos y más parecidos a tu trabajo. Si dudás, ' + defecto + '.',
@@ -1038,7 +1204,9 @@ window.T = (function () {
         + n + '. En No, solo busca y puntúa avisos.',
       recomendado: (x) => x + ' (recomendado)',
       postularSola: 'Terna postula por vos',
-      postularSolaAyuda: 'Terna postula sola en los avisos que te interesan y cuyo formulario es público y conocido. Llena el formulario con tu perfil, sube tu CV y tu carta y responde las preguntas con lo que tu perfil dice. Nunca entra con cuentas tuyas, nunca resuelve captchas y nunca inventa una respuesta. Lo que no puede hacer te lo deja listo para hacerlo a mano. Cada envío queda guardado con las respuestas y una captura.',
+      // propuesta PLAN-UX (brand.md §6.7), FEEDBACK-UX P1-2: «Nunca entra con cuentas tuyas» era falso para quien responde Sí a la
+      // pregunta de las cuentas, que va justo debajo. Hasta acá: «Nunca entra con cuentas tuyas, nunca resuelve captchas…».
+      postularSolaAyuda: 'Terna postula sola en los avisos que te interesan y cuyo formulario es público y conocido. Llena el formulario con tu perfil, sube tu CV y tu carta y responde las preguntas con lo que tu perfil dice. Nunca entra con tus cuentas de LinkedIn ni de los portales, nunca resuelve captchas y nunca inventa una respuesta. Lo que no puede hacer te lo deja listo para hacerlo a mano. Cada envío queda guardado con las respuestas y una captura.',
       cobertura: (x) => 'De cada 10 avisos, Terna puede postular en ' + x + '.',
       // "¿Terna crea cuentas por vos?" (brand.md 0.16 §6.7; diseno.md 0.29 §9.3; datos.md 0.32, 0036): justo debajo de "Terna
       // postula por vos" y solo con ese Sí. Una pregunta con su contexto, que nace sin respuesta: sin un Sí, Terna no crea nada.
@@ -1140,9 +1308,10 @@ window.T = (function () {
       alertas: 'Alertas por mail',
       alertasIntro: 'Para que Terna vea las alertas de empleo de LinkedIn, Bumeran, Zonajobs, Computrabajo e Indeed sin entrar con tu cuenta a esos sitios.',
       copiarDireccion: 'Copiar dirección',
-      alertasPasos: ['En cada portal que uses, creá una alerta de empleo diaria por mail.', 'Hacé que tu correo le reenvíe solo esas alertas a tu dirección de Terna, la de arriba.', 'Al día siguiente de cada alerta, sus avisos aparecen en Avisos.'],
+      // agregado por P0 (el mismo cambio de PLAN-UX §3.5 y §5.6, brand.md §6.7): «aparecen en Paquetes» por el nombre nuevo.
+      alertasPasos: ['En cada portal que uses, creá una alerta de empleo diaria por mail.', 'Hacé que tu correo le reenvíe solo esas alertas a tu dirección de Terna, la de arriba.', 'Al día siguiente de cada alerta, sus avisos aparecen en Paquetes.'],
       // La dueña del buzón de Terna (Terna.alertasMail) no reenvía: etiqueta sus alertas en su Gmail (brand.md 0.4.17 §6.7).
-      alertasPasosDueno: ['En cada portal que uses, creá una alerta de empleo diaria por mail.', 'Tu Gmail es la casilla de Terna, así que no reenviás nada: armá un filtro que les ponga a tus alertas la etiqueta Terna/Alertas.', 'Al día siguiente de cada alerta, sus avisos aparecen en Avisos.'],
+      alertasPasosDueno: ['En cada portal que uses, creá una alerta de empleo diaria por mail.', 'Tu Gmail es la casilla de Terna, así que no reenviás nada: armá un filtro que les ponga a tus alertas la etiqueta Terna/Alertas.', 'Al día siguiente de cada alerta, sus avisos aparecen en Paquetes.'],
       portalesTitulo: 'Portales',
       // [portal en alertas_mail, nombre, guía en alertas.html]
       portales: [['linkedin', 'LinkedIn', 'linkedin'], ['bumeran', 'Bumeran', 'bumeran'], ['zonajobs', 'Zonajobs', 'zonajobs'], ['computrabajo', 'Computrabajo', 'computrabajo'], ['indeed', 'Indeed', 'indeed']],
@@ -1184,17 +1353,19 @@ window.T = (function () {
       secciones: [
         // Las piezas con un tercer elemento se muestran solo a quien no es ('resto') o a quien es ('dueno') la dueña del
         // buzón de Terna (Terna.alertasMail): Gmail no la deja reenviarse a sí misma, así que etiqueta sus alertas.
-        { clave: 'como-funciona', titulo: 'Cómo funciona', piezas: [
+        // propuesta PLAN-UX §5.6 (brand.md §6.7.1): «Cómo funcionan las alertas», para no chocar con la página Cómo funciona (la clave
+        // y el hash no cambian); el paso 3, sin el relato de los tres intentos y de Francisco, y «aparecen en Paquetes › Por armar».
+        { clave: 'como-funciona', titulo: 'Cómo funcionan las alertas', piezas: [
           ['p', 'Los portales de empleo te mandan por mail los avisos nuevos de lo que buscás. Si esos mails le llegan a Terna, Terna los lee cada mañana, sin entrar con tu cuenta a los portales, y suma los avisos a tu lista.'],
           ['pasos', [
             '*Creá las alertas* en los portales que uses: una por cada puesto que buscás, diaria y por mail.',
             '*Armá en tu correo* una carpeta para las alertas y un filtro que se las reenvía solo a tu dirección de Terna. Se hace una vez, desde una computadora.',
-            '*Listo.* Al día siguiente de cada alerta, sus avisos aparecen en Avisos. Terna busca el texto completo de cada uno en la página de empleos de la empresa y, si es de LinkedIn, en la página pública del aviso, sin entrar con ninguna cuenta; si intenta leer esa página tres veces y no puede, se lo pasa a Francisco, que lo busca a mano, para darte el match.',
+            '*Listo.* Al día siguiente de cada alerta, sus avisos aparecen en Paquetes › Por armar. Terna busca el texto completo de cada uno, sin entrar con ninguna cuenta, para darte el match.',
           ], 'resto'],
           ['pasos', [
             '*Creá las alertas* en los portales que uses: una por cada puesto que buscás, diaria y por mail.',
             '*Armá en tu Gmail* un filtro que les ponga a tus alertas la etiqueta *Terna/Alertas*. Se hace una vez, desde una computadora.',
-            '*Listo.* Al día siguiente de cada alerta, sus avisos aparecen en Avisos. Terna busca el texto completo de cada uno en la página de empleos de la empresa y, si es de LinkedIn, en la página pública del aviso, sin entrar con ninguna cuenta; si intenta leer esa página tres veces y no puede, se lo pasa a Francisco, que lo busca a mano, para darte el match.',
+            '*Listo.* Al día siguiente de cada alerta, sus avisos aparecen en Paquetes › Por armar. Terna busca el texto completo de cada uno, sin entrar con ninguna cuenta, para darte el match.',
           ], 'dueno'],
           ['subtitulo', 'Tu dirección de Terna', 'resto'],
           ['p', 'Es la dirección de mail a la que le mandás tus alertas. Es solo tuya: por ella Terna sabe que esas alertas son tuyas. Lleva el nombre de Francisco porque llega a una casilla de Gmail suya, en una etiqueta aparte que lee Terna.', 'resto'],
@@ -1384,26 +1555,132 @@ window.T = (function () {
           ], 'dueno'],
           ['nota', 'Sus avisos aparecen al día siguiente.', 'dueno'],
         ] },
+        // agregado por P0 (el mismo cambio de PLAN-UX §3.5, brand.md §6.7.1): «en Paquetes dicen Sin texto», por el nombre nuevo.
         { clave: 'si-no-aparecen', titulo: 'Si no ves los avisos', piezas: [
           ['lista', [
             '*Terna lee las alertas una vez por día*, a la mañana: lo que llega hoy aparece mañana.',
             'En Preferencias, *Alertas por mail* dice para cada portal cuándo llegó su última alerta. Si dice *Sin alertas en los últimos 7 días*, fijate que la alerta llegue a tu etiqueta o carpeta *Alertas de empleo* y que el filtro o la regla tenga tu dirección de Terna.',
             'En Gmail, si *Reenviarlo a* no muestra tu dirección de Terna, falta que Francisco confirme la parte 2: avisale.',
             'Si dice *Llegaron mails, pero sin avisos*, avisale a Francisco: puede ser que el portal haya cambiado la forma de sus mails.',
-            'Los avisos de una alerta llegan sin el texto completo. Terna lo busca en la página de empleos de la empresa y, en los de LinkedIn, en la página pública del aviso; mientras tanto, en Avisos dicen *Sin texto*. Si intenta leer la página de LinkedIn tres veces y no puede, lo busca Francisco a mano.',
+            'Los avisos de una alerta llegan sin el texto completo. Terna lo busca en la página de empleos de la empresa y, en los de LinkedIn, en la página pública del aviso; mientras tanto, en Paquetes dicen *Sin texto*. Si intenta leer la página de LinkedIn tres veces y no puede, lo busca Francisco a mano.',
             'Para dejar de mandarle alertas a Terna, borrá el filtro (Gmail: *Filtros y direcciones bloqueadas*) o la regla (Outlook: *Reglas*), o la alerta en el portal.',
           ], 'resto'],
           ['lista', [
             '*Terna lee las alertas una vez por día*, a la mañana: lo que llega hoy aparece mañana.',
             'En Preferencias, *Alertas por mail* dice para cada portal cuándo llegó su última alerta. Si dice *Sin alertas en los últimos 7 días*, fijate en tu Gmail que la alerta tenga la etiqueta *Terna/Alertas*.',
             'Si dice *Llegaron mails, pero sin avisos*, puede ser que el portal haya cambiado la forma de sus mails y haya que ajustar cómo Terna los lee.',
-            'Los avisos de una alerta llegan sin el texto completo. Terna lo busca en la página de empleos de la empresa y, en los de LinkedIn, en la página pública del aviso; mientras tanto, en Avisos dicen *Sin texto*. Si intenta leer la página de LinkedIn tres veces y no puede, lo busca Francisco a mano.',
+            'Los avisos de una alerta llegan sin el texto completo. Terna lo busca en la página de empleos de la empresa y, en los de LinkedIn, en la página pública del aviso; mientras tanto, en Paquetes dicen *Sin texto*. Si intenta leer la página de LinkedIn tres veces y no puede, lo busca Francisco a mano.',
             'Para que Terna deje de leer tus alertas, borrá el filtro (*Filtros y direcciones bloqueadas*) o la alerta en el portal.',
           ], 'dueno'],
           ['ir', ['Ver mis portales en Preferencias', 'preferencias.html#alertas']],
         ] },
       ],
     },
+    // propuesta PLAN-UX §5.7 (brand.md, sección nueva §6.14): la página Cómo funciona (PLAN-UX §4), que arma P5 con Terna.porBloques.
+    // Cada tema tiene su clave, que es su hash (#match, #paquetes, #pedir, #postular y #fuentes llegan desde Preferencias, Paquetes y
+    // Postulaciones), su título y sus piezas, como T.guias: ['p', texto], ['lista', [...]], ['pasos', [...]], ['tabla', encabezados,
+    // filas: [si querés, andá a, href o null]], ['link', texto, href] y ['pregunta', pregunta, respuesta, href opcional]. "*así*" marca
+    // en negrita. Ningún número va escrito: las piezas son una función de x = { cupo, piso, umbral, dias } (los paquetes por día de
+    // la persona o config.paquetes_por_dia_default, config.piso_match, preferencias.umbral y config.retencion_no_interesa_dias).
+    como: {
+      titulo: 'Cómo funciona',
+      // agregado por P5: el nombre del índice de temas (el carril de la página por bloques), para el lector de pantalla.
+      carril: 'Temas',
+      temas: [
+        { clave: 'en-una-frase', titulo: 'En una frase', piezas: () => [
+          ['p', 'Cargás tu perfil una vez. Todos los días Terna busca empleos, se queda con los que ajustan con vos, te arma los documentos para los mejores y postula donde puede. Lo que no puede, te lo deja listo.'],
+        ] },
+        { clave: 'el-dia', titulo: 'El día de Terna', piezas: (x) => [
+          ['p', 'Una vez por día, a la mañana temprano:'],
+          ['pasos', [
+            '*Busca*: trae los avisos nuevos de los sitios que sabe leer (todos quedan en *Empleos*).',
+            // propuesta PLAN-UX (brand.md §6.14), FEEDBACK-UX P3-8: también el idioma (pipeline.md §4.5, 4).
+            '*Filtra*: deja los que entran en tus preferencias (modalidad, nivel, jornada, zona e idioma).',
+            '*Puntúa*: a los que más se parecen a tu perfil les calcula el *match*.',
+            '*Arma*: para los mejores, hasta ' + x.cupo + ' *paquetes*.',
+            '*Postula*: donde el formulario es público y lo conoce.',
+          ]],
+          ['p', 'Lo que cambies hoy vale desde la corrida de mañana.'],
+        ] },
+        { clave: 'match', titulo: 'El match y tu umbral', piezas: (x) => [
+          ['lista', [
+            'El match va de 0 a 100 y mide cuánto ajusta tu perfil con el aviso. No es la probabilidad de que te llamen.',
+            'Por debajo de ' + x.piso + ' el aviso ni se muestra.',
+            '*Tu umbral* (hoy: ' + x.umbral + ') es desde dónde Terna trabaja sola: arma el paquete y postula solo en los avisos que llegan.',
+            // P5: «si los priorizás», como lo hace el motor (pipeline.md §4.9, 3c: solo con Priorizar mis puestos en Sí, el default)
+            // y como lo dice T.preferencias.umbralAyuda.
+            'Dos excepciones: los avisos de *tus puestos*, si los priorizás, entran desde ' + x.piso + ', y lo que *pedís* entra siempre.',
+          ]],
+          ['link', 'Se cambia en Preferencias › Búsqueda.', 'preferencias.html#busqueda'],
+        ] },
+        { clave: 'paquetes', titulo: 'Los paquetes', piezas: (x) => [
+          ['lista', [
+            'Un paquete es: tu CV adaptado a ese aviso, la carta, un salario sugerido y notas para la entrevista.',
+            // propuesta PLAN-UX (brand.md §6.14), FEEDBACK-UX P3-8: el orden como lo hace el motor (pipeline.md §4.9, 3 y 3c). Hasta
+            // acá: «…lo que pediste; tus puestos; el resto por match, y primero donde puede postular sola.»
+            'Terna arma hasta *' + x.cupo + ' por día*, en este orden: lo que pediste; tus puestos; el resto. En cada grupo, primero donde Terna puede postular sola (si se lo permitís) y después por match. Uno por empresa por día.',
+            'Arma solo lo que está en *Me interesa*. Con «Me interesa por defecto» en Sí, es todo lo que llega a tu umbral hasta que digas que no. En No, Terna espera tu marca aviso por aviso.',
+            'Lo que viene está en Paquetes › Por armar; lo hecho, en Armados.',
+          ]],
+          // agregado por P5 (PLAN-UX §8 P5: los links adonde se actúa): Por armar y el interruptor de Preferencias que nombra (como
+          // «Se cambia en Preferencias › Búsqueda.» del match).
+          ['link', 'Ver Paquetes › Por armar', 'avisos.html#por-armar'],
+          ['link', '«Me interesa por defecto» se cambia en Preferencias › Paquetes.', 'preferencias.html#paquetes'],
+        ] },
+        { clave: 'pedir', titulo: 'Pedir un paquete', piezas: (x) => [
+          ['lista', [
+            'En *Empleos* o en *Por armar*, «Pedir paquete» hace que Terna lo arme aunque no llegue a tu umbral o quede fuera de tus preferencias.',
+            'Va antes que lo que Terna elige sola y usa uno de los ' + x.cupo + ' de ese día. Si pedís ' + (2 * x.cupo) + ', durante dos días Terna arma solo lo tuyo.',
+            'Si el aviso no tenía match, Terna lo calcula primero.',
+            'En «Tus pedidos» lo subís, lo bajás o lo cancelás.',
+          ]],
+          // agregado por P5: adonde se pide (Empleos, con el texto del botón de Paquetes) y adonde están tus pedidos.
+          ['link', 'Buscar en Empleos', 'busqueda.html'],
+          ['link', 'Ver tus pedidos en Por armar', 'avisos.html#por-armar'],
+        ] },
+        { clave: 'postular', titulo: 'Postular: Terna o vos', piezas: () => [
+          ['lista', [
+            '*Postula Terna* donde la empresa usa un formulario público que Terna sabe completar. Lo hace en la misma corrida en que arma el paquete: llena con tu perfil, sube el CV y la carta y responde con lo que tu perfil dice.',
+            'Con «Revisar antes de enviar» en Sí, lo deja listo y espera que toques Enviar.',
+            // propuesta PLAN-UX (brand.md §6.14), FEEDBACK-UX P1-2: con js/cuentas.js PARA_TODOS en true, Terna crea cuentas y entra
+            // con ellas para quien le dijo que sí. Hasta acá: «Terna nunca entra con tus cuentas, nunca resuelve un captcha…» y, en
+            // A mano, «…portales de empleo, sitios que piden cuenta, o un formulario…».
+            'Terna nunca entra con tus cuentas de LinkedIn ni de los portales, nunca resuelve un captcha y nunca inventa una respuesta. Lo intenta una vez.',
+            'Donde el sitio de la empresa pide crear una cuenta, Terna la crea con tu mail y postula solo si le dijiste que sí en Preferencias › Postulación. Si no, queda a mano.',
+            '*A mano* queda todo lo demás: Easy Apply de LinkedIn, portales de empleo, sitios que piden cuenta si no le pediste a Terna que las cree, o un formulario donde Terna se trabó. Tenés el link, el CV y la carta; cuando postulás, lo marcás.',
+          ]],
+          // agregado por P5: adonde está lo que te toca postular a mano.
+          ['link', 'Ver Postulaciones › A mano', 'postulaciones.html#a-mano'],
+        ] },
+        { clave: 'lo-que-manejas', titulo: 'Lo que manejás vos', piezas: (x) => [
+          ['tabla', ['Si querés…', 'Andá a…'], [
+            ['Que Terna busque otra cosa', 'Preferencias › Búsqueda (puestos, modalidad, nivel, jornada, zona)', 'preferencias.html#busqueda'],
+            ['Más o menos avisos', 'Tu umbral', 'preferencias.html#busqueda'],
+            ['Decidir aviso por aviso', '«Me interesa por defecto» en No', 'preferencias.html#paquetes'],
+            ['Que no postule sola, o revisar antes', 'Preferencias › Postulación', 'preferencias.html#postulacion'],
+            // propuesta PLAN-UX (brand.md §6.14), FEEDBACK-UX P1-2: fila nueva.
+            ['Que Terna cree cuentas en los sitios de las empresas', 'Preferencias › Postulación', 'preferencias.html#postulacion'],
+            ['Un empleo puntual', 'Empleos › Pedir paquete', 'busqueda.html'],
+            ['Priorizar una empresa o un puesto', 'Seguila o sumalo desde el aviso', 'busqueda.html'],
+            ['Sacar un aviso', 'No me interesa (lo ves ' + x.dias + ' días por si te arrepentís)', null],
+            ['Frenar todo', 'Pausar la cuenta', 'perfil.html#cuenta'],
+          ]],
+        ] },
+        { clave: 'fuentes', titulo: 'De dónde salen los empleos', piezas: () => [
+          ['p', 'Terna lee los sitios de empleo de muchas empresas y algunos buscadores de trabajo remoto. Por eso hoy hay sobre todo trabajo de oficina y de tecnología.'],
+          ['p', 'Lo de portales como Bumeran, Computrabajo, Zonajobs, Indeed o LinkedIn entra si le reenviás tus alertas.'],
+          ['link', 'Cómo reenviar alertas', 'alertas.html'],
+          ['p', 'Si buscás una empresa y no aparece, es que Terna todavía no lee su sitio.'],
+        ] },
+        { clave: 'preguntas', titulo: 'Preguntas cortas', piezas: (x) => [
+          ['pregunta', '¿Por qué hoy no hay paquetes?', 'Porque ningún aviso llegó a tu umbral, porque ya se armaron los ' + x.cupo + ' del día o porque Armar paquetes está en No.'],
+          ['pregunta', '¿Por qué quedó a mano?', 'Lo dice cada postulación, en Postulaciones › A mano.'],
+          ['pregunta', '¿Puedo pedir más de ' + x.cupo + ' por día?', 'No: lo que pidas de más se arma en los días siguientes, en tu orden.'],
+          ['pregunta', '¿Quién ve mis datos?', 'Lo explica Mi perfil › Tu cuenta.', 'perfil.html#cuenta'],
+        ] },
+      ],
+    },
+
     invitaciones: {
       titulo: 'Invitaciones',
       intro: (quedan, cupo, dias) => 'Te quedan ' + quedan + ' de ' + cupo + '. Cada invitación vale ' + dias + ' días.',
@@ -1598,7 +1875,8 @@ window.T = (function () {
       no_me_interesa: (dias) => 'Lo marcaste. Terna no arma ni postula; se borra a los ' + dias + ' días.',
       sin_armar: 'Todavía no hay documentos para este aviso.',
       // Hasta brand.md 0.7, "Terna lo arma en la próxima corrida.": desde 0.8 hay una cola y puede ir más atrás.
-      pedido: 'Lo pediste. Terna lo arma antes que los que elige sola, en el orden de tus próximos paquetes.',
+      // agregado por P0 (el mismo cambio de PLAN-UX §5.3, brand.md §6.10): «tus pedidos» en lugar de «tus próximos paquetes».
+      pedido: 'Lo pediste. Terna lo arma antes que los que elige sola, en el orden de tus pedidos.',
       armado: 'CV, carta, salario y notas listos.',
       no_se_pudo_armar: 'Falló al armarlo. Terna lo reintenta mañana.',
       // Desde brand.md 0.23 (la persona ya no pega textos): hasta 0.22, "Terna no tiene el texto de este aviso. Pegalo para que lo
@@ -1683,7 +1961,8 @@ window.T = (function () {
       guardarCampos: 'No se pudo guardar. Revisá los campos marcados.',
       marcar: 'No se pudo marcar. Probá de nuevo.',
       motivoSinNoInteresa: 'Primero marcá No me interesa.',
-      pedidosCambiaron: 'Tus próximos paquetes cambiaron mientras tanto. Ya ves cómo están ahora.',
+      // agregado por P0 (el mismo cambio de PLAN-UX §5.3, brand.md §11): «Tus pedidos» en lugar de «Tus próximos paquetes».
+      pedidosCambiaron: 'Tus pedidos cambiaron mientras tanto. Ya ves cómo están ahora.',
       general: 'Algo falló del lado de Terna. Probá de nuevo; si sigue, avisale a Francisco.',
       borrarUsuario: 'No se pudo borrar el usuario. Probá de nuevo.',
       limiteExperiencias: (x) => 'Hasta ' + x + ' trabajos.',

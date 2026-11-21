@@ -67,6 +67,10 @@
 .atenuado .interruptor { opacity: 0.5; }
 .interruptor:disabled { cursor: not-allowed; }
 
+/* «Cómo funciona», al final de la ayuda del umbral, de «Me interesa por defecto» y de «Armar paquetes» (PLAN-UX §3.5): un link de
+   texto dentro del renglón, como cualquier link; su blanco de toque llega a 44 px sin mover el texto. */
+.ayuda-como { display: inline-block; padding-block: var(--space-sm); margin-block: calc(-1 * var(--space-sm)); font-weight: var(--weight-strong); white-space: nowrap; }
+
 /* El umbral: el número en Lexend 500 a 20 px, como el match de una lengüeta, porque es el mismo número. */
 .umbral-valor { flex: none; font: var(--weight-display) var(--text-xl)/1 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-display); }
 /* La guía: la intro, las cinco franjas y la nota, arriba del deslizador; debajo, la cuenta de lo que llega. */

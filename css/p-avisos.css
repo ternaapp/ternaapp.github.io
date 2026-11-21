@@ -16,26 +16,26 @@
 /* Búsqueda: «de 61 empresas» no entra en el renglón del título del celular. */
 .cuenta-empresas { display: none; }
 
-/* ---------- 2. Avisos, arriba de la lista: el cartel, las vistas y Próximos paquetes ---------- */
+/* ---------- 2. Paquetes, arriba de la lista: las dos pestañas y Tus pedidos ---------- */
+/* PLAN-UX §3.2 (P2, 21/11/2026): Armados y Por armar (Aviso.pestanas, css/terna.css §11b) y, en Por armar, Tus pedidos (#proximos):
+   en escritorio a la derecha de las pestañas; en el celular, dentro de la lista, después de lo que te toca decidir (js/avisos.js
+   mueve el elemento). */
 .avisos-arriba { display: flex; flex-direction: column; gap: var(--space-sm); min-width: 0; }
 .avisos-arriba:not(:has(> :not([hidden]))) { display: none; }
-.vistas-nota { color: var(--color-muted); font-size: var(--text-sm); line-height: 1.4; }
-.vistas-nota:empty { display: none; }
 
-/* Próximos paquetes: un plegable abierto, por reglas; el título y la cuenta en la línea que lo pliega. */
-#proximos { min-width: 0; }
-#proximos summary h2 { font: var(--weight-strong) var(--text-lg)/1.3 var(--font-body); text-wrap: balance; }
-#proximos summary:hover h2 { text-decoration: underline; text-decoration-color: var(--color-accent); text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
-#proximos .plegable-cuerpo { gap: var(--space-xs); }
-.proximos-lista { display: flex; flex-direction: column; }
+/* Tus pedidos: un grupo más de Por armar, con su título, el cupo y la cola numerada. */
+#proximos { display: flex; flex-direction: column; gap: var(--space-xs); min-width: 0; }
+#proximos[hidden] { display: none; }
+#proximos > .grupo-cabeza { padding-top: 0; }
+/* La consecuencia de pedir (los pedidos llenan la próxima corrida): en tinta, para que no se pierda entre lo suave. */
+.proximos-aviso { color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.4; }
+.proximos-lista { display: flex; flex-direction: column; border-top: var(--rule-hair) solid var(--color-rule); }
 .proximo { display: grid; grid-template-columns: var(--space-lg) minmax(0, 1fr) auto; align-items: center; gap: var(--space-2xs) var(--space-sm); padding: var(--space-xs) 0; border-top: var(--rule-hair) solid var(--color-rule); }
 .proximo:first-child { border-top: 0; }
 .proximo-lugar { color: var(--color-muted); font: var(--weight-strong) var(--text-md)/1 var(--font-body); font-variant-numeric: tabular-nums; text-align: right; }
 .proximo-datos { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3xs); min-width: 0; }
 .proximo-datos .puesto { font-size: var(--text-md); }
 .proximo-detalle { display: flex; flex-wrap: wrap; column-gap: var(--space-sm); color: var(--color-muted); font-size: var(--text-sm); line-height: 1.35; }
-/* En el celular va al final de la página, después de la lista (js/avisos.js mueve el elemento): aire arriba. */
-#contenido > #proximos { margin-top: var(--space-lg); }
 /* «Próxima corrida» es espera: la tiene Terna. Tinta suave con el reloj, sin ámbar. */
 .proximo-cuando { display: inline-flex; align-items: center; gap: var(--space-3xs); font-weight: var(--weight-strong); white-space: nowrap; }
 .proximo-acciones { display: flex; gap: var(--space-2xs); }
@@ -45,7 +45,21 @@
   .proximo { grid-template-columns: var(--space-lg) minmax(0, 1fr); }
   .proximo-acciones { grid-column: 2; }
 }
-.proximos-pie { padding-top: var(--space-xs); border-top: var(--rule-hair) solid var(--color-rule); color: var(--color-muted); font-size: var(--text-sm); line-height: 1.4; }
+.proximos-lista .proximo:last-child { border-bottom: var(--rule-hair) solid var(--color-rule); }
+
+/* ---------- 2b. La lista de Paquetes: grupos ---------- */
+/* Cada grupo (Hoy, Esta semana, Antes; Te toca decidir, Después sigue Terna, Esperan) es una sección con su título y su cuenta
+   (Aviso.tituloGrupo); entre grupos, aire. js/avisos.js pone .lista-paquetes en #lista (Búsqueda usa el mismo id con otras reglas). */
+.lista-paquetes { display: flex; flex-direction: column; gap: var(--space-xl); min-width: 0; }
+.grupo-lista { display: flex; flex-direction: column; gap: var(--space-sm); min-width: 0; }
+.grupo-lista > .grupo-cabeza { padding-top: 0; }
+/* El plegado del final: «Ver N que Terna no arma sola», una fila entre reglas que abre la lista. */
+.grupo-plegable { margin: 0; font: inherit; }
+.grupo-plegable .plegable-boton { min-height: 52px; border-top: var(--rule-hair) solid var(--color-rule); color: var(--color-ink-2); font-size: var(--text-md); }
+.grupo-plegado:has(> ul[hidden]) .plegable-boton { border-bottom: var(--rule-hair) solid var(--color-rule); }
+/* «Armar paquetes» en No, lo primero de Por armar. */
+.armar-no { display: flex; align-items: flex-start; gap: var(--space-xs); color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.45; }
+.armar-no > .icono { flex: none; margin-top: var(--space-3xs); color: var(--color-turn); }
 
 /* ---------- 3. Filtros y orden ---------- */
 /* En el celular, la barra que se desplaza y, debajo, lo que dice el estado de los filtros con el orden a la derecha (parte en dos
@@ -80,6 +94,11 @@
 /* Más baja que la de P1 (FEEDBACK-1 P2-5): 4 px entre renglones y la regla de las acciones más cerca. */
 .tarjeta-aviso .carpeta-cuerpo { gap: var(--space-2xs); padding-block: var(--space-sm); }
 .tarjeta-aviso .carpeta-acciones { margin-top: var(--space-2xs); padding-top: var(--space-xs); }
+/* Armados: la fila de documentos y, al pie de la carpeta, cuándo se armó y «Ver en Postulaciones». */
+.tarjeta-aviso .docs-fila { margin-top: var(--space-2xs); }
+.carpeta-pie { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2xs) var(--space-sm); align-self: stretch; margin-top: var(--space-2xs); padding-top: var(--space-xs); border-top: var(--rule-hair) solid var(--color-rule); font-size: var(--text-sm); line-height: 1.35; }
+.carpeta-pie > .link-lista { margin-left: auto; }
+.armado-el { color: var(--color-muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; white-space: nowrap; }
 /* Me interesa y No me interesa, del mismo ancho, al pie de la carpeta; a 320 px siguen en un renglón. */
 .carpeta-acciones.interes > .chip-opcion { flex: 1 1 0; }
 .carpeta-acciones.interes .chip-opcion-cara { flex: 1; justify-content: center; }
@@ -168,6 +187,15 @@ dl.respuestas.datos-aviso > div { padding: 0; border-top: 0; }
 .tabla .aviso-puesto { font-weight: var(--weight-strong); line-height: 1.35; }
 .tabla tbody:first-of-type .grupo th { padding-top: var(--space-sm); }
 .tabla .grupo .grupo-titulo { font-size: var(--text-sm); }
+/* Paquetes: las filas de grupo llevan el título con su cuenta y, si hay, su renglón de ayuda, que parte en varios renglones. */
+.tabla-avisos .grupo > :is(th, td) { padding-inline: 0; white-space: normal; font-weight: var(--weight-body); }
+.tabla-avisos .grupo .grupo-titulo { font-size: var(--text-md); }
+.tabla-avisos .grupo .grupo-plegable .plegable-boton { border-bottom: 0; }
+.tabla-avisos tbody[hidden] { display: none; }
+/* Armados: los documentos y, debajo, cuándo se armó; la postulación con «Ver en Postulaciones». */
+.celda-docs { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2xs); }
+.tabla-avisos .docs-fila { gap: var(--space-2xs); }
+.tabla-avisos .docs-salario { font-size: var(--text-xs); }
 /* En una celda angosta el ícono del lugar o de la modalidad queda al lado de su texto, que parte en dos renglones. */
 :is(.tabla-avisos, .tabla-busqueda) td > .atributos { flex-wrap: nowrap; align-items: flex-start; }
 :is(.tabla-avisos, .tabla-busqueda) td > .atributos > .icono { margin-top: var(--space-3xs); }

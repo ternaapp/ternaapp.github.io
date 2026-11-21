@@ -1,21 +1,22 @@
 /* Terna · js/avisos.js
-   Avisos (diseno.md §7): la lista por match, la barra de filtros (que arranca en las preferencias de búsqueda del momento,
-   diseno.md 0.11 §7.2), los filtros por columna (diseno.md 0.21 §7.2 y §10.18), el interés en el lugar, los próximos paquetes
-   (diseno.md 0.21 §7.8), la ficha y, desde diseno.md 0.35, la franja de arriba (Todos y Esta semana, §7.10). Desde brand.md 0.23
-   la persona no pega el texto de un aviso: "Sin texto" dice quién lo busca, Terna o Francisco (`texto_estado`, datos.md 0.34, 0038).
-   Lee mis_avisos, preferencias, paquetes (solo contenido→render→bajo_minimo y →terminos_faltantes), corridas_usuarios
-   (si Terna ya corrió) y config; escribe con marcar_interes, pedir_paquete, cancelar_pedido, desde 0025
-   marcar_motivo_no_interesa (datos.md 0.20 §14) y desde 0029 ordenar_pedidos (datos.md 0.25 §14). Con 0025 lee además
-   `evaluacion` (el veredicto y "Cómo se calcula") y `motivo_no_interesa`; sin ella, la página anda como antes
-   (Aviso.leerConEvaluacion). Sin 0029, los próximos paquetes van sin Subir ni Bajar. De preferencias lee la fila entera.
-   La ficha lista las palabras del aviso que el CV no tiene, sin botón: se suman en Preferencias (datos.md 0.23 §14; desde 0.23
-   no hay sumar_palabra_clave). Desde 0027 trae priorizar_puestos (datos.md 0.22 §14; brand.md 0.5.4 §6.4; diseno.md
-   0.18 §7): con algún puesto que cuente, los avisos de tus puestos (js/puestos.js, la regla del motor) llevan "Tu puesto", pasan
-   el filtro Match desde el piso, deciden con el control de interés y se pueden ordenar primero. Sin la columna, vale Sí.
-   Desde brand.md 0.8 "Pedir paquete" y "No me interesa" piden confirmación, y "Pedir" va en la columna Paquete.
-   Desde el rediseño B2 «Sello» (opciones-v3/PLAN-WEB.md §3.2) cambia solo lo que se dibuja: el cartel lila de lo que hay para
-   decidir, el link a Búsqueda, la lista del celular en carpetas (con paquete) y líneas sueltas (sin paquete), Próximos paquetes
-   plegable, «Más filtros», y la ficha como carpeta con sus saltos. Los datos, las escrituras y las reglas de la lista, igual. */
+   Paquetes (avisos.html; hasta PLAN-UX, «Avisos», diseno.md §7): lo que Terna te arma, en dos pestañas (PLAN-UX §3.2 y §10, 21/11/2026).
+   - Armados, la de entrada: todo lo que tiene paquete (decisión D2), por cuándo se armó (Hoy, Esta semana, Antes; arriba, en rojo, lo
+     que no se pudo armar). Cada carpeta trae su fila de documentos (CV, Carta, Notas, salario), cuándo se armó y «Ver en
+     Postulaciones». Acá se miran los documentos: no hay control de interés, ni «Marcar postulado», ni «Enviar» (se postula en
+     Postulaciones, PLAN-UX §2.4 punto 4).
+   - Por armar: la cola que se maneja. Te toca decidir (el único lugar con Me interesa y No me interesa), Tus pedidos (#proximos, el
+     «Próximos paquetes» de antes, con Subir, Bajar y Cancelar y, encima, el cupo), Después sigue Terna (más o menos en el orden del
+     motor), Esperan (sin texto o sin match) y, plegado, lo que Terna no arma sola (bajo tu umbral o fuera de tus preferencias), con
+     Pedir paquete. Cada fila dice dónde se postula.
+   Cada número una sola vez, en su pestaña o en su grupo: salen la cuenta del título, las partes, «En los últimos 30 días» y la franja
+   Todos / Esta semana. Las preferencias de búsqueda y el umbral ya no esconden: ordenan (js/lista.js, grupoDe); lo que la persona
+   cambia en los filtros, sí filtra. La ficha va en dos órdenes: en Armados, el paquete primero; en Por armar, por qué ajusta.
+   Lee mis_avisos (desde PLAN-UX también armado_en, que ya leen Postulaciones y js/cuentas.js), preferencias (la fila entera),
+   paquetes (solo contenido→render→bajo_minimo y →terminos_faltantes), corridas_usuarios (la última fecha) y config; escribe con
+   marcar_interes, marcar_motivo_no_interesa (0025), pedir_paquete, cancelar_pedido y ordenar_pedidos (0029), como antes. Sin 0025
+   la página anda sin motivo; sin 0029, Tus pedidos va sin Subir ni Bajar (Aviso.leerConEvaluacion, comprobarOrdenar).
+   Las cuentas del muelle y del carril van con Terna.cuentaPaquetes (decisión D3): lila, los paquetes nuevos desde la última visita a
+   Armados (Lista.paquetesNuevos); ámbar, lo que te toca decidir. */
 'use strict';
 
 Terna.pagina('avisos', async (ctx) => {
@@ -27,18 +28,19 @@ Terna.pagina('avisos', async (ctx) => {
   const cajaFiltros = document.getElementById('filtros');
   const cajaProximos = document.getElementById('proximos');
   const cajaVistas = document.getElementById('vistas');
-  const cajaPorDecidir = document.getElementById('por-decidir');
   const irBusqueda = document.getElementById('ir-busqueda');
-  const cuenta = document.getElementById('cuenta');
-  const COLUMNAS = 'match_id, aviso_id, puesto, empresa, ubicacion, pais, modalidad, alcance, url, url_postulacion, fuente, postulacion, ats_formulario, dudoso, publicado_en, visto_en, tiene_texto, texto_origen, match, razones, requisitos_faltantes, interes, estado_paquete, pedido_en, creado_en, nuevo, paquete_id, paquete_idioma, cv_path, carta_path, salario_monto, salario_moneda, salario_periodo, salario_motivo, notas, estado_postulacion, motivo_a_mano, traba_detalle, intentos, en_cola_en, enviada_en, postulado_en, entrevista_en, nivel, jornada';
+  const contenido = document.getElementById('contenido');
+  const COLUMNAS = 'match_id, aviso_id, puesto, empresa, ubicacion, pais, modalidad, alcance, url, url_postulacion, fuente, postulacion, ats_formulario, dudoso, publicado_en, visto_en, tiene_texto, texto_origen, match, razones, requisitos_faltantes, interes, estado_paquete, pedido_en, creado_en, nuevo, paquete_id, paquete_idioma, armado_en, cv_path, carta_path, salario_monto, salario_moneda, salario_periodo, salario_motivo, notas, estado_postulacion, motivo_a_mano, traba_detalle, intentos, en_cola_en, enviada_en, postulado_en, entrevista_en, nivel, jornada';
 
+  lista.classList.add('lista-paquetes');
   const parar = Terna.cargando(lista);
   const [rA, rP, rB, rC] = await Promise.all([
     Aviso.leerConEvaluacion((cols) => sb.from('mis_avisos').select(cols), COLUMNAS),
     // La fila entera: trae lo de cada migración que esté aplicada (0027: priorizar_puestos), y sin ella no falla.
     sb.from('preferencias').select('*').eq('usuario_id', ctx.usuario.id).maybeSingle(),
     sb.from('paquetes').select('match_id, bajo_minimo:contenido->render->bajo_minimo, terminos_faltantes:contenido->render->terminos_faltantes'),
-    sb.from('corridas_usuarios').select('fecha').eq('usuario_id', ctx.usuario.id).limit(1),
+    // La última corrida: si Terna ya corrió y, desde PLAN-UX §6.3, el piso de los paquetes nuevos.
+    sb.from('corridas_usuarios').select('fecha').eq('usuario_id', ctx.usuario.id).order('fecha', { ascending: false }).limit(1),
   ]);
   parar();
   const errorCarga = rA.error || rP.error || rB.error || rC.error;
@@ -55,41 +57,39 @@ Terna.pagina('avisos', async (ctx) => {
   const conMinimo = new Set((rB.data || []).filter((p) => p.bajo_minimo === true).map((p) => p.match_id));
   // Palabras del aviso que el CV no tiene (cv-ats.md 0.4 §3.13): el motor las guarda en el paquete desde paquete.v3.
   const faltanPor = new Map((rB.data || []).filter((p) => Array.isArray(p.terminos_faltantes)).map((p) => [p.match_id, p.terminos_faltantes]));
-  const yaCorrio = (rC.data || []).length > 0;
-  // Priorizar mis puestos (0027): sin la columna vale Sí, como en el motor. Solo cuentan los puestos que no son generales. La
-  // regla es la de Aviso.tuPuesto, la misma de Postulaciones e Inicio (diseno.md 0.25 §1.36).
-  // Desde 0034 también las empresas que seguís (diseno.md 0.26 §7.2): `js/lista.js` arma lo tuyo y los filtros Empresa y Puesto
-  // con la regla que usa Inicio para contar, así lo que dice Inicio es lo que muestra esta lista.
+  const ultimaCorrida = (rC.data || [])[0] ? rC.data[0].fecha : null;
+  const yaCorrio = !!ultimaCorrida;
+  // Lo tuyo (tus puestos, 0027, y las empresas que seguís, 0034) con la regla del motor, la misma que usa Inicio para contar; y desde
+  // PLAN-UX, la pestaña y el grupo de cada aviso (js/lista.js).
   const seguidas = Lista.seguidasDe(rP.data);
   const loTuyo = Lista.crear(avisos, { prefs, piso, seguidas: seguidas.filas });
   const criterio = loTuyo.criterio;
-  // El orden "Tus puestos primero" es solo de los puestos: los paquetes de las empresas que seguís van por match, como la tabla
-  // (Francisco, 07/11/2026). Lo tuyo (puestos y empresas) se ve desde el piso.
+  const grupoDe = loTuyo.grupoDe;
+  const pestanaDe = Lista.pestanaDe;
+  // El orden "Tus puestos primero" es solo de los puestos: los avisos de las empresas que seguís van por match (Francisco, 07/11/2026).
   const priorizar = criterio.puestos.length > 0;
   const conTuyos = criterio.puestos.length > 0 || criterio.empresas.length > 0;
   const bajoMinimo = (a) => prefs.salario_modo === 'rango' && !!a.paquete_id && conMinimo.has(a.match_id);
 
   /* ---------- Filtros y orden (diseno.md 0.11 §7.2; desde 0.21, también por columna) ----------
-     Modalidad, Alcance, Nivel y Jornada arrancan en las preferencias de búsqueda del momento, y Match en el umbral: si la
-     persona cambia sus preferencias, la lista las sigue en el acto, sin esperar la corrida. Un filtro de búsqueda que la persona
-     cambió se recuerda en el navegador mientras sus preferencias sigan iguales (`huella`); si las cambia, vuelve a ellas.
-     Los de columna (Puesto, Empresa, Ubicación, Publicado) y Paquete y Postulación, que desde 0.21 eligen varios, se recuerdan
-     igual que Interés. Desde 0.22 cada filtro está en un solo lugar: en el encabezado de su columna, si la tabla lo muestra, o en
-     la barra (Alcance, Nivel y Jornada, que no tienen columna; los de una columna que la tabla oculta por ancho; todos en el
-     celular, que no tiene tabla). */
+     Los filtros son los de antes y valen para las dos pestañas, menos dos: Paquete es solo de Por armar (lo armado es la otra
+     pestaña) y Postulación solo de Armados (lo que está por armar no tiene postulación). Modalidad, Alcance, Nivel y Jornada muestran
+     las preferencias de búsqueda del momento y Match el umbral, pero desde PLAN-UX §3.2 no esconden nada mientras la persona no los
+     cambie: lo que queda fuera de las preferencias o debajo del umbral va al grupo plegado «Ver N que Terna no arma sola» (y lo
+     armado, a Armados, que muestra todo). Un filtro cambiado se recuerda en el navegador mientras las preferencias sigan iguales
+     (`huella`); si cambian, vuelve a ellas. En el celular todo va en la hoja del botón único «Filtrar» (Filtros.botonUnico). */
   const INTERESES = ['me_interesa', 'por_decidir', 'no_me_interesa'];
-  const PAQUETES = ['armado', 'sin_armar', 'pedido', 'no_se_pudo_armar', 'sin_texto', 'por_puntuar'];
+  // Paquete, en Por armar: lo armado está en la otra pestaña y lo pedido en Tus pedidos.
+  const PAQUETES = ['sin_armar', 'sin_texto', 'por_puntuar'];
   const POSTULACIONES = ['pendiente', 'en_cola', 'para_revisar', 'enviada', 'a_mano', 'postulado'];
   const DONDES = Aviso.DONDES;  // diseno.md 0.23 §7.6: Postula Terna; a mano en LinkedIn, en el sitio de la empresa o en un portal; LinkedIn, a confirmar
-  // Desde diseno.md 0.32 (Francisco, 12/11/2026: filtrar por lo que va escrito debajo del puesto), dos filtros más, los dos en la
-  // barra porque no tienen columna (§1.34): Requisitos, con el veredicto, como en Postulaciones; y Prioridad, con lo que la persona
-  // le pidió a Terna que priorice (sus puestos, las empresas que sigue) y "Los demás". Prioridad va solo si hay algo priorizado.
-  // "Bajo tu umbral" es del umbral y se elige en Match (`soloBajo`).
   const REQUISITOS = Aviso.REQUISITOS;
   const PRIORIDADES = [...(criterio.puestos.length ? ['tu_puesto'] : []), ...(criterio.empresas.length ? ['empresa'] : []), 'demas'];
   const BUSQUEDA = ['modalidad', 'alcance', 'nivel', 'jornada'];
   const DE_COLUMNA = ['puesto', 'empresa', 'ubicacion', 'publicado'];
   const CLAVES = ['modalidad', 'alcance', 'nivel', 'jornada', 'match', 'requisitos', ...(conTuyos ? ['prioridad'] : []), 'interes', 'paquete', 'postulacion', 'donde', ...DE_COLUMNA];
+  const CLAVES_DE = { armados: CLAVES.filter((k) => k !== 'paquete'), por_armar: CLAVES.filter((k) => k !== 'postulacion') };
+  const aplica = (k, p) => CLAVES_DE[p].includes(k);
   const TODOS = Object.assign({ interes: INTERESES }, Aviso.TODOS_BUSQUEDA);
   const busquedaPrefs = Aviso.busquedaDe(prefs);
   const huella = JSON.stringify([busquedaPrefs, umbral]);
@@ -102,7 +102,8 @@ Terna.pagina('avisos', async (ctx) => {
   const deLista = (v, todos) => { if (!Array.isArray(v)) return null; const l = todos.filter((x) => v.includes(x)); return l.length ? l : null; };
   // Un filtro de búsqueda igual a las preferencias se guarda como null: "según tus preferencias".
   const propio = (k, l) => (!l || mismos(l, busquedaPrefs[k]) ? null : l);
-  // Hasta 0.21 Paquete y Postulación eran uno solo ('todos', 'armado'…): se leen como lista.
+  // Hasta 0.21 Paquete y Postulación eran uno solo ('todos', 'armado'…): se leen como lista. Un valor que ya no está (Armado,
+  // Pedido, No se pudo armar, desde PLAN-UX) no cuenta.
   const unoOVarios = (v, todos) => (Array.isArray(v) ? Filtros.listaValida(v, todos) : (todos.includes(v) ? [v] : null));
   function validos(f) {
     const r = inicial();
@@ -121,8 +122,7 @@ Terna.pagina('avisos', async (ctx) => {
     r.empresaExacta = f.empresaExacta === true && !!r.empresa;
     r.ubicacion = Filtros.listaValida(f.ubicacion, null);
     r.publicado = Filtros.fechaValida(f.publicado);
-    // Los filtros guardados antes de la barra (sin `v`) conservan el match: significaba lo mismo. Modalidad y Alcance
-    // vacíos querían decir "todo"; ahora arrancan en las preferencias.
+    // Los filtros guardados antes de la barra (sin `v`) conservan el match: significaba lo mismo.
     const legado = !(f.v >= 2);
     if (legado || f.huella === huella) {
       r.matchMin = Number.isInteger(f.matchMin) ? f.matchMin : null;
@@ -134,18 +134,17 @@ Terna.pagina('avisos', async (ctx) => {
   }
   const guardados = Terna.leerLocal('avisos.filtros', null);
   let filtros = validos(guardados);
-  // Si las preferencias cambiaron, lo que la persona había cambiado sobre las de antes se olvida también en el navegador (si
-  // no, al volver a las preferencias de antes reaparecería).
+  // Si las preferencias cambiaron, lo que la persona había cambiado sobre las de antes se olvida también en el navegador.
   if (guardados && guardados.huella !== huella) guardarFiltros();
   const q = new URLSearchParams(location.search);
   if (q.get('interes') === 'por_decidir') filtros = Object.assign(inicial(), { interes: ['por_decidir'] });
   if (q.get('paquete') === 'sin_texto') filtros = Object.assign(inicial(), { paquete: ['sin_texto'] });
-  // Los links del tablero de Inicio (diseno.md 0.26 §6): una empresa, un puesto o dónde se postula, sobre la lista de entrada.
+  // Los links de Inicio (diseno.md 0.26 §6): una empresa, un puesto o dónde se postula, sobre la lista de entrada.
   if (q.get('empresa')) filtros = Object.assign(inicial(), { empresa: Filtros.textoValido(q.get('empresa')), empresaExacta: true });
   if (q.get('puesto')) filtros = Object.assign(inicial(), { puesto: Filtros.textoValido(q.get('puesto')), puestoExacto: true });
   if (DONDES.includes(q.get('donde'))) filtros = Object.assign(inicial(), { donde: [q.get('donde')] });
-  // El orden elegido se recuerda mientras "Priorizar mis puestos" siga igual (diseno.md 0.18 §7.2): al prenderlo, "Tus puestos
-  // primero"; al apagarlo, lo que la persona había elegido. Hasta 0.18 se guardaba solo el texto del orden.
+  // El orden elegido se recuerda mientras "Priorizar mis puestos" siga igual (diseno.md 0.18 §7.2). Desde PLAN-UX ordena Por armar;
+  // Armados va siempre por cuándo se armó.
   const ORDENES = priorizar ? ['puestos', 'match', 'nuevos'] : ['match', 'nuevos'];
   function ordenInicial() {
     const g = Terna.leerLocal('avisos.orden', null);
@@ -160,10 +159,10 @@ Terna.pagina('avisos', async (ctx) => {
   function guardarFiltros() { Terna.guardarLocal('avisos.filtros', Object.assign({ v: 3, huella }, filtros)); }
 
   const efectiva = (k) => filtros[k] || busquedaPrefs[k];
-  function busqueda() { return { modalidad: efectiva('modalidad'), alcance: efectiva('alcance'), nivel: efectiva('nivel'), jornada: efectiva('jornada') }; }
-  // Match según el umbral (diseno.md 0.32 §7.2): los que llegan (lo de siempre, con lo tuyo desde el piso), también los que no
-  // llegan, o solo los que no llegan: los que la lista marca "Bajo tu umbral" y lo tuyo que tampoco llega. `topeBajo` es el match
-  // más alto que no llega al umbral.
+  // Lo que filtra de la búsqueda: solo lo que la persona cambió acá (lo que dejó en sus preferencias no esconde nada).
+  function busquedaElegida() { const b = {}; for (const k of BUSQUEDA) b[k] = filtros[k] || TODOS[k]; return b; }
+  // Match según el umbral (diseno.md 0.32 §7.2): los que llegan, también los que no llegan, o solo los que no llegan. `topeBajo` es
+  // el match más alto que no llega al umbral.
   const modoUmbral = () => (filtros.soloBajo ? 'solo' : filtros.bajoUmbral ? 'tambien' : 'llegan');
   const topeBajo = Math.max(piso, umbral - 1);
   function minimo() {
@@ -171,27 +170,28 @@ Terna.pagina('avisos', async (ctx) => {
     const m = filtros.matchMin === null ? umbral : filtros.matchMin;
     return filtros.bajoUmbral ? Math.max(piso, Math.min(m, 100)) : Math.max(m, umbral);
   }
-  // Un aviso sin match no llega ni deja de llegar: se ve siempre, salvo cuando se piden solo los que no llegan.
-  // Lo que la persona pidió se ve siempre mientras no toque el filtro (busqueda.md 0.2 §4.5; js/lista.js): con Match en "Llegan a mi
-  // umbral" y sin subir el mínimo, un pedido pasa aunque no llegue; y pasa cada preferencia de búsqueda que ella no cambió acá.
+  // Un aviso sin match se ve siempre, salvo cuando se piden solo los que no llegan. Sin tocar Match se ve todo desde el piso (lo que
+  // no llega va plegado); con Match cambiado, la regla de antes: lo tuyo desde el piso y lo pedido mientras no se suba el mínimo.
   function pasaMatch(a) {
     if (a.match === null || a.match === undefined) return !filtros.soloBajo;
+    if (!cambiado('match')) return a.match >= piso;
     if (filtros.soloBajo) return a.match >= minimo() && a.match < umbral;
     return a.match >= minimo() || loTuyo.prioritario(a) || (loTuyo.pedido(a) && filtros.matchMin === null);
   }
-  function busquedaDePedidos() { const b = {}; for (const k of BUSQUEDA) b[k] = filtros[k] || TODOS[k]; return b; }
-  // Prioridad: un aviso puede ser de tus puestos y de una empresa que seguís a la vez; "Los demás" son los que no son ni lo uno
-  // ni lo otro.
+  // Prioridad: un aviso puede ser de tus puestos y de una empresa que seguís a la vez; "Los demás" son los que no son ni lo uno ni lo otro.
   const enPrioridad = (a, v) => (v === 'tu_puesto' ? loTuyo.esTuPuesto(a) : v === 'empresa' ? loTuyo.esTuEmpresa(a) : !loTuyo.prioritario(a));
   const fechaDe = (a) => a.publicado_en || a.visto_en;
-  let busquedaHoy = busqueda();
-  // `excepto`: todos los filtros menos ese (para contar las opciones de un filtro con lo que dejan pasar los demás).
+  let busquedaHoy = busquedaElegida();
+  // `excepto`: todos los filtros menos ese (para contar las opciones de un filtro con lo que dejan pasar los demás). Un filtro que no
+  // es de la pestaña del aviso no lo toca.
   function pasa(a, excepto) {
-    if (excepto !== 'interes' && !filtros.interes.includes(a.interes)) return false;
-    if (excepto !== 'paquete' && filtros.paquete && !filtros.paquete.includes(Aviso.estadoPaquete(a))) return false;
-    if (excepto !== 'postulacion' && filtros.postulacion && !filtros.postulacion.includes(a.estado_postulacion)) return false;
-    if (excepto !== 'donde' && filtros.donde && !filtros.donde.includes(Aviso.donde(a, prefs).clave)) return false;
-    if (!Aviso.pasaBusqueda(a, loTuyo.pedido(a) ? busquedaDePedidos() : busquedaHoy)) return false;
+    const p = pestanaDe(a);
+    const usa = (k) => excepto !== k && aplica(k, p);
+    if (usa('interes') && !filtros.interes.includes(a.interes)) return false;
+    if (usa('paquete') && filtros.paquete && !filtros.paquete.includes(Aviso.estadoPaquete(a))) return false;
+    if (usa('postulacion') && filtros.postulacion && !filtros.postulacion.includes(a.estado_postulacion)) return false;
+    if (usa('donde') && filtros.donde && !filtros.donde.includes(Aviso.donde(a, prefs).clave)) return false;
+    if (!Aviso.pasaBusqueda(a, busquedaHoy)) return false;
     if (!pasaMatch(a)) return false;
     if (excepto !== 'requisitos' && filtros.requisitos && !filtros.requisitos.includes(Aviso.categoriaRequisitos(a))) return false;
     if (excepto !== 'prioridad' && filtros.prioridad && !filtros.prioridad.some((v) => enPrioridad(a, v))) return false;
@@ -201,13 +201,12 @@ Terna.pagina('avisos', async (ctx) => {
     if (excepto !== 'publicado' && !Filtros.pasaFecha(fechaDe(a), filtros.publicado)) return false;
     return true;
   }
-  // Fuera de las preferencias (no del filtro): Terna no lo decide sola; la tarjeta ofrece "Pedir" como bajo el umbral.
+  // Fuera de las preferencias (no del filtro): Terna no lo decide sola; va a «Ver N que Terna no arma sola», con Pedir paquete.
   const fuera = (a) => Aviso.motivosFuera(a, busquedaPrefs);
-  // De tus puestos, como lo toma el motor (pipeline.md 0.4.15 §4.9 punto 3c): desde el piso, con interés y dentro de las preferencias.
   const esTuPuesto = (a) => !!Aviso.tuPuesto(a, criterio);
-  const decideSola = (a) => (Aviso.llega(a, umbral) || esTuPuesto(a)) && !fuera(a).length;
+  const bajo = (a) => a.match !== null && a.match !== undefined && !Aviso.llega(a, umbral);
   function chipTuPuesto(a) {
-    // "Tu puesto" y, desde 0034, "Tu empresa" (brand.md 0.13 §6.4): null, un chip o los dos.
+    // "Tu puesto" y, desde 0034, "Empresa que seguís" (brand.md 0.13 §6.4): null, un chip o los dos.
     const chips = [];
     if (esTuPuesto(a)) {
       const explicacion = T.avisos.tuPuestoExplicacion(Aviso.tuPuesto(a, criterio), Aviso.llega(a, umbral));
@@ -227,7 +226,19 @@ Terna.pagina('avisos', async (ctx) => {
     return desc(a.match, b.match) || (a.dudoso === b.dudoso ? 0 : a.dudoso ? 1 : -1)
       || desc(a.publicado_en, b.publicado_en) || desc(a.creado_en, b.creado_en);
   }
-  function visibles() { busquedaHoy = busqueda(); return avisos.filter((a) => pasa(a)).sort(comparar); }
+  // «Después sigue Terna», como elige el motor hasta donde la web lo sabe (pipeline.md §4.9): tus puestos primero (si los priorizás y
+  // el orden es ese), después donde postula Terna (si «Terna postula por vos» está en Sí), después por match. Con «Más nuevos», por fecha.
+  const postulaTerna = (a) => prefs.postular_sola !== false && Aviso.donde(a, prefs).clave === 'terna';
+  function compararSigue(a, b) {
+    if (orden === 'nuevos') return comparar(a, b);
+    if (orden === 'puestos' && esTuPuesto(a) !== esTuPuesto(b)) return esTuPuesto(a) ? -1 : 1;
+    if (postulaTerna(a) !== postulaTerna(b)) return postulaTerna(a) ? -1 : 1;
+    return desc(a.match, b.match) || desc(a.publicado_en, b.publicado_en) || desc(a.creado_en, b.creado_en);
+  }
+  // Armados: lo de hoy primero, por cuándo se armó; lo que no se sabe (archivos vencidos), al final.
+  const instanteArmado = (a) => (a.armado_en ? Date.parse(a.armado_en) || 0 : 0);
+  const compararArmado = (a, b) => (instanteArmado(b) - instanteArmado(a)) || desc(a.match, b.match);
+  const COMPARAR = { no_se_pudo: compararArmado, hoy: compararArmado, semana: compararArmado, antes: compararArmado, sigue: compararSigue };
 
   function cambiado(k) {
     if (BUSQUEDA.includes(k)) return filtros[k] !== null;
@@ -236,7 +247,8 @@ Terna.pagina('avisos', async (ctx) => {
     if (k === 'puesto' || k === 'empresa') return Filtros.hayTexto(filtros[k]);
     return filtros[k] !== null;  // requisitos, prioridad, paquete, postulación, dónde se postula, ubicación, publicado
   }
-  const algoCambiado = () => CLAVES.some(cambiado);
+  const clavesHoy = () => CLAVES_DE[pestana];
+  const algoCambiado = () => clavesHoy().some(cambiado);
   const F = T.avisos.filtros;
   const nombreFiltro = (k) => F.nombres[k] || F.columnas[k];
   function nombreDe(k, v) {
@@ -249,7 +261,6 @@ Terna.pagina('avisos', async (ctx) => {
   const todasUbicaciones = () => Array.from(new Set(avisos.map(Aviso.lugar))).sort((x, y) => x.localeCompare(y, 'es'));
   function resumen(k) {
     if (k === 'match') {
-      // Solo los que no llegan: "Bajo tu umbral", lo mismo que dice cada aviso de esa lista; con el mínimo subido, "60 a 69".
       if (filtros.soloBajo) return minimo() <= piso ? T.avisos.bajoUmbral : F.matchResumenSolo(minimo(), topeBajo);
       return conTuyos ? F.matchResumenTuyos(minimo(), criterio.puestos.length > 0, criterio.empresas.length > 0) : F.matchResumen(minimo());
     }
@@ -264,6 +275,41 @@ Terna.pagina('avisos', async (ctx) => {
     return resumenLista(k, k === 'interes' ? filtros.interes : efectiva(k));
   }
   function volverAPreferencias() { filtros = inicial(); guardarFiltros(); dibujar(); }
+
+  /* ---------- Las dos pestañas (PLAN-UX §2.2 y §3.2; Aviso.pestanas) ----------
+     Armados y Por armar, cada una con su número (lo que dejan ver los filtros; en Por armar, más tus pedidos). Si hay algo para decidir,
+     Por armar lleva además el punto ámbar con su cuenta. La elegida va en el hash (#armados, #por-armar), como en Postulaciones. */
+  const V = T.avisos.vistas;
+  const HASH = { armados: 'armados', por_armar: 'por-armar' };
+  // #proximos (Tus pedidos, el link de Cómo funciona) abre Por armar y baja hasta ahí.
+  const DE_HASH = { armados: 'armados', 'por-armar': 'por_armar', proximos: 'por_armar' };
+  let pestana = 'armados';
+  let pestanas = null;
+  function armarPestanas() {
+    pestanas = Aviso.pestanas({ nombre: T.avisos.mostrar, elegida: pestana, alCambiar: cambiarPestana,
+      opciones: [{ valor: 'armados', texto: V.armados, n: 0 }, { valor: 'por_armar', texto: V.por_armar, n: 0 }] });
+    cajaVistas.append(pestanas.nodo);
+  }
+  function actualizarPestanas(r) {
+    cajaVistas.hidden = !avisos.length;
+    const decidir = r.por_armar.filter((a) => grupoDe(a) === 'decidir').length;
+    pestanas.poner('armados', { n: r.armados.length });
+    pestanas.poner('por_armar', { n: r.por_armar.length + r.pedidos.length, punto: decidir, puntoTexto: decidir ? T.comun.porDecidirCuenta(decidir) : '' });
+    pestanas.elegir(pestana);
+  }
+  function cambiarPestana(v) {
+    if (v === pestana) return;
+    pestana = v;
+    if (!Terna.hojaAbierta()) history.replaceState(null, '', location.pathname + location.search + '#' + HASH[v]);
+    if (pestana === 'armados') Lista.visitaArmados();
+    dibujar();
+  }
+  // Las cuentas de Paquetes en el muelle y el carril (decisión D3): lila, los paquetes nuevos desde la última visita a Armados (con la
+  // última corrida como piso); ámbar, lo que te toca decidir, sin los filtros de la persona.
+  function contarPaquetes() {
+    // La misma cuenta que hace Inicio (js/inicio.js): lo de Paquetes al abrir (enPaquetes) que está en Te toca decidir.
+    Terna.cuentaPaquetes({ nuevos: Lista.paquetesNuevos(avisos, ultimaCorrida), porDecidir: avisos.filter((a) => loTuyo.enPaquetes(a) && grupoDe(a) === 'decidir').length });
+  }
 
   /* ---------- Orden y barra de filtros ---------- */
   function cambiarOrden(nuevo) {
@@ -283,11 +329,13 @@ Terna.pagina('avisos', async (ctx) => {
   // Los botones se arman una sola vez y se actualizan en el lugar: así el foco vuelve al mismo botón al cerrar su filtro.
   const botones = {};
   const ubicarFiltros = Filtros.ubicar({ botones, lista });
-  const primerFiltro = () => Filtros.primero({ botones, claves: CLAVES, lista });
+  const primerFiltro = () => Filtros.primero({ botones, claves: clavesHoy(), lista });
   const estadoFiltros = h('div', { class: 'filtros-estado' });
-  // «Más filtros» (PLAN-WEB.md §2.8): desde 768 px quedan a la vista los cambiados y los primeros de la barra, hasta cuatro.
   let barraFiltros = null;
-  const repartirBarra = () => Filtros.masFiltros({ barra: barraFiltros, botones, claves: CLAVES, cambiado, aLaVista: 4 });
+  let controles = null;
+  let unico = null;
+  // «Más filtros» (PLAN-WEB.md §2.8): desde 768 px quedan a la vista los cambiados y los primeros de la barra, hasta cuatro.
+  const repartirBarra = () => Filtros.masFiltros({ barra: barraFiltros, botones, claves: clavesHoy(), cambiado, aLaVista: 4 });
   function armarBarra() {
     const barra = h('div', { class: 'filtros-barra', role: 'group', 'aria-label': F.barra });
     for (const k of CLAVES) {
@@ -298,23 +346,31 @@ Terna.pagina('avisos', async (ctx) => {
       botones[k] = b;
       barra.append(b);
     }
-    cajaFiltros.append(h('div', { class: 'filtros-caja' }, barra), estadoFiltros);
-    // El orden va con los filtros, al lado de la lista que ordena (como en Búsqueda): debajo de la barra, a la derecha de lo que
-    // dice el estado de los filtros. El elemento es el mismo (#herramientas, con #orden adentro); cambia dónde se ve.
-    const controles = h('div', { class: 'controles-lista' });
+    const caja = h('div', { class: 'filtros-caja' }, barra);
+    cajaFiltros.append(caja, estadoFiltros);
+    // El orden va con los filtros, al lado de la lista que ordena: debajo de la barra, a la derecha del estado de los filtros.
+    controles = h('div', { class: 'controles-lista' });
     cajaFiltros.before(controles);
     controles.append(cajaFiltros, herramientas);
     barraFiltros = barra;
-    repartirBarra();
+    // En el celular, un solo botón «Filtrar» con la cuenta de los filtros puestos, que abre la hoja con la barra, el estado y el orden.
+    unico = Filtros.botonUnico({ caja: controles, nodos: [caja, estadoFiltros, herramientas], cuenta: 0 });
   }
   function actualizarBarra() {
+    const claves = clavesHoy();
     for (const k of CLAVES) {
       const b = botones[k];
+      // Un filtro que no es de esta pestaña no se ve (y «Más filtros» no lo cuenta).
+      if (!claves.includes(k)) { b.hidden = true; delete b.dataset.masOculto; continue; }
+      if (b.dataset.masOculto !== '1') b.hidden = false;
       b.querySelector('.filtro-valor').textContent = resumen(k);
       b.querySelector('.filtro-cambiado').textContent = cambiado(k) ? F.cambiadoAccesible : '';
       b.classList.toggle('cambiado', cambiado(k));
     }
     if (barraFiltros) repartirBarra();
+    if (unico) unico.cuenta(claves.filter(cambiado).length);
+    // Armados va siempre por cuándo se armó: el orden es de Por armar.
+    herramientas.hidden = pestana === 'armados';
     const enfocado = estadoFiltros.contains(document.activeElement);
     Terna.vaciar(estadoFiltros);
     if (algoCambiado()) {
@@ -327,118 +383,120 @@ Terna.pagina('avisos', async (ctx) => {
     }
   }
 
-  /* ---------- La franja de arriba: Todos y Esta semana (brand.md 0.23 §6.4; diseno.md 0.35 §7.10) ----------
-     Francisco, 12/11/2026: "algo similar" a Por postular y Postuladas, "7 nuevos empleos esta semana… qué es lo nuevo semanalmente,
-     mensualmente". Dos tarjetas que eligen qué parte de la lista se ve, como las pestañas de Postulaciones (botones de radio en un
-     grupo "Mostrar"): toda, o lo que llegó a la lista en los últimos 7 días (`creado_en`: el día en que Terna lo sumó a tu lista, la
-     misma fecha que la marca "nuevo", que mira solo la última corrida). Cada una dice de qué está hecha (con paquete, sin paquete, sin
-     texto) y al lado va cuántos llegaron en los últimos 30 días. Todo cuenta con los filtros puestos, como en Postulaciones, y la
-     cuenta del título es la de Todos. No se recuerda: al volver a entrar, Todos. Se arma una vez y se actualiza en el lugar. */
-  const VISTAS = ['todos', 'semana'];
-  const DIA = 24 * 60 * 60 * 1000;
-  const ahora = Date.now();
-  const llegoEn = (a, dias) => { const t = Date.parse(a.creado_en || ''); return Number.isFinite(t) && t >= ahora - dias * DIA; };
-  let vista = 'todos';
-  const refVistas = {};
-  let notaMes = null;
-  function armarVistas() {
-    const idSemana = Terna.idUnico('semana');
-    const grupo = h('div', { class: 'vistas', role: 'radiogroup', 'aria-label': T.avisos.mostrar });
-    for (const v of VISTAS) {
-      const input = h('input', { type: 'radio', name: 'vista-avisos', value: v, checked: vista === v, 'aria-describedby': v === 'semana' ? idSemana : null });
-      input.addEventListener('change', () => { if (input.checked) cambiarVista(v); });
-      const numero = h('b', { class: 'num vista-n' });
-      const partes = h('span', { class: 'vista-partes' });
-      refVistas[v] = { input, numero, partes };
-      grupo.append(h('label', { class: 'vista', dataset: { vista: v }, title: v === 'semana' ? T.avisos.vistaSemanaExplicacion : null }, input,
-        h('span', { class: 'vista-cara' }, h('span', { class: 'vista-titulo' }, h('span', { text: T.avisos.vistas[v] }), ' ', numero), partes)));
-    }
-    notaMes = h('span', { class: 'vistas-nota', role: 'status' });
-    cajaVistas.append(h('div', { class: 'vistas-caja' }, grupo, notaMes,
-      h('span', { class: 'oculto-visual', id: idSemana, text: T.avisos.vistaSemanaExplicacion })));
+  /* ---------- La lista: grupos, carpetas y líneas (celular) o la tabla con sus filas de grupo (escritorio) ---------- */
+  const G = T.avisos.grupos;
+  const ORDEN_GRUPOS = { armados: ['no_se_pudo', 'hoy', 'semana', 'antes'], por_armar: ['decidir', 'sigue', 'esperan', 'descartados', 'no_arma'] };
+  // Lo que cada pestaña deja ver con los filtros. Lo pedido va aparte (Tus pedidos), sin filtros: es una cola que se ordena entera.
+  function porPestana() {
+    busquedaHoy = busquedaElegida();
+    const r = { armados: [], por_armar: [], pedidos: pedidosOrdenados() };
+    for (const a of avisos) if (grupoDe(a) !== 'pedidos' && pasa(a)) r[pestanaDe(a)].push(a);
+    return r;
   }
-  // De qué está hecha una lista, como en la columna Paquete: con paquete (Armado), sin texto, y sin paquete todo lo demás.
-  function partesDe(l) {
-    const P = T.avisos.partes;
-    const con = l.filter((a) => Aviso.estadoPaquete(a) === 'armado').length;
-    const sinTexto = l.filter((a) => Aviso.estadoPaquete(a) === 'sin_texto').length;
-    return [[con, P.conPaquete], [l.length - con - sinTexto, P.sinPaquete], [sinTexto, P.sinTexto]]
-      .filter(([c]) => c > 0).map(([c, texto]) => texto(c)).join(' · ');
+  function agrupar(l) {
+    const por = new Map();
+    for (const a of l) { const g = grupoDe(a); if (!por.has(g)) por.set(g, []); por.get(g).push(a); }
+    return ORDEN_GRUPOS[pestana].filter((g) => por.has(g)).map((g) => [g, por.get(g).sort(COMPARAR[g] || comparar)]);
   }
-  function actualizarVistas(base) {
-    cajaVistas.hidden = !avisos.length;
-    if (!avisos.length) return;
-    const listas = { todos: base, semana: base.filter((a) => llegoEn(a, 7)) };
-    for (const v of VISTAS) {
-      const r = refVistas[v];
-      r.input.checked = vista === v;
-      r.numero.textContent = String(listas[v].length);
-      r.partes.textContent = partesDe(listas[v]);
-    }
-    const mes = base.filter((a) => llegoEn(a, 30)).length;
-    notaMes.textContent = mes ? T.avisos.mes(mes) : '';
+  function cabezaGrupo(g, n) {
+    const d = {
+      no_se_pudo: { texto: G.noSePudo, tono: 'error', ayuda: G.noSePudoAyuda },
+      hoy: { texto: G.hoy }, semana: { texto: G.semana }, antes: { texto: G.antes },
+      decidir: { texto: G.decidir, tono: 'toca', ayuda: G.decidirAyuda },
+      sigue: { texto: G.sigue, ayuda: orden === 'nuevos' ? null : G.sigueAyuda },
+      esperan: { texto: G.esperan, tono: 'espera' },
+      descartados: { texto: T.avisos.interes.no_me_interesa },
+    }[g];
+    return Aviso.tituloGrupo(Object.assign({ n }, d));
   }
-  function cambiarVista(v) { vista = v; dibujarLista(); }
-
-  /* ---------- El cartel de lo que hay para decidir (PLAN-WEB.md §3.2) ----------
-     Lo primero de la página: cuántos avisos por decidir dejan ver los demás filtros (y la vista elegida), que es lo que se ve al
-     tocar «Ver». «Ver» deja el filtro Interés en «Por decidir», como el link de Inicio, y lleva el foco a la lista. Con cero, o con
-     el filtro ya puesto, no está. Se arma una vez y se actualiza en el lugar (así no se pierde el foco del botón). */
-  let porDecidir = null;
-  function dibujarPorDecidir() {
-    if (!cajaPorDecidir) return;
-    const yaPuesto = filtros.interes.length === 1 && filtros.interes[0] === 'por_decidir';
-    const n = yaPuesto ? 0 : avisos.filter((a) => a.interes === 'por_decidir' && pasa(a, 'interes') && (vista !== 'semana' || llegoEn(a, 7))).length;
-    if (!n) { cajaPorDecidir.hidden = true; return; }
-    if (!porDecidir) {
-      porDecidir = { cifra: h('b', { class: 'num' }), resto: document.createTextNode(''),
-        boton: h('button', { class: 'btn btn-primario btn-chico', type: 'button', onclick: verPorDecidir }, T.avisos.porDecidir.ver) };
-      cajaPorDecidir.append(icono('i-por-decidir', 'icono-l'), h('span', null, porDecidir.cifra, porDecidir.resto), porDecidir.boton);
-    }
-    // La cifra va en negrita: el texto de Inicio, partido en su primer espacio.
-    const texto = T.inicio.porDecidir(n);
-    const i = texto.indexOf(' ');
-    porDecidir.cifra.textContent = i > 0 ? texto.slice(0, i) : texto;
-    porDecidir.resto.textContent = i > 0 ? texto.slice(i) : '';
-    porDecidir.boton.setAttribute('aria-label', T.avisos.porDecidir.verAccesible(n));
-    cajaPorDecidir.hidden = false;
+  // El grupo plegado de Por armar: «Ver N que Terna no arma sola». Abierto o cerrado no se guarda; con Match en «Bajo mi umbral» (todo
+  // lo que se ve es de este grupo) arranca abierto.
+  let noArmaAbierto = false;
+  function botonNoArma(n, controla, alAlternar) {
+    const abierto = noArmaAbierto || filtros.soloBajo;
+    const b = h('button', { class: 'plegable-boton', type: 'button', 'aria-expanded': String(abierto), 'aria-controls': controla, dataset: { control: 'no-arma' } },
+      h('span', { text: G.noArma(n) }), icono('i-chevron'));
+    b.addEventListener('click', () => {
+      noArmaAbierto = b.getAttribute('aria-expanded') !== 'true';
+      b.setAttribute('aria-expanded', String(noArmaAbierto));
+      alAlternar(noArmaAbierto);
+    });
+    return h('h2', { class: 'grupo-plegable' }, b);
   }
-  function verPorDecidir() {
-    filtros.interes = ['por_decidir'];
-    aplicarFiltro();
-    const primero = lista.querySelector('[data-match]');
-    if (primero) (primero.tagName === 'TR' ? primero : primero.querySelector('[data-control="abrir"]')).focus();
+  const ulDe = (filas) => h('ul', { class: 'lista-tarjetas', role: 'list' }, filas.map((a) => h('li', null, tarjeta(a))));
+  function gruposCelular(grupos) {
+    return grupos.map(([g, filas]) => {
+      if (g === 'no_arma') {
+        const ul = ulDe(filas);
+        ul.id = Terna.idUnico('no-arma');
+        ul.hidden = !(noArmaAbierto || filtros.soloBajo);
+        return h('section', { class: 'grupo-lista grupo-plegado', dataset: { grupo: g } }, botonNoArma(filas.length, ul.id, (abierto) => { ul.hidden = !abierto; }), ul);
+      }
+      const cabeza = cabezaGrupo(g, filas.length);
+      return h('section', { class: 'grupo-lista', dataset: { grupo: g }, 'aria-labelledby': cabeza.querySelector('.grupo-titulo').id }, cabeza, ulDe(filas));
+    });
   }
 
-  /* ---------- Lista: carpetas y líneas (celular) o tabla (escritorio) ---------- */
+  // Los vacíos de cada pestaña (PLAN-UX §3.2), o null si hay algo para ver.
+  function vacioDe(r) {
+    const A = T.avisos;
+    if (r[pestana].length) return null;
+    if (algoCambiado()) {
+      return h('div', { class: 'vacio' }, h('p', { text: A.vacioFiltros }),
+        h('button', { class: 'btn', type: 'button', onclick: () => { volverAPreferencias(); primerFiltro().focus(); } }, F.volverPreferencias));
+    }
+    if (pestana === 'armados') {
+      const hayCola = avisos.some((a) => pestanaDe(a) === 'por_armar' && loTuyo.enPaquetes(a));
+      return h('div', { class: 'vacio' }, h('p', { text: A.vacioArmados(cupo) }),
+        hayCola ? h('button', { class: 'btn', type: 'button', onclick: () => { cambiarPestana('por_armar'); pestanas.radios.por_armar.focus(); } }, V.por_armar) : null);
+    }
+    // Por armar con pedidos y nada más: Tus pedidos ya lo dice.
+    if (r.pedidos.length) return null;
+    return h('div', { class: 'vacio' }, h('p', { text: ctx.faltantes.length ? A.vacioIncompleto : yaCorrio ? A.vacioPorArmar : A.vacioSinCorrida }));
+  }
+  const arribaProximos = cajaProximos.parentElement;
+  const cierre = h('p', { class: 'avisos-busqueda', hidden: true });
   function dibujar() { actualizarBarra(); dibujarLista(); }
   function dibujarLista() {
+    const r = porPestana();
+    actualizarPestanas(r);
+    contarPaquetes();
     Terna.vaciar(lista);
-    const base = visibles();
-    actualizarVistas(base);
-    dibujarPorDecidir();
-    const vis = vista === 'semana' ? base.filter((a) => llegoEn(a, 7)) : base;
-    cuenta.textContent = avisos.length ? T.avisos.cuenta(base.length) : '';
-    if (!vis.length) {
-      const vacio = !avisos.length
-        ? h('div', { class: 'vacio' }, h('p', { text: yaCorrio ? T.avisos.vacioSinAvisos : T.avisos.vacioSinCorrida }),
-          h('a', { class: 'btn', href: 'preferencias.html' }, T.avisos.revisarPreferencias))
-        : base.length
-          ? h('div', { class: 'vacio' }, h('p', { text: T.avisos.vacioSemana }),
-            h('button', { class: 'btn', type: 'button', onclick: () => { cambiarVista('todos'); refVistas.todos.input.focus(); } }, T.avisos.verTodos))
-        : algoCambiado()
-          ? h('div', { class: 'vacio' }, h('p', { text: T.avisos.vacioFiltros }),
-            h('button', { class: 'btn', type: 'button', onclick: () => { volverAPreferencias(); primerFiltro().focus(); } }, F.volverPreferencias))
-          : h('div', { class: 'vacio' }, h('p', { text: T.avisos.vacioPreferencias }),
-            h('a', { class: 'btn', href: 'preferencias.html#busqueda' }, T.avisos.revisarPreferencias));
-      // En escritorio la lista es siempre la tabla, también vacía, con sus encabezados, que son los filtros de sus columnas
-      // (diseno.md 0.22 §1.34): si se fuera, esos filtros saltarían a la barra justo cuando hay que cambiarlos.
-      lista.append(Terna.anchoEscritorio.matches ? tabla([], vacio) : vacio);
-      ubicarFiltros();
+    if (controles) controles.hidden = !avisos.length;
+    cierre.hidden = !avisos.length || pestana !== 'por_armar';
+    if (!avisos.length) {
+      // Todavía no hay nada (persona nueva, o ningún aviso le ajusta): sin pestañas, sin filtros, un solo vacío. Con el perfil
+      // incompleto, Terna no corre: lo que hay que hacer es completarlo (FEEDBACK-UX P2-3 b).
+      arribaProximos.append(cajaProximos);
+      dibujarProximos();
+      const incompleto = ctx.faltantes.length > 0;
+      lista.append(h('div', { class: 'vacio' }, h('p', { text: incompleto ? T.avisos.vacioIncompleto : yaCorrio ? T.avisos.vacioSinAvisos : T.avisos.vacioSinCorrida }),
+        incompleto ? h('a', { class: 'btn', href: 'perfil.html' }, T.bandas.completar) : h('a', { class: 'btn', href: 'preferencias.html' }, T.avisos.revisarPreferencias)));
       return;
     }
-    if (Terna.anchoEscritorio.matches) lista.append(tabla(vis));
-    else lista.append(h('ul', { class: 'lista-tarjetas', role: 'list' }, vis.map((a) => h('li', null, tarjeta(a)))));
+    const grupos = agrupar(r[pestana]);
+    const vacio = vacioDe(r);
+    const escritorio = Terna.anchoEscritorio.matches;
+    // Con «Armar paquetes» en No, Terna no arma nada: lo primero de Por armar.
+    if (pestana === 'por_armar' && prefs.armar_paquetes === false) {
+      lista.append(h('p', { class: 'armar-no' }, icono('i-alerta', 'icono-16'), h('span', null, T.avisos.proximos.armarNo + ' ', h('a', { href: 'preferencias.html#paquetes', text: T.avisos.proximos.cambiarlo }))));
+    }
+    // Tus pedidos: en escritorio, arriba a la derecha de las pestañas; en el celular, dentro de Por armar, después de lo que te toca
+    // decidir y antes de lo demás (PLAN-UX §3.2). Se mueve el elemento: así el orden del foco es el de la pantalla.
+    if (escritorio || pestana !== 'por_armar') {
+      if (cajaProximos.parentElement !== arribaProximos) arribaProximos.append(cajaProximos);
+    }
+    if (escritorio) {
+      // En escritorio la lista es siempre la tabla, también vacía, con sus encabezados, que son los filtros de sus columnas (diseno.md
+      // 0.22 §1.34); sin un vacío que decir (Por armar con solo pedidos), no hay tabla.
+      if (grupos.length || vacio) lista.append(tabla(grupos, vacio));
+    } else {
+      const partes = gruposCelular(grupos);
+      if (pestana === 'por_armar') partes.splice(grupos.length && grupos[0][0] === 'decidir' ? 1 : 0, 0, cajaProximos);
+      Terna.agregar(lista, partes);
+      if (vacio) lista.append(vacio);
+    }
+    dibujarProximos();
     ubicarFiltros();
     marcarElegida();
   }
@@ -446,83 +504,94 @@ Terna.pagina('avisos', async (ctx) => {
   function puedePedir(a) {
     return a.tiene_texto && prefs.armar_paquetes && a.estado_paquete === 'sin_armar' && !a.paquete_id && a.interes !== 'no_me_interesa';
   }
-  // "Pedir" en la columna Paquete y en la tarjeta (corto, con el puesto en el nombre accesible); "Pedir paquete" en la ficha.
-  function botonPedir(a, largo) {
-    return h('button', { class: largo ? 'btn' : 'btn btn-fila', type: 'button', dataset: { control: 'pedir' }, 'aria-label': largo ? null : T.avisos.pedirAccesible(a.puesto),
+  // "Pedir" en lo que sigue Terna (corto, con el puesto en el nombre accesible); "Pedir paquete" en lo que Terna no arma sola y en la ficha.
+  function botonPedir(a, largo, enFicha) {
+    return h('button', { class: enFicha ? 'btn' : 'btn btn-fila', type: 'button', dataset: { control: 'pedir' }, 'aria-label': enFicha ? null : T.avisos.pedirAccesible(a.puesto),
       onclick: () => pedir(a) }, largo ? T.avisos.pedirPaquete : T.avisos.pedir);
   }
-  // Debajo de "Sin texto" (brand.md 0.23 §6.4; diseno.md 0.35 §7.3 y §7.6): quién lo busca, Terna o, si Terna ya no lo espera,
-  // Francisco (`texto_estado`; sin 0038, todo lo busca Terna). Hasta 0.34, el botón "Pegar texto" y, en la tarjeta, "Pegar el
-  // texto del aviso".
+  // Debajo de "Sin texto" (brand.md 0.23 §6.4; diseno.md 0.35 §7.3): quién lo busca, Terna o, si Terna ya no lo espera, Francisco.
   const quienBusca = (a) => (a.texto_estado === 'admin' ? 'admin' : 'buscando');
   function lineaSinTexto(a) {
     return h('span', { class: 'sin-texto-linea', dataset: { busca: quienBusca(a) }, text: T.avisos.sinTextoLinea[quienBusca(a)] });
   }
-  // El lugar de un pedido en los próximos paquetes, debajo del chip "Pedido": "2.º · próxima corrida".
-  function lineaPedido(a) {
-    const l = lugarDe(a);
-    if (!l) return null;
-    const corridas = Math.ceil(l / cupo);
-    return h('span', { class: 'pedido-lugar' }, h('span', { 'aria-hidden': 'true', text: T.avisos.pedidoLugar(l, corridas) }), oculto(T.avisos.pedidoLugarAccesible(l, corridas)));
+  // Lo que espera: «Sin texto» (con quién lo busca) o «Por puntuar» (tiene texto y todavía no tiene tu match).
+  function chipEspera(a) {
+    if (!a.tiene_texto) return [Aviso.chipPaquete(a), lineaSinTexto(a)];
+    return Aviso.chipPaquete(Object.assign({}, a, { texto_origen: 'usuario' }));
   }
-  // Lo que se hace con el paquete, al lado de su chip (diseno.md 0.21 §7.3 y §7.6): Pedir debajo de "Sin armar", el lugar debajo
-  // de "Pedido" y, desde 0.35, quién busca el texto debajo de "Sin texto" (hasta 0.34, "Pegar texto").
+  const chipBajo = () => h('span', { class: 'chip-texto', text: T.avisos.bajoUmbral });
+  // Lo que se hace con el paquete en Por armar (la columna Paquete de la tabla): Pedir en lo que sigue Terna y en lo que no arma sola;
+  // en lo que espera, su chip.
   function accionPaquete(a) {
-    if (a.estado_paquete === 'pedido' && !a.paquete_id) return lineaPedido(a);
-    if (!a.tiene_texto) return lineaSinTexto(a);
-    // Un texto pegado que Terna todavía no puntuó ("Por puntuar") no se pide: espera su match.
-    if (Aviso.estadoPaquete(a) === 'sin_armar' && puedePedir(a)) return botonPedir(a, false);
+    const g = grupoDe(a);
+    if (g === 'esperan') return chipEspera(a);
+    const marca = g === 'no_arma' && bajo(a) && !esTuPuesto(a) ? chipBajo() : null;
+    if ((g === 'sigue' || g === 'no_arma') && puedePedir(a)) return [marca, botonPedir(a, g === 'no_arma')];
+    return marca;
+  }
+  // El interés en Por armar (PLAN-UX §2.3): los dos botones solo en lo que te toca decidir; «No me interesa» chico en lo que sigue y en
+  // lo que Terna no arma sola; «Me interesa» para volver lo que no te interesa. `donde` (tabla, tarjeta o ficha) da a cada grupo de
+  // radios su nombre: la ficha abierta y la fila del mismo aviso no pueden compartirlo.
+  const PREFIJO = { tabla: 'it-', tarjeta: 'ic-', ficha: 'if-' };
+  function accionInteres(a, donde) {
+    const g = grupoDe(a);
+    if (g === 'decidir') return Aviso.interes(a, { forma: 'dos', nombre: PREFIJO[donde] + a.match_id, alCambiar: (v) => cambiarInteres(a, v) });
+    if (g === 'descartados') {
+      return h('button', { class: 'btn btn-fila', type: 'button', dataset: { control: 'interes-si' }, onclick: () => cambiarInteres(a, 'me_interesa') },
+        icono('i-tilde', 'icono-16'), T.avisos.interes.me_interesa);
+    }
+    if (g === 'sigue' || g === 'no_arma') return Aviso.interes(a, { forma: 'chico', alCambiar: (v) => cambiarInteres(a, v) });
     return null;
   }
-  // La columna Interés: el control de interés para lo que Terna decide sola; para lo demás (bajo el umbral, fuera de las
-  // preferencias, sin texto, por puntuar), "No me interesa", o "Me interesa" para volverlo. `donde` (tabla, tarjeta o ficha) da
-  // a cada grupo de radios su nombre: la ficha abierta y la fila del mismo aviso no pueden compartirlo.
-  function accionesAviso(a, donde) {
-    if (a.tiene_texto && a.match !== null && decideSola(a)) return Aviso.controlInteres(a, ({ tabla: 'it-', tarjeta: 'ic-', ficha: 'if-' })[donde] + a.match_id, (v) => cambiarInteres(a, v));
-    const cont = h('div', { class: 'acciones-tarjeta' });
-    if (a.interes === 'no_me_interesa') {
-      cont.append(h('button', { class: 'btn btn-fila', type: 'button', dataset: { control: 'interes-si' }, onclick: () => cambiarInteres(a, 'me_interesa') }, icono('i-tilde', 'icono-16'), T.avisos.interes.me_interesa));
-    } else {
-      cont.append(h('button', { class: 'btn btn-fila', type: 'button', dataset: { control: 'interes-no' }, 'aria-label': T.avisos.noMeInteresaAccesible(a.puesto),
-        onclick: () => cambiarInteres(a, 'no_me_interesa') }, icono('i-no-interesa', 'icono-16'), T.avisos.interes.no_me_interesa));
-    }
-    return cont;
+  // Abajo de cada carpeta de Armados: cuándo se armó y adónde se postula (Postulaciones lista lo que tiene paquete o postulación y te interesa).
+  function lineaArmado(a) {
+    const d = Lista.diasDesdeArmado(a);
+    return d === null ? null : h('span', { class: 'armado-el', text: T.avisos.armadoEl(Terna.fechaCorta(a.armado_en), d) });
   }
+  const enPostulaciones = (a) => (!!a.paquete_id || a.estado_postulacion !== 'pendiente') && a.interes !== 'no_me_interesa';
+  function linkPostulaciones(a) {
+    if (!enPostulaciones(a)) return null;
+    return h('a', { class: 'link-lista', href: 'postulaciones.html#postulacion-' + a.match_id, 'aria-label': T.avisos.verEnPostulacionesAccesible(a.puesto),
+      dataset: { control: 'postulaciones' } }, T.avisos.ficha.verEnPostulaciones);
+  }
+  // La fila de documentos: CV y Carta se bajan; Notas y el salario abren la ficha con ese panel desplegado.
+  const docOpciones = { alNotas: (a, b) => abrirFicha(a, b, false, 'notas'), alSalario: (a, b) => abrirFicha(a, b, false, 'salario') };
 
-  /* La lista del celular (PLAN-WEB.md §3.2), en el orden de siempre y en dos formas: una carpeta si el aviso tiene el paquete
-     armado (la lengüeta con el match y, si hay postulación, el marbete con su etapa) y una línea suelta si no (el match en una
-     columna de 44 px; la que está por decidir, en ámbar lavado). La lengüeta (o el match de la línea) abre la ficha en «Por qué
-     ajusta»; el puesto la abre arriba; un clic en cualquier otro lugar del aviso que no sea un control, también. */
+  /* La lista del celular: en Armados, carpetas (la lengüeta con el match, el marbete con la postulación, los documentos, cuándo se
+     armó y «Ver en Postulaciones»); en Por armar, líneas sueltas (el match en una columna de 44 px; lo que te toca decidir, en ámbar
+     lavado), con dónde se postula y sus acciones. La lengüeta (o el match) abre la ficha en «Por qué ajusta»; el puesto, arriba; un
+     clic en cualquier otro lugar del aviso que no sea un control, también. */
   function tarjeta(a) {
-    const conPaquete = !!a.paquete_id;
+    const g = grupoDe(a);
+    const armado = a.estado_paquete === 'armado';
     const boton = h('button', { class: 'tarjeta-boton puesto', type: 'button', dataset: { control: 'abrir' }, onclick: () => abrirFicha(a, boton) },
       h('span', { class: 'aviso-puesto puesto-texto', text: a.puesto }), Aviso.nuevo(a), icono('i-adelante', 'puesto-flecha'));
     const conPorQue = a.match !== null && a.match !== undefined;
-    const match = Aviso.lengueta(a, umbral, { linea: !conPaquete, alTocar: conPorQue ? () => abrirFicha(a, match, false, 'porque') : null });
-    const bajo = a.match !== null && !Aviso.llega(a, umbral);
+    const match = Aviso.lengueta(a, umbral, { linea: !armado, alTocar: conPorQue ? () => abrirFicha(a, match, false, 'porque') : null });
     const tuyo = chipTuPuesto(a);
-    // El marbete lleva la etapa de la postulación: la carpeta que lo tiene no repite ese chip. Una línea, solo si hay etapa.
-    const chips = h('div', { class: 'chips' }, Aviso.chipInteres(a, config), Aviso.chipPaquete(a), accionPaquete(a),
-      !conPaquete && Aviso.estadoDe(a) ? Aviso.chipPostulacion(a) : null, Aviso.chipCalificacion(a),
-      !tuyo && bajo ? h('span', { class: 'chip-texto', text: T.avisos.bajoUmbral }) : null);
-    const acciones = accionesAviso(a, 'tarjeta');
-    acciones.classList.add(conPaquete ? 'carpeta-acciones' : 'linea-acciones');
-    const donde = Aviso.lineaDonde(a, prefs);
-    const etiquetas = Aviso.etiquetas(a, bajoMinimo(a), false, fuera(a));
     let art;
-    if (conPaquete) {
+    if (armado) {
+      const interes = Aviso.chipInteres(a, config);
       art = h('article', { class: 'tarjeta-aviso carpeta', dataset: { match: a.match_id } },
         h('div', { class: 'carpeta-cabeza' }, match, Aviso.marbete(a)),
         h('div', { class: 'carpeta-cuerpo aviso-datos' }, boton,
           a.empresa ? h('span', { class: 'aviso-empresa empresa', text: a.empresa }) : null,
-          h('div', { class: 'aviso-linea' }, Aviso.atributos(a, { sinFuente: true }), tuyo, Aviso.fechaSola(a)),
-          donde, etiquetas, chips, acciones));
+          h('div', { class: 'aviso-linea' }, Aviso.atributos(a, { sinFuente: true }), tuyo),
+          Aviso.etiquetas(a, bajoMinimo(a), false, null), interes ? h('div', { class: 'chips' }, interes) : null,
+          Aviso.filaDocumentos(a, docOpciones),
+          h('div', { class: 'carpeta-pie' }, lineaArmado(a), linkPostulaciones(a))));
     } else {
-      art = h('article', { class: 'tarjeta-aviso linea' + (a.interes === 'por_decidir' ? ' toca-fila' : ''), dataset: { match: a.match_id } },
+      const chips = h('div', { class: 'chips' }, g === 'esperan' ? chipEspera(a) : null,
+        g === 'no_arma' && bajo(a) && !tuyo ? chipBajo() : null, Aviso.chipCalificacion(a));
+      let acciones = null;
+      const interes = accionInteres(a, 'tarjeta');
+      if (g === 'decidir') { acciones = interes; acciones.classList.add('linea-acciones'); }
+      else if (interes) acciones = h('div', { class: 'acciones-tarjeta linea-acciones' }, (g === 'sigue' || g === 'no_arma') && puedePedir(a) ? botonPedir(a, g === 'no_arma') : null, interes);
+      art = h('article', { class: 'tarjeta-aviso linea' + (g === 'decidir' ? ' toca-fila' : ''), dataset: { match: a.match_id } },
         match,
         h('div', { class: 'linea-datos aviso-datos' }, boton,
           h('div', { class: 'linea-apoyo' }, a.empresa ? h('span', { class: 'aviso-empresa', text: a.empresa }) : null, Aviso.atributos(a, { sinFuente: true }), tuyo),
-          donde, etiquetas,
+          Aviso.lineaDonde(a, prefs), Aviso.etiquetas(a, bajoMinimo(a), false, fuera(a)),
           h('div', { class: 'linea-pie' }, chips, Aviso.fechaSola(a)),
           acciones));
     }
@@ -530,40 +599,55 @@ Terna.pagina('avisos', async (ctx) => {
     return art;
   }
 
-  // Los encabezados abren el filtro de su columna (diseno.md 0.21 §7.6 y §10.18); Match y Publicado además ordenan, desde su panel.
+  // La tabla de escritorio: los grupos son filas de grupo (tr.grupo), cada uno en su tbody. Los encabezados abren el filtro de su
+  // columna (diseno.md 0.21 §7.6 y §10.18); en Por armar, Match y Publicado además ordenan, desde su panel. Las columnas cambian con
+  // la pestaña: Armados tiene los documentos y la postulación; Por armar, el paquete (Pedir), dónde se postula y el interés.
   let filtroAbierto = null;
-  function tabla(vis, vacio) {
+  function tabla(grupos, vacio) {
     const C = T.avisos.columnas;
-    const th = (texto, clave, clase, sort) => Filtros.encabezado({ texto, clave, clase, activo: cambiado(clave), abierto: filtroAbierto === clave, sort,
+    const armados = pestana === 'armados';
+    const th = (texto, clave, clase, sort) => Filtros.encabezado({ texto, clave, clase, activo: cambiado(clave), abierto: filtroAbierto === clave, sort: armados ? null : sort,
       titulo: F.boton(nombreFiltro(clave), resumen(clave)), alAbrir: (b) => abrirFiltro(clave, b, true) });
-    const thead = h('thead', null, h('tr', null,
-      th(C.puesto, 'puesto', 'col-puesto'), th(C.empresa, 'empresa', 'col-empresa'), th(C.modalidad, 'modalidad', 'col-modalidad'),
-      th(C.ubicacion, 'ubicacion', 'col-ubicacion'), th(C.match, 'match', 'der', orden === 'match' ? 'descending' : 'none'), th(C.paquete, 'paquete', 'col-paquete'),
-      th(C.postulacion, 'postulacion', 'col-postulacion'), th(C.donde, 'donde', 'col-donde'), th(C.interes, 'interes', 'col-interes'),
-      th(C.publicado, 'publicado', 'col-publicado', orden === 'nuevos' ? 'descending' : 'none'),
-      h('th', { scope: 'col', text: C.aviso })));
+    const solo = (texto, clase) => h('th', { scope: 'col', class: clase || null, text: texto });
+    const cols = [th(C.puesto, 'puesto', 'col-puesto'), th(C.empresa, 'empresa', 'col-empresa'), th(C.modalidad, 'modalidad', 'col-modalidad'),
+      th(C.ubicacion, 'ubicacion', 'col-ubicacion'), th(C.match, 'match', 'der', orden === 'match' ? 'descending' : 'none')];
+    if (armados) cols.push(solo(C.paquete, 'col-docs'), th(C.postulacion, 'postulacion', 'col-postulacion'));
+    else cols.push(th(C.paquete, 'paquete', 'col-paquete'), th(C.donde, 'donde', 'col-donde'), th(C.interes, 'interes', 'col-interes'));
+    cols.push(th(C.publicado, 'publicado', 'col-publicado', orden === 'nuevos' ? 'descending' : 'none'), solo(C.aviso));
+    const n = String(cols.length);
+    let cuerpos;
     // Sin filas (los filtros no dejan ver ninguna), una sola celda con el aviso de vacío, debajo de los encabezados.
-    const tbody = vacio ? h('tbody', null, h('tr', null, h('td', { class: 'tabla-vacia', colspan: '11' }, vacio))) : h('tbody', null, vis.map(fila));
-    return h('div', { class: 'tabla-caja tabla-avisos' }, h('table', { class: 'tabla' }, thead, tbody));
+    if (vacio) cuerpos = [h('tbody', null, h('tr', null, h('td', { class: 'tabla-vacia', colspan: n }, vacio)))];
+    else {
+      cuerpos = grupos.flatMap(([g, filas]) => {
+        if (g === 'no_arma') {
+          const cuerpo = h('tbody', { id: Terna.idUnico('no-arma'), hidden: !(noArmaAbierto || filtros.soloBajo), dataset: { grupo: g } }, filas.map(fila));
+          return [h('tbody', { class: 'grupo-plegado' }, h('tr', { class: 'grupo' }, h('td', { colspan: n }, botonNoArma(filas.length, cuerpo.id, (abierto) => { cuerpo.hidden = !abierto; })))), cuerpo];
+        }
+        return [h('tbody', { dataset: { grupo: g } }, h('tr', { class: 'grupo' }, h('th', { scope: 'rowgroup', colspan: n }, cabezaGrupo(g, filas.length))), filas.map(fila))];
+      });
+    }
+    return h('div', { class: 'tabla-caja tabla-avisos' + (armados ? ' tabla-armados' : ' tabla-por-armar') }, h('table', { class: 'tabla' }, h('thead', null, h('tr', null, cols)), cuerpos));
   }
-  // Lo que dicen las columnas que la tabla esconde cuando no le alcanza el ancho (diseno.md 0.8 §7.6): empresa, lugar y
-  // modalidad debajo del puesto, como en la fila de Postulaciones, y desde 0.23 dónde se postula, solo si te toca a vos (lo que
-  // postula Terna y lo ya postulado no suman ruido: están en la ficha). Oculta mientras las columnas se ven.
+  // Lo que dicen las columnas que la tabla esconde cuando no le alcanza el ancho (diseno.md 0.8 §7.6): empresa, lugar y modalidad
+  // debajo del puesto y, desde 0.23, dónde se postula: en Armados solo si te toca a vos; en Por armar, siempre (cada fila dice dónde
+  // se postula, PLAN-UX §3.2). Oculta mientras las columnas se ven.
   function lineaApoyo(a) {
     const d = Aviso.donde(a, prefs);
+    const conDonde = !d.hecha && (d.clave !== 'terna' || pestanaDe(a) === 'por_armar');
     return h('div', { class: 'atributos linea-apoyo' },
       a.empresa ? h('span', { class: 'apoyo-empresa', text: a.empresa + ' · ' }) : null,
       h('span', { text: Aviso.lugar(a) }), a.modalidad ? h('span', { text: ' · ' + T.avisos.modalidadMin[a.modalidad] }) : null,
-      d.clave === 'terna' || d.hecha ? null : h('span', { class: 'apoyo-donde', text: ' · ' + Aviso.textoDonde(d) }));
+      conDonde ? h('span', { class: 'apoyo-donde', text: ' · ' + Aviso.textoDonde(d) }) : null);
   }
   function fila(a) {
-    const bajo = a.match !== null && !Aviso.llega(a, umbral);
+    const g = grupoDe(a);
+    const armados = pestanaDe(a) === 'armados';
     const faltan = Aviso.chipCalificacion(a);
     const tuyo = chipTuPuesto(a);
-    // La fila por decidir va en ámbar lavado (toca-fila); «nuevo» va al lado del puesto y la columna Publicado lleva la fecha sola.
-    const tr = h('tr', { class: a.interes === 'por_decidir' ? 'toca-fila' : null, tabindex: '0', dataset: { match: a.match_id, control: 'abrir' } },
+    const tr = h('tr', { class: g === 'decidir' ? 'toca-fila' : null, tabindex: '0', dataset: { match: a.match_id, control: 'abrir' } },
       h('td', { class: 'col-puesto' }, h('div', { class: 'puesto-linea' }, h('span', { class: 'aviso-puesto', text: a.puesto }), Aviso.nuevo(a)),
-        lineaApoyo(a), Aviso.etiquetas(a, bajoMinimo(a), false, fuera(a)), faltan ? h('div', null, faltan) : null,
+        lineaApoyo(a), Aviso.etiquetas(a, bajoMinimo(a), false, armados ? null : fuera(a)), faltan ? h('div', null, faltan) : null,
         tuyo ? h('div', { class: 'linea-tuya' }, tuyo) : null),
       h('td', { class: 'col-empresa', text: a.empresa || '' }),
       h('td', { class: 'col-modalidad' }, a.modalidad ? h('span', { class: 'atributos' }, icono('i-' + a.modalidad, 'icono-16'), T.avisos.modalidadMin[a.modalidad]) : null),
@@ -571,11 +655,12 @@ Terna.pagina('avisos', async (ctx) => {
       h('td', { class: 'tabla-match' + (Aviso.llega(a, umbral) || a.match === null ? '' : ' bajo') },
         h('span', { 'aria-hidden': 'true', text: a.match === null ? '—' : String(a.match) }),
         oculto(a.match === null ? T.avisos.sinMatch : T.avisos.matchAccesible(a.match, Aviso.llega(a, umbral)))),
-      h('td', { class: 'col-paquete' }, h('div', { class: 'celda-paquete' }, Aviso.chipPaquete(a), accionPaquete(a),
-        bajo && !tuyo ? h('span', { class: 'chip-texto', text: T.avisos.bajoUmbral }) : null)),
-      h('td', { class: 'col-postulacion' }, Aviso.chipInteres(a, config), Aviso.chipPostulacion(a)),
-      h('td', { class: 'col-donde' }, Aviso.celdaDonde(a, prefs)),
-      h('td', { class: 'col-interes' }, accionesAviso(a, 'tabla')),
+      armados ? h('td', { class: 'col-docs' }, h('div', { class: 'celda-docs' }, Aviso.filaDocumentos(a, docOpciones), lineaArmado(a))) : null,
+      armados ? h('td', { class: 'col-postulacion' }, h('div', { class: 'celda-paquete' },
+        a.estado_paquete === 'armado' ? Aviso.chipPostulacion(a) : null, Aviso.chipInteres(a, config), linkPostulaciones(a))) : null,
+      armados ? null : h('td', { class: 'col-paquete' }, h('div', { class: 'celda-paquete' }, accionPaquete(a))),
+      armados ? null : h('td', { class: 'col-donde' }, Aviso.celdaDonde(a, prefs)),
+      armados ? null : h('td', { class: 'col-interes' }, accionInteres(a, 'tabla')),
       h('td', { class: 'col-publicado' }, Aviso.fechaSola(a)),
       h('td', null, h('a', { class: 'btn btn-texto btn-chico', href: Terna.urlExterna(a.url), target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(a.fuente) }, icono('i-abrir'))));
     tr.addEventListener('click', (e) => { if (!e.target.closest('button, a, input, label, select')) abrirFicha(a, tr); });
@@ -583,43 +668,84 @@ Terna.pagina('avisos', async (ctx) => {
     return tr;
   }
 
+  /* ---------- Después de escribir: rehacer y dejar el foco donde corresponde ---------- */
   function nodoDe(a) { return lista.querySelector('[data-match="' + a.match_id + '"]'); }
-  // Rehace la tarjeta o la fila de un aviso y devuelve el foco al mismo control.
+  const seVe = (el) => !!el && el.isConnected && el.getClientRects().length > 0;
+  const filasVisibles = () => Array.from(lista.querySelectorAll('[data-match]')).filter(seVe);
+  // El foco en un aviso de la lista: en su control `control` si lo tiene; si no, en lo que abre su ficha.
+  function enfocarAviso(nodo, control) {
+    if (!seVe(nodo)) return false;
+    const abrir = nodo.tagName === 'TR' ? nodo : nodo.querySelector('[data-control="abrir"]');
+    const destino = (control && control !== 'abrir' && nodo.querySelector('[data-control="' + control + '"]')) || abrir || nodo;
+    destino.focus();
+    return true;
+  }
+  // Lo que hay que saber antes de una escritura: si el foco estaba en el aviso (y en qué control), su lugar entre los que se ven, su
+  // grupo y si el foco estaba en la ficha abierta.
+  function focoAntes(a) {
+    const nodo = nodoDe(a);
+    const activo = document.activeElement;
+    const abierta = Terna.hojaAbierta();
+    return { tenia: !!nodo && nodo.contains(activo), control: activo && activo.dataset ? activo.dataset.control || null : null,
+      i: nodo ? filasVisibles().indexOf(nodo) : -1, grupo: grupoDe(a), enHoja: !!abierta && abierta.el.contains(activo) };
+  }
+  // La ficha abierta de ese aviso se rehace en el lugar; si el foco estaba en ella y su control ya no está, pasa al que lo reemplaza
+  // (Pedir ↔ Cancelar pedido, No me interesa ↔ Me interesa) o a la cruz.
+  const ALTERNO = { pedir: 'cancelar-pedido', 'cancelar-pedido': 'pedir', 'interes-no_me_interesa': 'interes-si', 'interes-si': 'interes-no_me_interesa', 'interes-me_interesa': 'interes-no_me_interesa' };
+  function refrescarFicha(a, antes) {
+    const abierta = Terna.hojaAbierta();
+    if (!abierta || abierta.clave !== a.match_id) return;
+    Terna.reemplazarCuerpoHoja(cuerpoFicha(a), accionesFicha(a));
+    if (antes && antes.enHoja && !abierta.el.contains(document.activeElement)) {
+      const buscar = (c) => (c ? abierta.el.querySelector('[data-control="' + c + '"]') : null);
+      const x = buscar(antes.control) || buscar(ALTERNO[antes.control]) || abierta.el.querySelector('.hoja-cerrar');
+      if (x) x.focus();
+    }
+  }
+  // Rehace una fila sola (el motivo de No me interesa cambió): mismo grupo, mismo lugar.
   function refrescar(a) {
     const viejo = nodoDe(a);
     if (viejo) {
-      const enfocado = viejo.contains(document.activeElement) ? (document.activeElement.dataset.control || 'abrir') : null;
+      const control = viejo.contains(document.activeElement) ? (document.activeElement.dataset.control || 'abrir') : null;
       const nuevo = viejo.tagName === 'TR' ? fila(a) : tarjeta(a);
       viejo.replaceWith(nuevo);
-      if (enfocado) {
-        const destino = nuevo.dataset.control === enfocado ? nuevo : nuevo.querySelector('[data-control="' + enfocado + '"]') || nuevo.querySelector('[data-control="abrir"]') || nuevo;
-        destino.focus();
-      }
+      if (control) enfocarAviso(nuevo, control);
       marcarElegida();
     }
-    const abierta = Terna.hojaAbierta();
-    if (abierta && abierta.clave === a.match_id) Terna.reemplazarCuerpoHoja(cuerpoFicha(a), accionesFicha(a));
-    dibujarPorDecidir();
+    refrescarFicha(a);
   }
-  // "No me interesa" saca la tarjeta con 150 ms y lleva el foco a la siguiente (o a la anterior si era la última).
-  async function sacar(a) {
-    const nodo = nodoDe(a);
-    const filas = Array.from(lista.querySelectorAll('[data-match]'));
-    const i = nodo ? filas.indexOf(nodo) : -1;
-    const teniaFoco = nodo && nodo.contains(document.activeElement);
-    if (nodo && nodo.tagName === 'ARTICLE') {
-      nodo.classList.add('saliendo');
+  // Después de una escritura se rehace la página (las pestañas, los grupos y Tus pedidos cuentan otra cosa). Si el aviso sigue en su
+  // grupo, el foco vuelve a su mismo control; si se fue (a otro grupo, a otra pestaña, a Tus pedidos o fuera de los filtros), la
+  // tarjeta se va con un fundido corto y el foco pasa al aviso que quedó en su lugar. Con `alAviso` (un Deshacer: el foco estaba en el
+  // aviso breve, que ya no existe), al aviso.
+  async function rehacer(a, antes, opciones) {
+    const o = opciones || {};
+    const viejo = nodoDe(a);
+    const seFue = grupoDe(a) !== antes.grupo || grupoDe(a) === 'pedidos' || !pasa(a);
+    if (seFue && antes.tenia && viejo && viejo.tagName === 'ARTICLE') {
+      viejo.classList.add('saliendo');
       await new Promise((r) => setTimeout(r, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 150));
     }
     dibujar();
-    const abierta = Terna.hojaAbierta();
-    if (abierta && abierta.clave === a.match_id) Terna.reemplazarCuerpoHoja(cuerpoFicha(a), accionesFicha(a));
-    if (teniaFoco) {
-      const nuevas = Array.from(lista.querySelectorAll('[data-match]'));
-      const destino = nuevas[Math.min(i, nuevas.length - 1)];
-      if (destino) (destino.tagName === 'TR' ? destino : destino.querySelector('[data-control="abrir"]')).focus();
-      else Terna.devolverFoco(null);
+    refrescarFicha(a, antes);
+    if (o.alAviso) {
+      // Con la ficha de ese aviso abierta encima (el aviso breve estaba en ella), el foco se queda en la ficha.
+      const abierta = Terna.hojaAbierta();
+      if (abierta && !abierta.linea && abierta.clave === a.match_id) {
+        const x = abierta.el.querySelector('.hoja-cuerpo .interes input:checked') || abierta.el.querySelector('.hoja-cuerpo .interes input')
+          || abierta.el.querySelector('.hoja-acciones [data-control^="interes"]')
+          || abierta.el.querySelector('.hoja-cerrar');
+        if (x) x.focus();
+        return;
+      }
+      if (!enfocarAviso(nodoDe(a), 'abrir')) Terna.devolverFoco(null);
+      return;
     }
+    if (!antes.tenia) return;
+    const nuevo = nodoDe(a);
+    if (!seFue && enfocarAviso(nuevo, antes.control)) return;
+    const filas = filasVisibles().filter((n) => n !== nuevo);
+    if (!enfocarAviso(filas[Math.min(Math.max(antes.i, 0), filas.length - 1)], 'abrir')) Terna.devolverFoco(null);
   }
 
   /* ---------- Acciones ---------- */
@@ -636,8 +762,7 @@ Terna.pagina('avisos', async (ctx) => {
       if (!r.si) { volverInteres(a, anterior); return; }
       motivo = r.motivo;
     }
-    const estaba = pasa(a);
-    const eraPedido = a.estado_paquete === 'pedido';
+    const antes = focoAntes(a);
     const error = valor === 'no_me_interesa' ? await Aviso.marcarNoInteresa(a, motivo)
       : (await sb.rpc('marcar_interes', { p_match_id: a.match_id, p_interes: valor })).error;
     if (error) { avisarError(error); volverInteres(a, anterior); return; }
@@ -647,27 +772,18 @@ Terna.pagina('avisos', async (ctx) => {
       if (a.estado_paquete === 'pedido') { a.estado_paquete = 'sin_armar'; a.pedido_en = null; }
       if (a.estado_postulacion === 'en_cola' || a.estado_postulacion === 'para_revisar') a.estado_postulacion = 'pendiente';
     }
-    const queda = pasa(a);
-    if (eraPedido) refrescarPedidos();
-    if (estaba && !queda) await sacar(a);
-    else if (!estaba && queda) { dibujar(); }
-    else refrescar(a);
-    if (deshaciendo) {
-      // El foco estaba en el aviso breve, que ya no existe: vuelve al aviso.
-      const n = nodoDe(a);
-      if (n) (n.tagName === 'TR' ? n : n.querySelector('[data-control="abrir"]')).focus();
-    } else {
+    await rehacer(a, antes, { alAviso: deshaciendo });
+    if (!deshaciendo) {
       Terna.avisoBreve(valor === 'no_me_interesa' ? T.avisos.noTeInteresa : T.avisos.teInteresa,
         { icono: valor === 'no_me_interesa' ? 'i-no-interesa' : 'i-tilde', deshacer: () => cambiarInteres(a, anterior, true) });
     }
   }
-  // Si no se confirma o la base no lo guarda, el control de interés vuelve a como estaba sin rehacer la fila: rehacerla se
-  // llevaba el foco (el diálogo lo devuelve a la opción que se tocó, que ya no estaba). En el grupo que tiene el foco, el foco
-  // pasa a la opción marcada.
+  // Si no se confirma o la base no lo guarda, el control de interés vuelve a como estaba sin rehacer la fila (rehacerla se llevaba el
+  // foco). En el grupo que tiene el foco, el foco pasa a la opción marcada.
   function volverInteres(a, anterior) {
     const activo = document.activeElement;
     let foco = null;
-    for (const pre of ['it-', 'ic-', 'if-']) {
+    for (const pre of Object.values(PREFIJO)) {
       document.getElementsByName(pre + a.match_id).forEach((x) => {
         x.checked = x.value === anterior;
         if (x.checked && activo && activo.name === x.name) foco = x;
@@ -675,33 +791,44 @@ Terna.pagina('avisos', async (ctx) => {
     }
     if (foco) foco.focus();
   }
-  // Pedir paquete: primero la confirmación, que dice en qué lugar queda y cuándo se arma (brand.md 0.8 §6.4).
+  // Pedir paquete: primero la confirmación, que dice en qué lugar de tus pedidos queda y cuándo se arma (brand.md 0.8 §6.4). El
+  // aviso pasa a Tus pedidos.
   async function pedir(a) {
     const lugar = pedidosOrdenados().length + 1;
     const corridas = Math.ceil(lugar / cupo);
-    const si = await Aviso.confirmarPedir(a, { lugar, corridas, cupo, prefs });
+    const incompleto = ctx.faltantes.length > 0;
+    const si = await Aviso.confirmarPedir(a, { lugar, corridas, cupo, prefs, incompleto });
     if (!si) return;
+    const antes = focoAntes(a);
     const { error } = await sb.rpc('pedir_paquete', { p_match_id: a.match_id });
     if (error) { avisarError(error); return; }
     a.estado_paquete = 'pedido';
     a.pedido_en = new Date().toISOString();
     a.interes = 'me_interesa';
     a.motivo_no_interesa = null;
-    refrescarPedidos();
-    refrescar(a);
-    Terna.avisoBreve(T.avisos.pedido(lugar, corridas), { icono: 'i-pedido', deshacer: () => cancelar(a, true) });
+    await rehacer(a, antes);
+    Terna.avisoBreve(incompleto ? T.avisos.pedidoIncompleto : T.avisos.pedido(lugar, corridas), { icono: 'i-pedido', deshacer: () => cancelar(a, true) });
   }
-  // Cancelar un pedido (desde los próximos paquetes, la ficha o el Deshacer de Pedir). Con Deshacer vuelve a su lugar.
+  // Cancelar un pedido (desde Tus pedidos, la ficha o el Deshacer de Pedir): vuelve a su grupo de Por armar. Desde Tus pedidos, el
+  // foco pasa al pedido que quedó en su lugar (o al aviso, si no queda ninguno). Con Deshacer vuelve a su lugar en la cola.
   async function cancelar(a, deshaciendo) {
-    const antes = pedidosOrdenados();
-    const i = antes.indexOf(a);
+    const antesPedidos = pedidosOrdenados();
+    const i = antesPedidos.indexOf(a);
+    const desdeProximos = cajaProximos.contains(document.activeElement);
+    const antes = focoAntes(a);
     const { error } = await sb.rpc('cancelar_pedido', { p_match_id: a.match_id });
     if (error) { avisarError(error); return; }
     a.estado_paquete = 'sin_armar';
     a.pedido_en = null;
-    refrescarPedidos();
-    refrescar(a);
-    if (deshaciendo) { const n = nodoDe(a); if (n) (n.tagName === 'TR' ? n : n.querySelector('[data-control="abrir"]')).focus(); return; }
+    await rehacer(a, antes, { alAviso: deshaciendo });
+    if (deshaciendo) return;
+    if (desdeProximos) {
+      const resto = pedidosOrdenados();
+      const otro = resto[Math.min(Math.max(i, 0), resto.length - 1)];
+      const b = otro ? cajaProximos.querySelector('[data-pedido="' + otro.match_id + '"][data-control="cancelar"]') : null;
+      if (b) b.focus();
+      else if (!enfocarAviso(nodoDe(a), 'abrir')) Terna.devolverFoco(null);
+    }
     Terna.avisoBreve(T.avisos.pedidoCancelado, { icono: 'i-deshacer', deshacer: async () => {
       const r = await sb.rpc('pedir_paquete', { p_match_id: a.match_id });
       if (r.error) { avisarError(r.error); return; }
@@ -715,17 +842,20 @@ Terna.pagina('avisos', async (ctx) => {
         nuevo.splice(i, 0, a);
         await ordenar(nuevo);
       }
-      refrescarPedidos();
-      refrescar(a);
+      dibujar();
+      refrescarFicha(a);
+      const abierta = Terna.hojaAbierta();
+      const b = abierta && !abierta.linea && abierta.clave === a.match_id ? abierta.el.querySelector('[data-control="cancelar-pedido"]')
+        : cajaProximos.querySelector('[data-pedido="' + a.match_id + '"][data-control="abrir"]');
+      if (seVe(b)) b.focus(); else Terna.devolverFoco(null);
     } });
   }
 
-  /* ---------- Próximos paquetes (diseno.md 0.21 §7.8; brand.md 0.8 §6.4; datos.md 0.25, 0029) ----------
-     Lo que la persona pidió, en el orden en que el motor lo arma (pipeline.md §4.9 punto 3: por pedido_en), con cuándo se arma
-     cada uno (3 por corrida) y Subir, Bajar y Cancelar pedido. No se muestran con nombre los que Terna elegiría sola: dependen
-     de los avisos nuevos de esa mañana y de la prueba de los formularios, y sería prometer algo que puede no pasar. */
-  // pedido_en llega de la base con microsegundos ("…:00.123456+00:00") y de la web con milisegundos ("…:00.123Z"): se compara
-  // por instante, con los microsegundos que Date.parse no lee.
+  /* ---------- Tus pedidos (#proximos; el «Próximos paquetes» de diseno.md 0.21 §7.8; brand.md 0.8 §6.4; datos.md 0.25, 0029) ----------
+     Lo que la persona pidió, en el orden en que el motor lo arma (pipeline.md §4.9 punto 3: por pedido_en), con cuándo se arma cada uno
+     (3 por corrida) y Subir, Bajar y Cancelar pedido. Encima, el cupo y, si los pedidos llenan la próxima corrida, la consecuencia.
+     Es de Por armar: en Armados no se ve. */
+  // pedido_en llega de la base con microsegundos y de la web con milisegundos: se compara por instante.
   function instante(x) {
     if (!x) return Number.MAX_SAFE_INTEGER;
     const m = /\.(\d+)/.exec(x);
@@ -736,13 +866,8 @@ Terna.pagina('avisos', async (ctx) => {
       .sort((x, y) => (instante(x.pedido_en) - instante(y.pedido_en)) || x.match_id.localeCompare(y.match_id));
   }
   function lugarDe(a) { const i = pedidosOrdenados().indexOf(a); return i >= 0 ? i + 1 : 0; }
-  // Los que Terna puede elegir sola (la misma cuenta que la selección del motor, sin lo que la web no ve: avisos cerrados, la
-  // empresa de la semana y la prueba de los formularios).
-  const candidatosSolos = () => avisos.filter((a) => a.interes === 'me_interesa' && a.tiene_texto && a.match !== null && a.estado_paquete === 'sin_armar'
-    && !a.paquete_id && !fuera(a).length && (Aviso.llega(a, umbral) || esTuPuesto(a))).length;
   // ¿La base tiene 0029? Se pregunta una vez, con un orden vacío (no hace nada), y solo cuando hay dos pedidos o más.
   let conOrdenar = null;
-  // Sin 0029 la función no está: PostgREST dice PGRST202 (404); si su caché todavía la tiene, Postgres dice 42883.
   const faltaFuncion = (error) => !!error && (error.code === 'PGRST202' || error.code === '42883' || error.status === 404
     || /Could not find the function|function .* does not exist/i.test(String(error.message || '')));
   async function comprobarOrdenar() {
@@ -755,8 +880,12 @@ Terna.pagina('avisos', async (ctx) => {
   function dibujarProximos(enfocar) {
     const P = T.avisos.proximos;
     const pedidos = pedidosOrdenados();
+    // Si el foco estaba adentro (por ejemplo, la segunda vuelta de cuando se sabe si hay 0029), vuelve al mismo lugar.
+    const activo = cajaProximos.contains(document.activeElement) ? document.activeElement : null;
+    const titulo = !!activo && activo.classList.contains('grupo-titulo');
+    if (!enfocar && activo && activo.dataset.pedido) enfocar = { id: activo.dataset.pedido, control: activo.dataset.control };
     Terna.vaciar(cajaProximos);
-    cajaProximos.hidden = !pedidos.length;
+    cajaProximos.hidden = !pedidos.length || pestana !== 'por_armar' || !avisos.length;
     if (!pedidos.length) return;
     if (pedidos.length > 1 && conOrdenar === null) comprobarOrdenar().then((si) => { if (si) dibujarProximos(); });
     const ordenable = conOrdenar === true && pedidos.length > 1;
@@ -771,7 +900,6 @@ Terna.pagina('avisos', async (ctx) => {
       return h('li', { class: 'proximo', dataset: { pedido: a.match_id } },
         h('span', { class: 'proximo-lugar num', 'aria-hidden': 'true', text: String(i + 1) }),
         h('div', { class: 'proximo-datos' }, abrir,
-          // La empresa y cuándo se arma, separados por aire (la coma, para el lector de pantalla).
           h('span', { class: 'proximo-detalle' }, a.empresa ? [h('span', { class: 'proximo-empresa', text: a.empresa }), cuando ? oculto(', ') : null] : null,
             h('span', { class: 'proximo-cuando' }, cuando ? icono('i-pedido', 'icono-14') : null, cuando))),
         h('div', { class: 'proximo-acciones' },
@@ -779,32 +907,23 @@ Terna.pagina('avisos', async (ctx) => {
           ordenable ? icBoton('i-abajo', P.bajar(a.puesto), 'bajar', a, i === pedidos.length - 1, () => mover(a, 1)) : null,
           icBoton('i-cerrar', P.cancelar(a.puesto), 'cancelar', a, false, () => cancelar(a))));
     });
-    const libres = cupo - pedidos.length;
-    let pie;
-    if (prefs.armar_paquetes === false) pie = h('p', { class: 'proximos-pie' }, P.armarNo + ' ', h('a', { href: 'preferencias.html#paquetes', text: P.cambiarlo }));
-    else if (libres > 0) pie = h('p', { class: 'proximos-pie', text: P.resto(candidatosSolos()) });
-    else pie = h('p', { class: 'proximos-pie', text: P.lleno(pedidos.length, Math.ceil(pedidos.length / cupo)) });
-    // Un plegable abierto (PLAN-WEB.md §3.2): si la persona lo pliega, se recuerda en este navegador. El anuncio de Subir y Bajar
-    // queda afuera, para que se oiga aunque esté plegado.
-    const plegable = h('details', { class: 'plegable plegable-pozo', open: Terna.leerLocal('avisos.proximosPlegado', false) !== true },
-      h('summary', null,
-        h('h2', { class: 'tarjeta-titulo', id: 'proximos-titulo' }, P.titulo, ' ', h('span', { class: 'cuenta-avisos num', text: String(pedidos.length) })),
-        icono('i-chevron')),
-      h('div', { class: 'plegable-cuerpo' },
-        h('p', { class: 'campo-ayuda', text: P.intro(cupo) }),
-        h('ol', { class: 'proximos-lista', role: 'list' }, items),
-        pie));
-    plegable.addEventListener('toggle', () => Terna.guardarLocal('avisos.proximosPlegado', !plegable.open));
-    cajaProximos.append(plegable, anuncio);
+    // La consecuencia de pedir, arriba de la cola (PLAN-UX §2.4 punto 8): con los pedidos que llenan la próxima corrida, Terna no elige
+    // nada sola. Con «Armar paquetes» en No lo dice el renglón de arriba de Por armar.
+    const lleno = prefs.armar_paquetes !== false && pedidos.length >= cupo
+      ? h('p', { class: 'proximos-aviso', text: P.lleno(pedidos.length, Math.ceil(pedidos.length / cupo)) }) : null;
+    // Con Terna.agregar y no con el append del DOM: `lleno` puede ser null, y el append nativo lo escribe como texto («null»).
+    Terna.agregar(cajaProximos, [Aviso.tituloGrupo({ texto: G.pedidos, n: pedidos.length, id: 'proximos-titulo', ayuda: P.intro(cupo) }), lleno,
+      h('ol', { class: 'proximos-lista', role: 'list' }, items), anuncio]);
     if (enfocar) {
       const b = cajaProximos.querySelector('[data-pedido="' + enfocar.id + '"][data-control="' + enfocar.control + '"]');
       if (b) b.focus();
-    }
+    } else if (titulo) enfocarTituloProximos();
   }
-  // Rehace la tarjeta de los próximos paquetes y las filas de los pedidos (su lugar cambia con cada pedido que entra o sale).
-  function refrescarPedidos(enfocar) {
-    dibujarProximos(enfocar);
-    for (const a of avisos) if (a.estado_paquete === 'pedido' && nodoDe(a)) refrescar(a);
+  function enfocarTituloProximos() {
+    const t = cajaProximos.querySelector('.grupo-titulo');
+    if (!t) return;
+    t.setAttribute('tabindex', '-1');
+    t.focus({ preventScroll: true });
   }
   // Escribe el orden nuevo (0029) y lo refleja acá como la base: cada pedido toma, en el orden nuevo, una de las mismas fechas.
   async function ordenar(nuevo) {
@@ -828,7 +947,9 @@ Terna.pagina('avisos', async (ctx) => {
     nuevo.splice(j, 0, a);
     const control = paso < 0 ? 'subir' : 'bajar';
     const ok = await ordenar(nuevo);
-    refrescarPedidos({ id: a.match_id, control });
+    dibujarProximos({ id: a.match_id, control });
+    const abierta = Terna.hojaAbierta();
+    if (abierta && porId.has(abierta.clave) && porId.get(abierta.clave).estado_paquete === 'pedido') refrescarFicha(porId.get(abierta.clave));
     if (ok) anuncio.textContent = T.avisos.proximos.movido(a.puesto, j + 1, pedidos.length);
   }
   // Si la base dice que los pedidos cambiaron (el motor armó uno, otra pestaña pidió o canceló), se vuelven a leer.
@@ -837,10 +958,17 @@ Terna.pagina('avisos', async (ctx) => {
     if (error || !data) return;
     for (const f of data) { const a = porId.get(f.match_id); if (a) Object.assign(a, f); }
   }
+  // #proximos (el link de Cómo funciona): baja hasta Tus pedidos, con el foco en su título.
+  function irAProximos() {
+    if (cajaProximos.hidden) return;
+    enfocarTituloProximos();
+    cajaProximos.scrollIntoView({ block: 'start' });
+  }
 
   /* ---------- Un filtro (§7.2): hoja en celular, panel debajo de su botón en escritorio ----------
-     Se aplica al tocar, con la lista a la vista detrás; "Listo" (o la cruz, o Esc) cierra y devuelve el foco al botón. Lo abren
-     los botones de la barra y, en la tabla, los encabezados (`desdeEncabezado`: el panel de Match y el de Publicado suman el orden). */
+     Se aplica al tocar, con la lista a la vista detrás; "Listo" (o la cruz, o Esc) cierra y devuelve el foco al botón. Lo abren los
+     botones de la barra y, en la tabla, los encabezados (`desdeEncabezado`: en Por armar, el panel de Match y el de Publicado suman el
+     orden). Las cuentas de cada opción son las de la pestaña elegida. */
   function opcion(tipo, nombre, valor, texto, elegido, iconoId) {
     return h('label', { class: 'chip-opcion chip-opcion-form' },
       h('input', { type: tipo, name: nombre, value: valor, checked: elegido }),
@@ -848,26 +976,28 @@ Terna.pagina('avisos', async (ctx) => {
   }
   const ICONOS = { modalidad: (v) => 'i-' + v, alcance: (v) => 'i-' + v };
   function aplicarFiltro() { guardarFiltros(); dibujar(); }
+  // Lo de la pestaña elegida que dejan ver los demás filtros (sin Tus pedidos, que no se filtra).
+  function baseDe(k) {
+    busquedaHoy = busquedaElegida();
+    return avisos.filter((a) => pestanaDe(a) === pestana && grupoDe(a) !== 'pedidos' && pasa(a, k));
+  }
   // Las opciones de un filtro de valores, con cuántos avisos deja ver cada una junto con los demás filtros.
   function opcionesDe(k, valores, texto, valorDe) {
-    busquedaHoy = busqueda();
-    const base = avisos.filter((a) => pasa(a, k));
+    const base = baseDe(k);
     return valores.map((v) => ({ valor: v, texto: texto(v), n: base.filter((a) => valorDe(a) === v).length }));
   }
   function cuerpoFiltro(k, desdeEncabezado) {
+    const conOrden = desdeEncabezado && pestana === 'por_armar';
     if (k === 'puesto' || k === 'empresa') {
       return Filtros.cuerpoTexto({ valor: filtros[k], alCambiar: (v) => { filtros[k] = v; filtros.puestoExacto = filtros.puestoExacto && k !== 'puesto'; filtros.empresaExacta = filtros.empresaExacta && k !== 'empresa'; aplicarFiltro(); } });
     }
     if (k === 'publicado') {
       const cuerpo = Filtros.cuerpoFecha({ valor: filtros.publicado, alCambiar: (v) => { filtros.publicado = v; aplicarFiltro(); } });
-      if (desdeEncabezado) cuerpo.prepend(Filtros.botonOrden(F.ordenar.nuevos, orden === 'nuevos', () => cambiarOrden('nuevos')));
+      if (conOrden) cuerpo.prepend(Filtros.botonOrden(F.ordenar.nuevos, orden === 'nuevos', () => cambiarOrden('nuevos')));
       return cuerpo;
     }
     if (k === 'prioridad') {
-      // Con cuántos avisos tiene cada una junto con los demás filtros. Un aviso de tus puestos que además es de una empresa que
-      // seguís cuenta en las dos; elegirlas todas es "Todas".
-      busquedaHoy = busqueda();
-      const base = avisos.filter((a) => pasa(a, 'prioridad'));
+      const base = baseDe('prioridad');
       const opciones = PRIORIDADES.map((v) => ({ valor: v, texto: F.prioridad[v], n: base.filter((a) => enPrioridad(a, v)).length }));
       const cuerpo = Filtros.cuerpoValores({ nombre: nombreFiltro(k), opciones, elegidos: filtros.prioridad, todosTexto: F.todosColumna.prioridad,
         alCambiar: (v) => { filtros.prioridad = v; aplicarFiltro(); } });
@@ -878,8 +1008,7 @@ Terna.pagina('avisos', async (ctx) => {
       let opciones;
       if (k === 'ubicacion') {
         // Las que hay en la lista con los demás filtros, y las elegidas aunque ya no haya ninguna; de la más usada a la menos.
-        busquedaHoy = busqueda();
-        const base = avisos.filter((a) => pasa(a, 'ubicacion'));
+        const base = baseDe('ubicacion');
         const valores = Array.from(new Set(base.map(Aviso.lugar).concat(filtros.ubicacion || [])));
         opciones = valores.map((v) => ({ valor: v, texto: v, n: base.filter((a) => Aviso.lugar(a) === v).length }))
           .sort((x, y) => (y.n - x.n) || x.texto.localeCompare(y.texto, 'es'));
@@ -900,8 +1029,6 @@ Terna.pagina('avisos', async (ctx) => {
       if (cambiado(k)) {
         prefsLinea.append(h('button', { class: 'btn btn-texto btn-chico', type: 'button', onclick: () => {
           if (k === 'match') { filtros.matchMin = null; filtros.bajoUmbral = false; filtros.soloBajo = false; } else filtros[k] = null;
-          if (k === 'puesto') filtros.puestoExacto = false;
-          if (k === 'empresa') filtros.empresaExacta = false;
           aplicarFiltro();
           Terna.reemplazarCuerpoHoja(cuerpoFiltro(k, desdeEncabezado));
           const primero = document.querySelector('dialog.hoja[open] .filtro-cuerpo input');
@@ -923,12 +1050,8 @@ Terna.pagina('avisos', async (ctx) => {
       cuerpo.append(h('fieldset', { class: 'campo' }, h('legend', { class: 'oculto-visual', text: F.nombres[k] }), grupo), aviso);
       if (F.sinDato[k]) cuerpo.append(h('p', { class: 'campo-ayuda', text: F.sinDato[k] }));
     } else {
-      // Match: desde diseno.md 0.32, primero qué avisos según el umbral, con tres opciones de una sola elección en lugar de la
-      // casilla (como Desde, Hasta y El día en un filtro de fecha): los que llegan, los que quedan debajo (así se filtra "Bajo tu
-      // umbral") o todos (la casilla de antes); y debajo el mínimo, que se mueve dentro de lo que cada opción deja ver: del umbral
-      // a 100, del piso al último que no llega o del piso a 100. Van arriba porque deciden entre qué números se mueve el mínimo, y
-      // porque así se ven las tres sin bajar en el panel de escritorio, que es corto; ahí van además en el tamaño chico de la tabla
-      // (`.chips-modos`, terna.css), para que entren en un renglón y el filtro entero se vea sin bajar dentro del panel.
+      // Match: primero qué avisos según el umbral (los que llegan, los que quedan debajo o todos) y debajo el mínimo, que se mueve dentro
+      // de lo que cada opción deja ver (diseno.md 0.32 §7.2).
       const idRango = Terna.idUnico('match');
       const limites = () => ({ llegan: [umbral, 100], tambien: [piso, 100], solo: [piso, topeBajo] })[modoUmbral()];
       const rango = h('input', { type: 'range', id: idRango, name: 'match', min: String(limites()[0]), max: String(limites()[1]), step: '1', value: String(minimo()) });
@@ -962,7 +1085,7 @@ Terna.pagina('avisos', async (ctx) => {
         if (ayudaTuyos) ayudaTuyos.hidden = filtros.soloBajo;
         aplicarMatch();
       });
-      if (desdeEncabezado) cuerpo.append(Filtros.botonOrden(F.ordenar.match, orden === 'match', () => cambiarOrden('match')));
+      if (conOrden) cuerpo.append(Filtros.botonOrden(F.ordenar.match, orden === 'match', () => cambiarOrden('match')));
       Terna.agregar(cuerpo, [modos, h('div', { class: 'campo' },
         h('div', { class: 'interruptor-fila' }, h('label', { class: 'campo-etiqueta', for: idRango, text: F.matchMinimo }), valor),
         rango, ayudaTuyos)]);
@@ -971,24 +1094,25 @@ Terna.pagina('avisos', async (ctx) => {
     cuerpo.append(prefsLinea);
     return cuerpo;
   }
-  // Al cerrar, el foco vuelve al botón que abrió el filtro; si era un encabezado, al de la tabla de ahora (se rehízo); si su lugar
-  // ya no se ve (la tabla ocultó o mostró la columna, diseno.md 0.22 §1.34), al otro lugar del filtro o al primer filtro.
-  const visible = (el) => !!el && el.isConnected && el.getClientRects().length > 0;
+  // Al cerrar, el foco vuelve al botón que abrió el filtro; si era un encabezado, al de la tabla de ahora (se rehízo); si su lugar ya
+  // no se ve (la tabla ocultó o mostró la columna, diseno.md 0.22 §1.34), al otro lugar del filtro o al primer filtro.
   function abrirFiltro(k, boton, desdeEncabezado) {
     filtroAbierto = k;
     Filtros.abrir({ clave: k, titulo: nombreFiltro(k), cuerpo: cuerpoFiltro(k, desdeEncabezado), boton,
       destino: () => {
         const th = lista.querySelector('th [data-filtro="' + k + '"]');
-        if (desdeEncabezado) return visible(th) ? th : (visible(botones[k]) ? botones[k] : primerFiltro());
-        return visible(botones[k]) ? botones[k] : (visible(th) ? th : primerFiltro());
+        if (desdeEncabezado) return seVe(th) ? th : (seVe(botones[k]) ? botones[k] : primerFiltro());
+        return seVe(botones[k]) ? botones[k] : (seVe(th) ? th : primerFiltro());
       },
       alCerrar: () => { filtroAbierto = null; } });
   }
 
-  /* ---------- Ficha del aviso (§7.5) ----------
-     Desde B2 (PLAN-WEB.md §2.9 y §3.2) la cabecera es una carpeta: la lengüeta grande, que baja a «Por qué ajusta», y el marbete.
-     El cuerpo empieza con los saltos (Por qué ajusta, Requisitos, Paquete, en el orden en que están) y sigue como siempre. */
-  // La sección adonde baja la lengüeta: «Por qué ajusta» o, si no la hay, los requisitos. La guarda el último cuerpo armado.
+  /* ---------- La ficha del aviso (§7.5), en dos órdenes (PLAN-UX §3.2) ----------
+     La cabecera es una carpeta: la lengüeta grande, que baja a «Por qué ajusta», y el marbete con la postulación (el estado se dice
+     ahí una vez). En Armados, el paquete primero (documentos, notas, salario, idioma, palabras que faltan), después por qué ajusta y al
+     final una sola línea de cómo va la postulación con «Ver en Postulaciones»; al pie, «Abrir aviso» y «No me interesa». En Por
+     armar, por qué ajusta primero, los dos botones de interés solo si te toca decidir, el paquete (con Pedir paquete) y dónde se
+     postula; al pie, «Abrir aviso» y «No me interesa». */
   let fichaPorQue = null;
   function cabeceraFicha(a, idTitulo) {
     return Aviso.cabezaFicha({ a, idTitulo, umbral, alPorQue: fichaPorQue ? () => Aviso.bajarA(fichaPorQue) : null });
@@ -1008,36 +1132,47 @@ Terna.pagina('avisos', async (ctx) => {
     else if (!prefs.armar_paquetes) sec.append(h('p', { text: FI.armarNo }));
     else {
       sec.append(h('p', { text: FI.sinDocs }));
-      if (puedePedir(a)) sec.append(h('div', { class: 'botones' }, botonPedir(a, true)));
+      if (puedePedir(a)) sec.append(h('div', { class: 'botones' }, botonPedir(a, true, true)));
     }
     return sec;
   }
+  // Armados: cómo va la postulación en una línea (la del marbete, sin repetir su chip) y el link a su ficha en Postulaciones.
+  function lineaEstado(a) {
+    const texto = Aviso.lineaEtapa(a, config);
+    const link = enPostulaciones(a) ? h('a', { href: 'postulaciones.html#postulacion-' + a.match_id, text: T.avisos.ficha.verEnPostulaciones }) : null;
+    if (!texto && !link) return null;
+    return h('section', { class: 'ficha-seccion ficha-estado' }, h('h3', { text: T.avisos.ficha.postulacion }), h('p', null, texto ? texto + ' ' : null, link));
+  }
   function cuerpoFicha(a) {
+    const FI = T.avisos.ficha;
+    const enArmados = pestanaDe(a) === 'armados';
     const razones = Aviso.razones(a, false);
     const porQue = (a.razones || []).length ? razones[0] : null;
     const requisitos = razones.find((s) => s.querySelector('.ficha-seccion-cuerpo.requisitos')) || null;
     const paquete = seccionPaquete(a);
     fichaPorQue = porQue || requisitos;
-    const partes = [
-      Aviso.saltos([{ nodo: porQue, texto: T.avisos.ficha.porQue }, { nodo: requisitos, texto: T.avisos.ficha.requisitos },
-        { nodo: paquete, texto: T.avisos.columnas.paquete }]),
-      h('div', { class: 'chips' }, Aviso.chipInteres(a, config), Aviso.chipPaquete(a), Aviso.chipCalificacion(a), chipTuPuesto(a), Aviso.fecha(a)),
-      Aviso.etiquetas(a, bajoMinimo(a), true, fuera(a)),
-    ];
-    if (a.match !== null && a.tiene_texto) partes.push(accionesAviso(a, 'ficha'));
-    if (conMotivo && a.interes === 'no_me_interesa') partes.push(Aviso.lineaMotivo(a, () => refrescar(a)));
-    partes.push(...razones, paquete, Aviso.seccionPostulacion(a, config, prefs));
-    return partes;
+    const chips = h('div', { class: 'chips' }, Aviso.chipInteres(a, config), enArmados ? null : Aviso.chipPaquete(a), Aviso.chipCalificacion(a), chipTuPuesto(a), Aviso.fecha(a));
+    const etiquetas = Aviso.etiquetas(a, bajoMinimo(a), true, enArmados ? null : fuera(a));
+    const motivo = conMotivo && a.interes === 'no_me_interesa' ? Aviso.lineaMotivo(a, () => refrescar(a)) : null;
+    if (enArmados) {
+      return [Aviso.saltos([{ nodo: paquete, texto: T.avisos.columnas.paquete }, { nodo: porQue, texto: FI.porQue }, { nodo: requisitos, texto: FI.requisitos }]),
+        chips, etiquetas, motivo, paquete, ...razones, lineaEstado(a)];
+    }
+    const decidir = grupoDe(a) === 'decidir' ? accionInteres(a, 'ficha') : null;
+    return [Aviso.saltos([{ nodo: porQue, texto: FI.porQue }, { nodo: requisitos, texto: FI.requisitos }, { nodo: paquete, texto: T.avisos.columnas.paquete }]),
+      chips, etiquetas, decidir, motivo, ...razones, paquete, Aviso.seccionPostulacion(a, config, prefs)];
   }
-  // «Abrir aviso en …» es el primario solo cuando hay algo para hacer afuera (PLAN-WEB.md §3.2): con la postulación enviada,
-  // postulada o en cola de Terna, va como secundario. «No me interesa» va acá solo si el cuerpo de la ficha no tiene ya el
-  // control de interés (lo tiene todo aviso con texto y match).
+  // «Abrir aviso en …» es el primario solo cuando hay algo para hacer afuera: con la postulación enviada, postulada o en cola de Terna,
+  // va como secundario. «No me interesa» va al pie, salvo en lo que te toca decidir (los dos botones están en el cuerpo); lo que no te
+  // interesa lleva «Me interesa» para volverlo.
   const POSTULACION_HECHA = ['en_cola', 'enviada', 'postulado'];
   function accionesFicha(a) {
     const afuera = POSTULACION_HECHA.includes(a.estado_postulacion) ? 'btn btn-ancho' : null;
     const b = h('div', { class: 'botones' }, Aviso.abrirAviso(a, afuera, prefs), Aviso.verAviso(a, prefs));
-    if (a.interes === 'me_interesa' && !(a.match !== null && a.tiene_texto)) {
-      b.append(h('button', { class: 'btn btn-texto', type: 'button', onclick: () => cambiarInteres(a, 'no_me_interesa') }, T.avisos.interes.no_me_interesa));
+    if (a.interes === 'no_me_interesa') {
+      b.append(h('button', { class: 'btn btn-texto', type: 'button', dataset: { control: 'interes-si' }, onclick: () => cambiarInteres(a, 'me_interesa') }, T.avisos.interes.me_interesa));
+    } else if (grupoDe(a) !== 'decidir') {
+      b.append(h('button', { class: 'btn btn-texto', type: 'button', dataset: { control: 'interes-no_me_interesa' }, onclick: () => cambiarInteres(a, 'no_me_interesa') }, T.avisos.interes.no_me_interesa));
     }
     return b;
   }
@@ -1049,7 +1184,8 @@ Terna.pagina('avisos', async (ctx) => {
       if (tr) tr.classList.add('elegida');
     }
   }
-  // `seccion`: con 'porque' (la lengüeta de una carpeta o el match de una línea), después de abrir baja hasta «Por qué ajusta».
+  // `seccion`: 'porque' (la lengüeta de una carpeta o el match de una línea) baja hasta «Por qué ajusta»; 'notas' y 'salario' (la fila
+  // de documentos de una carpeta) despliegan ese panel del paquete y bajan hasta él.
   function abrirFicha(a, origen, desdeHash, seccion) {
     // Una sola entrada de historial por ficha: si ya hay una abierta, se reemplaza (así "atrás" o cerrar no reabre la anterior).
     if (!desdeHash && location.hash !== '#aviso-' + a.match_id) {
@@ -1059,25 +1195,65 @@ Terna.pagina('avisos', async (ctx) => {
     const idTitulo = Terna.idUnico('ficha');
     // El cuerpo primero: dice si hay «Por qué ajusta», y con eso la lengüeta de la cabecera es un botón o no.
     const cuerpo = cuerpoFicha(a);
+    // Al cerrar, el foco vuelve a lo que la abrió; si la lista se rehízo mientras estaba abierta, al mismo aviso en la lista nueva.
+    const primero = origen || null;
+    const volver = () => {
+      if (primero && primero.isConnected) return primero;
+      const n = nodoDe(a);
+      return n ? (n.tagName === 'TR' ? n : n.querySelector('[data-control="abrir"]')) : null;
+    };
     Terna.abrirHoja({ cabecera: cabeceraFicha(a, idTitulo), idTitulo, cuerpo, acciones: accionesFicha(a), enLinea: true,
-      origen: origen || nodoDe(a), clave: a.match_id,
+      origen: volver, clave: a.match_id,
       alCerrar: (porUsuario) => { marcarElegida(); if (porUsuario) limpiarHash(); } });
     marcarElegida();
     if (seccion === 'porque' && fichaPorQue) Aviso.bajarA(fichaPorQue);
+    if (seccion === 'notas' || seccion === 'salario') {
+      const abierta = Terna.hojaAbierta();
+      const b = abierta ? abierta.el.querySelector('.fichas-paquete [aria-controls^="' + seccion + '-"]') : null;
+      if (b) {
+        b.click();
+        Aviso.bajarA(document.getElementById(b.getAttribute('aria-controls')));
+      }
+    }
   }
   function limpiarHash() {
     if (!/^#aviso-/.test(location.hash)) return;
     if (history.state && history.state.ficha) history.back();
-    else history.replaceState(null, '', location.pathname + location.search);
+    else history.replaceState(null, '', location.pathname + location.search + '#' + HASH[pestana]);
+  }
+
+  /* ---------- Los links de entrada (PLAN-UX §3.2) ----------
+     nada: Armados (si está vacía y hay cola, Por armar) · ?interes=por_decidir y ?paquete=sin_texto: Por armar, con ese filtro ·
+     ?empresa=, ?puesto=, ?donde=: la pestaña donde hay resultados (si hay en las dos, Por armar) · #aviso-<id>: la pestaña de ese aviso,
+     con su ficha · #armados, #por-armar: esa pestaña · #proximos: Por armar, en Tus pedidos. */
+  function pestanaInicial() {
+    const hash = (location.hash || '').slice(1);
+    const m = /^aviso-([0-9a-f-]{36})$/i.exec(hash);
+    if (m && porId.has(m[1])) return pestanaDe(porId.get(m[1]));
+    if (DE_HASH[hash]) return DE_HASH[hash];
+    if (q.get('interes') === 'por_decidir' || q.get('paquete') === 'sin_texto') return 'por_armar';
+    const r = porPestana();
+    const enCola = r.por_armar.length + r.pedidos.filter((a) => pasa(a)).length;
+    if (q.get('empresa') || q.get('puesto') || DONDES.includes(q.get('donde'))) return enCola || !r.armados.length ? 'por_armar' : 'armados';
+    return !r.armados.length && (r.por_armar.length || r.pedidos.length) ? 'por_armar' : 'armados';
   }
   function sincronizarHash() {
-    const m = /^#aviso-([0-9a-f-]{36})$/i.exec(location.hash);
+    const hash = (location.hash || '').slice(1);
+    const m = /^aviso-([0-9a-f-]{36})$/i.exec(hash);
     const abierta = Terna.hojaAbierta();
     if (m && porId.has(m[1])) {
-      if (!abierta || abierta.clave !== m[1]) abrirFicha(porId.get(m[1]), null, true);
-    } else if (abierta && abierta.clave) {
-      Terna.cerrarHoja(false);
+      const a = porId.get(m[1]);
+      if (pestanaDe(a) !== pestana) { pestana = pestanaDe(a); if (pestana === 'armados') Lista.visitaArmados(); dibujar(); }
+      if (!abierta || abierta.clave !== a.match_id) abrirFicha(a, null, true);
+      return;
     }
+    if (abierta && abierta.clave) Terna.cerrarHoja(false);
+    if (DE_HASH[hash] && DE_HASH[hash] !== pestana) {
+      pestana = DE_HASH[hash];
+      if (pestana === 'armados') Lista.visitaArmados();
+      dibujar();
+    }
+    if (hash === 'proximos') irAProximos();
   }
   window.addEventListener('popstate', sincronizarHash);
   document.addEventListener('terna:cambio-diseno', () => dibujarLista());
@@ -1086,31 +1262,22 @@ Terna.pagina('avisos', async (ctx) => {
     if (abierta && abierta.clave && porId.has(abierta.clave)) { Terna.cerrarHoja(false); abrirFicha(porId.get(abierta.clave), null, true); }
   });
 
-  // Debajo de la lista, qué es esta lista y dónde está todo lo demás (busqueda.md 0.2 §4.6).
-  const contenido = document.getElementById('contenido');
+  // Al final de Por armar, adónde ir a buscar otro (busqueda.md 0.2 §4.6; PLAN-UX §3.2 punto 6).
   if (contenido && T.busqueda) {
-    contenido.append(h('p', { class: 'avisos-busqueda' }, T.busqueda.enAvisos + ' ', h('a', { href: 'busqueda.html', text: T.comun.pestanas.busqueda }), '.'));
+    cierre.append(T.busqueda.enAvisos + ' ', h('a', { href: 'busqueda.html', text: T.comun.pestanas.busqueda }), '.');
+    contenido.append(cierre);
   }
-  // Y arriba, al lado del título, la puerta a Búsqueda: en el celular no está en el muelle (PLAN-WEB.md §3.2).
+  // Arriba, al lado del título, la puerta a Empleos.
   if (irBusqueda && T.busqueda) {
     Terna.agregar(irBusqueda, [icono('i-buscar', 'icono-16'), T.busqueda.enInicioLink]);
     irBusqueda.hidden = false;
   }
-  // Próximos paquetes, abierto (el banco opera sus botones): en escritorio, arriba a la derecha de las vistas; en el celular, al
-  // final de la página, después de la lista (como en B2: es una tarea de fondo, y arriba dejaba el primer aviso pasada la primera
-  // pantalla). Se mueve el elemento, no se reordena con CSS: así el orden del foco es el de la pantalla.
-  const arribaProximos = cajaProximos.parentElement;
-  function ubicarProximos() {
-    if (Terna.anchoEscritorio.matches) { if (cajaProximos.parentElement !== arribaProximos) arribaProximos.append(cajaProximos); }
-    else if (contenido && contenido.lastElementChild !== cajaProximos) contenido.append(cajaProximos);
-  }
-  ubicarProximos();
-  Terna.anchoEscritorio.addEventListener('change', ubicarProximos);
 
+  pestana = pestanaInicial();
+  if (pestana === 'armados') Lista.visitaArmados();
   dibujarHerramientas();
-  armarVistas();
+  armarPestanas();
   armarBarra();
-  dibujarProximos();
   dibujar();
   sincronizarHash();
 });

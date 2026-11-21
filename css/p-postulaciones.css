@@ -1,29 +1,41 @@
-/* Hallmark · shape: app screen · genre: editorial · theme: custom (Sello) · page sheet: Postulaciones, over css/terna.css (opciones-v3/PLAN-WEB.md, paquete P3) */
+/* Hallmark · shape: app screen · genre: editorial · theme: custom (Sello) · page sheet: Postulaciones, over css/terna.css (opciones-v3/PLAN-UX.md, paquete P4) */
 /* Terna · css/p-postulaciones.css · Postulaciones
    Las reglas propias de postulaciones.html; se carga después de css/terna.css (las fichas, la cáscara y las piezas comunes: la
-   carpeta, el marbete, la tabla, la ficha). Paquete P3 de opciones-v3/PLAN-WEB.md §3.3; referencia, opciones-v3/b2/postulaciones.html.
-   Solo fichas nuevas. Celular primero; la tabla desde 48rem, y se adapta al ancho de su caja (@container tabla), no al de la ventana. */
+   carpeta, el marbete, la tabla, la ficha, las pestañas de dos renglones y el título de grupo de §11b). Desde PLAN-UX §3.4 (paquete
+   P4): tres pestañas, los dos grupos de Postula Terna, el pie con botones de las tarjetas de A mano y de las para revisar, «Tu
+   umbral» con su «?», y la ficha más corta. Solo fichas existentes. Celular primero; la tabla desde 48rem, y se adapta al ancho de su
+   caja (@container tabla), no al de la ventana. */
 
-/* ---------- Arriba de la lista: las dos pestañas, la línea de la vista y los filtros ---------- */
+/* ---------- Arriba de la lista: los filtros y la línea de la pestaña ---------- */
 .post-principal { display: flex; flex-direction: column; gap: var(--space-sm); min-width: 0; }
-/* Por postular lleva la clase te-toca cuando algo te toca a vos, pero su número es el total de la pestaña (en cola incluidas): en
-   la pastilla ámbar del muelle diría otra cifra que la del muelle, que cuenta solo lo que te toca. Va en tinta, como el de
-   Postuladas; lo que te toca lo dicen el muelle, el carril y el renglón de la pestaña. */
-/* Una línea por pestaña, en el mismo lugar: en Postuladas, para qué sirve volver; en Por postular, «Tu umbral» con su nota. */
+/* Una línea por pestaña, en el mismo lugar: en Postuladas, para qué sirve volver; en A mano, «Tu umbral» con su «?» y su nota. */
 .linea-vista { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-md); min-height: var(--control-s); }
 .linea-vista > [hidden] { display: none; }
-/* Sin nada que decir (Postuladas vacía), la línea no ocupa lugar. */
+/* Sin nada que decir (Postula Terna, o una pestaña vacía), la línea no ocupa lugar. */
 .linea-vista:not(:has(> :not([hidden]))) { display: none; }
 .etapa-nota { max-width: 70ch; color: var(--color-muted); font-size: var(--text-sm); line-height: 1.45; }
-.tu-umbral-caja { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-sm); }
+.tu-umbral-caja { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2xs) var(--space-xs); min-width: 0; }
+/* El «?»: un botón de 44 px, en tinta suave; abierto, en tinta, con su explicación en el renglón de abajo. */
+.tu-umbral-pregunta { width: 44px; min-height: 44px; margin-left: calc(-1 * var(--space-2xs)); padding: 0; color: var(--color-muted); text-decoration: none; }
+.tu-umbral-pregunta:hover, .tu-umbral-pregunta[aria-expanded="true"] { color: var(--color-ink); }
+.tu-umbral-pregunta .icono { width: 20px; height: 20px; }
+.tu-umbral-ayuda { max-width: 60ch; color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.45; }
+.tu-umbral-ayuda[hidden] { display: none; }
 .tu-umbral-nota { color: var(--color-muted); font-size: var(--text-sm); line-height: 1.4; }
 .tu-umbral-nota:empty { display: none; }
+/* En el celular los filtros son un solo botón (Filtros.botonUnico): «Tu umbral» va a su lado si entra; su explicación y la nota de
+   Postuladas, cada una en su renglón. Desde 48rem la barra va entera y «Tu umbral» queda debajo, entre los filtros y la tabla. */
+@media (max-width: 47.98rem) {
+  .post-principal { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
+  .post-principal > .filtros { flex: none; }
+  .post-principal > :is(.linea-vista, .tu-umbral-ayuda, .con-cajon) { flex: 1 1 100%; min-width: 0; }
+  .post-principal > .linea-vista:has(> .tu-umbral-caja:not([hidden])) { flex: 1 1 9rem; }
+}
 
 /* ---------- La lista del celular: una carpeta por postulación, en grupos ---------- */
 #lista section.grupo { display: flex; flex-direction: column; gap: var(--space-sm); }
-/* El título del grupo es un texto corrido («3 te tocan a vos»), con la cifra en tinta: sin el aire entre piezas del flex común. */
-#lista .grupo-titulo { display: block; }
 #lista section.grupo + section.grupo { margin-top: var(--space-xl); }
+#lista .grupo-cabeza { padding-top: 0; }
 /* La fila es un solo botón: la carpeta entera abre la ficha. La lengüeta va como texto, no como otro botón. */
 button.fila-postulacion {
   width: 100%; padding: 0; border: 0; border-radius: var(--radius-card); background: none; color: var(--color-ink);
@@ -44,10 +56,23 @@ button.fila-postulacion {
   .fila-postulacion:hover .puesto-texto { text-decoration-color: var(--color-accent); }
   .fila-postulacion:hover .puesto-flecha { color: var(--color-accent); }
 }
+/* La tarjeta con botones (A mano y para revisar): la carpeta sigue en un pie del mismo gris, con su regla fina, donde van «Abrir aviso»
+   y «Marcar postulado», o «Revisar». El botón de la carpeta pierde las esquinas de abajo y no baja al tocarlo: el pie no se mueve. */
+.tarjeta-postulacion { display: flex; flex-direction: column; min-width: 0; }
+.tarjeta-postulacion > .fila-postulacion { border-radius: var(--radius-card) var(--radius-card) 0 0; }
+.tarjeta-postulacion > .fila-postulacion .carpeta-cuerpo { border-bottom-right-radius: 0; border-bottom-left-radius: 0; }
+.tarjeta-postulacion > .fila-postulacion:active { transform: none; }
+.tarjeta-pie { padding-top: 0; border-radius: 0 0 var(--radius-card) var(--radius-card); }
+.tarjeta-pie > .carpeta-acciones { margin-top: 0; }
+.tarjeta-pie .btn .icono { flex: none; }
 /* Sin movimiento: la carpeta no baja al tocarla (las duraciones ya van a cero desde css/terna.css). */
 @media (prefers-reduced-motion: reduce) {
   .fila-postulacion:active { transform: none; }
 }
+/* El renglón del final de Postula Terna: lo próximo que Terna va a armar y postular, con el link a Paquetes. */
+.proximos-terna { max-width: 70ch; margin-top: var(--space-lg); padding-top: var(--space-sm); border-top: var(--rule-hair) solid var(--color-rule); color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.45; }
+.vacio .proximos-terna { margin-top: 0; padding-top: 0; border-top: 0; }
+.tabla-vacia .vacio { border-top: 0; padding-top: 0; }
 
 /* ---------- La tabla (escritorio) ---------- */
 /* Se adapta a su propio ancho (diseno.md 0.8 §7.6 y §8.6): con el carril o con el cajón abierto, lo que no entra pasa a la línea de
@@ -59,9 +84,17 @@ button.fila-postulacion {
 .tabla-postulaciones .atributos { display: block; margin-top: var(--space-3xs); }
 /* Con las ocho columnas, el puesto se lleva un cuarto: sin eso la etapa y el veredicto lo dejaban en tres o cuatro renglones. */
 .tabla-postulaciones .col-puesto { width: 24%; }
-/* El título de un grupo ocupa toda la fila: que parta si hace falta, así no le pide ancho a la primera columna. */
+/* El título de un grupo (Para revisar, En cola) ocupa toda la fila, con su ayuda debajo: que parta si hace falta, así no le pide
+   ancho a la primera columna. */
 .tabla-postulaciones .grupo th { white-space: normal; }
 .tabla-postulaciones .grupo th .num { color: var(--color-ink); }
+.tabla-postulaciones .grupo .grupo-cabeza { padding-top: 0; }
+.tabla-postulaciones .grupo .grupo-titulo { font-size: var(--text-sm); }
+.tabla-postulaciones .grupo .grupo-ayuda { font-weight: var(--weight-body); }
+/* Debajo de la etapa, lo que se hace desde la fila: Revisar, o Marcar postulado en A mano. */
+.etapa-acciones { margin-top: var(--space-xs); }
+.boton-fila { gap: var(--space-2xs); text-align: left; }
+.boton-fila .icono { flex: none; width: 16px; height: 16px; }
 .tabla .sin-corte { white-space: nowrap; }
 .etapa-chip { margin-bottom: var(--space-2xs); }
 .linea-sugerencia { margin-top: var(--space-2xs); }
@@ -102,12 +135,12 @@ button.fila-postulacion {
 .captura { overflow: hidden; border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-control); background: var(--color-paper); }
 .captura img { width: 100%; max-height: 240px; object-fit: cover; object-position: top; }
 /* El pie de la ficha en el celular (revisión del 20/11, P1-3): el primario a todo el ancho y los secundarios de a dos por renglón,
-   en 14 px para que entren; «No me interesa», link, al costado o debajo. Los botones son los de siempre, todos a la vista. */
+   en 14 px para que entren; «No me interesa», chico, al costado o debajo. Los botones son los de siempre, todos a la vista. */
 .hoja:has(.ficha-carpeta) .hoja-acciones > .botones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xs); }
 .hoja:has(.ficha-carpeta) .hoja-acciones > .botones > :is(.btn-primario, .btn-ancho) { grid-column: 1 / -1; }
-.hoja:has(.ficha-carpeta) .hoja-acciones > .botones > .btn:not(.btn-primario, .btn-texto) { padding-inline: var(--space-sm); font-size: var(--text-sm); }
-.hoja:has(.ficha-carpeta) .hoja-acciones > .botones > .btn-texto { justify-self: start; }
+.hoja:has(.ficha-carpeta) .hoja-acciones > .botones > .btn:not(.btn-primario, .btn-texto, .interes-chico) { padding-inline: var(--space-sm); font-size: var(--text-sm); }
+.hoja:has(.ficha-carpeta) .hoja-acciones > .botones > .interes-chico { justify-self: start; align-self: center; }
 @media (min-width: 48rem) {
   .hoja:has(.ficha-carpeta) .hoja-acciones > .botones { display: flex; }
-  .hoja:has(.ficha-carpeta) .hoja-acciones > .botones > .btn:not(.btn-primario, .btn-texto) { padding-inline: var(--space-md); font-size: var(--text-md); }
+  .hoja:has(.ficha-carpeta) .hoja-acciones > .botones > .btn:not(.btn-primario, .btn-texto, .interes-chico) { padding-inline: var(--space-md); font-size: var(--text-md); }
 }

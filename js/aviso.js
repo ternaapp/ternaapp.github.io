@@ -3,7 +3,9 @@
    §10.12 y §10.13): chips, atributos, match, etiquetas, control de interés, paquete con sus cuatro fichas y sus dos
    desplegables (notas y "Ver por qué"), recorrido de cuatro tramos y la línea de cada etapa.
    Desde el rediseño B2 «Sello» (opciones-v3/PLAN-WEB.md §2.5 a §2.9), también la carpeta: la lengüeta con el match, el marbete
-   con el estado, «nuevo», la fecha sola, la cabecera de la ficha y sus saltos. Las funciones de antes siguen, con la misma firma. */
+   con el estado, «nuevo», la fecha sola, la cabecera de la ficha y sus saltos. Las funciones de antes siguen, con la misma firma.
+   Desde PLAN-UX §8, P0.4 (21/11/2026), también las pestañas de dos renglones, el título de grupo con su cuenta, el interés en sus
+   dos formas y la fila de documentos de una carpeta (al final del archivo). */
 'use strict';
 
 window.Aviso = (function () {
@@ -350,16 +352,6 @@ window.Aviso = (function () {
     const tramos = [0, 1, 2].map((i) => (lleno(p[i]) && lleno(p[i + 1]) ? ({ 'punto-tinta': 'tramo-tinta', 'punto-accion': 'tramo-accion', 'punto-azul': 'tramo-azul' })[p[i]] || '' : ''));
     return { p, tramos };
   }
-  // Desde el rediseño B2 (PLAN-WEB.md §2.9): cuatro tramos. Los pasos llenos de `puntos` son «hecho»; el primero que no lo está, «ahora».
-  const LLENO = new Set(['punto-tinta', 'punto-accion', 'punto-azul']);
-  function recorridoGrande(a) {
-    const { p } = puntos(a);
-    const etiquetas = T.postulaciones.recorrido;
-    const ahora = p.findIndex((c) => !LLENO.has(c));
-    return h('div', { class: 'recorrido-grande', 'aria-hidden': 'true' }, p.map((c, i) =>
-      h('div', { class: 'recorrido-paso' + (LLENO.has(c) ? ' hecho' : (i === ahora ? ' ahora' : '')) }, h('small', { text: etiquetas[i] }))));
-  }
-
   /* ---------- Etapa y su línea (brand.md §6.5) ---------- */
   function traba(a, config) {
     const M = T.postulaciones.trabas;
@@ -659,12 +651,13 @@ window.Aviso = (function () {
   // Pedir paquete: en qué lugar de los próximos paquetes queda y cuándo se arma; si después Terna postula, también. true o false.
   // `extra`: renglones propios de quien lo pide (Búsqueda dice que el aviso todavía no tiene match y que pasa a tus avisos;
   // busqueda.md 0.1 §5).
-  function confirmarPedir(a, { lugar, corridas, cupo, prefs, extra }) {
+  // `incompleto`: el perfil no está completo y Terna no corre; el primer renglón no promete una corrida (FEEDBACK-UX P2-3 c).
+  function confirmarPedir(a, { lugar, corridas, cupo, prefs, extra, incompleto }) {
     const C = T.avisos.confirmarPedir;
     const sola = !prefs || prefs.postular_sola !== false;
     const postula = sola && postulable(a) ? (prefs && prefs.revisar_antes_de_enviar ? C.revisa : C.postula) : null;
     return Terna.confirmar({ titulo: C.titulo, si: C.si, clase: 'dialogo-confirmar',
-      cuerpo: [lineaAviso(a), h('p', { text: C.lugar(lugar, corridas, cupo) }), ...(extra || []).map((x) => h('p', { text: x })),
+      cuerpo: [lineaAviso(a), h('p', { text: incompleto ? C.lugarIncompleto(lugar) : C.lugar(lugar, corridas, cupo) }), ...(extra || []).map((x) => h('p', { text: x })),
         h('p', { class: 'suave', text: C.regla(cupo) }), postula ? h('p', { text: postula }) : null] });
   }
 
@@ -847,14 +840,124 @@ window.Aviso = (function () {
     return h('div', { class: 'separadores-lista', role: 'group', 'aria-label': T.comun.navegacion }, botones);
   }
 
+  /* ---------- Las piezas comunes de PLAN-UX §8, P0.4 (21/11/2026) ----------
+     Para Inicio (P1), Paquetes (P2), Empleos (P3) y Postulaciones (P4): las pestañas de dos renglones, el título de un grupo con su
+     cuenta, el control de interés en sus dos formas y la fila de documentos de una carpeta. Sus estilos, en css/terna.css §11b. */
+
+  // pestanas({ nombre, opciones, elegida, alCambiar }) → { nodo, elegir(valor), poner(valor, datos), radios }. Las pestañas de dos
+  // renglones (el nombre arriba, el número abajo) para dos o tres opciones: un radiogroup de label.vista[data-vista] con su radio,
+  // .vista-titulo y .vista-n, como las vistas de antes (el banco las lee). `nombre`: el del grupo, para el lector de pantalla.
+  // `opciones`: [{ valor, texto, n, toca, punto, puntoTexto }]; `n`, el número (null: sin número); `toca`, el número en la pastilla
+  // ámbar (lo que te toca); `punto`, un número ámbar chico en la esquina (por ejemplo, los «por decidir» dentro de Por armar) y
+  // `puntoTexto`, lo que dice para el lector de pantalla (T.comun.porDecidirCuenta(n)). alCambiar(valor) corre al elegir otra; las
+  // flechas del teclado van de una a otra, como en todo grupo de radios. `poner` cambia en el lugar lo de una opción (n, toca, punto,
+  // puntoTexto), así el foco no se pierde.
+  function pestanas({ nombre, opciones, elegida, alCambiar }) {
+    const nombreRadios = Terna.idUnico('vista');
+    const grupo = h('div', { class: 'vistas vistas-pestanas' + (opciones.length === 3 ? ' vistas-3' : ''), role: 'radiogroup', 'aria-label': nombre });
+    const refs = {};
+    for (const o of opciones) {
+      const input = h('input', { type: 'radio', name: nombreRadios, value: o.valor, checked: o.valor === elegida });
+      input.addEventListener('change', () => { if (input.checked && alCambiar) alCambiar(o.valor); });
+      const numero = h('b', { class: 'num vista-n' });
+      const punto = h('span', { class: 'vista-punto', 'aria-hidden': 'true', hidden: true }, h('span', { class: 'cuenta-toca' }));
+      const puntoTexto = h('span', { class: 'oculto-visual' });
+      refs[o.valor] = { input, numero, punto, puntoTexto };
+      grupo.append(h('label', { class: 'vista', dataset: { vista: o.valor } }, input,
+        h('span', { class: 'vista-cara' }, h('span', { class: 'vista-titulo' }, h('span', { class: 'vista-nombre', text: o.texto }), ' ', numero), punto, puntoTexto)));
+      poner(o.valor, o);
+    }
+    function poner(valor, datos) {
+      const r = refs[valor];
+      if (!r) return;
+      const d = datos || {};
+      if (d.n !== undefined) {
+        r.numero.textContent = d.n === null ? '' : Terna.numero(d.n);
+        r.numero.hidden = d.n === null;
+        // El punto va a la derecha del número: la mitad de su ancho, por la cantidad de cifras (por CSSOM, que la CSP permite).
+        r.punto.style.setProperty('--medio-n', Math.max(14, (r.numero.textContent.length * 12 + 8) / 2) + 'px');
+      }
+      if (d.toca !== undefined) r.numero.classList.toggle('toca', !!d.toca);
+      if (d.punto !== undefined) {
+        const p = Number(d.punto) || 0;
+        r.punto.hidden = !p;
+        r.punto.firstChild.textContent = p ? Terna.numero(p) : '';
+        if (!p) r.puntoTexto.textContent = '';
+      }
+      if (d.puntoTexto !== undefined) r.puntoTexto.textContent = r.punto.hidden ? '' : (d.puntoTexto || '');
+    }
+    function elegir(valor) { for (const [v, r] of Object.entries(refs)) r.input.checked = v === valor; }
+    return { nodo: grupo, elegir, poner, radios: Object.fromEntries(Object.entries(refs).map(([v, r]) => [v, r.input])) };
+  }
+
+  // tituloGrupo({ texto, n, tono, ayuda, nivel, id }) → div.grupo-cabeza. El título de un grupo de una lista con su cuenta: «Hoy · 3»,
+  // «Te toca decidir · 2» (`n` null o undefined: sin número). `tono`: 'toca' (ámbar, con su ícono), 'error' (rojo, con el triángulo),
+  // 'espera' (el reloj) o nada. `ayuda`: un renglón debajo. `nivel`: la etiqueta del título ('h2' si no se dice). `id`: el del
+  // título, para un aria-labelledby (si no, uno nuevo; queda en .titulo.id).
+  const ICONO_GRUPO = { toca: 'i-por-decidir', error: 'i-alerta', espera: 'i-pedido' };
+  function tituloGrupo({ texto, n, tono, ayuda, nivel, id }) {
+    const conNumero = n !== null && n !== undefined;
+    // El nombre accesible, entero: el h2 es flex y, sin esto, el lector lee «Después sigue Terna : 3» (FEEDBACK-UX P3-1).
+    const titulo = h(nivel || 'h2', { class: 'grupo-titulo' + (tono ? ' grupo-' + tono : ''), id: id || Terna.idUnico('grupo'), 'aria-label': conNumero ? texto + ': ' + Terna.numero(n) : null },
+      ICONO_GRUPO[tono] ? icono(ICONO_GRUPO[tono]) : null, h('span', { text: texto }),
+      conNumero ? [h('span', { class: 'grupo-punto', 'aria-hidden': 'true', text: '·' }), oculto(': '), h('span', { class: 'num', text: Terna.numero(n) })] : null);
+    return h('div', { class: 'grupo-cabeza' }, titulo, ayuda ? h('p', { class: 'grupo-ayuda', text: ayuda }) : null);
+  }
+
+  // interes(a, { forma, nombre, alCambiar }) → el control de interés en sus dos formas (PLAN-UX §2.3). forma 'dos' (la de siempre):
+  // Me interesa y No me interesa, como radios (controlInteres; `nombre`, el del grupo de radios). forma 'chico': solo «No me
+  // interesa», un botón chico para cada fila de Por armar, con el nombre del puesto para el lector de pantalla. Las dos llevan
+  // data-control="interes-…" (el banco lo busca). alCambiar(valor, nodo) corre con el valor elegido ('me_interesa' o
+  // 'no_me_interesa'); la confirmación (confirmarNoInteresa) y la escritura (marcarNoInteresa) las hace la página.
+  function interes(a, { forma, nombre, alCambiar }) {
+    if (forma !== 'chico') return controlInteres(a, nombre || Terna.idUnico('interes'), (valor) => alCambiar(valor, null));
+    const b = h('button', { class: 'btn btn-fila interes-chico', type: 'button', 'aria-label': T.avisos.noMeInteresaAccesible(a.puesto),
+      dataset: { control: 'interes-no_me_interesa' } }, icono('i-no-interesa'), T.avisos.interes.no_me_interesa);
+    b.addEventListener('click', () => alCambiar('no_me_interesa', b));
+    return b;
+  }
+
+  // filaDocumentos(a, { alNotas, alSalario }) → div.docs-fila o null (sin paquete). La fila de documentos de una carpeta de Armados
+  // (PLAN-UX §3.2): CV y Carta son links firmados que se firman al tocarlos (Terna.linkFirmado con alTocar: una lista entera no pide
+  // decenas de firmas al dibujarse) y se descargan con el nombre de cv-ats.md §3.12; Notas es un botón, solo si hay notas y la
+  // página pasa alNotas(a, boton) (por ejemplo, abrir la ficha en el paquete); el salario sugerido es un dato, o un botón con
+  // alSalario(a, boton). Cada pieza nombra el puesto para el lector de pantalla: en una lista hay muchos «CV».
+  function filaDocumentos(a, opciones) {
+    if (!a || (!a.cv_path && !a.carta_path)) return null;
+    const o = opciones || {};
+    const D = T.avisos.docs;
+    const F = T.avisos.ficha;
+    const idioma = a.paquete_idioma === 'en' ? 'en' : 'es';
+    const doc = (ruta, tipo, iconoId, texto, nombre) => (ruta
+      ? Terna.linkFirmado(ruta, Terna.nombreDescarga(tipo, idioma),
+        h('a', { class: 'btn btn-fila', 'aria-label': nombre, dataset: { doc: tipo } }, icono(iconoId), texto), { alTocar: true })
+      : null);
+    const piezas = [doc(a.cv_path, 'cv', 'i-cv', F.cv, D.cv(a.puesto)), doc(a.carta_path, 'carta', 'i-sobre', F.carta, D.carta(a.puesto))];
+    if (a.notas && o.alNotas) {
+      const b = h('button', { class: 'btn btn-fila', type: 'button', 'aria-label': D.notas(a.puesto), dataset: { doc: 'notas' } }, icono('i-notas'), F.notas);
+      b.addEventListener('click', () => o.alNotas(a, b));
+      piezas.push(b);
+    }
+    if (a.salario_monto !== null && a.salario_monto !== undefined) {
+      const cara = [icono('i-salario'), h('span', { 'aria-hidden': 'true', text: F.salarioCorto(Terna.numero(Number(a.salario_monto)), a.salario_moneda) }), oculto(textoSalario(a))];
+      if (o.alSalario) {
+        const b = h('button', { class: 'btn btn-fila', type: 'button', dataset: { doc: 'salario' } }, cara);
+        b.addEventListener('click', () => o.alSalario(a, b));
+        piezas.push(b);
+      } else piezas.push(h('span', { class: 'docs-salario', dataset: { doc: 'salario' } }, cara));
+    }
+    return h('div', { class: 'docs-fila', role: 'group', 'aria-label': D.grupo(a.puesto) }, piezas);
+  }
+
   return {
+    pestanas, tituloGrupo, interes, filaDocumentos,
     lengueta, estadoDe, marbete, nuevo, fechaSola, cabezaFicha, saltos, bajarA,
     estadoPaquete, llega, chip, chipPaquete, chipPostulacion, chipInteres, chipFaltan, fecha, etiquetas,
     evaluacion, chipCalificacion, REQUISITOS, categoriaRequisitos, pedirMotivo, lineaMotivo, MOTIVOS, leerConEvaluacion,
     MODALIDADES, ALCANCES, NIVELES, JORNADAS, TODOS_BUSQUEDA, busquedaDe, pasaBusqueda, motivosFuera,
     criterio, tuPuesto, tuEmpresa, sugerida,
     lugar, atributos, bloqueMatch, controlInteres, fichasPaquete, parsearNotas, textoSalario,
-    recorridoGrande, traba, lineaEtapa, lineaCorta, topeIntentos, puedeVolverAProbar, seccionPostulacion, razones, abrirAviso, verAviso,
+    traba, lineaEtapa, lineaCorta, topeIntentos, puedeVolverAProbar, seccionPostulacion, razones, abrirAviso, verAviso,
     ESTILO_POSTULACION, postulable, confirmarPedir, confirmarNoInteresa, marcarNoInteresa,
     DONDES, donde, textoDonde, explicacionDonde, celdaDonde, etiquetaDonde, lineaDonde,
   };

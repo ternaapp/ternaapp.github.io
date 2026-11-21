@@ -13,23 +13,30 @@ window.Terna = (function () {
     zona: 'America/Argentina/Buenos_Aires',
     bucket: 'documentos',
   };
+  // Desde PLAN-UX §2.1 (21/11/2026) busqueda.html es «Empleos» y avisos.html es «Paquetes»: los archivos y las claves no cambian,
+  // cambian los nombres (T.comun.pestanas). Cómo funciona es la página 13 (como-funciona.html; su nombre es T.comun.pestanas.comoFunciona).
   const PAGINAS = {
     inicio: 'index.html', busqueda: 'busqueda.html', avisos: 'avisos.html', postulaciones: 'postulaciones.html', perfil: 'perfil.html',
-    preferencias: 'preferencias.html', invitaciones: 'invitaciones.html', alertas: 'alertas.html',
+    preferencias: 'preferencias.html', invitaciones: 'invitaciones.html', alertas: 'alertas.html', como: 'como-funciona.html',
   };
   // Desde operacion.md 0.2 (20/11/2026) no hay pestaña ni página de Admin: quien administra Terna es una persona más en esta web
   // y lo de admin vive en ops.html, con su sesión y el segundo paso (0054).
   // Páginas sin pestaña propia: marcan la de la sección a la que pertenecen (las guías de alertas son de Preferencias).
   const PESTANA_DE = { alertas: 'preferencias' };
   const ICONOS_PESTANAS = {
-    inicio: 'i-inicio', busqueda: 'i-buscar', avisos: 'i-avisos', postulaciones: 'i-postulaciones', perfil: 'i-perfil',
-    preferencias: 'i-preferencias', invitaciones: 'i-sobre',
+    inicio: 'i-inicio', busqueda: 'i-buscar', avisos: 'i-paquete', postulaciones: 'i-postulaciones', perfil: 'i-perfil',
+    preferencias: 'i-preferencias', invitaciones: 'i-sobre', como: 'i-preguntar',
   };
-  // El muelle del celular (PLAN-WEB.md §2.1): tres destinos y Cuenta. Búsqueda se entra desde Avisos y desde Inicio; lo de la
-  // cuenta, desde la hoja de Cuenta.
-  const MUELLE = ['inicio', 'avisos', 'postulaciones'];
-  const DE_CUENTA = new Set(['perfil', 'preferencias', 'invitaciones', 'alertas']);
+  // La clave del texto de una pestaña, cuando no es la de la página.
+  const TEXTO_PESTANA = { como: 'comoFunciona' };
+  function nombrePestana(clave) { return T.comun.pestanas[TEXTO_PESTANA[clave] || clave]; }
+  // El muelle del celular (PLAN-UX §2.1): cuatro destinos, en el orden del recorrido de un aviso. Desde PLAN-UX Empleos está en el
+  // muelle y marca lo suyo (hasta ahí se entraba desde Avisos y quedaba marcado Avisos); Cuenta pasó a la barra de arriba, a la
+  // izquierda del sol o la luna, y lo de la cuenta se entra desde su hoja.
+  const MUELLE = ['inicio', 'busqueda', 'avisos', 'postulaciones'];
+  const DE_CUENTA = new Set(['perfil', 'preferencias', 'invitaciones', 'alertas', 'como']);
   const CLAVE_TOCAN = 'terna.tocan';
+  const CLAVE_PAQUETES = 'terna.paquetes';
   const SVG = 'http://www.w3.org/2000/svg';
 
   // El hash antes de que supabase-js lo lea y lo limpie (link de cambio de contraseña: #...&type=recovery).
@@ -169,11 +176,11 @@ window.Terna = (function () {
   }
   // Solo deja volver a una página propia, con un hash simple.
   function volverValido(valor) {
-    return /^(index|busqueda|avisos|postulaciones|perfil|preferencias|invitaciones|alertas)\.html(#[a-z0-9-]+)?$/i.test(valor || '') ? valor : 'index.html';
+    return /^(index|busqueda|avisos|postulaciones|perfil|preferencias|invitaciones|alertas|como-funciona)\.html(#[a-z0-9-]+)?$/i.test(valor || '') ? valor : 'index.html';
   }
   async function salir() {
     estado.saliendo = true;
-    try { sessionStorage.removeItem(CLAVE_TOCAN); } catch (e) { /* sin almacenamiento */ }
+    try { sessionStorage.removeItem(CLAVE_TOCAN); sessionStorage.removeItem(CLAVE_PAQUETES); } catch (e) { /* sin almacenamiento */ }
     try { await sb.auth.signOut({ scope: 'local' }); } catch (e) { /* igual se sale */ }
     location.replace('entrar.html');
   }
@@ -200,23 +207,33 @@ window.Terna = (function () {
     return svg;
   }
   // Un solo DOM para la barra del celular y el carril de escritorio: el CSS decide qué se ve. .pestanas tiene como hijos solo los
-  // links (siete, los mismos para todos desde operacion.md 0.2) y en #barra hay un solo .btn-tema (el banco lo controla).
+  // links (ocho desde PLAN-UX §2.1, los mismos para todos) y en #barra hay un solo .btn-tema (el banco lo controla).
   function dibujarBarra(pagina) {
     const cont = document.getElementById('barra');
     if (!cont) return;
     vaciar(cont);
     const nav = h('nav', { class: 'pestanas', 'aria-label': T.comun.navegacion });
-    // Desde busqueda.md 0.1 (16/11/2026), Búsqueda va segunda: de lo más ancho (todo lo abierto) a lo tuyo (Avisos) y a lo que se postula.
-    for (const clave of ['inicio', 'busqueda', 'avisos', 'postulaciones', 'perfil', 'preferencias', 'invitaciones']) nav.append(pestana(clave, pagina));
+    // Desde busqueda.md 0.1 (16/11/2026), Búsqueda (desde PLAN-UX, Empleos) va segunda: de lo más ancho (todo lo abierto) a lo tuyo
+    // (Paquetes) y a lo que se postula. Desde PLAN-UX §2.1, Cómo funciona cierra lo de la cuenta.
+    for (const clave of ['inicio', 'busqueda', 'avisos', 'postulaciones', 'perfil', 'preferencias', 'invitaciones', 'como']) nav.append(pestana(clave, pagina));
     const nombre = h('span', { class: 'cuenta-nombre', id: 'cuenta-nombre' });
     const barra = h('div', { class: 'barra' },
       h('a', { class: 'logo', href: 'index.html', 'aria-label': T.comun.logo },
         marca(), h('span', { class: 'logo-palabra', 'aria-hidden': 'true', text: 'terna' })),
       nav,
-      h('div', { class: 'cuenta' }, nombre, botonTema('btn-barra'),
+      h('div', { class: 'cuenta' }, nombre, botonCuenta(pagina), botonTema('btn-barra'),
         h('button', { class: 'btn btn-texto btn-barra btn-salir', type: 'button', onclick: salir }, icono('i-salir'), T.comun.salir)));
     cont.append(barra);
     pintarCuentas();
+  }
+  /* El botón de Cuenta de la barra del celular (PLAN-UX §2.1): el ícono de la persona, a la izquierda del sol o la luna, que abre la
+     hoja de Cuenta. Lleva el punto ámbar cuando al perfil le falta algo (pintarCuentas), como el chip «Falta» del carril; desde
+     64rem no se ve, porque el carril tiene todo. data-destino="cuenta" es el que tenía en el muelle. */
+  function botonCuenta(pagina) {
+    return h('button', { class: 'btn btn-texto btn-barra btn-cuenta', id: 'btn-cuenta', type: 'button', 'aria-haspopup': 'dialog',
+      'aria-current': DE_CUENTA.has(pagina) ? 'true' : null, title: T.comun.cuentaAccesible, dataset: { destino: 'cuenta' },
+      onclick: (e) => abrirCuenta(e.currentTarget) },
+    h('span', { class: 'persona-pastilla' }, icono('i-perfil')), h('span', { class: 'oculto-visual', text: T.comun.cuentaAccesible }));
   }
   /* El sol o la luna (diseno.md 0.30 §10.19): muestra el modo al que pasa y lo dice en su nombre. El modo lo guarda y lo
      aplica js/tema.js; acá solo está el botón, que se repinta cuando el modo cambia (por este botón, por otra pestaña o
@@ -240,7 +257,7 @@ window.Terna = (function () {
   function actualDe(clave, pagina) { return clave === pagina ? 'page' : (clave === PESTANA_DE[pagina] ? 'true' : null); }
   function pestana(clave, pagina) {
     return h('a', { class: 'pestana', href: PAGINAS[clave], 'aria-current': actualDe(clave, pagina), dataset: { pestana: clave } },
-      icono(ICONOS_PESTANAS[clave]), h('span', { text: T.comun.pestanas[clave] }));
+      icono(ICONOS_PESTANAS[clave]), h('span', { text: nombrePestana(clave) }));
   }
   function completarBarra() {
     const nombre = document.getElementById('cuenta-nombre');
@@ -249,27 +266,25 @@ window.Terna = (function () {
   }
   function nombrePersona() { return (estado.perfil && estado.perfil.nombre) || (estado.usuario && estado.usuario.mail) || ''; }
 
-  // El muelle (celular, hasta 64rem): Inicio, Avisos, Postulaciones y Cuenta, al final del <body> (lo último del orden de foco).
-  // En Búsqueda queda marcado Avisos; en lo de la cuenta, el botón Cuenta. Sus links no llevan la clase pestana.
+  // El muelle (celular, hasta 64rem): Inicio, Empleos, Paquetes y Postulaciones, al final del <body> (lo último del orden de foco).
+  // Cada destino marca solo lo suyo; lo de la cuenta lo marca el botón de Cuenta de la barra. Sus links no llevan la clase pestana.
+  // Desde PLAN-UX §2.1 Cuenta no está acá: subió a la barra (botonCuenta).
   function dibujarMuelle(pagina) {
     const viejo = document.getElementById('muelle');
     if (viejo) viejo.remove();
-    const actual = (clave) => (clave === pagina ? 'page' : (pagina === 'busqueda' && clave === 'avisos' ? 'true' : null));
-    const destino = (clave) => h('a', { class: 'muelle-destino', href: PAGINAS[clave], 'aria-current': actual(clave), dataset: { destino: clave } },
-      h('span', { class: 'muelle-pastilla' }, icono(ICONOS_PESTANAS[clave])), h('span', { text: T.comun.pestanas[clave] }));
-    const cuenta = h('button', { class: 'muelle-destino', type: 'button', 'aria-haspopup': 'dialog', 'aria-current': DE_CUENTA.has(pagina) ? 'true' : null,
-      dataset: { destino: 'cuenta' }, onclick: (e) => abrirCuenta(e.currentTarget) },
-    h('span', { class: 'muelle-pastilla' }, icono('i-perfil')), h('span', { text: T.comun.cuenta }));
-    document.body.append(h('nav', { class: 'muelle', id: 'muelle', 'aria-label': T.comun.navegacion }, MUELLE.map(destino), cuenta));
+    const destino = (clave) => h('a', { class: 'muelle-destino', href: PAGINAS[clave], 'aria-current': clave === pagina ? 'page' : null, dataset: { destino: clave } },
+      h('span', { class: 'muelle-pastilla' }, icono(ICONOS_PESTANAS[clave])), h('span', { class: 'muelle-nombre', text: nombrePestana(clave) }));
+    document.body.append(h('nav', { class: 'muelle', id: 'muelle', 'aria-label': T.comun.navegacion }, MUELLE.map(destino)));
     pintarCuentas();
   }
   // La hoja de Cuenta: las secciones que no van en el muelle, quién sos y Salir. El modo no se repite: está en la barra.
+  // Desde PLAN-UX §3.5 suma la fila «Cómo funciona», después de Invitaciones.
   function abrirCuenta(origen) {
     const fila = (clave, extra) => h('a', { class: 'menu-fila', href: PAGINAS[clave], 'aria-current': actualDe(clave, estado.pagina) },
-      icono(ICONOS_PESTANAS[clave]), h('span', null, T.comun.pestanas[clave], extra || null), icono('i-adelante'));
+      icono(ICONOS_PESTANAS[clave]), h('span', null, nombrePestana(clave), extra || null), icono('i-adelante'));
     const falta = estado.faltantes.length
       ? h('small', null, icono('i-por-decidir', 'icono-14'), T.perfil.falta(listaFaltantes(estado.faltantes))) : null;
-    const filas = [fila('perfil', falta), fila('preferencias'), fila('invitaciones')];
+    const filas = [fila('perfil', falta), fila('preferencias'), fila('invitaciones'), fila('como')];
     const persona = nombrePersona();
     abrirHoja({ titulo: T.comun.cuenta, clase: 'hoja-chica', origen,
       cuerpo: h('div', { class: 'filas menu' }, filas, h('hr', { class: 'menu-separador' }),
@@ -298,28 +313,76 @@ window.Terna = (function () {
     } catch (e) { /* sin almacenamiento: vale hasta que se cambie de página */ }
     pintarCuentas(valor);
   }
-  function quitarCuentas(nodo) { if (nodo) for (const x of nodo.querySelectorAll('.cuenta-toca, .cuenta-toca-texto, .chip-carril')) x.remove(); }
-  function pintarCuentas(forzado) {
-    const n = forzado === undefined ? leerTocan() : forzado;
-    const texto = ', ' + T.postulaciones.partes.tocan(n);
-    const numero = () => h('span', { class: 'cuenta-toca', 'aria-hidden': 'true', text: fNumero.format(n) });
-    const pPost = document.querySelector('.pestana[data-pestana="postulaciones"]');
-    quitarCuentas(pPost);
-    if (pPost && n) pPost.append(numero(), h('span', { class: 'oculto-visual cuenta-toca-texto', text: texto }));
-    const mPost = document.querySelector('.muelle-destino[data-destino="postulaciones"]');
-    quitarCuentas(mPost);
-    if (mPost && n) {
-      mPost.querySelector('.muelle-pastilla').append(numero());
-      mPost.append(h('span', { class: 'oculto-visual cuenta-toca-texto', text: texto }));
-    }
-    const pPerfil = document.querySelector('.pestana[data-pestana="perfil"]');
-    quitarCuentas(pPerfil);
-    if (pPerfil && estado.faltantes.length) {
-      pPerfil.append(h('span', { class: 'chip chip-toca chip-carril', 'aria-hidden': 'true' }, icono('i-por-decidir', 'icono-14'), T.perfil.faltaCorto),
-        h('span', { class: 'oculto-visual cuenta-toca-texto', text: ', ' + T.perfil.falta(listaFaltantes(estado.faltantes)) }));
+  /* Las cuentas de Paquetes (PLAN-UX §2.1; decisión D3): dos señales, dos colores. Lila, los paquetes nuevos (armados desde la última
+     visita a Paquetes › Armados: no te piden nada); ámbar, los avisos por decidir (te tocan). Con la misma memoria de sesión que lo
+     que te toca: Inicio y Paquetes las pasan con Terna.cuentaPaquetes y las demás páginas muestran las últimas. */
+  const numeroValido = (x) => { const v = Number(x); return Number.isFinite(v) && v > 0 ? Math.round(v) : 0; };
+  function leerPaquetes() {
+    try {
+      const v = JSON.parse(sessionStorage.getItem(CLAVE_PAQUETES) || 'null') || {};
+      return { nuevos: numeroValido(v.nuevos), porDecidir: numeroValido(v.porDecidir) };
+    } catch (e) {
+      return { nuevos: 0, porDecidir: 0 };
     }
   }
+  // cuentaPaquetes({ nuevos, porDecidir }): guarda y pinta las dos cuentas de Paquetes en el muelle y el carril. Lo que no se pasa
+  // (undefined) queda como estaba; 0 o null lo saca. Devuelve las dos cuentas como quedaron.
+  let paquetesSinMemoria = null;
+  function cuentaPaquetes(cuentas) {
+    const c = cuentas || {};
+    const antes = paquetesSinMemoria || leerPaquetes();
+    const valor = {
+      nuevos: c.nuevos === undefined ? antes.nuevos : numeroValido(c.nuevos),
+      porDecidir: c.porDecidir === undefined ? antes.porDecidir : numeroValido(c.porDecidir),
+    };
+    try {
+      if (valor.nuevos || valor.porDecidir) sessionStorage.setItem(CLAVE_PAQUETES, JSON.stringify(valor));
+      else sessionStorage.removeItem(CLAVE_PAQUETES);
+      paquetesSinMemoria = null;
+    } catch (e) { paquetesSinMemoria = valor; /* sin almacenamiento: vale hasta que se cambie de página */ }
+    pintarCuentas(undefined, valor);
+    return valor;
+  }
+  function quitarCuentas(nodo) { if (nodo) for (const x of nodo.querySelectorAll('.cuenta-toca, .cuenta-nuevos, .cuenta-toca-texto, .chip-carril, .muelle-cuentas, .cuenta-punto')) x.remove(); }
+  // Lo que se pinta en una pestaña del carril y en un destino del muelle: los números (aria-hidden) y su texto para el lector de
+  // pantalla. En el muelle los números van juntos, arriba a la derecha de la pastilla (.muelle-cuentas).
+  function ponerCuentas(clave, numeros, texto) {
+    const lista = numeros.filter(([n]) => n > 0);
+    const p = document.querySelector('.pestana[data-pestana="' + clave + '"]');
+    const m = document.querySelector('.muelle-destino[data-destino="' + clave + '"]');
+    quitarCuentas(p);
+    quitarCuentas(m);
+    if (!lista.length) return;
+    const numero = ([n, clase]) => h('span', { class: clase, 'aria-hidden': 'true', text: fNumero.format(n) });
+    if (p) p.append(...lista.map(numero), h('span', { class: 'oculto-visual cuenta-toca-texto', text: texto }));
+    if (m) {
+      m.querySelector('.muelle-pastilla').append(h('span', { class: 'muelle-cuentas', 'aria-hidden': 'true' }, lista.map(numero)));
+      m.append(h('span', { class: 'oculto-visual cuenta-toca-texto', text: texto }));
+    }
+  }
+  function pintarCuentas(forzado, forzadoPaquetes) {
+    const n = forzado === undefined ? leerTocan() : forzado;
+    ponerCuentas('postulaciones', [[n, 'cuenta-toca']], ', ' + T.postulaciones.partes.tocan(n));
+    const q = forzadoPaquetes || paquetesSinMemoria || leerPaquetes();
+    ponerCuentas('avisos', [[q.porDecidir, 'cuenta-toca'], [q.nuevos, 'cuenta-nuevos']],
+      (q.nuevos ? T.comun.paquetesNuevos(q.nuevos) : '') + (q.porDecidir ? T.comun.porDecidirCuenta(q.porDecidir) : ''));
+    // «Falta» en Mi perfil: el chip en el carril y el punto ámbar en el botón de Cuenta de la barra.
+    const faltaTexto = estado.faltantes.length ? ', ' + T.perfil.falta(listaFaltantes(estado.faltantes)) : '';
+    const pPerfil = document.querySelector('.pestana[data-pestana="perfil"]');
+    quitarCuentas(pPerfil);
+    if (pPerfil && faltaTexto) {
+      pPerfil.append(h('span', { class: 'chip chip-toca chip-carril', 'aria-hidden': 'true' }, icono('i-por-decidir', 'icono-14'), T.perfil.faltaCorto),
+        h('span', { class: 'oculto-visual cuenta-toca-texto', text: faltaTexto }));
+    }
+    const bCuenta = document.getElementById('btn-cuenta');
+    quitarCuentas(bCuenta);
+    if (bCuenta && faltaTexto) bCuenta.append(h('span', { class: 'cuenta-punto', 'aria-hidden': 'true' }), h('span', { class: 'oculto-visual cuenta-toca-texto', text: faltaTexto }));
+  }
+  // El pie: desde PLAN-UX §3.5 el lema y la línea de privacidad salen de las páginas con sesión y quedan en Entrar, Crear cuenta y
+  // Contraseña, que los traen en su HTML. Con sesión no dibuja nada (el <footer class="pie"> vacío no ocupa lugar: css/terna.css).
+  // Queda exportada por si una página sin sesión la usa.
   function dibujarPie() {
+    if (estado.pagina) return;
     const pie = document.querySelector('.pie');
     if (pie && !pie.firstChild) pie.append(h('p', null, T.comun.pie1, h('br'), T.comun.pie2));
   }
@@ -381,7 +444,7 @@ window.Terna = (function () {
     }
     return contenedorCuerpo();
   }
-  // opciones: deshacer (función), alVencer (función que corre cuando el aviso se va sin Deshacer), error, icono
+  // opciones: deshacer (función), alVencer (función que corre cuando el aviso se va sin Deshacer), error, icono, accion, link
   function avisoBreve(texto, opciones) {
     opciones = opciones || {};
     cerrarBreve(true);
@@ -389,9 +452,10 @@ window.Terna = (function () {
     const iconoBreve = opciones.icono || (opciones.error ? 'i-alerta' : null);
     const caja = h('div', { class: 'aviso-breve' + (opciones.error ? ' aviso-breve-error' : '') },
       iconoBreve ? icono(iconoBreve) : null, h('span', { text: texto }));
-    // Con una segunda acción (`accion: { texto, alHacer }`, el "Decir por qué" de "No me interesa"; diseno.md 0.14 §10.9)
-    // dura 8 segundos: hay dos cosas para elegir.
-    const actual = { caja, opciones, timer: null, restante: opciones.accion ? 8000 : (opciones.deshacer || opciones.error ? 6000 : 3000), inicio: 0 };
+    // Con una segunda acción (`accion: { texto, alHacer }`, el "Decir por qué" de "No me interesa"; diseno.md 0.14 §10.9), o con
+    // un link (`link: { texto, href, etiqueta }`, el «Ver» de Pedir en Empleos: adonde quedó lo pedido; FEEDBACK-UX P2-1), dura
+    // 8 segundos: hay dos cosas para elegir.
+    const actual = { caja, opciones, timer: null, restante: opciones.accion || opciones.link ? 8000 : (opciones.deshacer || opciones.error ? 6000 : 3000), inicio: 0 };
     // "Deshacer" no deja que corra alVencer (lo que el aviso iba a escribir al irse); la segunda acción sí, porque no deshace.
     const boton = (contenido, fn, vence) => h('button', { type: 'button', onclick: () => {
       clearTimeout(actual.timer);
@@ -401,6 +465,12 @@ window.Terna = (function () {
       fn();
     } }, contenido);
     if (opciones.accion) caja.append(boton([opciones.accion.texto], opciones.accion.alHacer, true));
+    // El link no deshace: como la segunda acción, deja que corra alVencer antes de irse.
+    if (opciones.link) {
+      const ir = h('a', { href: opciones.link.href, 'aria-label': opciones.link.etiqueta || null, text: opciones.link.texto });
+      ir.addEventListener('click', () => { clearTimeout(actual.timer); if (breve === actual) breve = null; if (opciones.alVencer) opciones.alVencer(); });
+      caja.append(ir);
+    }
     if (opciones.deshacer) caja.append(boton([icono('i-deshacer', 'icono-16'), T.comun.deshacer], opciones.deshacer, false));
     const arrancar = () => { actual.inicio = Date.now(); actual.timer = setTimeout(() => { if (breve === actual) cerrarBreve(true); }, actual.restante); };
     const pausar = () => { clearTimeout(actual.timer); actual.restante = Math.max(1500, actual.restante - (Date.now() - actual.inicio)); };
@@ -617,7 +687,9 @@ window.Terna = (function () {
     if (!marco || !aside.parentElement) return;
     const pegado = parseFloat(getComputedStyle(aside).top) || 80;
     const cont = aside.parentElement.getBoundingClientRect();
-    const despues = Math.max(16, (pie ? pie.getBoundingClientRect().bottom : cont.bottom) - cont.bottom);
+    // Sin pie a la vista (desde PLAN-UX §3.5 el de las páginas con sesión está vacío y no se dibuja), lo de después es el margen.
+    const conPie = pie && pie.getClientRects().length > 0;
+    const despues = Math.max(16, (conPie ? pie.getBoundingClientRect().bottom : cont.bottom) - cont.bottom);
     const yaPegado = Math.max(320, window.innerHeight - pegado - despues);
     const aLaVista = window.innerHeight - Math.max(pegado, cont.top) - 16;
     const alto = Math.round(Math.max(240, Math.min(yaPegado, aLaVista))) + 'px';
@@ -682,8 +754,10 @@ window.Terna = (function () {
   // Un link a un archivo privado: se firma al dibujarse (URL de 60 minutos) y el navegador lo abre como cualquier link.
   // Si al tocarlo la firma todavía no está o ya es vieja, se abre la pestaña en el acto (si no, iOS la bloquea) y se le
   // pone la URL nueva cuando llega; si no se puede firmar, se cierra y avisa.
+  // `opciones.alTocar` (desde PLAN-UX §8, P0.4): no lo firma al dibujarse sino al tocarlo, por el mismo camino de una firma vieja. Para
+  // las filas de documentos de una lista (Aviso.filaDocumentos), donde firmar cada CV y cada carta al dibujar serían decenas de pedidos.
   const VIGENCIA_LINK_MS = 50 * 60 * 1000;
-  function linkFirmado(ruta, descarga, nodo) {
+  function linkFirmado(ruta, descarga, nodo, opciones) {
     nodo.setAttribute('target', '_blank');
     nodo.setAttribute('rel', 'noopener noreferrer');
     nodo.setAttribute('href', '#');
@@ -697,12 +771,12 @@ window.Terna = (function () {
       firmar().then((url) => { if (ventana) ventana.location.replace(url); else window.open(url, '_blank', 'noopener'); })
         .catch(() => { if (ventana) ventana.close(); avisoBreve(T.errores.archivo, { error: true }); });
     });
-    firmar().catch(() => { /* se reintenta al tocarlo */ });
+    if (!(opciones && opciones.alTocar)) firmar().catch(() => { /* se reintenta al tocarlo */ });
     return nodo;
   }
 
   /* ---------- Config ---------- */
-  const COLUMNAS_CONFIG = 'umbral_min, umbral_max, umbral_default, piso_match, paquetes_por_dia_opciones, paquetes_por_dia_default, invitaciones_abiertas, invitaciones_cupo, invitaciones_dias, max_reintentos_postulacion, max_texto_pegado_chars, min_texto_pegado_chars, max_experiencias, max_estudios, max_idiomas, cv_max_mb, retencion_no_interesa_dias, alertas_mail_patron';
+  const COLUMNAS_CONFIG = 'umbral_min, umbral_max, umbral_default, piso_match, paquetes_por_dia_opciones, paquetes_por_dia_default, invitaciones_abiertas, invitaciones_cupo, invitaciones_dias, max_reintentos_postulacion, max_empresas_seguidas, max_texto_pegado_chars, min_texto_pegado_chars, max_experiencias, max_estudios, max_idiomas, cv_max_mb, retencion_no_interesa_dias, alertas_mail_patron';
   async function leerConfig() {
     if (estado.config) return estado.config;
     const { data, error } = await sb.from('config').select(COLUMNAS_CONFIG).eq('id', 1).maybeSingle();
@@ -993,7 +1067,7 @@ window.Terna = (function () {
   async function iniciar(pagina, opciones) {
     opciones = opciones || {};
     estado.pagina = pagina;
-    document.title = T.comun.titulo(T.comun.pestanas[pagina]);
+    document.title = T.comun.titulo(nombrePestana(pagina));
     dibujarBarra(pagina);
     dibujarMuelle(pagina);
     dibujarPie();
@@ -1078,7 +1152,7 @@ window.Terna = (function () {
     hoy, sumarDias, diasEntre, aFechaLocal, fechaCorta, fechaLarga, hora, relativa, numero, decimal,
     leerLocal, guardarLocal, textoError, siSesionVencida, esErrorDeSesion,
     irAEntrar, volverValido, salir, token, dibujarPie, botonTema, listaFaltantes, cambiarEstadoCuenta, bandas,
-    marca, dibujarMuelle, abrirCuenta, cuentaToca,
+    marca, dibujarMuelle, abrirCuenta, cuentaToca, cuentaPaquetes, nombrePestana,
     avisoBreve, cerrarBreve, cargando, errorDeCarga, dialogo, confirmar, devolverFoco,
     abrirHoja, cerrarHoja, hojaAbierta, reemplazarCuerpoHoja, anchoLinea, anchoEscritorio,
     copiar, urlExterna, nombreDescarga, urlFirmada, linkFirmado, leerConfig, pagina, actualizarFaltantes, actualizarPerfil, porBloques,

@@ -1,19 +1,27 @@
 /* Terna · js/postulaciones.js
-   Postulaciones (diseno.md 0.33 §8): todo lo que tiene paquete, en dos pestañas, "Por postular" y "Postuladas" (§1.41; hasta 0.32,
-   ocho etapas en píldoras y en un carril); "Tu umbral", que deja en Por postular solo lo que Terna te sugiere; en cada fila, por qué
-   está en tu lista y en qué etapa; el veredicto de requisitos; la ficha con la traba, la captura, el paquete y lo que Terna
-   respondió (en una postulada, con el paquete y las notas primero: es adonde se vuelve para preparar la entrevista); y los botones
-   de cada etapa (brand.md 0.21 §6.5).
+   Postulaciones (PLAN-UX §3.4; hasta ahí, diseno.md 0.33 §8): el envío de lo que ya tiene paquete, en tres pestañas (PLAN-UX §2.2):
+   - Postuladas: lo que envió Terna y lo que la persona marcó (enviada y postulado), la más nueva primero. Es la de entrada, siempre
+     (decisión D1, 21/11/2026): los links y el número del muelle llegan a su pestaña con el hash.
+   - Postula Terna: lo que tiene Terna en marcha, en dos grupos, para revisar (te toca confirmar: la tarjeta lleva «Revisar») y en
+     cola (espera la próxima corrida); al final, un renglón que lleva a lo que Terna va a armar y postular en Paquetes (PLAN-UX §6.0:
+     una lectura más de mis_avisos, con otro filtro). Va a estar vacía muchos días: su vacío lo explica.
+   - A mano: a mano y el paquete armado sin postular, por match; la tarjeta lleva «Abrir aviso» y «Marcar postulado» (con Deshacer,
+     como la ficha). "Tu umbral" (brand.md 0.21 §6.5) va solo acá, con su explicación detrás de un «?».
+   Cada número vive una vez, en su pestaña o en su grupo (PLAN-UX §0): salen la cuenta del título, el renglón «Terna postuló por vos
+   en N…» (decisión D7; lo que hizo Terna se cuenta en Inicio) y las partes de debajo de las pestañas. La cuenta de lo que te toca
+   (para revisar y A mano) va al muelle y al carril con Terna.cuentaToca.
+   En cada fila, por qué está en tu lista y en qué etapa; el veredicto de requisitos; la ficha con la traba, la captura, el paquete y lo
+   que Terna respondió (en una postulada, con el paquete y las notas primero: es adonde se vuelve para preparar la entrevista). Desde
+   PLAN-UX §3.4 la ficha es más corta: sin el recorrido de cuatro puntos, «Terna lo intentó N veces» solo si quedó a mano o si fueron
+   dos o más, y en una a mano el CV y la carta arriba y abajo solo las notas y el salario.
    Escribe con un upsert de { match_id, usuario_id, estado } (el disparador valida la transición) y marcar_interes. La ficha
    lista las palabras del aviso que el CV no tiene, sin botón: se suman en Preferencias (datos.md 0.23 §14).
    Deshacer: la base no deja volver de postulado a a mano ni de en cola a para revisar o a mano (datos.md §5.13), así
    que las acciones con "Deshacer" se escriben cuando el aviso breve se va (6 s); si la página se cierra antes,
    se mandan igual con fetch keepalive.
-   Desde diseno.md 0.21 cada encabezado de la tabla abre su filtro (js/filtros.js) y "No me interesa" pide confirmación, con el
-   motivo opcional adentro (brand.md 0.8 §6.5).
-   Desde el rediseño B2 «Sello» (opciones-v3/PLAN-WEB.md §3.3) cambia solo el dibujo: cada fila del celular es una carpeta (la
-   lengüeta con el match y el marbete con la etapa), Por postular va en dos grupos (te tocan a vos, la tiene Terna) en la lista y en
-   la tabla, la ficha es una carpeta con sus saltos y, a mano, el CV y la carta a la vista; la cuenta de lo que te toca va al muelle y al carril. */
+   Cada encabezado de la tabla abre su filtro (js/filtros.js; diseno.md 0.21) y en el celular los filtros van detrás de un solo botón
+   (Filtros.botonUnico); "No me interesa" va chico, al pie de la ficha, y pide confirmación con el motivo opcional adentro (brand.md
+   0.8 §6.5). */
 'use strict';
 
 Terna.pagina('postulaciones', async (ctx) => {
@@ -23,16 +31,19 @@ Terna.pagina('postulaciones', async (ctx) => {
   const uid = ctx.usuario.id;
   const lista = document.getElementById('lista');
   const cajaFiltros = document.getElementById('filtros');
-  const cuenta = document.getElementById('cuenta');
   const cajaVistas = document.getElementById('vistas');
   const COLUMNAS = 'match_id, aviso_id, puesto, empresa, ubicacion, pais, modalidad, alcance, url, url_postulacion, fuente, postulacion, dudoso, publicado_en, visto_en, tiene_texto, texto_origen, match, razones, requisitos_faltantes, interes, estado_paquete, pedido_en, creado_en, nuevo, paquete_id, paquete_idioma, armado_en, cv_path, carta_path, salario_monto, salario_moneda, salario_periodo, salario_motivo, notas, estado_postulacion, motivo_a_mano, traba_detalle, intentos, en_cola_en, enviada_en, postulado_en, entrevista_en, respuestas, captura_path, captura_en, confirmacion_texto, nivel, jornada';
+  // Lo que todavía no tiene paquete y Terna va a armar (PLAN-UX §6.0 y §10): lo pedido y lo que está en «Me interesa». Solo lo que
+  // piden la regla de lo sugerido (Aviso.sugerida) y la de dónde se postula (Aviso.postulable), sin el texto ni la evaluación.
+  const COLUMNAS_COLA = 'match_id, puesto, match, interes, estado_paquete, estado_postulacion, pedido_en, tiene_texto, modalidad, alcance, nivel, jornada, postulacion, ats_formulario';
 
   const parar = Terna.cargando(lista);
-  const [rA, rP, rB] = await Promise.all([
+  const [rA, rP, rB, rC] = await Promise.all([
     Aviso.leerConEvaluacion((cols) => sb.from('mis_avisos').select(cols).or('paquete_id.not.is.null,estado_postulacion.neq.pendiente').neq('interes', 'no_me_interesa'), COLUMNAS),
     // La fila entera: trae lo de cada migración que esté aplicada (0027: priorizar_puestos), y sin ella no falla.
     sb.from('preferencias').select('*').eq('usuario_id', uid).maybeSingle(),
     sb.from('paquetes').select('match_id, bajo_minimo:contenido->render->bajo_minimo, terminos_faltantes:contenido->render->terminos_faltantes'),
+    sb.from('mis_avisos').select(COLUMNAS_COLA).is('paquete_id', null).or('pedido_en.not.is.null,interes.eq.me_interesa'),
   ]);
   parar();
   const errorCarga = rA.error || rP.error || rB.error;
@@ -56,34 +67,42 @@ Terna.pagina('postulaciones', async (ctx) => {
   // Palabras del aviso que el CV no tiene (cv-ats.md 0.4 §3.13): el motor las guarda en el paquete desde paquete.v3.
   const faltanPor = new Map((rB.data || []).filter((p) => Array.isArray(p.terminos_faltantes)).map((p) => [p.match_id, p.terminos_faltantes]));
   const bajoMinimo = (a) => prefs.salario_modo === 'rango' && !!a.paquete_id && conMinimo.has(a.match_id);
-  // null: sin tope (0041); con un número, "Intento 2 de 3".
   // Lo que quedó fuera de las preferencias de búsqueda del momento no se esconde acá (es lo que la persona ya tiene), pero
   // la ficha lo dice: Terna no lo postula por su cuenta (diseno.md 0.11 §8.5; pipeline.md 0.3.15 §4.12).
   const busquedaPrefs = Aviso.busquedaDe(prefs);
 
-  /* ---------- Las dos pestañas y "Tu umbral" (diseno.md 0.33 §1.41 y §8.2; brand.md 0.21 §6.5) ----------
-     Por postular: lo que tiene paquete y todavía no se postuló (a mano, para revisar, en cola o con el paquete armado). Postuladas:
-     lo que envió Terna y lo que la persona marcó. La etapa de cada una va en su fila, en un chip.
+  /* ---------- Lo próximo que Terna va a armar y postular (PLAN-UX §2.4, punto 2, y §3.4) ----------
+     El renglón del final de Postula Terna: lo que está en Paquetes › Por armar, Terna arma sola o porque lo pediste («Tus pedidos» y
+     «Después sigue Terna», PLAN-UX §3.2) y después postula ella (un formulario de los cuatro ATS, con «Terna postula por vos» en Sí).
+     Lo por decidir, lo que espera texto o número sin pedido y lo que Terna no arma sola no cuenta: todavía no es de Terna. Si la
+     lectura falla, el renglón no se dibuja; la página sigue igual. */
+  const armaYPostula = prefs.armar_paquetes !== false && prefs.postular_sola !== false;
+  const sinPostular = (a) => !a.estado_postulacion || a.estado_postulacion === 'pendiente';
+  const tieneMatch = (a) => a.match !== null && a.match !== undefined;
+  const loArmaTerna = (a) => (a.pedido_en ? a.estado_paquete === 'pedido'
+    : a.interes === 'me_interesa' && a.estado_paquete === 'sin_armar' && a.tiene_texto && tieneMatch(a) && Aviso.pasaBusqueda(a, busquedaPrefs) && Aviso.sugerida(a, criterio));
+  const loProximo = !armaYPostula || rC.error ? 0 : (rC.data || []).filter((a) => sinPostular(a) && Aviso.postulable(a) && loArmaTerna(a)).length;
+
+  /* ---------- Las tres pestañas y "Tu umbral" (PLAN-UX §2.2 y §3.4; brand.md 0.21 §6.5) ----------
      "Tu umbral" (Francisco, 12/11/2026: "las de abajo de 50 ni siquiera quiero que figuren en ningún lado… un botón que esté cliqueado
      como tu umbral y si lo desactivas te aparecen todas"): lo que quedó a mano, o con el paquete armado, y Terna ya no sugiere
      (subiste el umbral o un repuntaje lo bajó) se ve solo sin la casilla y desde el piso; debajo del piso, nunca. Lo ya postulado y
-     lo que Terna tiene en marcha se ve siempre: se mandó, o se está por mandar, en nombre de la persona. */
-  /* Desde 0.41 (Francisco, 17/11/2026: «primero "postuladas" y despues por postular… por default ya que en teoria se tendria que
-     poder postular a todas sola»): Postuladas va primera y es la de entrada; Por postular, los casos para hacer a mano. "Tu umbral"
-     sale de al lado de las pestañas a la línea de arriba de la lista, solo en Por postular, que es lo único que cambia («ubicalo en
-     un mejor lugar»). */
-  const VISTAS = ['postuladas', 'por_postular'];
+     lo que Terna tiene en marcha se ve siempre: se mandó, o se está por mandar, en nombre de la persona. Por eso la casilla va solo
+     en A mano: es la única pestaña que cambia. */
+  const VISTAS = ['postuladas', 'terna', 'a_mano'];
   const URGENCIA = { a_mano: 0, para_revisar: 1, en_cola: 2, enviada: 3, postulado: 4, pendiente: 5 };
-  const HASH = { por_postular: 'por-postular', postuladas: 'postuladas' };
-  // Los hash de las etapas de antes (hasta 0.32), que siguen en los links de Inicio y en lo que alguien haya guardado.
-  const DE_HASH = { 'por-postular': 'por_postular', postuladas: 'postuladas', todas: 'por_postular', 'a-mano': 'por_postular', 'para-revisar': 'por_postular',
-    'en-cola': 'por_postular', 'bajo-umbral': 'por_postular', enviadas: 'postuladas', entrevistas: 'postuladas' };
+  const HASH = { postuladas: 'postuladas', terna: 'postula-terna', a_mano: 'a-mano' };
+  // Los hash de siempre (los de las etapas hasta 0.32 y los de las dos pestañas de antes), que siguen en los links de Inicio, del
+  // muelle y en lo que alguien haya guardado (tabla de PLAN-UX §3.4). «#por-postular» y «#todas» eran la pestaña de lo que falta:
+  // caen en A mano si tiene algo y, si no, en Postula Terna (más abajo, en leerHash).
+  const DE_HASH = { postuladas: 'postuladas', enviadas: 'postuladas', entrevistas: 'postuladas',
+    'postula-terna': 'terna', 'para-revisar': 'terna', 'en-cola': 'terna', 'a-mano': 'a_mano', 'bajo-umbral': 'a_mano' };
+  const DE_HASH_LO_QUE_FALTA = new Set(['por-postular', 'todas']);
   let vista = 'postuladas';
   let soloSugeridas = true;
   const hecha = (a) => a.estado_postulacion === 'enviada' || a.estado_postulacion === 'postulado';
   const enMarcha = (a) => a.estado_postulacion === 'en_cola' || a.estado_postulacion === 'para_revisar';
-  const laTieneTerna = (a) => a.estado_postulacion === 'en_cola';
-  const vistaDe = (a) => (hecha(a) ? 'postuladas' : 'por_postular');
+  const vistaDe = (a) => (hecha(a) ? 'postuladas' : (enMarcha(a) ? 'terna' : 'a_mano'));
   const bajoPiso = (a) => a.match !== null && a.match !== undefined && a.match < piso;
   // Quedó a mano (o con el paquete armado) y Terna ya no la sugiere.
   const quedo = (a) => !hecha(a) && !enMarcha(a) && !Aviso.sugerida(a, criterio);
@@ -119,17 +138,14 @@ Terna.pagina('postulaciones', async (ctx) => {
   }
 
   /* ---------- Filtros (diseno.md 0.13 §8.1): la barra de Avisos, sin Interés ni Postulación ----------
-     Un botón por filtro con su valor, siempre a la vista; cada uno abre su hoja (celular) o su panel (escritorio) y se
-     aplica al tocar. Interés no va (acá todo interesa) y Postulación tampoco: las etapas ya son ese filtro. Arrancan en
-     todo, no en las preferencias: acá está lo que la persona ya tiene, y lo que quedó fuera de sus preferencias no se
-     esconde (diseno.md 0.11 §8.5). Desde 0.24.3, Match tampoco esconde lo que bajó del piso: "Todos" es desde 0 (Francisco,
-     07/11/2026: Inicio contaba más postulaciones para hacer a mano que las que se veían acá; las que faltaban eran las que el
-     repuntaje dejó bajo el piso). Lo cambiado se marca como en Avisos y se recuerda en el navegador.
-     Desde diseno.md 0.21, también por columna (Francisco, 06/11/2026: hizo clic en "Requisitos" para filtrar): Puesto, Empresa y
-     Etapa con texto, Requisitos y Por qué con lo que hay, Fecha con Desde, Hasta o El día. Desde 0.22 cada filtro está en un solo
-     lugar: en el encabezado de su columna, si la tabla lo muestra, o en la barra (Modalidad, Alcance, Nivel, Jornada y Paquete, que no
-     tienen columna; los de una columna que la tabla oculta por ancho; todos en el celular). Hasta 0.32 había uno más, Recorrido, que
-     elegía etapas: salió con su columna, y lo que filtraba lo separan ahora las pestañas y lo busca Etapa. */
+     Un botón por filtro con su valor; cada uno abre su hoja (celular) o su panel (escritorio) y se aplica al tocar. Interés no va
+     (acá todo interesa) y Postulación tampoco: las pestañas y los grupos ya son ese filtro. Arrancan en todo, no en las preferencias:
+     acá está lo que la persona ya tiene, y lo que quedó fuera de sus preferencias no se esconde (diseno.md 0.11 §8.5). Desde 0.24.3,
+     Match tampoco esconde lo que bajó del piso: "Todos" es desde 0 (Francisco, 07/11/2026: Inicio contaba más postulaciones para
+     hacer a mano que las que se veían acá). Lo cambiado se marca como en Avisos y se recuerda en el navegador.
+     Desde diseno.md 0.21, también por columna: Puesto, Empresa y Etapa con texto, Requisitos y Por qué con lo que hay, Fecha con Desde,
+     Hasta o El día. Cada filtro está en un solo lugar: en el encabezado de su columna, si la tabla lo muestra, o en la barra. Desde
+     PLAN-UX §3.4, en el celular la barra entera va detrás de un solo botón, «Filtrar», con la cuenta de los que están puestos. */
   const PAQUETES = ['armado', 'sin_armar', 'pedido', 'no_se_pudo_armar', 'sin_texto', 'por_puntuar'];
   const REQUISITOS = ['cumple', 'a_confirmar', 'falta', 'sobra_nivel', 'falta_nivel', 'sin_dato'];
   const BUSQUEDA = ['modalidad', 'alcance', 'nivel', 'jornada'];
@@ -214,85 +230,78 @@ Terna.pagina('postulaciones', async (ctx) => {
   const visibles = () => postulaciones.filter(seVe);
   const filtradas = () => visibles().filter((a) => pasaFiltros(a));
   const enVista = (l, v) => l.filter((a) => vistaDe(a) === v);
-  // diseno.md 0.3.1 §8: por match de mayor a menor (sin match, al final); a igual match, por urgencia y las más nuevas primero.
+  // Postula Terna y A mano, por match de mayor a menor (diseno.md 0.3.1 §8; sin match, al final); a igual match, por urgencia y las
+  // más nuevas primero. Postuladas, la más nueva primero (PLAN-UX §3.4): es lo que ya pasó, y se vuelve por lo último.
   const matchDe = (a) => (a.match === null || a.match === undefined ? -1 : Number(a.match));
-  function ordenar(lista) {
-    return lista.slice().sort((a, b) => (matchDe(b) - matchDe(a))
-      || (URGENCIA[a.estado_postulacion] - URGENCIA[b.estado_postulacion])
-      || String(fechaEtapa(b) || '').localeCompare(String(fechaEtapa(a) || '')));
+  const masNueva = (a, b) => String(fechaEtapa(b) || '').localeCompare(String(fechaEtapa(a) || ''));
+  function ordenar(l, v) {
+    if (v === 'postuladas') return l.slice().sort((a, b) => masNueva(a, b) || (matchDe(b) - matchDe(a)));
+    return l.slice().sort((a, b) => (matchDe(b) - matchDe(a)) || (URGENCIA[a.estado_postulacion] - URGENCIA[b.estado_postulacion]) || masNueva(a, b));
   }
 
   /* ---------- Dibujo ---------- */
   function dibujar() { actualizarVistas(); actualizarBarra(); dibujarLista(); }
-  // Las pestañas y "Tu umbral" se arman una sola vez y se actualizan en el lugar, como la barra: así el foco se queda en la pestaña
-  // que se eligió con las flechas. Son botones de radio (dos pestañas que muestran una u otra parte de la misma lista).
-  const refVistas = {};
+  // Las pestañas, "Tu umbral" y la nota de Postuladas se arman una sola vez y se actualizan en el lugar, como la barra: así el foco se
+  // queda en la pestaña que se eligió con las flechas. Las pestañas son las de dos renglones (Aviso.pestanas): el nombre arriba y el
+  // número abajo, para que las tres entren a 320 px.
+  let pestanas = null;
   let casillaUmbral = null;
   let notaUmbral = null;
   let cajaUmbral = null;
+  let ayudaUmbral = null;
+  let botonAyuda = null;
   let notaPostuladas = null;
-  let resumenTerna = null;
   function armarVistas() {
-    const grupo = h('div', { class: 'vistas', role: 'radiogroup', 'aria-label': T.postulaciones.mostrar });
-    for (const v of VISTAS) {
-      const input = h('input', { type: 'radio', name: 'vista', value: v, checked: vista === v });
-      input.addEventListener('change', () => { if (input.checked) cambiarVista(v); });
-      const numero = h('b', { class: 'num vista-n' });
-      const partes = h('span', { class: 'vista-partes' });
-      refVistas[v] = { input, numero, partes };
-      grupo.append(h('label', { class: 'vista', dataset: { vista: v } }, input,
-        h('span', { class: 'vista-cara' }, h('span', { class: 'vista-titulo' }, h('span', { text: T.postulaciones.vistas[v] }), ' ', numero), partes)));
-    }
+    pestanas = Aviso.pestanas({ nombre: T.postulaciones.mostrar, elegida: vista, alCambiar: cambiarVista,
+      opciones: VISTAS.map((v) => ({ valor: v, texto: T.postulaciones.vistas[v], n: 0 })) });
+    cajaVistas.append(h('div', { class: 'vistas-caja' }, pestanas.nodo));
+    // "Tu umbral": la casilla y, detrás de un «?», lo que muestra marcada o sin marcar (PLAN-UX §3.4; hasta acá, dos renglones fijos).
+    // La explicación queda además en el title de la casilla y es su descripción para el lector de pantalla.
     const U = T.postulaciones.tuUmbral;
     const explicacion = U.explicacion(piso, conPuestos);
-    const idExplicacion = Terna.idUnico('umbral');
-    casillaUmbral = h('input', { type: 'checkbox', name: 'tu-umbral', checked: soloSugeridas, 'aria-describedby': idExplicacion });
+    const idAyuda = Terna.idUnico('umbral');
+    casillaUmbral = h('input', { type: 'checkbox', name: 'tu-umbral', checked: soloSugeridas, 'aria-describedby': idAyuda });
     casillaUmbral.addEventListener('change', () => { soloSugeridas = casillaUmbral.checked; dibujar(); });
+    // La explicación va en su propio renglón, a todo el ancho, debajo de la línea (en el celular, la casilla comparte la suya con
+    // «Filtrar» y al lado no entraba).
+    ayudaUmbral = h('p', { class: 'tu-umbral-ayuda', id: idAyuda, hidden: true, text: explicacion });
+    botonAyuda = h('button', { class: 'btn btn-texto btn-icono tu-umbral-pregunta', type: 'button', title: U.ayudaAccesible,
+      'aria-label': U.ayudaAccesible, 'aria-expanded': 'false', 'aria-controls': idAyuda }, icono('i-preguntar'));
+    botonAyuda.addEventListener('click', () => {
+      botonAyuda.setAttribute('aria-expanded', String(botonAyuda.getAttribute('aria-expanded') !== 'true'));
+      mostrarAyuda();
+    });
     notaUmbral = h('span', { class: 'tu-umbral-nota', role: 'status' });
-    // Cuántas postuló Terna y cuántas no pudo (brand.md 0.39 §6.5; Francisco, 20/11/2026: «le tiene que decir… Terna postuló por
-    // vos tantas, Terna no pudo postular por vos tantas otras»). Sobre todo lo tuyo, sin filtros, y sin lo que la página no muestra
-    // nunca (lo que quedó debajo del piso). "Te quedan" cuenta lo que Terna te sugiere, como Inicio (diseno.md 0.25 §1.36).
-    resumenTerna = h('p', { class: 'suave resumen-terna', role: 'status' });
-    cajaVistas.append(resumenTerna, h('div', { class: 'vistas-caja' }, grupo));
-    // La línea de arriba de la lista, una por pestaña y en el mismo lugar (diseno.md 0.41 §8.2): en Postuladas, para qué sirve volver;
-    // en Por postular, "Tu umbral" con su nota. Se arma una sola vez, fuera de la lista, para que el foco no se pierda al redibujarla.
     cajaUmbral = h('div', { class: 'tu-umbral-caja' },
       h('label', { class: 'chip-opcion chip-opcion-form tu-umbral', title: explicacion }, casillaUmbral,
         h('span', { class: 'chip-opcion-cara' }, h('span', { class: 'marca' }, icono('i-tilde')), U.etiqueta(umbral))),
-      h('span', { class: 'oculto-visual', id: idExplicacion, text: explicacion }), notaUmbral);
+      botonAyuda, notaUmbral);
+    // En Postuladas, una línea corta arriba de la lista: para qué sirve volver (PLAN-UX §3.4).
     notaPostuladas = h('p', { class: 'etapa-nota', text: T.postulaciones.postuladasNota });
-    document.querySelector('.post-principal .con-cajon').before(h('div', { class: 'linea-vista' }, notaPostuladas, cajaUmbral));
+    document.querySelector('.post-principal .con-cajon').before(h('div', { class: 'linea-vista' }, notaPostuladas, cajaUmbral), ayudaUmbral);
   }
+  // La explicación de "Tu umbral" se ve abierta con su «?» y solo donde está la casilla.
+  function mostrarAyuda() { ayudaUmbral.hidden = cajaUmbral.hidden || botonAyuda.getAttribute('aria-expanded') !== 'true'; }
   function actualizarVistas() {
     const base = filtradas();
-    const R = T.postulaciones.resumenTerna;
-    const noPudo = (a) => a.motivo_a_mano && a.motivo_a_mano !== 'elegido_por_usuario' && ['a_mano', 'postulado', 'entrevista'].includes(a.estado_postulacion);
-    const todas = mostrables();
-    const enviadas = todas.filter((a) => a.enviada_en || a.estado_postulacion === 'enviada').length;
-    const fallidas = todas.filter(noPudo).length;
-    const quedan = todas.filter((a) => noPudo(a) && a.estado_postulacion === 'a_mano' && !quedo(a)).length;
-    resumenTerna.textContent = enviadas || fallidas ? R(enviadas, fallidas, quedan) : '';
-    resumenTerna.hidden = !(enviadas || fallidas);
-    const P = T.postulaciones.partes;
-    const cuantas = (l, cual) => l.filter(cual).length;
-    for (const v of VISTAS) {
-      const l = enVista(base, v);
-      const r = refVistas[v];
-      r.input.checked = vista === v;
-      r.numero.textContent = String(l.length);
-      const partes = (v === 'por_postular'
-        ? [[cuantas(l, (a) => !laTieneTerna(a)), P.tocan], [cuantas(l, laTieneTerna), P.terna]]
-        : [[cuantas(l, (a) => a.estado_postulacion === 'enviada'), P.enviadas], [cuantas(l, (a) => a.estado_postulacion === 'postulado'), P.aMano]])
-        .filter(([c]) => c > 0).map(([c, texto]) => texto(c));
-      r.partes.textContent = partes.join(' · ');
-      // Por postular resalta su número cuando alguna te toca a vos: queda segunda y no se tiene que perder (con el texto, no solo el color).
-      if (v === 'por_postular') r.input.closest('.vista').classList.toggle('te-toca', cuantas(l, (a) => !laTieneTerna(a)) > 0);
-    }
-    // Lo que te toca, en el muelle y en el carril (PLAN-WEB.md §2.1): lo que "te tocan a vos" cuenta al entrar, con "Tu umbral"
+    const hay = mostrables().length > 0;
+    const n = Object.fromEntries(VISTAS.map((v) => [v, enVista(base, v)]));
+    const revisar = n.terna.filter((a) => a.estado_postulacion === 'para_revisar').length;
+    pestanas.elegir(vista);
+    pestanas.poner('postuladas', { n: n.postuladas.length });
+    // En ámbar, lo que te toca (PLAN-UX §3.4): todo A mano y, dentro de Postula Terna, lo que está para revisar. Si en Postula Terna
+    // todo es para revisar, su número va en ámbar; si también hay en cola, el número queda en tinta y lo para revisar va en el punto.
+    pestanas.poner('terna', { n: n.terna.length, toca: revisar > 0 && revisar === n.terna.length,
+      punto: revisar > 0 && revisar < n.terna.length ? revisar : 0, puntoTexto: T.postulaciones.paraRevisarCuenta(revisar) });
+    pestanas.poner('a_mano', { n: n.a_mano.length, toca: n.a_mano.length > 0 });
+    // Lo que te toca, en el muelle y en el carril (PLAN-WEB.md §2.1): para revisar y A mano, contados al entrar, con "Tu umbral"
     // marcada y sin filtros, así no cambia con cada filtro ni con la casilla. Inicio pasa el mismo número.
-    Terna.cuentaToca(postulaciones.filter((a) => vistaDe(a) === 'por_postular' && !laTieneTerna(a) && !quedo(a)).length);
-    cajaUmbral.hidden = vista !== 'por_postular';
-    notaPostuladas.hidden = vista !== 'postuladas' || enVista(base, 'postuladas').length === 0;
+    Terna.cuentaToca(postulaciones.filter((a) => a.estado_postulacion === 'para_revisar' || (vistaDe(a) === 'a_mano' && !quedo(a))).length);
+    // Sin nada todavía, ni filtros ni casilla (PLAN-UX §3.2: no se dibujan si la lista está vacía porque todavía no hay nada).
+    cajaFiltros.hidden = !hay;
+    cajaUmbral.hidden = vista !== 'a_mano' || !hay;
+    mostrarAyuda();
+    notaPostuladas.hidden = vista !== 'postuladas' || n.postuladas.length === 0;
     // Cuántas quedaron entre el piso y tu umbral, con los filtros puestos: lo que la casilla esconde o deja ver.
     const U = T.postulaciones.tuUmbral;
     const k = postulaciones.filter((a) => quedo(a) && !bajoPiso(a) && pasaFiltros(a)).length;
@@ -308,12 +317,15 @@ Terna.pagina('postulaciones', async (ctx) => {
   // La barra se arma una sola vez y se actualiza en el lugar: así el foco vuelve al mismo botón al cerrar su filtro.
   const botones = {};
   const ubicarFiltros = Filtros.ubicar({ botones, lista });
-  const primerFiltro = () => Filtros.primero({ botones, claves: CLAVES, lista });
   const estadoFiltros = h('div', { class: 'filtros-estado', hidden: true });
   // «Más filtros» (PLAN-WEB.md §2.8), desde 768 px. Con la tabla entera la barra lleva cinco (Modalidad, Alcance, Nivel, Jornada y
   // Paquete, que no tienen columna): quedan los cinco a la vista y el botón aparece recién cuando la tabla manda a la barra los de
-  // una columna que esconde (Empresa, Por qué). Con cuatro, el botón escondería uno solo para ocupar su mismo lugar.
+  // una columna que esconde (Empresa, Por qué).
   let masFiltros = null;
+  // El botón único del celular (Filtros.botonUnico): la barra y el estado van a su hoja; en la página queda «Filtrar».
+  let unico = null;
+  // El primer filtro a la vista; en el celular, el botón único (los de la barra están en su hoja).
+  const primerFiltro = () => (!Terna.anchoEscritorio.matches && unico && !unico.boton.closest('[hidden]') ? unico.boton : Filtros.primero({ botones, claves: CLAVES, lista }));
   function armarBarra() {
     const barra = h('div', { class: 'filtros-barra', role: 'group', 'aria-label': F.barra });
     for (const k of CLAVES) {
@@ -326,8 +338,10 @@ Terna.pagina('postulaciones', async (ctx) => {
     }
     estadoFiltros.append(h('button', { class: 'btn btn-texto btn-chico', type: 'button', onclick: () => { limpiarFiltros(); primerFiltro().focus(); } },
       icono('i-deshacer', 'icono-16'), F.limpiarFiltros));
-    cajaFiltros.append(h('div', { class: 'filtros-caja' }, barra), estadoFiltros);
+    const cajaBarra = h('div', { class: 'filtros-caja' }, barra);
+    cajaFiltros.append(cajaBarra, estadoFiltros);
     masFiltros = Filtros.masFiltros({ barra, botones, claves: CLAVES, cambiado, aLaVista: 5 });
+    unico = Filtros.botonUnico({ caja: cajaFiltros, nodos: [cajaBarra, estadoFiltros], cuenta: CLAVES.filter(cambiado).length });
   }
   function actualizarBarra() {
     for (const k of CLAVES) {
@@ -337,37 +351,49 @@ Terna.pagina('postulaciones', async (ctx) => {
       b.classList.toggle('cambiado', cambiado(k));
     }
     if (masFiltros) masFiltros.repartir();
+    if (unico) unico.cuenta(CLAVES.filter(cambiado).length);
     const enfocado = estadoFiltros.contains(document.activeElement);
     estadoFiltros.hidden = !algoCambiado();
     if (enfocado && estadoFiltros.hidden) primerFiltro().focus();
   }
-  // Postuladas vacía con algo en Por postular (la persona nueva entra acá): el botón lleva a la otra pestaña, con su nombre.
+
+  /* ---------- Los vacíos (PLAN-UX §3.4) ---------- */
+  // El renglón del final de Postula Terna: lo próximo que Terna va a armar y postular, con el link a Paquetes filtrado a «Postula
+  // Terna» (avisos.html?donde=terna). Sin nada que Terna vaya a armar y postular, no se dibuja. Sin número (FEEDBACK-UX P2-5): lo
+  // que cuenta loProximo no es ninguno de los grupos que el link muestra.
+  function lineaProximos() {
+    if (!loProximo) return null;
+    return h('p', { class: 'proximos-terna' }, T.postulaciones.proximos + ' ',
+      h('a', { href: 'avisos.html?donde=terna', text: T.postulaciones.proximosLink }), '.');
+  }
+  // Una pestaña vacía con algo en otra (la persona nueva entra en Postuladas): el botón lleva a la que tiene, con su nombre; A mano
+  // primero, que es lo que te toca. Postula Terna vacía explica por qué, en vez de parecer rota, y lleva a Paquetes.
   function vacioVista() {
     const texto = h('p', { text: T.postulaciones.vacioVista[vista] });
-    if (vista !== 'postuladas' || !enVista(visibles(), 'por_postular').length) return h('p', { class: 'vacio', text: T.postulaciones.vacioVista[vista] });
+    if (vista === 'terna') return h('div', { class: 'vacio' }, texto, lineaProximos());
+    const otra = vista === 'postuladas' ? ['a_mano', 'terna'].find((v) => enVista(visibles(), v).length) : null;
+    if (!otra) return h('div', { class: 'vacio' }, texto);
     return h('div', { class: 'vacio' }, texto, h('button', { class: 'btn', type: 'button',
-      onclick: () => { cambiarVista('por_postular'); refVistas.por_postular.input.focus(); } }, T.postulaciones.vistas.por_postular));
+      onclick: () => { cambiarVista(otra); pestanas.radios[otra].focus(); } }, T.postulaciones.vistas[otra]));
   }
-  // Por postular va en dos grupos (PLAN-WEB.md §3.3): lo que te toca a vos y lo que la tiene Terna, cada uno con su cuenta y, adentro,
-  // en el orden de siempre. Un grupo vacío no se dibuja; Postuladas va sin grupos. Devuelve [[título o null, lista], …].
+  /* Postula Terna va en dos grupos (PLAN-UX §3.4): para revisar (te toca confirmar; en ámbar) y en cola (espera la próxima corrida;
+     con el reloj), cada uno con su cuenta y su ayuda, y adentro en el orden de siempre. Un grupo vacío no se dibuja; Postuladas y A
+     mano van sin grupos. Devuelve [{ clave, texto, ayuda, tono, lista }]. */
   function grupos(vis) {
-    if (vista !== 'por_postular') return [[null, vis]];
-    const P = T.postulaciones.partes;
-    const tocan = vis.filter((a) => !laTieneTerna(a));
-    const terna = vis.filter(laTieneTerna);
-    return [[P.tocan(tocan.length), tocan], [P.terna(terna.length), terna]].filter(([, l]) => l.length);
+    if (vista !== 'terna') return [{ clave: null, lista: vis }];
+    const G = T.postulaciones.grupos;
+    return [
+      { clave: 'para_revisar', texto: G.revisar, ayuda: G.revisarAyuda, tono: 'toca', lista: vis.filter((a) => a.estado_postulacion === 'para_revisar') },
+      { clave: 'en_cola', texto: G.cola, ayuda: G.colaAyuda, tono: 'espera', lista: vis.filter((a) => a.estado_postulacion === 'en_cola') },
+    ].filter((g) => g.lista.length);
   }
-  // "3 te tocan a vos": la cifra en tinta y el resto en tinta suave. El texto queda igual.
-  function conCifra(texto) {
-    const m = /^(\d[\d.]*)(\s[\s\S]*)$/.exec(texto);
-    return m ? [h('span', { class: 'num', text: m[1] }), m[2]] : texto;
-  }
+  const tituloDeGrupo = (g, nivel) => Aviso.tituloGrupo({ texto: g.texto, n: g.lista.length, tono: g.tono, ayuda: g.ayuda, nivel });
   function listaCelular(vis) {
-    const ul = (l) => h('ul', { class: 'lista-postulaciones carpetas', role: 'list' }, l.map((a) => h('li', null, filaCelular(a))));
-    return grupos(vis).map(([titulo, l]) => {
-      if (!titulo) return ul(l);
-      const id = Terna.idUnico('grupo');
-      return h('section', { class: 'grupo', 'aria-labelledby': id }, h('h2', { class: 'grupo-titulo', id }, conCifra(titulo)), ul(l));
+    const ul = (l) => h('ul', { class: 'lista-postulaciones carpetas', role: 'list' }, l.map((a) => h('li', null, tarjeta(a))));
+    return grupos(vis).map((g) => {
+      if (!g.texto) return ul(g.lista);
+      const cabeza = tituloDeGrupo(g);
+      return h('section', { class: 'grupo', dataset: { grupo: g.clave }, 'aria-labelledby': cabeza.querySelector('.grupo-titulo').id }, cabeza, ul(g.lista));
     });
   }
   function dibujarLista() {
@@ -375,23 +401,23 @@ Terna.pagina('postulaciones', async (ctx) => {
     // El marbete y el chip resueltos van calmos en Postuladas, donde todo está resuelto (PLAN-WEB.md §2.7).
     lista.dataset.vista = vista;
     const todas = filtradas();
-    const vis = ordenar(enVista(todas, vista));
+    const vis = ordenar(enVista(todas, vista), vista);
     const hay = mostrables().length > 0;
-    cuenta.textContent = hay ? T.postulaciones.cuenta(todas.length) : '';
     if (!vis.length) {
-      const vacio = !hay ? h('p', { class: 'vacio', text: T.postulaciones.vacio })
+      const vacio = !hay && vista !== 'terna' ? h('p', { class: 'vacio', text: T.postulaciones.vacio })
         : enVista(visibles(), vista).length === 0
           ? vacioVista()
           : h('div', { class: 'vacio' }, h('p', { text: T.postulaciones.vacioFiltros }),
             h('button', { class: 'btn', type: 'button', onclick: () => { limpiarFiltros(); primerFiltro().focus(); } }, T.avisos.filtros.limpiarFiltros));
       // En escritorio la lista es siempre la tabla, también vacía, con sus encabezados, que son los filtros de sus columnas
-      // (diseno.md 0.22 §1.34 y §8.6).
-      lista.append(Terna.anchoEscritorio.matches ? tabla([], vacio) : vacio);
+      // (diseno.md 0.22 §1.34 y §8.6). Sin nada todavía, el vacío solo.
+      lista.append(Terna.anchoEscritorio.matches && hay ? tabla([], vacio) : vacio);
       ubicarFiltros();
       return;
     }
     if (Terna.anchoEscritorio.matches) lista.append(tabla(vis));
     else lista.append(...listaCelular(vis));
+    if (vista === 'terna') { const l = lineaProximos(); if (l) lista.append(l); }
     ubicarFiltros();
     marcarElegida();
   }
@@ -402,23 +428,74 @@ Terna.pagina('postulaciones', async (ctx) => {
     if (!estilo) return h('span', { class: 'chip-texto', text: T.avisos.postulacion.pendiente });
     return conExplicacion === false ? Aviso.chip(estilo[0], estilo[1], etiquetaEtapa(a)) : Aviso.chipPostulacion(a);
   }
-  // La fila (§8.3), desde B2 una carpeta (PLAN-WEB.md §3.3): arriba la lengüeta con el match y el marbete con la etapa (el chip de la
-  // etapa, mudado arriba); en el cuerpo el puesto, la empresa, los atributos, por qué está en tu lista, el veredicto y la línea de la
-  // etapa. Sigue siendo un solo botón que abre la ficha: la lengüeta va como texto, no como otro botón. `.linea-etapa` envuelve todo
-  // (el banco busca ahí el chip de la etapa y el de por qué). Una pendiente no tiene marbete: su "Pendiente" va en el cuerpo.
-  function filaCelular(a) {
-    const linea = Aviso.lineaCorta(a, config);
+  // La fila del celular (§8.3), una carpeta (PLAN-WEB.md §3.3): arriba la lengüeta con el match y el marbete con la etapa; en el cuerpo
+  // el puesto, la empresa, los atributos, por qué está en tu lista, el veredicto y la línea de la etapa. Es un solo botón que abre la
+  // ficha: la lengüeta va como texto, no como otro botón. `.linea-etapa` envuelve todo (el banco busca ahí el chip de la etapa y el de
+  // por qué). Una pendiente no tiene marbete: su "Pendiente" va en el cuerpo. El id del puesto describe los botones de la tarjeta.
+  // En Postula Terna la carpeta va sin la línea de la etapa: la dice la ayuda de su grupo («Terna completó el formulario…», «Terna la
+  // envía en la próxima corrida»), una vez por grupo y no una por carpeta.
+  function filaCelular(a, idPuesto) {
+    const linea = enMarcha(a) ? null : Aviso.lineaCorta(a, config);
     const marbete = Aviso.marbete(a, { chip: true });
     const boton = h('button', { class: 'fila-postulacion carpeta', type: 'button', dataset: { match: a.match_id, control: 'abrir', etapa: a.estado_postulacion }, onclick: () => abrirFicha(a, boton) },
       h('span', { class: 'linea-etapa' },
         h('span', { class: 'carpeta-cabeza' }, Aviso.lengueta(a, umbral), marbete ? [oculto(', '), marbete] : null),
         h('span', { class: 'carpeta-cuerpo fila-postulacion-datos' }, oculto(', '),
-          h('span', { class: 'fila-postulacion-puesto' }, h('span', { class: 'aviso-puesto puesto-texto', text: a.puesto }), icono('i-adelante', 'puesto-flecha')),
+          h('span', { class: 'fila-postulacion-puesto' }, h('span', { class: 'aviso-puesto puesto-texto', id: idPuesto || null, text: a.puesto }), icono('i-adelante', 'puesto-flecha')),
           a.empresa ? [oculto(', '), h('span', { class: 'empresa', text: a.empresa })] : null,
           oculto(', '), Aviso.atributos(a, { sinFuente: true }),
           h('span', { class: 'fila-postulacion-chips' }, marbete ? null : chipEtapa(a, false), chipPorQue(a, false), lineaCalificacion(a)),
           linea ? h('span', { class: 'traba', text: linea }) : null)));
     return boton;
+  }
+  /* La tarjeta del celular: la carpeta y, si hay algo para hacer desde la lista (PLAN-UX §2.3 y §3.4), su pie con los botones, que
+     sigue el gris de la carpeta. En A mano, «Abrir aviso» (adonde se postula) y «Marcar postulado» (con Deshacer, como en la ficha);
+     en una para revisar, «Revisar», que abre la ficha en lo que Terna va a responder (Enviar y Postular yo siguen en su pie). En la
+     lista hay muchos botones iguales: cada uno lleva el puesto como descripción para el lector de pantalla. */
+  function tarjeta(a) {
+    const idPuesto = Terna.idUnico('puesto');
+    const boton = filaCelular(a, idPuesto);
+    const acciones = accionesLista(a, idPuesto, false);
+    if (!acciones.length) return boton;
+    return h('div', { class: 'tarjeta-postulacion' }, boton,
+      h('div', { class: 'carpeta-cuerpo tarjeta-pie' }, h('div', { class: 'carpeta-acciones' }, acciones)));
+  }
+  // Los botones de una postulación en la lista: en el pie de la tarjeta, o en la fila de la tabla (`chico`: debajo de la etapa, sin
+  // «Abrir aviso», que en la tabla es el link de su última columna).
+  function accionesLista(a, idPuesto, chico) {
+    const B = T.postulaciones.botones;
+    const e = a.estado_postulacion;
+    const boton = (texto, iconoId, control, fn) => {
+      const b = h('button', { class: chico ? 'btn btn-chico boton-fila' : 'btn', type: 'button', 'aria-describedby': idPuesto, dataset: { control } },
+        icono(iconoId), h('span', { text: texto }));
+      b.addEventListener('click', () => fn(b));
+      return b;
+    };
+    if (e === 'para_revisar') return [boton(B.revisar, 'i-revisar', 'revisar', (b) => revisar(a, b))];
+    if (e !== 'a_mano' && e !== 'pendiente') return [];
+    const marcar = boton(B.marcarPostulado, 'i-tilde', 'marcar-postulado', () => desdeLaLista(a, () => conDeshacer(a, 'postulado', T.postulaciones.hecho.postulado)));
+    if (chico) return [marcar];
+    const abrir = Aviso.abrirAviso(a, 'btn', prefs);
+    abrir.setAttribute('aria-describedby', idPuesto);
+    return [abrir, marcar];
+  }
+  // Una acción desde la lista que saca la postulación de su pestaña (Marcar postulado): el foco pasa a la que quedó en su lugar, o a la
+  // pestaña si la lista quedó vacía, en vez de perderse con el botón. Deshacer la devuelve y el foco vuelve a ella (enfocarFicha).
+  const filasDeLaLista = () => [...lista.querySelectorAll('button.fila-postulacion[data-match], tr[data-match]')];
+  function desdeLaLista(a, fn) {
+    const i = filasDeLaLista().findIndex((x) => x.dataset.match === a.match_id);
+    fn();
+    if (Terna.hojaAbierta()) return;
+    const ahora = filasDeLaLista();
+    if (ahora.some((x) => x.dataset.match === a.match_id)) return;
+    const destino = ahora[Math.min(Math.max(i, 0), ahora.length - 1)] || pestanas.radios[vista];
+    if (destino) destino.focus();
+  }
+  // «Revisar»: la ficha, abierta en lo que Terna va a responder.
+  function revisar(a, origen) {
+    abrirFicha(a, origen);
+    const nodo = fichaRespuestas;
+    if (nodo && nodo.isConnected) requestAnimationFrame(() => Aviso.bajarA(nodo));
   }
   // El veredicto de requisitos (diseno.md 0.17 §8.3 y §8.6; brand.md 0.5.3 §6.5): en la fila de celular, una línea debajo de los
   // atributos; en la tabla, su columna, que se ve siempre: cuando la caja no alcanza se acomodan las demás.
@@ -435,27 +512,31 @@ Terna.pagina('postulaciones', async (ctx) => {
     return h('div', { class: 'tabla-caja tabla-postulaciones' }, h('table', { class: 'tabla' },
       h('thead', null, h('tr', null, columnas.map(([texto, clave, clase]) => Filtros.encabezado({ texto, clave, clase, activo: cambiado(clave), abierto: filtroAbierto === clave,
         titulo: F.boton(nombreFiltro(clave), resumen(clave)), alAbrir: (b) => abrirFiltro(clave, b, true) })), h('th', { scope: 'col', text: C.aviso }))),
-      // Sin filas, una sola celda con el aviso de vacío, debajo de los encabezados. En Por postular, un cuerpo por grupo, con su
-      // título en la primera fila (PLAN-WEB.md §3.3); las filas de datos no cambian.
+      // Sin filas, una sola celda con el aviso de vacío, debajo de los encabezados. En Postula Terna, un cuerpo por grupo, con su
+      // título y su ayuda en la primera fila; las filas de datos no cambian.
       vacio ? h('tbody', null, h('tr', null, h('td', { class: 'tabla-vacia', colspan: '8' }, vacio)))
-        : grupos(vis).map(([titulo, l]) => h('tbody', null,
-          titulo ? h('tr', { class: 'grupo' }, h('th', { scope: 'rowgroup', colspan: '8' }, conCifra(titulo))) : null, l.map(filaTabla)))));
+        : grupos(vis).map((g) => h('tbody', { dataset: g.clave ? { grupo: g.clave } : null },
+          g.texto ? h('tr', { class: 'grupo' }, h('th', { scope: 'rowgroup', colspan: '8' }, tituloDeGrupo(g, 'span'))) : null, g.lista.map(filaTabla)))));
   }
   function filaTabla(a) {
     const llega = Aviso.llega(a, umbral);
     const linea = Aviso.lineaCorta(a, config);
     const calificacion = Aviso.chipCalificacion(a);
+    const idPuesto = Terna.idUnico('puesto');
+    const acciones = accionesLista(a, idPuesto, true);
     const tr = h('tr', { tabindex: '0', dataset: { match: a.match_id, control: 'abrir', etapa: a.estado_postulacion } },
       h('td', { class: 'tabla-match' + (llega || a.match === null ? '' : ' bajo') }, h('span', { 'aria-hidden': 'true', text: a.match === null ? '—' : String(a.match) }),
         oculto(a.match === null ? T.avisos.sinMatch : T.avisos.matchAccesible(a.match, llega))),
-      h('td', null, h('div', { class: 'aviso-puesto', text: a.puesto }), h('div', { class: 'atributos' },
+      h('td', null, h('div', { class: 'aviso-puesto', id: idPuesto, text: a.puesto }), h('div', { class: 'atributos' },
         a.empresa ? h('span', { class: 'apoyo-empresa', text: a.empresa + ' · ' }) : null, Aviso.lugar(a), a.modalidad ? ' · ' + T.avisos.modalidadMin[a.modalidad] : ''),
         // Cuando la caja no alcanza para la columna, "Por qué" baja acá (.apoyo-porque; diseno.md 0.33 §8.6).
         porQue(a) ? h('div', { class: 'linea-sugerencia apoyo-porque' }, chipPorQue(a)) : null),
       h('td', { class: 'col-empresa', text: a.empresa || '' }),
       h('td', { class: 'col-porque' }, chipPorQue(a)),
       h('td', { class: 'col-requisitos' }, calificacion),
-      h('td', { class: 'col-etapa' }, h('div', { class: 'etapa-chip' }, chipEtapa(a)), linea ? h('div', { class: 'traba', text: linea }) : null),
+      // La etapa y, debajo, lo que se hace desde la fila (Revisar, o Marcar postulado en A mano): la acción al lado del estado que resuelve.
+      h('td', { class: 'col-etapa' }, h('div', { class: 'etapa-chip' }, chipEtapa(a)), linea ? h('div', { class: 'traba', text: linea }) : null,
+        acciones.length ? h('div', { class: 'etapa-acciones' }, acciones) : null),
       h('td', { class: 'num sin-corte col-fecha', text: Terna.relativa(fechaEtapa(a)) }),
       h('td', null, h('a', { class: 'btn btn-texto btn-chico', href: Terna.urlExterna(a.url), target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(a.fuente) }, icono('i-abrir'))));
     tr.addEventListener('click', (e) => { if (!e.target.closest('a, button')) abrirFicha(a, tr); });
@@ -563,7 +644,8 @@ Terna.pagina('postulaciones', async (ctx) => {
     } else if (viejo) viejo.remove();
     else if (nuevo) cabeza.append(nuevo);
   }
-  // Después de Deshacer: el foco vuelve al botón con el mismo texto que el que se tocó (si sigue estando), o al primero.
+  // Después de Deshacer: el foco vuelve al botón con el mismo texto que el que se tocó (si sigue estando), o al primero; sin ficha
+  // abierta, a la postulación en la lista.
   function enfocarFicha(a, etiqueta) {
     const abierta = Terna.hojaAbierta();
     if (abierta && abierta.clave === a.match_id) {
@@ -653,11 +735,14 @@ Terna.pagina('postulaciones', async (ctx) => {
   }
 
   /* ---------- Ficha de la postulación (§8.5) ----------
-     Desde B2 (PLAN-WEB.md §2.9 y §3.3) la cabecera es una carpeta (Aviso.cabezaFicha): la lengüeta grande, que baja a «Por qué
-     ajusta», y el marbete de la etapa. El cuerpo, en el orden de siempre, empieza con los saltos: Paquete, Por qué ajusta y
-     Requisitos, todo a la vista. El pie (las acciones) queda como estaba. */
+     La cabecera es una carpeta (Aviso.cabezaFicha): la lengüeta grande, que baja a «Por qué ajusta», y el marbete de la etapa, que
+     es donde se dice el estado (una vez: PLAN-UX §3.4). El cuerpo empieza con los saltos: Paquete, Por qué ajusta y Requisitos. Desde
+     PLAN-UX §3.4, sin el recorrido de cuatro puntos: en una postulada los cuatro estaban hechos y no decía nada que el marbete no
+     dijera. El pie (las acciones) queda como estaba, con «No me interesa» chico. */
   // La sección «Por qué ajusta» de la ficha abierta (o la de requisitos, si no hay razones): adonde baja la lengüeta.
   let fichaPorQue = null;
+  // La sección de lo que Terna va a responder (o respondió) de la ficha abierta: adonde lleva «Revisar».
+  let fichaRespuestas = null;
   // Una sección plegada se abre al llegar a ella por un salto o por la lengüeta (con el botón de siempre, así queda su aria-expanded).
   function desplegar(sec) {
     const b = sec && sec.querySelector(':scope > .plegable-boton[aria-expanded="false"]');
@@ -671,36 +756,42 @@ Terna.pagina('postulaciones', async (ctx) => {
     desplegar(nodo);
     Aviso.bajarA(nodo);
   }
-  // El CV y la carta de una postulación a mano, a la vista debajo de "Todo está listo" (PLAN-WEB.md §3.3). El plan sumaba dos pasos
-  // más, abrir el aviso y marcar postulado, pero son los mismos botones del pie, que en el celular queda justo debajo: repetidos,
-  // no se sabía cuál tocar (revisión del 20/11, P1-3). Pasan el toque a los links del paquete: no piden otra firma.
+  // El CV y la carta de una postulación a mano, a la vista debajo de "Todo está listo" (PLAN-WEB.md §3.3). Abrir el aviso y marcar
+  // postulado son los botones del pie, que en el celular queda justo debajo (revisión del 20/11, P1-3). Pasan el toque a los links del
+  // paquete, que no piden otra firma; desde PLAN-UX §3.4 esos dos quedan escondidos (en el paquete de abajo, solo notas y salario).
   function docsAMano(a, paquete) {
-    const docs = paquete ? paquete.querySelectorAll('.fichas-paquete a.ficha-doc') : [];
+    const docs = paquete ? [...paquete.querySelectorAll('.fichas-paquete a.ficha-doc')] : [];
+    if (docs.length < 2) return null;
     const doc = (origen, texto) => {
       const l = h('a', { class: 'btn', href: origen.getAttribute('href') || '#', target: '_blank', rel: 'noopener noreferrer' }, icono('i-descargar'), texto);
       new MutationObserver(() => l.setAttribute('href', origen.getAttribute('href') || '#')).observe(origen, { attributes: true, attributeFilter: ['href'] });
       l.addEventListener('click', (e) => { e.preventDefault(); origen.click(); });
       return l;
     };
-    return docs.length >= 2 ? h('div', { class: 'par-docs docs-a-mano' }, doc(docs[0], T.avisos.ficha.cvPdf), doc(docs[1], T.avisos.ficha.cartaPdf)) : null;
+    const par = h('div', { class: 'par-docs docs-a-mano' }, doc(docs[0], T.avisos.ficha.cvPdf), doc(docs[1], T.avisos.ficha.cartaPdf));
+    docs[0].hidden = true;
+    docs[1].hidden = true;
+    return par;
   }
   // `conCaptura` en false: la captura va más abajo (la ficha de una postulada). `paquete`: la sección del paquete, para el CV y la carta.
   function seccionEtapa(a, conCaptura, paquete) {
     const sec = h('section', { class: 'ficha-seccion' });
-    sec.append(h('div', { class: 'chips' }, chipEtapa(a), chipPorQue(a, false)), oculto(T.postulaciones.recorridoAccesible(etiquetaEtapa(a))));
+    // El chip de la etapa queda para el lector de pantalla y para el banco: a la vista, el estado lo dice el marbete de la cabecera.
+    sec.append(h('div', { class: 'chips' }, chipEtapa(a), chipPorQue(a, false)));
     // Por qué está en tu lista, cuando no es lo de siempre: es de tus puestos, la pediste o quedó bajo tu umbral (diseno.md 0.33 §8.5).
     const k = porQue(a);
     if (k && k !== 'sobre_umbral') sec.append(h('p', { class: 'etapa-nota', text: explicacionPorQue(a, k) }));
     const linea = Aviso.lineaEtapa(a, config);
     // Cuántas veces lo intentó Terna (brand.md 0.28 §6.5; Francisco, 13/11/2026: «que los cuente en algún lado y diga la cantidad
-    // de veces que lleva intentando»). Los intentos los cuenta el motor; desde 0041 no tienen tope y cada uno después del primero lo
-    // pide Francisco con "Volver a probar" desde Operación (operacion.md 0.2; hasta 0.1, la persona).
+    // de veces que lleva intentando»). Desde PLAN-UX §3.4, solo cuando sirve: si quedó a mano, o si fueron dos o más (en una enviada
+    // al primer intento, «Terna lo intentó 1 vez» no decía nada). Cada intento después del primero lo pide Francisco desde Operación.
     const intentos = Number(a.intentos) || 0;
+    const conIntentos = intentos > 0 && (a.estado_postulacion === 'a_mano' || intentos >= 2);
     // Cuando la línea de la etapa es la de los intentos ("Terna ya lo intentó 3 veces."), decía lo mismo que la de abajo ("Terna lo
     // intentó 3 veces."), una sobre otra (revisión del 20/11, P2-11): queda una sola, la de los intentos, en tinta.
-    const repetida = intentos > 0 && linea === T.postulaciones.trabas.intentos_agotados(intentos);
+    const repetida = conIntentos && linea === T.postulaciones.trabas.intentos_agotados(intentos);
     if (linea && !repetida) sec.append(h('p', { text: linea }));
-    if (intentos > 0) sec.append(h('p', { class: (repetida ? '' : 'suave ') + 'intentos', text: T.postulaciones.intentos(intentos) }));
+    if (conIntentos) sec.append(h('p', { class: (repetida ? '' : 'suave ') + 'intentos', text: T.postulaciones.intentos(intentos) }));
     if (a.estado_postulacion === 'a_mano') {
       sec.append(h('p', { text: T.postulaciones.linea.todoListo }));
       const link = linkTraba(a);
@@ -762,7 +853,7 @@ Terna.pagina('postulaciones', async (ctx) => {
       dl.append(h('div', null, h('dt', { text: c.etiqueta || '' }), h('dd', { text: c.valor ? c.valor : T.postulaciones.sinRespuesta }), nota));
     }
     const texto = campos.map((c) => (c.etiqueta || '') + ': ' + (c.valor || T.postulaciones.sinRespuesta)).join('\n');
-    return h('section', { class: 'ficha-seccion' },
+    return h('section', { class: 'ficha-seccion seccion-respuestas' },
       h('div', { class: 'interruptor-fila' }, h('h3', { text: a.estado_postulacion === 'para_revisar' ? T.postulaciones.vaAResponder : T.postulaciones.respondio }),
         h('button', { class: 'btn btn-texto btn-chico', type: 'button', onclick: () => Terna.copiar(texto, dl) }, icono('i-pegar'), T.postulaciones.copiarRespuestas)),
       dl);
@@ -816,30 +907,33 @@ Terna.pagina('postulaciones', async (ctx) => {
     const paquete = seccionPaquete(a, hecha(a));
     const razones = Aviso.razones(a, true);
     const tituloDe = (s) => { const t = s.querySelector(':scope > .plegable-boton > span, :scope > h3'); return t ? t.textContent : ''; };
-    const porQue = razones.find((s) => tituloDe(s) === T.avisos.ficha.porQue) || null;
+    const porQueSec = razones.find((s) => tituloDe(s) === T.avisos.ficha.porQue) || null;
     const requisitos = razones.find((s) => tituloDe(s) === T.avisos.ficha.requisitos) || null;
-    fichaPorQue = porQue || requisitos;
-    const secciones = [{ nodo: paquete, texto: T.avisos.columnas.paquete }, { nodo: porQue, texto: T.avisos.ficha.porQue },
+    fichaPorQue = porQueSec || requisitos;
+    const secciones = [{ nodo: paquete, texto: T.avisos.columnas.paquete }, { nodo: porQueSec, texto: T.avisos.ficha.porQue },
       { nodo: requisitos, texto: T.avisos.ficha.requisitos }].filter((x) => x.nodo);
     const tira = Aviso.saltos(secciones);
     if (tira) tira.querySelectorAll('.separador').forEach((b, i) => b.addEventListener('click', () => desplegar(secciones[i].nodo)));
+    const respuestas = seccionRespuestas(a);
+    fichaRespuestas = respuestas;
     if (hecha(a)) {
-      return [tira, Aviso.recorridoGrande(a), seccionEtapa(a, false), paquete, seccionTextoAviso(a), seccionRespuestas(a), a.captura_path ? captura(a) : null, ...razones];
+      return [tira, seccionEtapa(a, false), paquete, seccionTextoAviso(a), respuestas, a.captura_path ? captura(a) : null, ...razones];
     }
-    return [tira, Aviso.recorridoGrande(a), seccionEtapa(a, true, paquete), paquete, seccionRespuestas(a), ...razones];
+    return [tira, seccionEtapa(a, true, paquete), paquete, respuestas, ...razones];
   }
   function accionesFicha(a) {
     const B = T.postulaciones.botones;
     const H = T.postulaciones.hecho;
     const b = (texto, iconoId, fn, clase) => h('button', { class: clase || 'btn', type: 'button', onclick: fn }, iconoId ? icono(iconoId) : null, texto);
-    const noInteresa = b(B.noMeInteresa, null, () => noMeInteresa(a), 'btn btn-texto');
+    // «No me interesa», chico, al pie de toda ficha (PLAN-UX §2.3).
+    const noInteresa = Aviso.interes(a, { forma: 'chico', alCambiar: () => noMeInteresa(a) });
     const cont = h('div', { class: 'botones' });
     const notas = [];
     switch (a.estado_postulacion) {
       case 'a_mano':
         // Desde operacion.md 0.2 (0054; Francisco, 20/11/2026): «Volver a probar» es de Operación. La persona ve la traba como
         // siempre y le queda postular a mano; la falla le llega a Francisco, que la vuelve a probar desde ops.html.
-        cont.append(Aviso.abrirAviso(a), b(B.marcarPostulado, 'i-tilde', () => conDeshacer(a, 'postulado', H.postulado)), noInteresa);
+        cont.append(Aviso.abrirAviso(a, null, prefs), b(B.marcarPostulado, 'i-tilde', () => conDeshacer(a, 'postulado', H.postulado)), noInteresa);
         break;
       case 'para_revisar':
         cont.append(b(B.enviar, 'i-enviar', () => conDeshacer(a, 'en_cola', H.aprobada), 'btn btn-primario'),
@@ -848,16 +942,16 @@ Terna.pagina('postulaciones', async (ctx) => {
       // En cola, enviada o postulada no queda nada para hacer afuera: "Abrir aviso" va como secundario (PLAN-WEB.md §3.2; revisión
       // del 20/11, P2-4). Mismo link, misma acción.
       case 'en_cola':
-        cont.append(Aviso.abrirAviso(a, 'btn btn-ancho'), b(B.cancelarEnvio, null, () => enElActo(a, 'pendiente', H.cancelado)), noInteresa);
+        cont.append(Aviso.abrirAviso(a, 'btn btn-ancho', prefs), b(B.cancelarEnvio, null, () => enElActo(a, 'pendiente', H.cancelado)), noInteresa);
         break;
       case 'enviada':
-        cont.append(Aviso.abrirAviso(a, 'btn btn-ancho'), noInteresa);
+        cont.append(Aviso.abrirAviso(a, 'btn btn-ancho', prefs), noInteresa);
         break;
       case 'postulado':
-        cont.append(Aviso.abrirAviso(a, 'btn btn-ancho'), b(B.volverAPendiente, null, () => enElActo(a, 'pendiente', H.pendiente)), noInteresa);
+        cont.append(Aviso.abrirAviso(a, 'btn btn-ancho', prefs), b(B.volverAPendiente, null, () => enElActo(a, 'pendiente', H.pendiente)), noInteresa);
         break;
       default:
-        cont.append(Aviso.abrirAviso(a), b(B.marcarPostulado, 'i-tilde', () => conDeshacer(a, 'postulado', H.postulado)), noInteresa);
+        cont.append(Aviso.abrirAviso(a, null, prefs), b(B.marcarPostulado, 'i-tilde', () => conDeshacer(a, 'postulado', H.postulado)), noInteresa);
     }
     return [cont, notas];
   }
@@ -876,8 +970,10 @@ Terna.pagina('postulaciones', async (ctx) => {
       else history.pushState({ ficha: a.match_id }, '', '#postulacion-' + a.match_id);
     }
     const idTitulo = Terna.idUnico('ficha');
+    // Al cerrar, el foco vuelve a lo que la abrió; si la lista se redibujó mientras tanto (se envió, se marcó), a la postulación.
+    const volver = () => (origen && origen.isConnected ? origen : lista.querySelector('[data-match="' + a.match_id + '"]'));
     Terna.abrirHoja({ cabecera: Aviso.cabezaFicha({ a, idTitulo, umbral, alPorQue }), idTitulo, cuerpo: cuerpoFicha(a), acciones: accionesFicha(a), enLinea: true,
-      origen: origen || lista.querySelector('[data-match="' + a.match_id + '"]'), clave: a.match_id,
+      origen: volver, clave: a.match_id,
       alCerrar: (porUsuario) => { marcarElegida(); if (porUsuario) limpiarHash(); } });
     marcarElegida();
   }
@@ -886,15 +982,17 @@ Terna.pagina('postulaciones', async (ctx) => {
     if (history.state && history.state.ficha) history.back();
     else history.replaceState(null, '', location.pathname + '#' + HASH[vista]);
   }
-  // El hash dice la pestaña; "#bajo-umbral", la etapa de antes, además llega con "Tu umbral" sin marcar; y el de una ficha (el link
-  // "Ver en Postulaciones" de Avisos) llega a la pestaña de esa postulación, con su fila a la vista. Devuelve si cambió algo.
+  // El hash dice la pestaña (tabla de PLAN-UX §3.4); "#bajo-umbral", la etapa de antes, además llega con "Tu umbral" sin marcar; y
+  // el de una ficha (el link "Ver en Postulaciones" de Paquetes) llega a la pestaña de esa postulación, con su ficha. Sin hash, la
+  // pestaña no cambia: al entrar es Postuladas (D1). Devuelve si cambió algo.
   function leerHash() {
     const hash = (location.hash || '').slice(1);
     let cambio = false;
     const elegir = (v) => { if (v !== vista) { vista = v; cambio = true; } };
     const destildar = () => { if (soloSugeridas) { soloSugeridas = false; cambio = true; } };
-    if (DE_HASH[hash]) elegir(DE_HASH[hash]);
     if (hash === 'bajo-umbral') destildar();
+    if (DE_HASH[hash]) elegir(DE_HASH[hash]);
+    if (DE_HASH_LO_QUE_FALTA.has(hash)) elegir(enVista(visibles(), 'a_mano').length ? 'a_mano' : 'terna');
     const m = /^postulacion-([0-9a-f-]{36})$/i.exec(hash);
     const a = m ? porId.get(m[1]) : null;
     if (a && !(quedo(a) && bajoPiso(a))) {
@@ -908,8 +1006,12 @@ Terna.pagina('postulaciones', async (ctx) => {
     const abierta = Terna.hojaAbierta();
     if (m) {
       const a = porId.get(m[1]);
-      // Lo que quedó debajo del piso no se muestra en ningún lado: tampoco con el link de su ficha.
-      if (a && !(quedo(a) && bajoPiso(a)) && (!abierta || abierta.clave !== a.match_id)) abrirFicha(a, null, true);
+      // Lo que quedó debajo del piso no se muestra en ningún lado: tampoco con el link de su ficha. La de otra pestaña (un link a la
+      // ficha sin volver a cargar la página) llega a su pestaña, como al entrar.
+      if (a && !(quedo(a) && bajoPiso(a)) && (!abierta || abierta.clave !== a.match_id)) {
+        if (leerHash()) dibujar();
+        abrirFicha(a, null, true);
+      }
       return;
     }
     if (abierta && abierta.clave) Terna.cerrarHoja(false);

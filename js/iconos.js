@@ -9,6 +9,8 @@
   const S = {
     'i-inicio': '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',
     'i-avisos': P('M4 6h16M4 12h16M4 18h10'),
+    // Paquetes (PLAN-UX §2.1, la pestaña que era Avisos): una carpeta con su lengüeta, como cada paquete armado.
+    'i-paquete': P('M3 7.5A1.5 1.5 0 0 1 4.5 6H9l2 2h8.5A1.5 1.5 0 0 1 21 9.5v8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z'),
     // La pestaña Búsqueda y su campo (busqueda.md 0.1 §4): la lupa.
     'i-buscar': '<circle cx="11" cy="11" r="6.5"/>' + P('M16 16l4.5 4.5'),
     'i-postulaciones': '<rect x="6" y="4" width="12" height="17" rx="2"/>' + P('M9 4V2h6v2M9 13l2 2 4-4'),

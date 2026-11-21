@@ -205,8 +205,11 @@ window.Filtros = (function () {
   function abrir({ clave, titulo, cuerpo, boton, destino, alCerrar }) {
     // Un filtro escondido detrás de «Más filtros» que se abre desde otro lado (un vacío): la barra se abre sola.
     if (boton && boton.dataset.masOculto === '1') abrirMas(boton.closest('.filtros-barra'));
+    // Un filtro que se abre desde la hoja del botón único (celular): al cerrarlo, se vuelve a esa hoja, con el foco en el filtro.
+    const unico = unicoDe(boton);
+    const origen = unico ? () => { unico.abrir(); return destino ? destino() : boton; } : (destino || boton);
     boton.setAttribute('aria-expanded', 'true');
-    Terna.abrirHoja({ titulo, cuerpo, panel: boton, origen: destino || boton,
+    Terna.abrirHoja({ titulo, cuerpo, panel: boton, origen,
       alCerrar: (porUsuario) => {
         for (const b of document.querySelectorAll('[aria-expanded="true"][data-filtro="' + clave + '"]')) b.setAttribute('aria-expanded', 'false');
         if (alCerrar) alCerrar(porUsuario);
@@ -279,9 +282,74 @@ window.Filtros = (function () {
   }
   Terna.anchoEscritorio.addEventListener('change', () => { for (const m of MAS_TODAS) repartir(m); });
 
+  /* ---------- El botón único de filtros del celular (PLAN-UX §3.2 a §3.4 y §8, P0.4) ----------
+     Hasta 47,99rem la fila de quince filtros que se desplazaba de costado se va: queda un solo botón «Filtrar», con la cuenta de los
+     filtros puestos, que abre una hoja con todo lo que la página le pasa (la barra, el estado de los filtros, el orden). Los nodos se
+     mudan a la hoja mientras está abierta y vuelven a su lugar al cerrarla, así cada filtro sigue siendo el mismo botón, con su
+     estado y sus eventos (y con Filtros.masFiltros y Filtros.ubicar como siempre). Un filtro que se abre desde esa hoja abre su
+     propia hoja encima (Filtros.abrir) y, al cerrarse, vuelve a la de los filtros con el foco en él. Desde 48rem el botón no se ve,
+     la hoja se cierra sola y los nodos se quedan donde estaban: la barra de escritorio no cambia. */
+  const UNICOS = new Set();
+  function unicoDe(boton) {
+    for (const u of UNICOS) if (u.abierta && u.cuerpo.contains(boton)) return u;
+    return null;
+  }
+  // botonUnico({ caja, nodos, cuenta }) → { boton, cuenta(n), abrir(), cerrar() }. `caja`: dónde va el botón (al principio); `nodos`:
+  // lo que va en la hoja, en orden (la .filtros-caja, el .filtros-estado, el #herramientas con el orden…), que en el celular deja de
+  // verse en la página (clase filtros-movil); `cuenta`: cuántos filtros hay puestos (0: sin número). cuenta(n) la cambia.
+  function botonUnico({ caja, nodos, cuenta }) {
+    const num = h('span', { class: 'num', 'aria-hidden': 'true', hidden: true });
+    const boton = h('button', { class: 'filtro-boton filtros-unico', type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': 'false' },
+      icono('i-filtrar', 'icono-16'), h('span', { class: 'filtro-valor', text: T.avisos.filtrar }), num);
+    const cuerpo = h('div', { class: 'filtros-hoja' });
+    const lista = (nodos || []).filter(Boolean);
+    for (const n of lista) n.classList.add('filtros-movil');
+    const lugares = new Map();
+    const u = { cuerpo, abierta: false };
+    function pintar(n) {
+      const x = Number(n) || 0;
+      num.textContent = x ? String(x) : '';
+      num.hidden = !x;
+      if (x) boton.setAttribute('aria-label', T.avisos.filtrarCon(x)); else boton.removeAttribute('aria-label');
+    }
+    function devolver() {
+      for (const n of lista) {
+        const marca = lugares.get(n);
+        if (marca && marca.parentNode) { marca.parentNode.replaceChild(n, marca); }
+      }
+      lugares.clear();
+    }
+    u.abrir = function () {
+      if (u.abierta) return;
+      for (const n of lista) {
+        if (!n.parentNode) continue;
+        const marca = document.createComment('filtros');
+        n.parentNode.replaceChild(marca, n);
+        lugares.set(n, marca);
+        cuerpo.append(n);
+      }
+      u.abierta = true;
+      boton.setAttribute('aria-expanded', 'true');
+      Terna.abrirHoja({ titulo: F().barra, cuerpo, origen: boton,
+        alCerrar: () => { u.abierta = false; boton.setAttribute('aria-expanded', 'false'); devolver(); },
+        acciones: h('div', { class: 'botones' }, h('button', { class: 'btn btn-primario', type: 'button', onclick: () => Terna.cerrarHoja(true) }, F().listo)) });
+    };
+    u.cerrar = () => { if (u.abierta) Terna.cerrarHoja(true); };
+    boton.addEventListener('click', () => u.abrir());
+    if (caja) caja.prepend(boton);
+    pintar(cuenta);
+    UNICOS.add(u);
+    return { boton, cuenta: pintar, abrir: u.abrir, cerrar: u.cerrar };
+  }
+  // Al pasar a 48rem con la hoja abierta, se cierra: lo de adentro vuelve a la página, donde ya se ve.
+  Terna.anchoEscritorio.addEventListener('change', () => {
+    if (!Terna.anchoEscritorio.matches) return;
+    for (const u of UNICOS) if (u.abierta) Terna.cerrarHoja(false);
+  });
+
   return {
     normal, contiene, textoValido, hayTexto, listaValida, fechaValida, pasaFecha,
     resumenLista, resumenTexto, resumenFecha,
-    cuerpoTexto, cuerpoValores, cuerpoFecha, botonOrden, encabezado, abrir, ubicar, primero, seVe, masFiltros,
+    cuerpoTexto, cuerpoValores, cuerpoFecha, botonOrden, encabezado, abrir, ubicar, primero, seVe, masFiltros, botonUnico,
   };
 })();
