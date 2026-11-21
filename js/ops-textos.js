@@ -1,7 +1,7 @@
 /* Terna · js/ops-textos.js
-   Los textos del portal operativo (ops.html), copiados de operacion.md §6. Viven aparte de js/textos.js mientras brand.md está
-   reservado por otro chat (estado.md §2), como hizo problemas.md con los suyos; cuando se libere, pasan a brand.md y a T.
-   El código de ops.js no escribe textos propios. */
+   Los textos del portal operativo (ops.html), copiados de operacion.md §6 (desde 0.2, también los de Fallas, Volver a probar,
+   Personas y Ajustes). Viven aparte de js/textos.js: son de una página que ve solo quien administra Terna, como los de
+   problemas.md. Lo que era Admin usa los suyos de siempre (T.admin, de brand.md §6.9). El código de ops.js no escribe textos propios. */
 'use strict';
 
 window.TO = (function () {
@@ -48,7 +48,10 @@ window.TO = (function () {
     errorCarga: 'No se pudo cargar. Probá de nuevo.',
     reintentar: 'Probar de nuevo',
 
-    secciones: { hoy: 'Hoy', busqueda: 'Búsqueda', postulaciones: 'Postulaciones', paquetes: 'Paquetes', corridas: 'Corridas', registro: 'Registro' },
+    secciones: {
+      hoy: 'Hoy', fallas: 'Fallas', busqueda: 'Búsqueda', postulaciones: 'Postulaciones', paquetes: 'Paquetes', problemas: 'Problemas',
+      personas: 'Personas', corridas: 'Corridas', ajustes: 'Ajustes', registro: 'Registro',
+    },
 
     comun: {
       actualizar: 'Actualizar',
@@ -61,7 +64,7 @@ window.TO = (function () {
       abrirFormulario: 'Abrir el formulario',
       abrirSitio: 'Abrir el sitio',
       errorTecnico: 'Error técnico',
-      ventana: { 1: '24 h', 7: '7 días', 30: '30 días' },
+      ventana: { 1: '24 h', 7: '7 días', 30: '30 días', 90: '90 días' },
       ventanaNombre: 'Período',
       veces: (x) => n(x) + plural(x, ' vez', ' veces'),
       personas: (x) => n(x) + plural(x, ' persona', ' personas'),
@@ -79,7 +82,7 @@ window.TO = (function () {
       intro: 'Lo que está roto o hay que mirar, primero. Cada tarjeta lleva a su sección.',
       todoBien: 'Todo anduvo.',
       interruptorApagado: 'De las demás personas ves los totales. El detalle de sus postulaciones y paquetes está apagado.',
-      interruptorPrendido: 'Ves el detalle de las postulaciones y los paquetes de todas las personas, con seudónimo. Cada vez que lo mirás queda en el Registro.',
+      interruptorPrendido: 'Ves el detalle de las postulaciones, las fallas y los paquetes de todas las personas, con seudónimo, y las capturas de las fallas. Cada vez que lo mirás queda en el Registro.',
       motor: {
         titulo: 'Motor',
         pausado: (motivo) => 'El motor está pausado' + (motivo ? ': ' + motivo : '.'),
@@ -126,8 +129,23 @@ window.TO = (function () {
         titulo: 'Problemas',
         linea: (vos, nuevos, curso, arr) => n(vos) + ' para vos · ' + n(nuevos) + ' sin revisar · ' + n(curso) + ' en curso · ' + n(arr) + ' arreglados por confirmar.',
         etiqueta: 'para vos',
-        sinTabla: 'Admin › Problemas todavía va por la tabla de antes (falta la 0042).',
-        ir: 'Abrir Admin › Problemas',
+        sinTabla: 'Problemas todavía va por la tabla de antes (falta la 0042).',
+        ir: 'Ver los problemas',
+      },
+      fallas: {
+        titulo: 'Fallas de postulación',
+        linea: (nuevas, abiertas, personas) => n(nuevas) + plural(nuevas, ' nueva', ' nuevas') + ' desde la última vez que las miraste · '
+          + n(abiertas) + plural(abiertas, ' abierta', ' abiertas') + ' de ' + n(personas) + plural(personas, ' persona', ' personas') + ' en 30 días.',
+        bien: 'Ninguna falla en 30 días.',
+        etiqueta: (x) => plural(x, 'nueva', 'nuevas'),
+        ir: 'Ver las fallas',
+      },
+      completar: {
+        titulo: 'Para completar',
+        linea: (emp, txt) => n(emp) + plural(emp, ' empresa', ' empresas') + ' sin saber dónde postular · ' + n(txt) + plural(txt, ' aviso', ' avisos') + ' sin texto.',
+        bien: 'No hay empresas ni avisos para completar.',
+        etiqueta: (x) => plural(x, 'pendiente', 'pendientes'),
+        ir: 'Completar',
       },
       costo: {
         titulo: 'Costo de Claude',
@@ -146,8 +164,8 @@ window.TO = (function () {
     },
 
     busqueda: {
-      intro: 'De dónde salen los avisos: las fuentes, el sitio de cada empresa que Terna lee y el directorio de dónde publica cada empresa.',
-      vistas: { fuentes: 'Fuentes', sitios: 'Sitios', directorio: 'Directorio' },
+      intro: 'De dónde salen los avisos: las fuentes, el sitio de cada empresa que Terna lee, el directorio de dónde publica cada empresa y lo que Terna no consiguió solo.',
+      vistas: { fuentes: 'Fuentes', sitios: 'Sitios', directorio: 'Directorio', completar: 'Empresas por completar', sinTexto: 'Avisos sin texto' },
       vistasNombre: 'Qué ver',
       fuentes: {
         cols: ['Fuente', 'Tipo', 'Activa', 'Última lectura', 'Avisos abiertos', 'Nuevos en 7 días', 'Cerrados en 7 días', 'Sitios activos', 'Sitios con error', 'Error'],
@@ -256,7 +274,7 @@ window.TO = (function () {
       dondeSeTrabo: 'Dónde se trabó',
       paquete: 'Paquete',
       paqueteLinea: (mod, idi, ver, fecha) => [mod, idi, ver, fecha ? 'armado el ' + fecha : null].filter(Boolean).join(' · '),
-      captura: 'Tiene captura (se ve en la ficha de la persona).',
+      captura: 'Tiene captura: se ve en Fallas.',
       verQuien: 'Ver quién es',
       verQuienTitulo: (s) => '¿Ver quién es ' + s + '?',
       verQuienTexto: 'Te muestra el mail de esa persona. Queda anotado en el Registro.',
@@ -275,6 +293,82 @@ window.TO = (function () {
         paquete: (p) => 'paquete: ' + p,
         probar: (id) => 'Para probar en Fenix: motor.bat postular --matches ' + id,
       },
+    },
+
+    fallas: {
+      intro: 'Cada vez que Terna no pudo postular por alguien. Ninguna se borra: si la persona después la postuló a mano, si la volviste a probar o si salió enviada, queda anotado en la misma falla. La persona ve la suya en Postulaciones, sin «Volver a probar».',
+      cifras: {
+        nuevas: 'Nuevas', abiertas: 'Abiertas', resueltas_a_mano: 'La persona la postuló', descartadas: 'La persona la descartó',
+        reintentadas: 'Las volviste a probar', enviadas_despues: 'Salieron después', personas: 'Personas',
+      },
+      vistasDesde: (cuando) => 'Nuevas: las que entraron después del ' + cuando + ', la última vez que las marcaste vistas.',
+      nuncaVistas: 'Nuevas: todas, hasta que las marques vistas.',
+      marcarVistas: 'Marcar como vistas',
+      marcadas: 'Listo: desde ahora cuentan como nuevas las que entren después.',
+      porMotivo: 'Por motivo',
+      porMotivoCols: ['Motivo', 'Cuántas', 'Abiertas', 'Postuladas a mano', 'Reintentadas', 'Salieron después', 'Personas'],
+      porSitio: 'Por sitio',
+      porSitioCols: ['Sitio', 'Sistema', 'Cuántas', 'Personas'],
+      porPatron: 'Las que se repiten',
+      porPatronIntro: 'Las que dicen lo mismo, sin contar los números: lo que más se repite es lo primero para arreglar.',
+      porPatronCols: ['Motivo', 'Lo que dice', 'Cuántas', 'Personas'],
+      verLas: (m) => 'Ver las de «' + m + '»',
+      lista: 'Una por una',
+      filtroEstado: 'Cuáles',
+      estados: { abiertas: 'Abiertas', resueltas_a_mano: 'Postuladas a mano', descartadas: 'Descartadas', reintentadas: 'Reintentadas', enviadas_despues: 'Salieron después', todas: 'Todas' },
+      filtroSitio: (x) => 'Sitio: ' + x,
+      buscar: 'Buscar puesto, empresa, sitio, error o persona',
+      copiarLista: 'Copiar la lista para una planilla',
+      planillaCols: ['Cuándo', 'Persona', 'Puesto', 'Empresa', 'Sitio', 'Sistema', 'Motivo', 'Intentos', 'Dónde se trabó', 'Error técnico',
+        'Postulada a mano', 'Descartada', 'Reintentada', 'Salió después', 'Ahora'],
+      soloTuyas: 'Con el detalle apagado, acá ves solo las tuyas. Las de las demás personas suman en los totales de arriba.',
+      vacio: 'No hay fallas con ese filtro en este período.',
+      sinPuesto: 'Aviso sin puesto',
+      nueva: 'Nueva',
+      resuelta: (f) => 'La postuló a mano el ' + f,
+      descartada: (f) => 'La descartó el ' + f,
+      reintentada: (f) => 'La volviste a probar el ' + f,
+      enviada: (f) => 'Salió el ' + f,
+      ahora: (e) => 'Ahora: ' + e + '.',
+      verCaptura: 'Ver la captura',
+      capturaAlt: (aviso) => 'Captura de la página donde Terna se trabó' + (aviso ? ': ' + aviso : ''),
+      capturaNota: 'Es la última captura de esta postulación: si Terna la volvió a intentar, puede ser de un intento posterior.',
+      capturaNo: 'La captura ya no está: se borra con el tiempo o la reemplazó un intento posterior.',
+      copiar: {
+        titulo: 'Terna · Operación · falla',
+        falla: (id, p, m) => 'falla: ' + id + ' · persona: ' + p + ' · match: ' + (m || '—'),
+        aviso: (pu, em, f) => 'aviso: ' + [pu, em, f].filter(Boolean).join(' · '),
+        sitio: (s, ats, u) => 'sitio: ' + (s || '—') + ' · sistema: ' + (ats || '—') + ' · link: ' + (u || '—'),
+        motivo: (m, i, cuando, ahora) => 'motivo: ' + m + ' · intentos: ' + i + ' · ' + cuando + ' · ahora: ' + (ahora || '—'),
+        trabo: (t) => 'dónde se trabó: ' + t,
+        error: (e) => 'error técnico: ' + e,
+        despues: (t) => 'después: ' + t,
+        resuelta: (f) => 'la postuló a mano el ' + f,
+        descartada: (f) => 'la descartó el ' + f,
+        reintentada: (f) => 'la volviste a probar el ' + f,
+        enviada: (f) => 'salió el ' + f,
+      },
+    },
+
+    volverAProbar: {
+      boton: 'Volver a probar',
+      titulo: '¿Volver a probar?',
+      texto: 'Terna la intenta de nuevo en la próxima corrida o con «motor.bat postular». La persona no ve nada distinto hasta entonces.',
+      incierta: 'Terna mandó el formulario y no encontró la confirmación: si llegó, se va a mandar dos veces. Revisá primero en el sitio.',
+      si: 'Volver a probar',
+      hecho: 'Quedó en cola: Terna la intenta en la próxima corrida o con «motor.bat postular».',
+      yaNo: 'Ya no está a mano: no hace falta.',
+      noPostulable: 'Es de Easy Apply de LinkedIn: Terna no la intenta.',
+    },
+
+    personas: {
+      intro: 'Las cuentas de Terna y el uso de cada día. Lo que era Admin › Usuarios y Admin › Uso.',
+      vistas: { usuarios: 'Cuentas', uso: 'Uso' },
+      vistasNombre: 'Qué ver',
+    },
+
+    ajustes: {
+      intro: 'Si se puede invitar y quién escribe los paquetes y las respuestas. Lo que era Admin › Invitaciones y Admin › Modelo de IA.',
     },
 
     paquetes: {
@@ -331,11 +425,13 @@ window.TO = (function () {
     },
 
     registro: {
-      intro: 'Lo que hiciste desde esta página: lo que sumaste o cambiaste, el detalle de otras personas que miraste y a quién le viste el mail.',
+      intro: 'Lo que hiciste desde esta página: lo que sumaste, cambiaste o volviste a probar, el detalle y las capturas de otras personas que miraste y a quién le viste el mail.',
       cols: ['Cuándo', 'Qué', 'Sobre qué', 'Detalle'],
       acciones: {
         sumar_empresa: 'Sumaste una empresa', activar_sitio: 'Activaste un sitio', desactivar_sitio: 'Desactivaste un sitio',
         ver_postulaciones: 'Miraste postulaciones de todos', ver_paquetes: 'Miraste paquetes de todos', ver_quien_es: 'Viste quién es',
+        ver_fallas: 'Miraste fallas de todos', ver_fallas_resumen: 'Miraste el resumen de fallas', ver_captura: 'Miraste una captura',
+        volver_a_probar: 'Volviste a probar una postulación',
       },
       vacio: 'Todavía no hay nada en el registro.',
       factoresTitulo: 'Tus apps de códigos',

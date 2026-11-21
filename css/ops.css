@@ -113,6 +113,13 @@ a.op-ir:hover { text-decoration: underline; }
 .op-factores-lista { margin: 0; padding-left: 1.2em; font-size: 15px; line-height: 1.6; }
 .op-corrida-detalle:empty { display: none; }
 .op-corrida-detalle { display: flex; flex-direction: column; gap: 8px; }
+/* Fallas (operacion.md 0.2 §5): la captura, a lo ancho de la tarjeta, con borde de control. */
+.op-captura:empty { display: none; }
+.op-captura { display: flex; flex-direction: column; gap: 8px; }
+.op-captura-img { display: block; width: 100%; max-width: 900px; height: auto; border: 1px solid var(--borde-control); border-radius: 6px; }
+/* Lo que era Admin dentro de Operación: sus tarjetas, con el mismo ancho que las demás listas del portal. */
+.op-admin { display: flex; flex-direction: column; gap: 16px; }
+.op-admin .empresas-lista { display: flex; flex-direction: column; gap: 16px; }
 
 @media (min-width: 768px) {
   .op-hoy { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -634,6 +634,10 @@ window.T = (function () {
         enviadas: (x) => plural(x, '1 enviada por Terna', n(x) + ' enviadas por Terna'),
         aMano: (x) => n(x) + ' a mano',
       },
+      // Arriba de las pestañas (brand.md 0.39 §6.5; operacion.md 0.2): cuántas postuló Terna y cuántas no pudo. Desde 0.39 la persona
+      // no tiene «Volver a probar» (lo hace Francisco desde Operación): lo que Terna no pudo, lo postula ella.
+      resumenTerna: (env, noPudo, quedan) => 'Terna postuló por vos en ' + n(env) + '. No pudo en ' + n(noPudo)
+        + (quedan ? ': ' + plural(quedan, 'te queda 1', 'te quedan ' + n(quedan)) + ' para postular a mano.' : '.'),
       postuladasNota: 'Si te llaman de alguna, abrila: ahí están el CV y la carta de esa postulación, las notas para la entrevista, el texto del aviso y lo que Terna respondió.',
       // "Tu umbral" (brand.md 0.21 §6.5): marcada, Por postular muestra solo lo que Terna te sugiere; sin marcar, también lo que quedó a
       // mano entre el piso y tu umbral. Debajo del piso, eso no se ve en ningún lado.
@@ -683,7 +687,7 @@ window.T = (function () {
         pregunta_sin_respuesta: 'Terna no pudo postular: el formulario pregunta algo que tu perfil no responde.',
         formulario_desconocido: 'Terna no pudo postular: el formulario tiene campos que no conoce.',
         archivo_rechazado: 'Terna no pudo postular: el sitio no aceptó el CV o la carta.',
-        confirmacion_incierta: 'Terna envió el formulario pero no encontró la confirmación. Revisá en el sitio si llegó antes de volver a probar.',
+        confirmacion_incierta: 'Terna envió el formulario pero no encontró la confirmación. Revisá en el sitio si llegó antes de postularla a mano.',
         intentos_agotados: (x) => 'Terna ya lo intentó ' + x + ' veces.',
         error: 'Terna no pudo postular: el sitio no respondió.',
         elegido_por_usuario: 'Elegiste postular vos.',
@@ -691,19 +695,16 @@ window.T = (function () {
       completarRespuestas: 'Completar respuestas para formularios',
       completarPreferencias: 'Completar Preferencias',
       completarPerfil: 'Completar Mi perfil',
-      seVaATrabar: 'Se va a trabar en el mismo lugar: Terna no entra con cuentas.',
       // Cuántas veces lo intentó Terna, en la ficha (brand.md 0.28 §6.5).
       intentos: (n) => 'Terna lo intentó ' + n + (n === 1 ? ' vez.' : ' veces.'),
       botones: {
-        marcarPostulado: 'Marcar postulado', volverAProbar: 'Volver a probar', noMeInteresa: 'No me interesa',
+        marcarPostulado: 'Marcar postulado', noMeInteresa: 'No me interesa',
         enviar: 'Enviar', postularYo: 'Postular yo', cancelarEnvio: 'Cancelar envío',
         volverAPendiente: 'Volver a pendiente',
       },
-      confirmarProbar: { titulo: 'Volver a probar', texto: 'Si la postulación ya llegó, se va a mandar dos veces. Revisá primero en el sitio.', si: 'Volver a probar', no: 'Cancelar' },
       hecho: {
         postulado: 'Postulado.',
         pendiente: 'Pendiente.',
-        probar: (i, max) => 'Terna vuelve a probar en la próxima corrida. ' + (max ? 'Intento ' + i + ' de ' + max + '.' : 'Va a ser el intento ' + i + '.'),
         aprobada: 'Aprobada. Terna la envía en la próxima corrida.',
         aMano: 'Queda para hacer a mano.',
         cancelado: 'Cancelado. Queda pendiente.',
@@ -826,7 +827,8 @@ window.T = (function () {
       pausarCuenta: 'Pausar cuenta', reanudarCuenta: 'Reanudar cuenta',
       borrar: 'Borrar la cuenta',
       borrarTexto: 'Para borrar tu cuenta y todo lo tuyo, escribile a Francisco. Se borra en el día. Lo que ya recibió un empleador queda en el empleador.',
-      privacidad: 'Tus datos y tus documentos los ves vos sola o solo. Francisco administra Terna y ve la lista de cuentas y el uso, no tu perfil, tus documentos ni tus postulaciones desde la web; como operador del servicio tiene acceso técnico a la base, como cualquier administrador de un sistema. Para puntuar, armar y responder, Terna manda tu perfil y el texto del aviso a un proveedor externo que, según sus términos, no usa esos datos para entrenar.',
+      // Desde brand.md 0.39 (operacion.md 0.2; Francisco, 20/11/2026): ve cómo salieron postulaciones y paquetes, y la captura de las fallas.
+      privacidad: 'Tus datos y tus documentos los ves vos sola o solo. Francisco administra Terna: ve la lista de cuentas y el uso y, para arreglar lo que falla, cómo salieron tus postulaciones y tus paquetes (el puesto, la empresa, el error del sitio y, cuando Terna no pudo postular, la captura de esa página, que puede mostrar lo que Terna llenó). Fuera de eso no ve tu perfil, tu CV, tu carta ni tus respuestas desde la web; como operador del servicio tiene acceso técnico a la base, como cualquier administrador de un sistema. Para puntuar, armar y responder, Terna manda tu perfil y el texto del aviso a un proveedor externo que, según sus términos, no usa esos datos para entrenar.',
       guardadoBusca: 'Guardado. Terna empieza a buscar en la próxima corrida.',
       revisarPrefs: 'Revisar preferencias (opcional)',
       meses: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
@@ -1642,6 +1644,8 @@ window.T = (function () {
       enviada: 'Terna ya envió esta postulación; no se puede volver atrás.',
       noPostulable: 'Terna no puede postular en este sitio. Hacelo vos: todo está listo.',
       agotados: (x) => 'Terna ya lo intentó ' + x + ' veces. Hacelo vos: todo está listo.',
+      // 0054 (brand.md 0.39): la persona ya no vuelve a probar; si una página vieja lo intenta, la base lo rechaza con esta clave.
+      reintento: 'Esta la vuelve a probar Francisco. Si querés, postulala a mano: todo está listo.',
       guardar: 'No se pudo guardar. Probá de nuevo.',
       guardarCampos: 'No se pudo guardar. Revisá los campos marcados.',
       marcar: 'No se pudo marcar. Probá de nuevo.',
@@ -1683,7 +1687,7 @@ window.T = (function () {
         interes_invalido: e.marcar, transicion_invalida: e.marcar, motivo_sin_no_interesa: e.motivoSinNoInteresa,
         pedidos_cambiaron: e.pedidosCambiaron,
         postulacion_enviada: e.enviada, no_postulable: e.noPostulable,
-        intentos_agotados: e.agotados(c.max_reintentos_postulacion || 3),
+        intentos_agotados: e.agotados(c.max_reintentos_postulacion || 3), reintento_en_operacion: e.reintento,
         no_se_puede_borrar_admin: e.borrarUsuario, usuario_no_existe: e.borrarUsuario,
         empresas_demasiadas: e.empresasDemasiadas(c.max_empresas_seguidas || 10), empresa_nombre_invalido: e.empresaNombre,
       };

@@ -54,7 +54,6 @@ Terna.pagina('postulaciones', async (ctx) => {
   const faltanPor = new Map((rB.data || []).filter((p) => Array.isArray(p.terminos_faltantes)).map((p) => [p.match_id, p.terminos_faltantes]));
   const bajoMinimo = (a) => prefs.salario_modo === 'rango' && !!a.paquete_id && conMinimo.has(a.match_id);
   // null: sin tope (0041); con un número, "Intento 2 de 3".
-  const maxIntentos = Aviso.topeIntentos(config);
   // Lo que quedó fuera de las preferencias de búsqueda del momento no se esconde acá (es lo que la persona ya tiene), pero
   // la ficha lo dice: Terna no lo postula por su cuenta (diseno.md 0.11 §8.5; pipeline.md 0.3.15 §4.12).
   const busquedaPrefs = Aviso.busquedaDe(prefs);
@@ -229,6 +228,7 @@ Terna.pagina('postulaciones', async (ctx) => {
   let notaUmbral = null;
   let cajaUmbral = null;
   let notaPostuladas = null;
+  let resumenTerna = null;
   function armarVistas() {
     const grupo = h('div', { class: 'vistas', role: 'radiogroup', 'aria-label': T.postulaciones.mostrar });
     for (const v of VISTAS) {
@@ -246,7 +246,10 @@ Terna.pagina('postulaciones', async (ctx) => {
     casillaUmbral = h('input', { type: 'checkbox', name: 'tu-umbral', checked: soloSugeridas, 'aria-describedby': idExplicacion });
     casillaUmbral.addEventListener('change', () => { soloSugeridas = casillaUmbral.checked; dibujar(); });
     notaUmbral = h('span', { class: 'tu-umbral-nota', role: 'status' });
-    cajaVistas.append(h('div', { class: 'vistas-caja' }, grupo));
+    // Cuántas postuló Terna y cuántas no pudo (brand.md 0.39 §6.5; Francisco, 20/11/2026: «le tiene que decir… Terna postuló por
+    // vos tantas, Terna no pudo postular por vos tantas otras»). Sobre todo lo tuyo, sin filtros.
+    resumenTerna = h('p', { class: 'suave resumen-terna', role: 'status' });
+    cajaVistas.append(resumenTerna, h('div', { class: 'vistas-caja' }, grupo));
     // La línea de arriba de la lista, una por pestaña y en el mismo lugar (diseno.md 0.41 §8.2): en Postuladas, para qué sirve volver;
     // en Por postular, "Tu umbral" con su nota. Se arma una sola vez, fuera de la lista, para que el foco no se pierda al redibujarla.
     cajaUmbral = h('div', { class: 'tu-umbral-caja' },
@@ -258,6 +261,13 @@ Terna.pagina('postulaciones', async (ctx) => {
   }
   function actualizarVistas() {
     const base = filtradas();
+    const R = T.postulaciones.resumenTerna;
+    const noPudo = (a) => a.motivo_a_mano && a.motivo_a_mano !== 'elegido_por_usuario' && ['a_mano', 'postulado', 'entrevista'].includes(a.estado_postulacion);
+    const enviadas = postulaciones.filter((a) => a.enviada_en || a.estado_postulacion === 'enviada').length;
+    const fallidas = postulaciones.filter(noPudo).length;
+    const quedan = postulaciones.filter((a) => noPudo(a) && a.estado_postulacion === 'a_mano').length;
+    resumenTerna.textContent = enviadas || fallidas ? R(enviadas, fallidas, quedan) : '';
+    resumenTerna.hidden = !(enviadas || fallidas);
     const P = T.postulaciones.partes;
     const cuantas = (l, cual) => l.filter(cual).length;
     for (const v of VISTAS) {
@@ -583,14 +593,6 @@ Terna.pagina('postulaciones', async (ctx) => {
       if (n) n.focus(); else Terna.devolverFoco(null);
     }
   }
-  async function volverAProbar(a) {
-    if (a.motivo_a_mano === 'confirmacion_incierta') {
-      const P = T.postulaciones.confirmarProbar;
-      const si = await Terna.confirmar({ titulo: P.titulo, texto: P.texto, si: P.si, no: P.no });
-      if (!si) return;
-    }
-    conDeshacer(a, 'en_cola', T.postulaciones.hecho.probar((a.intentos || 0) + 1, maxIntentos));
-  }
 
   /* ---------- Ficha de la postulación (§8.5) ---------- */
   function cabeceraFicha(a, idTitulo) {
@@ -736,14 +738,9 @@ Terna.pagina('postulaciones', async (ctx) => {
     const notas = [];
     switch (a.estado_postulacion) {
       case 'a_mano':
-        cont.append(Aviso.abrirAviso(a), b(B.marcarPostulado, 'i-enviada', () => conDeshacer(a, 'postulado', H.postulado)));
-        if (Aviso.puedeVolverAProbar(a, config)) {
-          cont.append(b(B.volverAProbar, 'i-probar', () => volverAProbar(a)));
-          // brand.md 0.32 (17/11/2026): las trabas de la cuenta que terminan en «tocá Volver a probar» (ya tenías una cuenta, confirmala
-          // por mail) se destraban con eso; la nota de que se va a trabar igual queda para las otras.
-          if (a.motivo_a_mano === 'requiere_cuenta' && !/Volver a probar\.?$/.test(a.traba_detalle || '')) notas.push(h('p', { class: 'campo-ayuda', text: T.postulaciones.seVaATrabar }));
-        }
-        cont.append(noInteresa);
+        // Desde operacion.md 0.2 (0054; Francisco, 20/11/2026): «Volver a probar» es de Operación. La persona ve la traba como
+        // siempre y le queda postular a mano; la falla le llega a Francisco, que la vuelve a probar desde ops.html.
+        cont.append(Aviso.abrirAviso(a), b(B.marcarPostulado, 'i-enviada', () => conDeshacer(a, 'postulado', H.postulado)), noInteresa);
         break;
       case 'para_revisar':
         cont.append(b(B.enviar, 'i-enviar', () => conDeshacer(a, 'en_cola', H.aprobada), 'btn btn-primario'),

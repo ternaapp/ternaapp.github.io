@@ -2,7 +2,11 @@
    El portal operativo (operacion.md 0.1; 0053): una página aparte de la web de usuario, solo para quien administra Terna, con su
    propia sesión y un segundo paso (un código de una app de códigos) que exige la base, no este archivo. Muestra la operación de
    todos (fuentes, sitios, directorio, postulaciones, paquetes, corridas, costos) y deja sumar una empresa al directorio y activar o
-   desactivar un sitio. Nunca CV, carta, respuestas, capturas, perfil ni salario: la base no los devuelve.
+   desactivar un sitio. Nunca CV, carta, respuestas, perfil ni salario: la base no los devuelve.
+   Desde operacion.md 0.2 (0054; Francisco, 20/11/2026: «yo sea un usuario más… dentro de operaciones me lleguen todas las
+   fallas… lo de volver a probar lo voy a manejar yo dentro de operaciones»): Fallas, con todas las veces que Terna no pudo
+   postular por alguien, su captura y «Volver a probar», que la persona ya no tiene; y lo que era Admin (Problemas, Personas,
+   Ajustes, Empresas por completar y Avisos sin texto), que dibuja js/ops-admin.js.
    - La sesión vive en sessionStorage, con su propia clave ('terna-ops'): muere al cerrar la pestaña y no la ve otra pestaña, ni
      siquiera de Terna. No usa Terna.pagina (eso arma la sesión común de la web y redirige); de comun.js toma solo las piezas.
    - Todo dato se escribe con textContent (Terna.h) y todo link que sale de Terna pasa por Terna.urlExterna: el portal dibuja texto
@@ -13,7 +17,7 @@
 (function () {
   const { h, icono, vaciar } = Terna;
   const O = window.TO;
-  const SECCIONES = ['hoy', 'busqueda', 'postulaciones', 'paquetes', 'corridas', 'registro'];
+  const SECCIONES = ['hoy', 'fallas', 'busqueda', 'postulaciones', 'paquetes', 'problemas', 'personas', 'corridas', 'ajustes', 'registro'];
   const FRESCO_S = 12 * 3600 - 120; // la base pide un código de las últimas 12 horas (ops_exigir)
 
   /* ---------- La sesión propia del portal ---------- */
@@ -28,7 +32,10 @@
 
   const estado = {
     seccion: SECCIONES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'hoy',
-    ventana: { postulaciones: leer('ventana.postulaciones', 7), paquetes: leer('ventana.paquetes', 7), corridas: leer('ventana.corridas', 7) },
+    ventana: { postulaciones: leer('ventana.postulaciones', 7), paquetes: leer('ventana.paquetes', 7), corridas: leer('ventana.corridas', 7),
+      fallas: leer('ventana.fallas', 30), uso: leer('ventana.uso', 7) },
+    fallas: { estado: 'abiertas', motivo: null, sitio: null, buscar: '' },
+    personas: leer('personas.vista', 'usuarios'),
     busqueda: leer('busqueda.vista', 'sitios'),
     sitios: { filtro: 'problemas', fuente: '', buscar: '' },
     directorio: { filtro: 'pendientes', buscar: '' },
@@ -64,13 +71,46 @@
     throw error;
   }
   function errorEn(cont, error, reintentar) {
-    if (error instanceof Barrera) return;
+    if (error instanceof Barrera || (error && error.barrera)) return;
     console.error('[Terna ops]', error && error.name, error && (error.code || ''), error && error.message);
     vaciar(cont);
     cont.append(h('div', { class: 'banda banda-error', role: 'alert' }, icono('i-alerta'),
       h('span', { text: error && error.falta0053 ? O.falta0053 : O.errorCarga }),
       error && error.falta0053 ? null : h('button', { class: 'btn', type: 'button', onclick: reintentar }, O.reintentar)));
   }
+
+  // Lo de Admin (js/ops-admin.js) llama a las funciones admin_* y escribe config: desde la 0054 piden el segundo paso y, si
+  // falta o venció, dicen `no_autorizado` (no `falta_segundo_factor`). Acá se resuelve: se vuelve a mirar la sesión y, si
+  // el código venció, se pide uno nuevo. Dos `no_autorizado` seguidos con la sesión en orden quieren decir que no es admin.
+  let ultimaBarrera = 0;
+  async function esBarreraDe(error) {
+    const m = mensaje(error);
+    if (m.includes('falta_segundo_factor') || m.includes('segundo_factor_vencido')) { await pantallaCodigo(m.includes('vencido')); return true; }
+    if (m.includes('no_autorizado')) {
+      if (Date.now() - ultimaBarrera < 10000) await noAdmin(); else { ultimaBarrera = Date.now(); await despuesDeEntrar(); }
+      return true;
+    }
+    if (Terna.esErrorDeSesion(error)) { await sb.auth.signOut({ scope: 'local' }); pantallaEntrar(); return true; }
+    return false;
+  }
+  const api = {
+    sb,
+    async rpc(nombre, args) {
+      const r = await sb.rpc(nombre, args || {});
+      if (r.error && await esBarreraDe(r.error)) r.error.barrera = true;
+      return r;
+    },
+    esBarrera: (e) => !!(e && (e.barrera || e instanceof Barrera)),
+    errorEn: (cont, e, reintentar) => errorEn(cont, e, reintentar),
+    // Con la sesión sin el segundo paso la base no da error: la política de config no deja cambiar nada. Por eso se pide la fila.
+    async escribirConfig(cambios) {
+      const r = await sb.from('config').update(cambios).eq('id', 1).select('id');
+      if (r.error) { if (await esBarreraDe(r.error)) r.error.barrera = true; return r; }
+      if (!(r.data || []).length) { const e = new Error('no_autorizado'); await esBarreraDe(e); e.barrera = true; return { data: null, error: e }; }
+      return r;
+    },
+  };
+  const admin = window.OpsAdmin(api);
 
   /* ---------- Encabezado propio ---------- */
   function dibujarCabecera(conSesion) {
@@ -309,10 +349,14 @@
     const quitar = Terna.cargando(raiz);
     try {
       if (estado.seccion === 'hoy') await hoy();
+      else if (estado.seccion === 'fallas') await fallas();
       else if (estado.seccion === 'busqueda') await busqueda();
       else if (estado.seccion === 'postulaciones') await postulaciones();
       else if (estado.seccion === 'paquetes') await paquetes();
+      else if (estado.seccion === 'problemas') await problemas();
+      else if (estado.seccion === 'personas') await personas();
       else if (estado.seccion === 'corridas') await corridas();
+      else if (estado.seccion === 'ajustes') await ajustes();
       else await registro();
     } catch (e) {
       errorEn(raiz, e, cargar);
@@ -389,7 +433,8 @@
 
   /* ---------- Hoy ---------- */
   async function hoy() {
-    const e = await llamar('ops_estado');
+    const [e, fa, casos, completarN, sinTextoN] = await Promise.all([llamar('ops_estado'), llamar('ops_fallas_resumen', { p_dias: 30 }),
+      admin.contarCasos(), admin.contarCompletar(), admin.contarSinTexto()]);
     estado.detalleDeTodos = !!(e.ajustes && e.ajustes.detalle_de_todos);
     const H = O.hoy;
     const tarjetas = [];
@@ -449,10 +494,26 @@
       if (pr) {
         const g = Number(pr.para_vos) ? 'roto' : Number(pr.nuevos) ? 'mirar' : 'bien';
         tarjetas.push({ g, titulo: H.problemas.titulo, cifra: num(pr.para_vos), etiqueta: H.problemas.etiqueta,
-          lineas: [H.problemas.linea(pr.para_vos, pr.nuevos, pr.en_curso, pr.arreglados)], ir: H.problemas.ir, href: 'admin.html#problemas' });
-      } else {
-        tarjetas.push({ g: 'mirar', titulo: H.problemas.titulo, cifra: null, lineas: [H.problemas.sinTabla], ir: H.problemas.ir, href: 'admin.html#problemas' });
+          lineas: [H.problemas.linea(pr.para_vos, pr.nuevos, pr.en_curso, pr.arreglados)], ir: H.problemas.ir, destino: () => ir('problemas') });
+      } else if (casos) {
+        tarjetas.push({ g: casos.paraVos ? 'roto' : casos.nuevos ? 'mirar' : 'bien', titulo: H.problemas.titulo, cifra: num(casos.paraVos), etiqueta: H.problemas.etiqueta,
+          lineas: [H.problemas.linea(casos.paraVos, casos.nuevos, 0, 0)], ir: H.problemas.ir, destino: () => ir('problemas') });
       }
+    }
+    {
+      // Las fallas de postulación de todos (0054): las nuevas desde la última vez que las marcaste vistas.
+      const nuevas = Number(fa.nuevas) || 0;
+      const abiertas = Number(fa.abiertas) || 0;
+      tarjetas.push({ g: nuevas ? 'mirar' : 'bien', titulo: H.fallas.titulo, cifra: num(nuevas), etiqueta: H.fallas.etiqueta(nuevas),
+        lineas: [nuevas || abiertas ? H.fallas.linea(nuevas, abiertas, fa.personas) : H.fallas.bien], ir: H.fallas.ir,
+        destino: () => { estado.fallas = { estado: nuevas ? 'todas' : 'abiertas', motivo: null, sitio: null, buscar: '' }; ir('fallas'); } });
+    }
+    if (completarN !== null || sinTextoN !== null) {
+      const ce = Number(completarN) || 0;
+      const st = Number(sinTextoN) || 0;
+      tarjetas.push({ g: ce || st ? 'mirar' : 'bien', titulo: H.completar.titulo, cifra: num(ce + st), etiqueta: H.completar.etiqueta(ce + st),
+        lineas: [ce || st ? H.completar.linea(ce, st) : H.completar.bien], ir: H.completar.ir,
+        destino: () => { const v = !ce && st ? 'sinTexto' : 'completar'; estado.busqueda = v; guardar('busqueda.vista', v); ir('busqueda'); } });
     }
     {
       const c = e.costo || {};
@@ -500,7 +561,7 @@
   /* ---------- Búsqueda: fuentes, sitios y directorio ---------- */
   async function busqueda() {
     const B = O.busqueda;
-    const vista = ['fuentes', 'sitios', 'directorio'].includes(estado.busqueda) ? estado.busqueda : 'sitios';
+    const vista = ['fuentes', 'sitios', 'directorio', 'completar', 'sinTexto'].includes(estado.busqueda) ? estado.busqueda : 'sitios';
     const cont = h('div', { class: 'op-lista' });
     vaciar(raiz);
     raiz.append(encabezado(O.secciones.busqueda, B.intro),
@@ -508,6 +569,8 @@
       cont);
     if (vista === 'fuentes') await fuentes(cont);
     else if (vista === 'sitios') await sitios(cont);
+    else if (vista === 'completar') await admin.completar(cont);
+    else if (vista === 'sinTexto') await admin.sinTexto(cont);
     else await directorio(cont);
   }
 
@@ -792,9 +855,13 @@
           h('button', { class: 'btn btn-chico', type: 'button', onclick: () => Terna.copiar(textoPostulacion(x)) }, O.comun.copiarChat), bQuien),
         resultado]);
     });
+    const bProbar = x.estado === 'a_mano' && x.motivo_a_mano !== 'elegido_por_usuario'
+      ? h('button', { class: 'btn btn-chico', type: 'button' }, icono('i-probar'), O.volverAProbar.boton) : null;
+    if (bProbar) bProbar.addEventListener('click', () => volverAProbar({ match_id: x.match_id, motivo: x.motivo_a_mano }, bProbar, cargar));
     return h('section', { class: 'tarjeta op-item', 'aria-labelledby': idT },
       h('div', { class: 'op-cabeza' }, chip, h('h2', { class: 'tarjeta-titulo', id: idT, text: [x.puesto, x.empresa].filter(Boolean).join(' · ') })),
       meta(quien, x.ats || x.sitio, x.intentos ? O.comun.intentos(x.intentos) : null, Terna.relativa(x.actualizado_en) + ' ' + Terna.hora(x.actualizado_en)),
+      bProbar ? h('div', { class: 'botones op-acciones' }, bProbar) : null,
       bDet, det);
   }
   function textoPostulacion(x) {
@@ -974,6 +1041,224 @@
       h('ul', { class: 'op-factores-lista' }, factores.map((f) => h('li', { text: R.factor(f.friendly_name, Terna.fechaLarga(f.created_at)) }))),
       h('div', { class: 'botones' }, h('button', { class: 'btn', type: 'button', onclick: () => pantallaActivar(true) }, icono('i-agregar'), R.sumarFactor)),
       h('p', { class: 'campo-ayuda', text: R.perdiste })));
+  }
+
+  /* ---------- Volver a probar (0054: solo desde acá) ---------- */
+  async function volverAProbar(x, boton, alTerminar) {
+    const V = O.volverAProbar;
+    const incierta = x.motivo === 'confirmacion_incierta';
+    const si = await Terna.confirmar({ titulo: V.titulo, texto: incierta ? V.incierta : V.texto, si: V.si, no: T.comun.cancelar });
+    if (!si) return;
+    boton.disabled = true;
+    try {
+      await llamar('ops_volver_a_probar', { p_match: x.match_id });
+      Terna.avisoBreve(V.hecho);
+      if (alTerminar) await alTerminar();
+    } catch (e) {
+      boton.disabled = false;
+      if (e instanceof Barrera) return;
+      const m = mensaje(e);
+      Terna.avisoBreve(m.includes('no_postulable') ? V.noPostulable : m.includes('transicion_invalida') ? V.yaNo : O.entrar.falla, { error: true });
+    }
+  }
+  function botonQuien(persona, resultado) {
+    const P = O.postulaciones;
+    const b = h('button', { class: 'btn btn-texto btn-chico', type: 'button' }, P.verQuien);
+    b.addEventListener('click', async () => {
+      const si = await Terna.confirmar({ titulo: P.verQuienTitulo(persona), texto: P.verQuienTexto, si: P.verQuienSi, no: T.comun.cancelar });
+      if (!si) return;
+      try {
+        const mail = await llamar('ops_persona', { p_seudonimo: persona });
+        resultado.textContent = P.quienEs(persona, mail);
+      } catch (e) {
+        if (!(e instanceof Barrera)) Terna.avisoBreve(O.entrar.falla, { error: true });
+      }
+    });
+    return b;
+  }
+
+  /* ---------- Fallas (operacion.md 0.2 §5; 0054) ----------
+     Cada vez que Terna dejó una postulación a mano, de cualquier persona. Arriba, las cifras y los grupos (por motivo, por
+     sitio y por la forma del detalle) para ver qué arreglar primero; abajo, una por una, con lo que pasó después, la captura
+     y «Volver a probar». Nunca se borran: la persona sigue viendo la suya en Postulaciones y le queda «Postular a mano». */
+  async function fallas() {
+    const F = O.fallas;
+    const r = await llamar('ops_fallas_resumen', { p_dias: estado.ventana.fallas });
+    estado.detalleDeTodos = !!r.detalle_de_todos;
+    vaciar(raiz);
+    const bVistas = h('button', { class: 'btn btn-chico', type: 'button' }, icono('i-tilde'), F.marcarVistas);
+    bVistas.addEventListener('click', async () => {
+      bVistas.disabled = true;
+      try { await llamar('ops_marcar_fallas_vistas'); Terna.avisoBreve(F.marcadas); await cargar(); } catch (e) { bVistas.disabled = false; if (!(e instanceof Barrera)) Terna.avisoBreve(O.entrar.falla, { error: true }); }
+    });
+    raiz.append(encabezado(O.secciones.fallas, F.intro), h('div', { class: 'herramientas' }, selectorVentana('fallas', [7, 30, 90]), Number(r.nuevas) ? bVistas : null));
+    const cifras = h('dl', { class: 'op-cifras' });
+    for (const k of ['nuevas', 'abiertas', 'resueltas_a_mano', 'descartadas', 'reintentadas', 'enviadas_despues', 'personas']) {
+      cifras.append(h('div', { class: 'op-cifra-caja' }, h('dt', { class: 'suave', text: F.cifras[k] }), h('dd', { class: 'cifra-numero num', text: num(r[k] || 0) })));
+    }
+    raiz.append(h('section', { class: 'tarjeta op-resumen' }, cifras,
+      h('p', { class: 'campo-ayuda', text: r.vistas_hasta ? F.vistasDesde(fechaHora(r.vistas_hasta)) : F.nuncaVistas })));
+    const filtrar = (cambio) => { Object.assign(estado.fallas, cambio); dibujarLista().then(() => { const t = document.getElementById('op-fallas-lista'); if (t) t.focus(); }); };
+    const grupos = h('div', { class: 'op-grupos' });
+    grupos.append(grupo(F.porMotivo, F.porMotivoCols, (r.por_motivo || []).map((x) => h('tr', null,
+      h('th', { scope: 'row' }, h('button', { class: 'btn-enlace', type: 'button', 'aria-label': F.verLas(textoMotivo(x.motivo)), onclick: () => filtrar({ motivo: x.motivo, estado: 'todas' }) }, textoMotivo(x.motivo))),
+      celda(num(x.n), true), celda(num(x.abiertas), true), celda(num(x.resueltas_a_mano), true), celda(num(x.reintentadas), true),
+      celda(num(x.enviadas_despues), true), celda(num(x.personas), true))), [1, 2, 3, 4, 5, 6]));
+    grupos.append(grupo(F.porSitio, F.porSitioCols, (r.por_sitio || []).map((x) => h('tr', null,
+      h('th', { scope: 'row' }, h('button', { class: 'btn-enlace', type: 'button', 'aria-label': F.verLas(x.sitio), onclick: () => filtrar({ sitio: x.sitio, estado: 'todas' }) }, x.sitio)),
+      celda(x.ats), celda(num(x.n), true), celda(num(x.personas), true))), [2, 3]));
+    raiz.append(grupos);
+    raiz.append(h('section', { class: 'op-grupo' }, h('h2', { class: 'op-subtitulo', text: F.porPatron }), h('p', { class: 'campo-ayuda', text: F.porPatronIntro }),
+      (r.por_patron || []).length ? tabla(F.porPatron, F.porPatronCols, (r.por_patron || []).map((x) => h('tr', null,
+        h('th', { scope: 'row', text: textoMotivo(x.motivo) }), h('td', { class: 'op-celda-error', text: x.ejemplo || x.patron }),
+        celda(num(x.n), true), celda(num(x.personas), true))), [2, 3]) : h('p', { class: 'campo-ayuda', text: O.postulaciones.sinTabla })));
+    const listaCaja = h('section', { class: 'op-seccion', 'aria-labelledby': 'op-fallas-lista' });
+    raiz.append(listaCaja);
+    let cargadas = [];
+    async function dibujarLista() {
+      vaciar(listaCaja);
+      cargadas = [];
+      const f = estado.fallas;
+      const buscar = h('input', { class: 'control op-buscar', type: 'search', 'aria-label': F.buscar, placeholder: F.buscar, value: f.buscar || '', spellcheck: 'false' });
+      let espera = null;
+      buscar.addEventListener('input', () => { clearTimeout(espera); espera = setTimeout(() => { f.buscar = buscar.value.trim(); recargarLista(); }, 400); });
+      const quitar = (k) => h('button', { type: 'button', 'aria-label': O.postulaciones.quitarFiltro, onclick: () => { f[k] = null; dibujarLista(); } }, icono('i-cerrar', 'icono-14'));
+      const bCopiar = h('button', { class: 'btn btn-chico', type: 'button', onclick: () => Terna.copiar(planilla(cargadas)) }, icono('i-pegar'), F.copiarLista);
+      Terna.agregar(listaCaja, [h('h2', { class: 'op-subtitulo', id: 'op-fallas-lista', tabindex: '-1', text: F.lista }),
+        estado.detalleDeTodos ? null : h('p', { class: 'campo-ayuda', text: F.soloTuyas }),
+        h('div', { class: 'op-filtros' },
+          segmentado(F.filtroEstado, Object.entries(F.estados), f.estado, (v) => { f.estado = v; dibujarLista(); }),
+          f.motivo ? h('span', { class: 'chip chip-filtro' }, O.postulaciones.filtroMotivo(textoMotivo(f.motivo)), quitar('motivo')) : null,
+          f.sitio ? h('span', { class: 'chip chip-filtro' }, F.filtroSitio(f.sitio), quitar('sitio')) : null),
+        h('div', { class: 'op-filtros' }, buscar, bCopiar)]);
+      const lista = h('div', { class: 'op-tarjetas' });
+      listaCaja.append(lista);
+      await masFallas(lista, null);
+    }
+    async function recargarLista() {
+      const lista = listaCaja.querySelector('.op-tarjetas');
+      vaciar(lista);
+      cargadas = [];
+      const pie = listaCaja.querySelector('.mas-resultados');
+      if (pie) pie.remove();
+      await masFallas(lista, null).catch((e) => errorEn(lista, e));
+    }
+    async function masFallas(lista, antes) {
+      const f = estado.fallas;
+      const datos = await llamar('ops_fallas', { p_dias: estado.ventana.fallas, p_estado: f.estado, p_motivo: f.motivo || null, p_sitio: f.sitio || null,
+        p_buscar: f.buscar || null, p_limite: 50, p_antes: antes });
+      const pie = listaCaja.querySelector('.mas-resultados');
+      if (pie) pie.remove();
+      if (!antes && !datos.length) { lista.append(h('p', { class: 'vacio', text: F.vacio })); return; }
+      cargadas = cargadas.concat(datos);
+      datos.forEach((x) => lista.append(tarjetaFalla(x, cargar)));
+      const total = datos.length ? Number(datos[0].total) : 0;
+      if (cargadas.length < total && datos.length) {
+        const ultimo = datos[datos.length - 1].creado_en;
+        listaCaja.append(h('div', { class: 'mas-resultados' }, h('span', { class: 'suave', text: O.comun.deN(cargadas.length, total) }),
+          h('button', { class: 'btn', type: 'button', onclick: (e) => { e.currentTarget.disabled = true; masFallas(lista, ultimo).catch((x) => errorEn(lista, x)); } }, O.comun.verMas)));
+      }
+    }
+    await dibujarLista();
+  }
+  function tarjetaFalla(x, recargar) {
+    const F = O.fallas;
+    const idT = 'falla-' + x.id;
+    const chip = h('span', { class: 'chip ' + (['error', 'confirmacion_incierta'].includes(x.motivo) ? 'chip-error' : 'chip-espera'), text: textoMotivo(x.motivo) });
+    const marcas = [];
+    if (x.es_nueva) marcas.push(h('span', { class: 'chip chip-azul', text: F.nueva }));
+    if (x.resuelta_a_mano_en) marcas.push(h('span', { class: 'chip chip-accion' }, icono('i-tilde', 'icono-14'), F.resuelta(Terna.fechaCorta(x.resuelta_a_mano_en))));
+    if (x.descartada_en) marcas.push(h('span', { class: 'chip', text: F.descartada(Terna.fechaCorta(x.descartada_en)) }));
+    if (x.reintentada_en) marcas.push(h('span', { class: 'chip' }, icono('i-probar', 'icono-14'), F.reintentada(Terna.fechaCorta(x.reintentada_en))));
+    if (x.enviada_despues_en) marcas.push(h('span', { class: 'chip chip-accion' }, icono('i-enviada', 'icono-14'), F.enviada(Terna.fechaCorta(x.enviada_despues_en))));
+    const quien = h('span', { class: 'op-persona', text: x.persona + (x.es_mia ? ' (' + O.postulaciones.tuya + ')' : '') });
+    const bProbar = x.puede_volver_a_probar ? h('button', { class: 'btn btn-chico', type: 'button' }, icono('i-probar'), O.volverAProbar.boton) : null;
+    if (bProbar) bProbar.addEventListener('click', () => volverAProbar({ match_id: x.match_id, motivo: x.motivo }, bProbar, recargar));
+    const [bDet, det] = plegable((cuerpo) => {
+      const resultado = h('p', { class: 'op-linea', role: 'status' });
+      const caja = h('div', { class: 'op-captura' });
+      const bCaptura = x.tiene_captura ? h('button', { class: 'btn btn-chico', type: 'button' }, F.verCaptura) : null;
+      if (bCaptura) bCaptura.addEventListener('click', () => verCaptura(x, caja, bCaptura));
+      Terna.agregar(cuerpo, [
+        x.detalle ? h('div', null, h('h3', { text: O.postulaciones.dondeSeTrabo }), h('p', { class: 'caso-texto', text: x.detalle })) : null,
+        x.ultimo_error ? h('div', null, h('h3', { text: O.comun.errorTecnico }), errorMono(x.ultimo_error)) : null,
+        x.estado_actual ? h('p', { class: 'op-linea', text: F.ahora(O.postulaciones.estado1[x.estado_actual] || x.estado_actual) }) : null,
+        h('div', { class: 'botones op-acciones' }, link(x.url, O.comun.abrirAviso), bCaptura,
+          h('button', { class: 'btn btn-chico', type: 'button', onclick: () => Terna.copiar(textoFalla(x)) }, O.comun.copiarChat),
+          x.es_mia ? null : botonQuien(x.persona, resultado)),
+        caja, resultado]);
+    });
+    return h('section', { class: 'tarjeta op-item op-falla', 'aria-labelledby': idT, dataset: { falla: x.id } },
+      h('div', { class: 'op-cabeza' }, chip, h('h2', { class: 'tarjeta-titulo', id: idT, text: [x.puesto, x.empresa].filter(Boolean).join(' · ') || F.sinPuesto })),
+      marcas.length ? h('div', { class: 'chips' }, marcas) : null,
+      meta(quien, [x.sitio, x.ats].filter(Boolean).join(' · ') || null, x.intentos ? O.comun.intentos(x.intentos) : null, Terna.relativa(x.creado_en) + ' ' + Terna.hora(x.creado_en)),
+      bProbar ? h('div', { class: 'botones op-acciones' }, bProbar) : null,
+      bDet, det);
+  }
+  // La captura es de la persona: la base la deja firmar solo con el segundo paso y el interruptor prendido, y lo anota.
+  async function verCaptura(x, caja, boton) {
+    const F = O.fallas;
+    boton.disabled = true;
+    const noEsta = () => { vaciar(caja); caja.append(h('p', { class: 'campo-ayuda', text: F.capturaNo })); };
+    try {
+      const ruta = await llamar('ops_falla_captura', { p_falla: x.id });
+      const { data, error } = await sb.storage.from(Terna.CONFIG.bucket).createSignedUrl(ruta, 300);
+      if (error || !data || !data.signedUrl) throw error || new Error('sin_url');
+      vaciar(caja);
+      const img = h('img', { class: 'op-captura-img', src: data.signedUrl, alt: F.capturaAlt([x.puesto, x.empresa].filter(Boolean).join(' · ')) });
+      img.addEventListener('error', noEsta);
+      caja.append(img, h('p', { class: 'campo-ayuda', text: F.capturaNota }));
+      boton.hidden = true;
+    } catch (e) {
+      boton.disabled = false;
+      if (e instanceof Barrera) return;
+      noEsta();
+    }
+  }
+  function textoFalla(x) {
+    const C = O.fallas.copiar;
+    const despues = [x.resuelta_a_mano_en ? C.resuelta(fechaHora(x.resuelta_a_mano_en)) : null, x.descartada_en ? C.descartada(fechaHora(x.descartada_en)) : null,
+      x.reintentada_en ? C.reintentada(fechaHora(x.reintentada_en)) : null, x.enviada_despues_en ? C.enviada(fechaHora(x.enviada_despues_en)) : null].filter(Boolean);
+    return [C.titulo, C.falla(corto(x.id), x.persona, corto(x.match_id)), C.aviso(x.puesto, x.empresa, x.fuente_id),
+      C.sitio(x.sitio, x.ats, x.url), C.motivo(x.motivo, x.intentos || 0, fechaHora(x.creado_en), x.estado_actual),
+      x.detalle ? C.trabo(x.detalle) : null, x.ultimo_error ? C.error(x.ultimo_error) : null, despues.length ? C.despues(despues.join(' · ')) : null,
+      x.match_id ? O.postulaciones.copiar.probar(corto(x.match_id)) : null].filter(Boolean).join('\n');
+  }
+  // «Copiar la lista»: una fila por falla, separada por tabulaciones, para pegar en una planilla y agrupar a mano.
+  function planilla(filas) {
+    const F = O.fallas;
+    const limpio = (v) => (v === null || v === undefined ? '' : String(v).replace(/[\t\r\n]+/g, ' ').trim());
+    const lineas = [F.planillaCols.join('\t')].concat(filas.map((x) => [fechaHora(x.creado_en), x.persona, x.puesto, x.empresa, x.sitio, x.ats,
+      textoMotivo(x.motivo), x.intentos, x.detalle, x.ultimo_error, fechaHora(x.resuelta_a_mano_en), fechaHora(x.descartada_en),
+      fechaHora(x.reintentada_en), fechaHora(x.enviada_despues_en), O.postulaciones.estado1[x.estado_actual] || x.estado_actual].map(limpio).join('\t')));
+    return lineas.join('\n');
+  }
+
+  /* ---------- Problemas, Personas y Ajustes: lo que era Admin (js/ops-admin.js) ---------- */
+  async function problemas() {
+    const cont = h('div', { class: 'op-lista op-admin' });
+    vaciar(raiz);
+    raiz.append(encabezado(O.secciones.problemas, null), cont);
+    await admin.problemas(cont);
+  }
+  async function personas() {
+    const P = O.personas;
+    const vista = estado.personas === 'uso' ? 'uso' : 'usuarios';
+    const cont = h('div', { class: 'op-lista op-admin' });
+    vaciar(raiz);
+    raiz.append(encabezado(O.secciones.personas, P.intro),
+      h('div', { class: 'herramientas' }, segmentado(P.vistasNombre, Object.entries(P.vistas), vista, (v) => { estado.personas = v; guardar('personas.vista', v); cargar(); }),
+        vista === 'uso' ? selectorVentana('uso', [7, 30]) : null),
+      cont);
+    if (vista === 'uso') await admin.uso(cont, estado.ventana.uso); else await admin.usuarios(cont);
+  }
+  async function ajustes() {
+    const cont = h('div', { class: 'op-lista op-admin' });
+    vaciar(raiz);
+    raiz.append(encabezado(O.secciones.ajustes, O.ajustes.intro), cont);
+    await admin.leerConfig();
+    await admin.invitaciones(cont);
+    await admin.ia(cont);
   }
 
   /* ---------- Arranque ---------- */

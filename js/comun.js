@@ -14,8 +14,10 @@ window.Terna = (function () {
   };
   const PAGINAS = {
     inicio: 'index.html', busqueda: 'busqueda.html', avisos: 'avisos.html', postulaciones: 'postulaciones.html', perfil: 'perfil.html',
-    preferencias: 'preferencias.html', invitaciones: 'invitaciones.html', admin: 'admin.html', alertas: 'alertas.html',
+    preferencias: 'preferencias.html', invitaciones: 'invitaciones.html', alertas: 'alertas.html',
   };
+  // Desde operacion.md 0.2 (20/11/2026) no hay pestaña ni página de Admin: quien administra Terna es una persona más en esta web
+  // y lo de admin vive en ops.html, con su sesión y el segundo paso (0054).
   // Páginas sin pestaña propia: marcan la de la sección a la que pertenecen (las guías de alertas son de Preferencias).
   const PESTANA_DE = { alertas: 'preferencias' };
   const ICONOS_PESTANAS = {
@@ -161,7 +163,7 @@ window.Terna = (function () {
   }
   // Solo deja volver a una página propia, con un hash simple.
   function volverValido(valor) {
-    return /^(index|busqueda|avisos|postulaciones|perfil|preferencias|invitaciones|admin|alertas)\.html(#[a-z0-9-]+)?$/i.test(valor || '') ? valor : 'index.html';
+    return /^(index|busqueda|avisos|postulaciones|perfil|preferencias|invitaciones|alertas)\.html(#[a-z0-9-]+)?$/i.test(valor || '') ? valor : 'index.html';
   }
   async function salir() {
     estado.saliendo = true;
@@ -221,11 +223,6 @@ window.Terna = (function () {
     nav.scrollLeft = Math.max(0, activa.offsetLeft - (nav.clientWidth - activa.offsetWidth) / 2);
   }
   function completarBarra() {
-    const nav = document.querySelector('.pestanas');
-    if (nav && estado.usuario.rol === 'admin' && !nav.querySelector('[data-pestana="admin"]')) {
-      nav.append(pestana('admin', estado.pagina));
-      centrarPestana(nav);
-    }
     const nombre = document.getElementById('cuenta-nombre');
     if (nombre) nombre.textContent = (estado.perfil && estado.perfil.nombre) || estado.usuario.mail;
   }
@@ -867,7 +864,6 @@ window.Terna = (function () {
     estado.usuario = u.data;
     estado.perfil = p.data || { nombre: null, apellido: null };
     estado.faltantes = f.data || [];
-    if (opciones.admin && estado.usuario.rol !== 'admin') { location.replace('index.html'); return null; }
     completarBarra();
     bandas();
     return { sb, usuario: estado.usuario, perfil: estado.perfil, faltantes: estado.faltantes, config: estado.config };
