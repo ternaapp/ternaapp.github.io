@@ -614,7 +614,7 @@ Terna.pagina('postulaciones', async (ctx) => {
     if (linea) sec.append(h('p', { text: linea }));
     // Cuántas veces lo intentó Terna (brand.md 0.28 §6.5; Francisco, 13/11/2026: «que los cuente en algún lado y diga la cantidad
     // de veces que lleva intentando»). Los intentos los cuenta el motor; desde 0041 no tienen tope y cada uno después del primero lo
-    // pide la persona con "Volver a probar".
+    // pide Francisco con "Volver a probar" desde Operación (operacion.md 0.2; hasta 0.1, la persona).
     const intentos = Number(a.intentos) || 0;
     if (intentos > 0) sec.append(h('p', { class: 'suave intentos', text: T.postulaciones.intentos(intentos) }));
     if (a.estado_postulacion === 'a_mano') {

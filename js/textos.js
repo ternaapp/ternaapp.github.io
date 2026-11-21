@@ -1018,7 +1018,7 @@ window.T = (function () {
         queHace: 'Si decís que sí, Terna crea la cuenta con tu mail y una contraseña que genera para esos sitios, la misma en todos, y postula por vos. La contraseña la ves acá.',
         saber: 'Algunas empresas mandan un mail para confirmar la cuenta: te explicamos cómo dejar que Terna lo vea sin darle tu correo. La empresa podría bloquear la cuenta si detecta que la creó un programa. Lo cambiás cuando quieras, y las cuentas que Terna creó siguen siendo tuyas.',
         // brand.md 0.18 §6.7 y §9 (propuesta: falta el OK de Francisco al texto): mientras no exista la guía de los mails, esta línea lo dice.
-        guiaEnCamino: 'La guía para que Terna vea esos mails está en camino. Hasta que esté, si una empresa manda uno, confirmás la cuenta desde tu correo y Terna vuelve a probar cuando se lo pedís.',
+        guiaEnCamino: 'La guía para que Terna vea esos mails está en camino. Hasta que esté, si una empresa manda uno, confirmás la cuenta desde tu correo y esa postulación la hacés vos; las siguientes en ese sitio, Terna entra con la cuenta.',
         si: 'Sí, creá las cuentas',
         no: 'No, las hago yo',
         contrasena: 'Tu contraseña para esos sitios',
