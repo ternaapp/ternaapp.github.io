@@ -480,6 +480,10 @@ Terna.pagina('avisos', async (ctx) => {
     // Con «Armar paquetes» en No, Terna no arma nada: lo primero de Por armar.
     if (pestana === 'por_armar' && prefs.armar_paquetes === false) {
       lista.append(h('p', { class: 'armar-no' }, icono('i-alerta', 'icono-16'), h('span', null, T.avisos.proximos.armarNo + ' ', h('a', { href: 'preferencias.html#paquetes', text: T.avisos.proximos.cambiarlo }))));
+    } else if (pestana === 'por_armar' && !r.pedidos.length && grupos.length && grupos.every(([g]) => g === 'no_arma' || g === 'descartados') && !algoCambiado()) {
+      // Nada que Terna vaya a armar sola y nada pedido: todo cae en el plegado «Ver N que Terna no arma sola». Sin esta línea la
+      // pestaña mostraba un número grande y un plegable cerrado, sin decir por qué (con datos reales, 21/11/2026).
+      lista.append(h('p', { class: 'armar-no' }, icono('i-pedido', 'icono-16'), h('span', null, T.avisos.proximos.nadaSola(umbral) + ' ', h('a', { href: 'preferencias.html#busqueda', text: T.avisos.proximos.cambiarUmbral }))));
     }
     // Tus pedidos: en escritorio, arriba a la derecha de las pestañas; en el celular, dentro de Por armar, después de lo que te toca
     // decidir y antes de lo demás (PLAN-UX §3.2). Se mueve el elemento: así el orden del foco es el de la pantalla.

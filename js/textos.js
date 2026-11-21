@@ -518,6 +518,10 @@ window.T = (function () {
           : 'Con ' + pedidos + ' pedidos, las próximas ' + corridas + ' corridas arman solo lo que pediste.'),
         armarNo: 'Armar paquetes está en No: Terna no arma nada, tampoco lo que pediste.',
         cambiarlo: 'Cambiarlo',
+        // propuesta PLAN-UX (brand.md §6.4): Por armar sin nada que Terna vaya a armar y sin pedidos (visto con datos reales el 21/11:
+        // todo caía en «Ver N que Terna no arma sola», sin decir por qué).
+        nadaSola: (u) => 'Ninguno de estos lo arma Terna sola: quedan debajo de tu umbral (' + u + ') o fuera de tus preferencias. Podés pedir el que quieras.',
+        cambiarUmbral: 'Cambiar el umbral',
       },
       ficha: {
         match: (m) => 'Match ' + m,
