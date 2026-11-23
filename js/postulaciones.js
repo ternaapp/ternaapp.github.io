@@ -805,25 +805,29 @@ Terna.pagina('postulaciones', async (ctx) => {
     if (et) sec.append(et);
     return sec;
   }
-  // Dónde se destraba (brand.md 0.7 §6.5): el motor deja en respuestas.traba qué campo frenó la postulación. Todo se completa en
-  // Mi perfil (diseno.md 0.19 §9.2): un dato de contacto en Datos; DNI, CUIL o fecha de nacimiento en Identificación (desde
-  // brand.md 0.4.8 Terna los escribe si están cargados); el analítico en CV; el promedio en Estudios; lo demás (autorización,
-  // disponibilidad, nacionalidad, consentimientos…) en Respuestas para formularios, que hasta 0.18 estaba en Preferencias.
-  const CAMPOS_PERFIL = { empresa_actual: 'experiencia', telefono: 'datos', linkedin: 'datos', sitio: 'datos', promedio: 'estudios', promedio_sin_opcion: 'estudios',
-    analitico: 'analitico', dni: 'identificacion' };
+  // Dónde se destraba (brand.md 0.7 §6.5): el motor deja en respuestas.traba qué campo frenó la postulación. Desde PLAN-PREFERENCIAS
+  // (D2 y D5, §3.2) en Mi perfil queda solo lo que es tuyo y va en el CV: la experiencia, el teléfono y LinkedIn (Datos) y el promedio
+  // (Estudios, D7). Lo demás se completa en Preferencias › Postulaciones, cada campo en su ancla: el secundario y viajar en
+  // Respuestas para formularios; el sitio (portfolio) en Datos para formularios; el analítico y el DNI (con el CUIL y la fecha de
+  // nacimiento, que Terna escribe si están cargados desde brand.md 0.4.8) en su ítem; y todo lo demás (autorización, disponibilidad,
+  // nacionalidad, consentimientos…) en Respuestas para formularios.
+  const CAMPOS_PERFIL = { empresa_actual: 'experiencia', telefono: 'datos', linkedin: 'datos', promedio: 'estudios', promedio_sin_opcion: 'estudios' };
   // Lo que Terna no tiene en ningún lado (un archivo que no es el CV ni la carta): no hay dónde completarlo, así que no va link
   // (pipeline.md 0.3.19 §4.12).
   const CAMPOS_SIN_LINK = { archivo: true };
-  // Desde brand.md 0.24 (0039): el secundario, su evidencia y viajar se completan en Preferencias › Postulación.
-  const CAMPOS_PREFERENCIAS = { secundario_matematica: true, secundario_lengua: true, secundario_evidencia: true, viajar: true };
+  // El ancla de Preferencias de cada campo (PLAN-PREFERENCIAS §3.2). Desde brand.md 0.24 (0039): el secundario, su evidencia y viajar.
+  // La dirección (FEEDBACK-PREFERENCIAS P2-4): el motor marca campo "direccion" cuando el registro la pide y no está
+  // (postular/comun.py); sin esta fila caía en «Completar respuestas para formularios», 2.900 px arriba de la dirección.
+  const CAMPOS_PREFERENCIAS = { secundario_matematica: 'formularios', secundario_lengua: 'formularios', secundario_evidencia: 'formularios', viajar: 'formularios',
+    sitio: 'datos-formularios', analitico: 'analitico', dni: 'identificacion', direccion: 'direccion' };
   function campoTraba(a) { return a.respuestas && a.respuestas.traba ? a.respuestas.traba.campo || null : null; }
   function linkTraba(a) {
     if (a.motivo_a_mano !== 'pregunta_sin_respuesta') return null;
     const campo = campoTraba(a);
     if (CAMPOS_SIN_LINK[campo]) return null;
     if (CAMPOS_PERFIL[campo]) return h('a', { href: 'perfil.html#' + CAMPOS_PERFIL[campo], text: T.postulaciones.completarPerfil });
-    if (CAMPOS_PREFERENCIAS[campo]) return h('a', { href: 'preferencias.html#postulacion', text: T.postulaciones.completarPreferencias });
-    return h('a', { href: 'perfil.html#respuestas', text: T.postulaciones.completarRespuestas });
+    if (CAMPOS_PREFERENCIAS[campo]) return h('a', { href: 'preferencias.html#' + CAMPOS_PREFERENCIAS[campo], text: T.postulaciones.completarPreferencias });
+    return h('a', { href: 'preferencias.html#formularios', text: T.postulaciones.completarRespuestas });
   }
   function captura(a) {
     const caja = h('div', { class: 'ficha-seccion' });

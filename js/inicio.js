@@ -242,7 +242,7 @@ Terna.pagina('inicio', async (ctx) => {
     const sec = h('section', { class: 'pozo pregunta-cuentas', id: 'pregunta-cuentas', 'aria-labelledby': 'h-cuentas' },
       h('h2', { id: 'h-cuentas', text: C.titulo }),
       h('p', null, C.texto, ' ', numero),
-      h('div', { class: 'pregunta-cuentas-botones' }, bSi, bNo, h('a', { href: 'preferencias.html#postulacion', text: C.saber })));
+      h('div', { class: 'pregunta-cuentas-botones' }, bSi, bNo, h('a', { href: 'preferencias.html#cuentas', text: C.saber })));
     async function responder(valor) {
       if (bSi.getAttribute('aria-disabled') === 'true') return;
       for (const b of [bSi, bNo]) b.setAttribute('aria-disabled', 'true');
@@ -338,7 +338,7 @@ Terna.pagina('inicio', async (ctx) => {
     const iMarca = filas.findIndex((x) => x.f.desde <= u);
     if (iMarca >= 0) filas[iMarca].marcaDespues = h('li', { class: 'franjas-umbral' }, h('span', { class: 'umbral-pastilla num', text: G.marca(u) }));
     return plegable('por-match', 'h-franjas', LI.franjas, h('div', { class: 'plegable-cuerpo' }, barras(filas, LI.franjas),
-      h('p', { class: 'tablero-nota' }, h('span', { class: 'suave', text: LI.franjasNota(piso) + ' ' }), h('a', { href: 'preferencias.html#busqueda', text: LI.cambiarUmbral }))));
+      h('p', { class: 'tablero-nota' }, h('span', { class: 'suave', text: LI.franjasNota(piso) + ' ' }), h('a', { href: 'preferencias.html#umbral', text: LI.cambiarUmbral }))));
   }
 
   // Semana a semana: ocho llamadas a mi_resumen, una desde el comienzo de cada semana (de siete días, hasta hoy); cada semana es la

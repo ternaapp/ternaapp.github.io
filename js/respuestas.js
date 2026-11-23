@@ -1,8 +1,10 @@
 /* Terna · js/respuestas.js
    Respuestas para formularios (diseno.md 0.19 §9.2; brand.md 0.7 §6.6; datos.md §5.6): autorización para trabajar,
    nacionalidad, disponibilidad, mudanza y consentimientos. Son columnas de `preferencias` que el motor lee cuando llena un
-   formulario (pipeline.md §4.12). Desde 0.19 son un subtema de Mi perfil › Datos y se guardan con su "Guardar" (perfil.js);
-   hasta 0.18 eran un bloque de Preferencias.
+   formulario (pipeline.md §4.12). Hasta 0.18 eran un bloque de Preferencias; de 0.19 a PLAN-PREFERENCIAS, un subtema de Mi
+   perfil › Datos. Desde PLAN-PREFERENCIAS (D2, 23/11/2026) son el subtema Respuestas para formularios de Preferencias ›
+   Postulaciones (preferencias.js, que intercala viajar y el secundario) y se guardan con "Guardar preferencias", solo si
+   cambiaron. El módulo no cambió: no sabe en qué página está.
    Las opciones se guardan en los textos que el motor ya lee: "Argentina: sí. Italia: sí. Otros países: solo remoto, sin visa."
    e "inmediata" o "30 días". Lo que no entra en esas opciones va con tus palabras, y un texto guardado que no es exactamente
    el de unas opciones se muestra tal cual: la página nunca reescribe lo que la persona escribió. */
@@ -11,8 +13,8 @@
 window.Respuestas = (function () {
   const MAX_DIAS = 365;
 
-  // fila: las cinco columnas de preferencias. piezas: Terna.piezas de Mi perfil (títulos h4, dentro del subtema).
-  // alMarcar(el): un error se escribió o se borró en `el` (perfil.js abre su bloque y marca el carril).
+  // fila: las cinco columnas de preferencias. piezas: Terna.piezas de la página (títulos h4, dentro del subtema).
+  // alMarcar(el): un error se escribió o se borró en `el` (preferencias.js abre su bloque y marca el carril).
   function montar({ fila, piezas, alMarcar }) {
     const { h, icono } = Terna;
     const R = T.respuestas;
@@ -99,7 +101,7 @@ window.Respuestas = (function () {
     // 0021: las casillas de consentimiento obligatorias (Sí por defecto, como hacía el motor desde pipeline.md 0.3.8).
     const sCons = conInterruptor(R.consentimientos, R.consentimientosAyuda, v.consentimientos, (x) => { v.consentimientos = x; });
 
-    // Lo que se guarda: los mismos textos y valores que escribía Preferencias hasta 0.18.
+    // Lo que se guarda: los mismos textos y valores que escribían Preferencias hasta 0.18 y Mi perfil hasta PLAN-PREFERENCIAS.
     function columnas() {
       return {
         autorizacion_trabajo: aut.propias ? (aut.texto.trim() || null) : armarAut(),

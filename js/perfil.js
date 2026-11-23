@@ -1,16 +1,31 @@
 /* Terna · js/perfil.js
-   Mi perfil (diseno.md 0.19 §9.1, §9.2 y §10.17; brand.md 0.7 §6.6), en seis bloques y en este orden, también en primer uso:
-   - Datos, con tres subtemas: Contacto; Identificación (DNI, CUIL y fecha de nacimiento, hasta 0.18 el bloque "Datos para
-     formularios"); y Respuestas para formularios (hasta 0.18 en Preferencias; js/respuestas.js).
-   - CV, con el CV original, el perfil estructurado (si existe) y el analítico (hasta 0.18, tres bloques sueltos).
-   - Experiencia laboral, Estudios y cursos e Idiomas: cada ítem en su propia caja.
-   - Tu cuenta: pausar (escribe en el acto) y cómo borrarla (hasta 0.18 en Preferencias).
+   Mi perfil (diseno.md 0.19 §9.1, §9.2 y §10.17; brand.md 0.7 §6.6): desde PLAN-PREFERENCIAS (D2 y D5, 23/11/2026) es lo mínimo,
+   quién sos y lo que va escrito en tu CV; toda la configuración está en Preferencias. Seis bloques, en este orden, también en
+   primer uso:
+   - Datos, sin subtemas: nombre, apellido, mail, ciudad, y teléfono y LinkedIn (opcionales: van en la línea de contacto del CV).
+     #contacto, el subtema de antes, abre este bloque. Arriba de todo, debajo de la intro y fuera de los bloques, una línea con los
+     links a Preferencias › Postulaciones (FEEDBACK-PREFERENCIAS P1-2; hasta ahí iba al final de Datos).
+   - CV, con el CV original y el perfil estructurado (si existe).
+   - Experiencia laboral, Estudios y cursos (con el promedio de cada carrera, opcional; D7) e Idiomas: cada ítem en su caja.
+   - Tu cuenta: pausar (escribe en el acto) y cómo borrarla.
+   Se mudaron a Preferencias › Postulaciones: Respuestas para formularios (js/respuestas.js; D2), Identificación, Dirección,
+   Portfolio, GitHub y Analítico (js/formularios.js; D5). Sus anclas de antes redirigen ahí (abajo). Esta página ya no lee ni
+   escribe la tabla preferencias, perfiles.portfolio ni github, las funciones de identificación y dirección ni el analítico.
    En celular cada bloque es un desplegable (cerrado, salvo los que tienen algo que falta) y "Guardar" va fijo abajo. Desde
    768 px: carril a la izquierda, con los subtemas debajo de su bloque, el bloque elegido a la derecha y "Guardar" arriba a la
    derecha en la cabecera fija. Un error al guardar muestra su bloque.
-   Un "Guardar" para la página (perfil, listas, identificación y respuestas); el CV y el analítico se suben en el acto, el
-   perfil estructurado tiene su propio "Guardar" y pausar la cuenta escribe en el acto. */
+   Un "Guardar" para la página (perfil y listas); el CV se sube en el acto, el perfil estructurado tiene su propio "Guardar" y
+   pausar la cuenta escribe en el acto. */
 'use strict';
+
+/* Lo que se mudó a Preferencias (PLAN-PREFERENCIAS §3.1): los links de antes llevan ahí, antes de armar nada. Ninguno va a
+   #respuestas ni a #cuenta, que el js/preferencias.js de antes mandaba de vuelta acá: si durante los diez minutos de caché se
+   juntaran este archivo y aquel, no habría vuelta infinita (esos hashes el archivo viejo no los conoce y abre la página arriba). */
+(function () {
+  const MUDADAS = { respuestas: 'formularios', identificacion: 'identificacion', formularios: 'datos-formularios', analitico: 'analitico' };
+  const destino = MUDADAS[location.hash.slice(1)];
+  if (destino) location.replace('preferencias.html#' + destino);
+}());
 
 Terna.pagina('perfil', async (ctx) => {
   const { h, icono } = Terna;
@@ -23,10 +38,18 @@ Terna.pagina('perfil', async (ctx) => {
   // La intro, en una oración (PLAN-UX §3.5; T.perfil.intro): el texto es el de T, no el que trae el .html.
   const intro = document.querySelector('#contenido > p.intro');
   if (intro) intro.textContent = P.intro;
+  // Debajo de la intro, mientras falte algo: qué hace falta para empezar (PLAN-PREFERENCIAS §4.6). Lo pinta dibujarIndicador.
+  const minimo = h('p', { class: 'campo-ayuda perfil-minimo', hidden: true, text: P.minimo });
+  /* Y siempre, dónde quedó lo que se mudó (FEEDBACK-PREFERENCIAS P1-2): fuera de los bloques, a la vista también en el celular. Las
+     postulaciones a mano de antes dicen «Cargalo en Mi perfil › Identificación» (el texto es del motor y queda escrito así): quien lo
+     sigue llega acá y no encuentra Identificación. Dos links: las respuestas y los datos, que caen en el DNI. */
+  const mudados = h('p', { class: 'campo-ayuda datos-en-preferencias' }, P.datosEnPreferencias(
+    h('a', { href: 'preferencias.html#formularios', text: P.datosEnPreferenciasLink }),
+    h('a', { href: 'preferencias.html#identificacion', text: P.datosEnPreferenciasDatos })));
+  if (intro) intro.after(minimo, mudados);
   const primerUso = new URLSearchParams(location.search).get('bienvenida') === '1';
   const MAX = { exp: config.max_experiencias || 15, est: config.max_estudios || 15, idi: config.max_idiomas || 10, cvMb: config.cv_max_mb || 5 };
   const RUTA_CV = uid + '/cv-original.pdf';
-  const RUTA_ANALITICO = uid + '/analitico.pdf';  // 0021
   // 0022: el tipo de cada estudio. Sin elegir, el que dice el nombre, con las mismas palabras que usa el motor (datos/titulos.json,
   // datos/secundario.json) y las de posgrado y terciario.
   const NIVELES_ESTUDIO = ['grado', 'posgrado', 'terciario', 'curso', 'secundario'];
@@ -44,23 +67,17 @@ Terna.pagina('perfil', async (ctx) => {
   const mesHoy = Terna.hoy().slice(0, 7);
 
   const parar = Terna.cargando(raiz);
-  const [rP, rE, rS, rI, rC, rA, rR] = await Promise.all([
-    // 0049: con el GitHub; sin la columna (la base sin la 0049), la lectura de antes y el campo no se muestra.
-    (async () => {
-      const columnas = 'nombre, apellido, telefono, ciudad, linkedin, portfolio, perfil_estructurado, perfil_estructurado_en, cv_original_leido_en';
-      const r = await sb.from('perfiles').select(columnas + ', github').eq('usuario_id', uid).maybeSingle();
-      return r.error && (r.error.code === '42703' || /github/.test(r.error.message || '')) ? sb.from('perfiles').select(columnas).eq('usuario_id', uid).maybeSingle() : r;
-    })(),
+  const [rP, rE, rS, rI, rC] = await Promise.all([
+    // Sin portfolio ni GitHub desde PLAN-PREFERENCIAS (D5): los lee y los escribe Preferencias (js/formularios.js). Si quedaran en el
+    // update de acá, Mi perfil los pisaría con el valor viejo.
+    sb.from('perfiles').select('nombre, apellido, telefono, ciudad, linkedin, perfil_estructurado, perfil_estructurado_en, cv_original_leido_en').eq('usuario_id', uid).maybeSingle(),
     sb.from('experiencias').select('id, puesto, empresa, desde, hasta, actual, descripcion, orden').eq('usuario_id', uid).order('orden').order('desde', { ascending: false }),
     sb.from('estudios').select('id, titulo, institucion, anio, estado, promedio, nivel, orden').eq('usuario_id', uid).order('orden'),
     sb.from('idiomas').select('id, idioma, nivel').eq('usuario_id', uid).order('creado_en'),
     sb.rpc('cv_original'),
-    sb.rpc('analitico'),
-    // Las respuestas para formularios (0016, 0020, 0021): columnas de preferencias (datos.md 0.24 §14).
-    sb.from('preferencias').select('autorizacion_trabajo, disponibilidad, mudanza, nacionalidad, aceptar_consentimientos').eq('usuario_id', uid).maybeSingle(),
   ]);
   parar();
-  const errorCarga = rP.error || rE.error || rS.error || rI.error || rC.error || rR.error;
+  const errorCarga = rP.error || rE.error || rS.error || rI.error || rC.error;
   if (errorCarga) { Terna.errorDeCarga(raiz, errorCarga); return; }
   if (primerUso) {
     history.replaceState(null, '', location.pathname + location.hash);
@@ -70,9 +87,7 @@ Terna.pagina('perfil', async (ctx) => {
   let clave = 0;
   const nuevaClave = () => 'n' + (clave += 1);
   const perfil = rP.data || {};
-  const conGithub = Object.prototype.hasOwnProperty.call(perfil, 'github');
-  const datos = { nombre: perfil.nombre || '', apellido: perfil.apellido || '', telefono: perfil.telefono || '', ciudad: perfil.ciudad || '', linkedin: perfil.linkedin || '', portfolio: perfil.portfolio || '' };
-  if (conGithub) datos.github = perfil.github || '';
+  const datos = { nombre: perfil.nombre || '', apellido: perfil.apellido || '', telefono: perfil.telefono || '', ciudad: perfil.ciudad || '', linkedin: perfil.linkedin || '' };
   const listas = {
     exp: (rE.data || []).map((e) => Object.assign({ clave: nuevaClave() }, e, { descripcion: e.descripcion || '' })),
     // 0022: sin tipo elegido, se propone el que dice el nombre (como lo deduce el motor); se guarda cuando la persona guarda.
@@ -82,18 +97,8 @@ Terna.pagina('perfil', async (ctx) => {
   let originales = foto();
   let estructurado = perfil.perfil_estructurado || null;
   let cv = (Array.isArray(rC.data) ? rC.data[0] : rC.data) || null;
-  // El analítico (0021): si no se puede leer, el bloque sigue sin él (no es parte del perfil).
-  let analitico = rA.error ? undefined : ((Array.isArray(rA.data) ? rA.data[0] : rA.data) || null);
   let leidoEn = perfil.cv_original_leido_en || null;
   let faltantes = ctx.faltantes.slice();
-  const formularios = { cargado: false, dni: '', cuil: '', fecha: '', original: null };
-  // La dirección (0036; diseno.md 0.29 §9.2; brand.md 0.16 §6.6): calle y número, código postal y provincia, cifrados como el DNI.
-  // `guardada` dice si la base tiene una, para mostrar "Borrar dirección". A quién se le muestra, en js/cuentas.js.
-  const direccion = { cargada: false, calle: '', cp: '', provincia: '', original: null, guardada: false };
-  const firmaDireccion = () => JSON.stringify([direccion.calle.trim(), direccion.cp.trim(), direccion.provincia]);
-  // Como la guarda la base: la calle con los espacios juntados; el código postal sin espacios ni guiones y en mayúscula.
-  const calleLimpia = () => direccion.calle.trim().replace(/\s+/g, ' ');
-  const cpLimpio = () => direccion.cp.replace(/[\s-]/g, '').toUpperCase();
 
   function foto() {
     const limpiar = (o, campos) => campos.map((k) => o[k] === undefined ? null : o[k]);
@@ -106,7 +111,8 @@ Terna.pagina('perfil', async (ctx) => {
   }
 
   /* ---------- Piezas de formulario ---------- */
-  function campo({ id, etiqueta, valor, ayuda, max, tipo, autocomplete, readonly, inputmode, alCambiar, area, list, ejemplo }) {
+  // `opcional`: al lado de la etiqueta, la marca chica y gris «Opcional» (PLAN-PREFERENCIAS §8.2): teléfono, LinkedIn y promedio.
+  function campo({ id, etiqueta, valor, ayuda, max, tipo, autocomplete, readonly, inputmode, alCambiar, area, list, ejemplo, opcional }) {
     const idAyuda = ayuda ? id + '-ayuda' : null;
     const idError = id + '-error';
     const props = { class: 'control', id, value: valor === null || valor === undefined ? '' : String(valor), maxlength: max ? String(max) : null,
@@ -115,7 +121,7 @@ Terna.pagina('perfil', async (ctx) => {
     const control = area ? h('textarea', Object.assign(props, { rows: '4' })) : h('input', Object.assign(props, { type: tipo || 'text' }));
     if (area) control.value = props.value;
     if (alCambiar) control.addEventListener('input', () => { alCambiar(control.value); limpiarError(id); });
-    return h('div', { class: 'campo' }, h('label', { for: id, text: etiqueta }), control,
+    return h('div', { class: 'campo' }, h('label', { for: id }, etiqueta, opcional ? [' ', h('span', { class: 'marca-opcional', text: P.opcional })] : null), control,
       ayuda ? h('p', { class: 'campo-ayuda', id: idAyuda, text: ayuda }) : null, h('p', { class: 'campo-error', id: idError }));
   }
   function seleccion({ id, etiqueta, valor, opciones, alCambiar, vacio }) {
@@ -191,6 +197,7 @@ Terna.pagina('perfil', async (ctx) => {
     indicador.append(icono(faltantes.length ? 'i-por-decidir' : 'i-armado', 'icono-18'),
       faltantes.length ? P.falta(Terna.listaFaltantes(faltantes)) : P.completo);
     bCompletar.hidden = !faltantes.some((x) => FALTA[x]);
+    minimo.hidden = !faltantes.length;
     const conFalta = new Set(faltantes.filter((x) => FALTA[x]).map((x) => FALTA[x][0]));
     for (const k of ['datos', 'cv', 'exp', 'est', 'idi', 'cuenta']) bloques.estado(k, conFalta.has(k) ? 'toca' : null, P.faltaCorto);
   }
@@ -203,9 +210,9 @@ Terna.pagina('perfil', async (ctx) => {
   if (faltantes.includes('experiencia')) { abiertosAlEntrar.add('exp'); abiertosAlEntrar.add('est'); }
   if (faltantes.includes('idioma')) abiertosAlEntrar.add('idi');
   const bloques = Terna.porBloques({ raiz, cabecera: document.getElementById('cabecera'), nombre: T.comun.pestanas.perfil, abiertos: abiertosAlEntrar });
-  // Los hash de los bloques; los de los subtemas van en cada uno (#contacto, #identificacion, #respuestas, #cv-original,
-  // #estructurado, #analitico). Los de antes siguen andando: #formularios (alias de Identificación) y #estructurado.
-  const HASH = { datos: 'datos', cv: 'cv', exp: 'experiencia', est: 'estudios', idi: 'idiomas', cuenta: 'cuenta' };
+  // Los hash de los bloques; los de los subtemas van en cada uno (#cv-original, #estructurado). #contacto, el subtema de antes,
+  // es un alias de Datos. #respuestas, #identificacion, #formularios y #analitico redirigen a Preferencias (arriba de todo).
+  const HASH ={ datos: 'datos', cv: 'cv', exp: 'experiencia', est: 'estudios', idi: 'idiomas', cuenta: 'cuenta' };
   const CUENTA = { exp: () => listas.exp.length, est: () => listas.est.length, idi: () => listas.idi.length };
   // El lomo de un bloque cerrado dice qué hay adentro, con lo que la persona cargó (PLAN-WEB.md §2.12 y §3.4). Sin nada, el
   // vacío que el bloque ya dice adentro ("Todavía no subiste tu CV."): un lomo en blanco parecía roto y escondía el CV, que es
@@ -213,7 +220,7 @@ Terna.pagina('perfil', async (ctx) => {
   const unidos = (xs, con) => xs.map((x) => String(x || '').trim()).filter(Boolean).join(con || ', ');
   const RESUMEN = {
     datos: () => unidos([unidos([datos.nombre, datos.apellido], ' '), datos.ciudad]),
-    cv: () => [cv ? P.cvCargado(Terna.fechaLarga(cv.subido_en)) : P.sinCv, analitico ? P.analiticoCargado(Terna.fechaLarga(analitico.subido_en)) : ''].filter(Boolean).join(' '),
+    cv: () => (cv ? P.cvCargado(Terna.fechaLarga(cv.subido_en)) : P.sinCv),
     exp: () => unidos(listas.exp.map((e) => e.puesto)) || P.sinExperiencia,
     est: () => unidos(listas.est.map((e) => e.titulo)) || P.sinEstudios,
     idi: () => unidos(listas.idi.map((e) => e.idioma)) || P.sinIdiomas,
@@ -225,105 +232,20 @@ Terna.pagina('perfil', async (ctx) => {
   const irAlPrimerError = () => bloques.irAlPrimerError();
   const actualizarCuentas = () => bloques.actualizarCuentas();
 
-  /* ---------- Datos: Contacto, Identificación y Respuestas para formularios ---------- */
-  const resp = Respuestas.montar({
-    fila: rR.data || {},
-    piezas: Terna.piezas({ prefijo: 'resp', nivel: 'h4' }),
-    alMarcar: (el) => { if (el.textContent) abrirSeccionDe(el); marcarCarril(); },
-  });
-  let respOriginal = JSON.stringify(resp.columnas());
-
+  /* ---------- Datos: quién sos y cómo te contactan (PLAN-PREFERENCIAS §8.2) ----------
+     Sin subtemas desde PLAN-PREFERENCIAS: Identificación (con la dirección) y Respuestas para formularios se mudaron a Preferencias ›
+     Postulaciones, igual que Portfolio y GitHub. Teléfono y LinkedIn quedan porque van escritos en el CV: llevan la marca «Opcional».
+     Dónde quedó lo demás lo dice la línea de arriba de todo, debajo de la intro (FEEDBACK-PREFERENCIAS P1-2). */
   function bloqueDatos() {
     const c = (k, etiqueta, extra) => campo(Object.assign({ id: 'dato-' + k, etiqueta, valor: datos[k], alCambiar: (v) => { datos[k] = v; } }, extra));
-    const contacto = Terna.subtema(P.contacto, null,
+    return seccion('datos', P.datos, [
       h('div', { class: 'dos' }, c('nombre', P.nombre, { max: 80, autocomplete: 'given-name' }), c('apellido', P.apellido, { max: 80, autocomplete: 'family-name' })),
       campo({ id: 'dato-mail', etiqueta: P.mail, valor: ctx.usuario.mail, ayuda: P.mailAyuda, readonly: true, tipo: 'email', autocomplete: 'email' }),
       c('ciudad', P.ciudad, { max: 80, autocomplete: 'address-level2', ayuda: P.ciudadAyuda }),
-      h('div', { class: 'dos dos-apilable' }, c('telefono', P.telefono, { max: 30, tipo: 'tel', autocomplete: 'tel' }), c('linkedin', P.linkedin, { max: 200, tipo: 'url', autocomplete: 'url', inputmode: 'url' })),
-      conGithub ? h('div', { class: 'dos dos-apilable' }, c('portfolio', P.portfolio, { max: 300, tipo: 'url', inputmode: 'url', ayuda: P.portfolioAyuda }),
-        c('github', P.github, { max: 300, tipo: 'url', inputmode: 'url', ayuda: P.githubAyuda }))
-        : c('portfolio', P.portfolio, { max: 300, tipo: 'url', inputmode: 'url', ayuda: P.portfolioAyuda }));
-    const identificacion = temaIdentificacion();
-    const respuestas = Terna.subtema(T.respuestas.titulo, T.respuestas.intro, resp.nodos);
-    return seccion('datos', P.datos, [contacto, identificacion, respuestas], { alAbrir: cargarIdentificacion || undefined, temas: [
-      { hash: 'contacto', titulo: P.contacto, nodo: contacto },
-      { hash: 'identificacion', alias: ['formularios'], titulo: P.identificacion, nodo: identificacion },
-      { hash: 'respuestas', titulo: T.respuestas.titulo, nodo: respuestas },
-    ] });
-  }
-
-  /* Identificación: DNI, CUIL y fecha de nacimiento, cifrados. Se descifran recién cuando el subtema está por verse (a 200 px de
-     la pantalla, con su bloque abierto o elegido), una sola vez por visita. Sin IntersectionObserver, al abrir el bloque. */
-  let cargarIdentificacion = null;
-  function temaIdentificacion() {
-    const campos = h('div', { class: 'seccion' });
-    let pidiendo = false;
-    const cargar = async () => {
-      if (formularios.cargado || pidiendo) return;
-      pidiendo = true;
-      const parar2 = Terna.cargando(campos);
-      // La dirección se descifra con el resto de Identificación. Si no se puede leer (sin 0036, o a quien todavía no se le
-      // muestra), el subtema queda como antes, sin ella.
-      const [{ data, error }, rDir] = await Promise.all([
-        sb.rpc('leer_datos_formularios'),
-        Cuentas.abiertas(ctx.usuario) ? sb.rpc('leer_direccion') : Promise.resolve(null),
-      ]);
-      parar2();
-      pidiendo = false;
-      if (error) { Terna.errorDeCarga(campos, error); return; }
-      const fila = (Array.isArray(data) ? data[0] : data) || {};
-      Object.assign(formularios, { cargado: true, dni: fila.dni || '', cuil: fila.cuil || '', fecha: fila.fecha_nacimiento || '' });
-      formularios.original = JSON.stringify([formularios.dni, formularios.cuil, formularios.fecha]);
-      Terna.vaciar(campos);
-      campos.append(
-        h('div', { class: 'dos' },
-          campo({ id: 'form-dni', etiqueta: P.dni, valor: formularios.dni, max: 10, inputmode: 'numeric', autocomplete: 'off', alCambiar: (x) => { formularios.dni = x; } }),
-          campo({ id: 'form-cuil', etiqueta: P.cuil, valor: formularios.cuil, max: 13, inputmode: 'numeric', autocomplete: 'off', alCambiar: (x) => { formularios.cuil = x; } })),
-        campo({ id: 'form-fecha', etiqueta: P.nacimiento, valor: formularios.fecha, tipo: 'date', autocomplete: 'bday', alCambiar: (x) => { formularios.fecha = x; } }));
-      if (rDir && !rDir.error) campos.append(bloqueDireccion((Array.isArray(rDir.data) ? rDir.data[0] : rDir.data) || {}));
-    };
-    const tema = Terna.subtema(P.identificacion, P.identificacionAyuda, campos);
-    if ('IntersectionObserver' in window) {
-      const io = new IntersectionObserver((vistos) => { if (vistos.some((x) => x.isIntersecting)) { io.disconnect(); cargar(); } }, { rootMargin: '200px 0px' });
-      io.observe(tema);
-    } else cargarIdentificacion = cargar;
-    return tema;
-  }
-
-  /* Dirección (diseno.md 0.29 §9.2; brand.md 0.16 §6.6): debajo de la fecha de nacimiento, con su <h4>, su ayuda y tres campos que
-     van juntos. Se guarda con el "Guardar" de la página, solo si cambió; "Borrar dirección" la saca en el acto y aparece solo
-     si hay una guardada. El error de los tres juntos va arriba de los tres; los otros, junto a su campo. */
-  function bloqueDireccion(fila) {
-    Object.assign(direccion, { cargada: true, calle: fila.calle || '', cp: fila.codigo_postal || '', provincia: fila.provincia || '' });
-    direccion.original = firmaDireccion();
-    direccion.guardada = !!(direccion.calle || direccion.cp || direccion.provincia);
-    const pzD = Terna.piezas({ prefijo: 'dir', nivel: 'h4' });
-    const alCambiar = (k) => (x) => { direccion[k] = x; limpiarError('dir'); };
-    const bBorrar = boton(P.borrarDireccion, 'i-quitar', async () => {
-      if (bBorrar.getAttribute('aria-disabled') === 'true') return;
-      bBorrar.setAttribute('aria-disabled', 'true');
-      const { error } = await sb.rpc('borrar_direccion');
-      bBorrar.removeAttribute('aria-disabled');
-      if (error) { if (!Terna.siSesionVencida(error)) Terna.avisoBreve(Terna.textoError(error), { error: true }); return; }
-      Object.assign(direccion, { calle: '', cp: '', provincia: '', guardada: false });
-      direccion.original = firmaDireccion();
-      for (const [idC, v] of [['dir-calle', ''], ['dir-cp', ''], ['dir-provincia', '']]) { document.getElementById(idC).value = v; limpiarError(idC); }
-      limpiarError('dir');
-      bBorrar.hidden = true;
-      enfocar('dir-calle');
-      Terna.avisoBreve(T.comun.guardado);
-    }, null, { id: 'dir-borrar', hidden: !direccion.guardada });
-    const nodo = pzD.item(P.direccion,
-      h('p', { class: 'campo-ayuda', text: P.direccionAyuda }),
-      h('p', { class: 'campo-error', id: 'dir-error' }),
-      campo({ id: 'dir-calle', etiqueta: P.calle, valor: direccion.calle, max: 120, autocomplete: 'street-address', ejemplo: P.calleEjemplo, alCambiar: alCambiar('calle') }),
       h('div', { class: 'dos dos-apilable' },
-        campo({ id: 'dir-cp', etiqueta: P.codigoPostal, valor: direccion.cp, max: 12, autocomplete: 'postal-code', inputmode: 'text', ejemplo: P.codigoPostalEjemplo, alCambiar: alCambiar('cp') }),
-        seleccion({ id: 'dir-provincia', etiqueta: P.provincia, valor: direccion.provincia, opciones: P.provincias.map((x) => [x, x]), vacio: P.provinciaVacia, alCambiar: alCambiar('provincia') })),
-      h('div', null, bBorrar));
-    // Una línea arriba, como entre dos ítems de un subtema: viene después de tres campos sueltos.
-    nodo.classList.add('direccion-postal');
-    return nodo;
+        c('telefono', P.telefono, { max: 30, tipo: 'tel', autocomplete: 'tel', opcional: true, ayuda: P.enTuCv }),
+        c('linkedin', P.linkedin, { max: 200, tipo: 'url', autocomplete: 'url', inputmode: 'url', opcional: true, ayuda: P.enTuCv })),
+    ], { alias: ['contacto'] });
   }
 
   function enfocar(id) { const el = document.getElementById(id); if (el) el.focus(); }
@@ -383,7 +305,9 @@ Terna.pagina('perfil', async (ctx) => {
         const p = 'est-' + e.clave;
         const ponerTitulo = () => { const t = document.getElementById(p + '-cabeza'); if (t) t.textContent = P.tituloItem(i + 1, e.titulo, e.institucion, P.estudioNuevo); };
         // El promedio es de una carrera (0022): para un curso o el secundario no se muestra y no se guarda.
-        const promedio = campo({ id: p + '-promedio', etiqueta: P.promedio, valor: e.promedio, max: 20, ayuda: P.promedioAyuda, alCambiar: (v) => { e.promedio = v; } });
+        // Sirve solo para formularios, pero es un campo de cada estudio: se queda acá, «Opcional» (PLAN-PREFERENCIAS D7), y
+        // Preferencias › Postulaciones lo muestra de solo lectura.
+        const promedio = campo({ id: p + '-promedio', etiqueta: P.promedio, valor: e.promedio, max: 20, ayuda: P.promedioAyuda, opcional: true, alCambiar: (v) => { e.promedio = v; } });
         const mostrarPromedio = () => { promedio.hidden = !NIVELES_CARRERA.includes(e.nivel); };
         mostrarPromedio();
         cont.append(caja(p, P.tituloItem(i + 1, e.titulo, e.institucion, P.estudioNuevo),
@@ -443,7 +367,8 @@ Terna.pagina('perfil', async (ctx) => {
     return seccion('idi', P.idiomas, cont);
   }
 
-  /* ---------- CV: el CV original, el perfil estructurado (si existe) y el analítico, uno debajo del otro ---------- */
+  /* ---------- CV: el CV original y el perfil estructurado (si existe), uno debajo del otro ----------
+     El analítico, que iba tercero, está en Preferencias › Postulaciones › Datos para formularios desde PLAN-PREFERENCIAS (D5). */
   function bloqueCv() {
     const original = Terna.subtema(P.cv, null, partesCv());
     const partes = [original];
@@ -452,11 +377,6 @@ Terna.pagina('perfil', async (ctx) => {
       const t = Terna.subtema(P.estructurado, null, partesEstructurado());
       partes.push(t);
       temas.push({ hash: 'estructurado', titulo: P.estructurado, nodo: t });
-    }
-    if (analitico !== undefined) {
-      const t = Terna.subtema(P.analitico, null, partesAnalitico());
-      partes.push(t);
-      temas.push({ hash: 'analitico', titulo: P.analitico, nodo: t });
     }
     return seccion('cv', P.cvBloque, partes, { temas });
   }
@@ -505,54 +425,6 @@ Terna.pagina('perfil', async (ctx) => {
           boton(P.subirCv(MAX.cvMb), 'i-subir', elegir, 'btn btn-ancho', { id: 'cv-subir' }));
       }
       cont.append(h('p', { class: 'campo-ayuda', text: P.cvAyuda }), estado, error, archivo);
-    };
-    dibujar();
-    return cont;
-  }
-
-  /* Analítico (0021; brand.md 0.4.14): un PDF que Terna adjunta solo si un formulario lo pide. */
-  function partesAnalitico() {
-    const cont = h('div', { class: 'seccion' });
-    const estado = h('p', { class: 'campo-ayuda', role: 'status' });
-    const error = h('p', { class: 'campo-error', role: 'alert' });
-    const archivo = h('input', { type: 'file', accept: 'application/pdf,.pdf', class: 'oculto-visual', tabindex: '-1', 'aria-hidden': 'true' });
-    const elegir = () => { error.textContent = ''; archivo.click(); };
-    archivo.addEventListener('change', async () => {
-      const f = archivo.files && archivo.files[0];
-      archivo.value = '';
-      if (!f) return;
-      const esPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
-      if (!esPdf || f.size > MAX.cvMb * 1048576) { error.textContent = T.errores.cvArchivo(MAX.cvMb); return; }
-      estado.textContent = P.subiendo;
-      const { error: e } = await sb.storage.from(Terna.CONFIG.bucket).upload(RUTA_ANALITICO, f, { upsert: true, contentType: 'application/pdf', cacheControl: '0' });
-      estado.textContent = '';
-      if (e) { if (!Terna.siSesionVencida(e)) error.textContent = T.errores.analiticoSubir; return; }
-      const r = await sb.rpc('analitico');
-      analitico = (Array.isArray(r.data) ? r.data[0] : r.data) || { subido_en: new Date().toISOString() };
-      dibujar();
-      Terna.avisoBreve(T.comun.guardado);
-      enfocar('analitico-ver');
-    });
-    const dibujar = () => {
-      Terna.vaciar(cont);
-      if (analitico) {
-        cont.append(h('p', { text: P.analiticoCargado(Terna.fechaLarga(analitico.subido_en)) }),
-          h('div', { class: 'botones' },
-            Terna.linkFirmado(RUTA_ANALITICO, null, h('a', { class: 'btn btn-texto', id: 'analitico-ver' }, icono('i-revisar'), P.ver)),
-            boton(P.reemplazar, 'i-subir', elegir, 'btn btn-texto'),
-            boton(P.quitar, 'i-quitar', async () => {
-              const { error: e } = await sb.storage.from(Terna.CONFIG.bucket).remove([RUTA_ANALITICO]);
-              if (e) { if (!Terna.siSesionVencida(e)) Terna.avisoBreve(T.errores.guardar, { error: true }); return; }
-              analitico = null;
-              dibujar();
-              Terna.avisoBreve(T.comun.guardado);
-              enfocar('analitico-subir');
-            }, 'btn btn-texto')));
-      } else {
-        cont.append(h('p', { class: 'suave', text: P.sinAnalitico }),
-          boton(P.subirAnalitico(MAX.cvMb), 'i-subir', elegir, 'btn btn-ancho', { id: 'analitico-subir' }));
-      }
-      cont.append(h('p', { class: 'campo-ayuda', text: P.analiticoAyuda }), estado, error, archivo);
     };
     dibujar();
     return cont;
@@ -699,25 +571,6 @@ Terna.pagina('perfil', async (ctx) => {
       if (k && vistos.has(k)) { marcarError(p + '-idioma', T.errores.guardarCampos); ok = false; }
       vistos.add(k);
     });
-    if (formularios.cargado) {
-      const dni = formularios.dni.replace(/\D/g, '');
-      if (dni && !/^\d{7,8}$/.test(dni)) { marcarError('form-dni', T.errores.dni); ok = false; }
-      const cuil = formularios.cuil.replace(/\D/g, '');
-      if (cuil && !/^\d{11}$/.test(cuil)) { marcarError('form-cuil', T.errores.cuil); ok = false; }
-    }
-    if (direccion.cargada) {
-      // Los tres juntos o ninguno (los tres vacíos la sacan); la base valida lo mismo (datos.md 0.32 §5.4b).
-      const calle = calleLimpia();
-      const cp = cpLimpio();
-      if (calle || cp || direccion.provincia) {
-        if (!calle || !cp || !direccion.provincia) { marcarError('dir', T.errores.direccionIncompleta); ok = false; }
-        else {
-          if (calle.length < 3 || calle.length > 120) { marcarError('dir-calle', T.errores.calle); ok = false; }
-          if (!/^(\d{4}|[A-Z]\d{4}[A-Z]{3})$/.test(cp)) { marcarError('dir-cp', T.errores.codigoPostal); ok = false; }
-        }
-      }
-    }
-    if (!resp.validar()) ok = false;
     return ok;
   }
   const ERROR_CAMPO = { fecha_futura: ['-desde', T.errores.fechaFutura], fecha_fin_anterior: ['-hasta', T.errores.fechaFinAnterior] };
@@ -729,13 +582,10 @@ Terna.pagina('perfil', async (ctx) => {
     bGuardar.setAttribute('aria-disabled', 'true');
     const eraIncompleto = faltantes.length > 0;
     try {
-      // 1. Contacto
+      // 1. Datos. Sin portfolio ni GitHub desde PLAN-PREFERENCIAS: los escribe Preferencias (js/formularios.js).
       if (JSON.stringify(datos) !== originales.datos) {
         const v = (x) => (String(x || '').trim() || null);
-        // 0020: el portfolio se guarda como link; sin "https://" adelante, se lo agrega (la base pide http o https).
-        const link = (x) => { const s = v(x); return s && !/^https?:\/\//i.test(s) ? 'https://' + s : s; };
-        const cambios = { nombre: v(datos.nombre), apellido: v(datos.apellido), telefono: v(datos.telefono), ciudad: v(datos.ciudad), linkedin: v(datos.linkedin), portfolio: link(datos.portfolio) };
-        if (conGithub) cambios.github = link(datos.github);   // 0049, como el portfolio
+        const cambios = { nombre: v(datos.nombre), apellido: v(datos.apellido), telefono: v(datos.telefono), ciudad: v(datos.ciudad), linkedin: v(datos.linkedin) };
         const { error } = await sb.from('perfiles').update(cambios).eq('usuario_id', uid);
         if (error) throw error;
         Terna.actualizarPerfil({ nombre: v(datos.nombre), apellido: v(datos.apellido) });
@@ -748,43 +598,10 @@ Terna.pagina('perfil', async (ctx) => {
         (e, i) => JSON.stringify([e.titulo, e.institucion, e.anio === '' || e.anio === undefined ? null : (e.anio === null ? null : Number(e.anio)), e.estado || 'terminado', e.promedio || '', e.nivel || null].concat(i)), 'est');
       await guardarLista('idiomas', listas.idi, originales.idi, (e) => ({ idioma: e.idioma.trim(), nivel: e.nivel }),
         (e) => JSON.stringify([e.idioma, e.nivel]), 'idi');
-      // 3. Identificación, solo si se descifró y cambió.
-      if (formularios.cargado && JSON.stringify([formularios.dni, formularios.cuil, formularios.fecha]) !== formularios.original) {
-        const { error } = await sb.rpc('guardar_datos_formularios', { p_dni: formularios.dni || null, p_cuil: formularios.cuil || null, p_fecha_nacimiento: formularios.fecha || null });
-        if (error) throw Object.assign(error, { _campo: true });
-        formularios.original = JSON.stringify([formularios.dni, formularios.cuil, formularios.fecha]);
-      }
-      // 3b. La dirección, solo si se descifró y cambió: los tres juntos, o ninguno para sacarla.
-      if (direccion.cargada && firmaDireccion() !== direccion.original) {
-        const calle = calleLimpia();
-        const cp = cpLimpio();
-        const vacia = !calle && !cp && !direccion.provincia;
-        const { error } = vacia ? await sb.rpc('borrar_direccion')
-          : await sb.rpc('guardar_direccion', { p_calle: calle, p_codigo_postal: cp, p_provincia: direccion.provincia });
-        if (error) throw Object.assign(error, { _campo: true });
-        // Quedan a la vista como se guardaron.
-        Object.assign(direccion, { calle, cp, guardada: !vacia });
-        direccion.original = firmaDireccion();
-        const [iCalle, iCp, bBorrar] = ['dir-calle', 'dir-cp', 'dir-borrar'].map((x) => document.getElementById(x));
-        if (iCalle) iCalle.value = calle;
-        if (iCp) iCp.value = cp;
-        if (bBorrar) bBorrar.hidden = vacia;
-      }
-      // 4. Respuestas para formularios (columnas de preferencias), solo si cambiaron: así una pestaña de Preferencias abierta
-      //    antes no se pisa con esta, ni esta con aquella (Preferencias ya no las escribe).
-      const columnas = resp.columnas();
-      if (JSON.stringify(columnas) !== respOriginal) {
-        const { error } = await sb.from('preferencias').update(columnas).eq('usuario_id', uid);
-        if (error) throw error;
-        respOriginal = JSON.stringify(columnas);
-      }
     } catch (error) {
       bGuardar.removeAttribute('aria-disabled');
       if (Terna.siSesionVencida(error)) return;
       const claveError = String(error.message || '').trim();
-      const campoForm = { dni_invalido: 'form-dni', cuil_invalido: 'form-cuil', fecha_nacimiento_invalida: 'form-fecha',
-        direccion_incompleta: 'dir', calle_invalida: 'dir-calle', codigo_postal_invalido: 'dir-cp', provincia_invalida: 'dir-provincia' }[claveError];
-      if (campoForm) { marcarError(campoForm, Terna.textoError(error)); mostrarBanda(T.errores.guardarCampos); return; }
       if (error._item && ERROR_CAMPO[claveError]) { marcarError(error._item + ERROR_CAMPO[claveError][0], ERROR_CAMPO[claveError][1]); mostrarBanda(T.errores.guardarCampos); return; }
       mostrarBanda(['limite_experiencias', 'limite_estudios', 'limite_idiomas'].includes(claveError) ? Terna.textoError(error) : T.errores.guardar);
       return;
@@ -795,9 +612,9 @@ Terna.pagina('perfil', async (ctx) => {
     bGuardar.removeAttribute('aria-disabled');
     if (!r.error) { faltantes = r.data || []; Terna.actualizarFaltantes(faltantes); dibujarIndicador(); }
     if (eraIncompleto && !faltantes.length) {
-      // Las respuestas para formularios ya están acá (con sus valores por defecto): lo que queda para revisar es la búsqueda.
+      // Lo que queda para revisar, opcional, es qué busca Terna: Preferencias › Empleos (PLAN-PREFERENCIAS §3.2).
       Terna.vaciar(estadoGuardado);
-      estadoGuardado.append(T.perfil.guardadoBusca + ' ', h('a', { href: 'preferencias.html#busqueda', text: P.revisarPrefs }));
+      estadoGuardado.append(T.perfil.guardadoBusca + ' ', h('a', { href: 'preferencias.html#empleos', text: P.revisarPrefs }));
     } else {
       Terna.avisoBreve(T.comun.guardado);
     }

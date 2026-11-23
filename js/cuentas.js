@@ -1,6 +1,7 @@
 /* Terna · js/cuentas.js
    "Terna crea cuentas por vos" y la dirección (diseno.md 0.29 §6, §9.2 y §9.3; brand.md 0.16 §6.3, §6.6 y §6.7; datos.md 0.32, 0036):
-   lo que comparten Inicio, Preferencias y Mi perfil.
+   lo que comparten Inicio y Preferencias (desde PLAN-PREFERENCIAS la dirección está en Preferencias › Postulaciones › Datos para
+   formularios, js/formularios.js; hasta ahí, en Mi perfil).
    - A quién se le muestra. Todo esto se publica junto con el lector de Workday del motor (pipeline.md §4.12). Mientras ese lector
      está apagado para la corrida diaria (terna-motor, datos/workday.json › corrida), lo ve solo el admin, que es quien corre el
      ensayo: a los demás no se les ofrece algo que Terna todavía no hace. Al prender el lector, PARA_TODOS pasa a true en el mismo

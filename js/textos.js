@@ -160,7 +160,8 @@ window.T = (function () {
         texto: 'Muchas empresas grandes (las que usan Workday, SuccessFactors u Oracle) piden crear una cuenta en su sitio para postular. Si querés, Terna la crea con tu mail y postula por vos.',
         ultimoMes: (x) => plural(x, 'En el último mes te quedó 1 postulación a mano por eso.', 'En el último mes te quedaron ' + n(x) + ' postulaciones a mano por eso.'),
         saber: 'Qué conviene saber',
-        listo: 'Listo. Lo cambiás cuando quieras en Preferencias › Postulación.',
+        // propuesta PLAN-PREFERENCIAS (brand.md §6.3): el bloque se llama Postulaciones. Antes: «…en Preferencias › Postulación.»
+        listo: 'Listo. Lo cambiás cuando quieras en Preferencias › Postulaciones.',
       },
       // propuesta PLAN-UX §5.2 (brand.md §6.3): «Así funciona» salió de Inicio; su contenido, ampliado, es la página Cómo funciona
       // (T.como), con el link «Cómo funciona Terna» de «Para empezar».
@@ -312,7 +313,8 @@ window.T = (function () {
         // Prioridad, en Avisos (brand.md 0.20 §6.4; diseno.md 0.32 §1.40; Francisco, 12/11/2026: un filtro para "Tu puesto", con
         // el nombre que eligió): lo que la persona le pidió a Terna que priorice. Los dos primeros son los chips del aviso.
         prioridad: { tu_puesto: 'Tu puesto', empresa: 'Empresa que seguís', demas: 'Los demás' },
-        prioridadAyuda: (puestos, empresas) => 'Es lo que le pediste a Terna que priorice en Preferencias › Búsqueda: '
+        // propuesta PLAN-PREFERENCIAS (brand.md §6.4): Búsqueda pasó a Empleos. Antes: «…en Preferencias › Búsqueda: …».
+        prioridadAyuda: (puestos, empresas) => 'Es lo que le pediste a Terna que priorice en Preferencias › Empleos: '
           + (puestos && empresas ? 'tus puestos y las empresas que seguís' : empresas ? 'las empresas que seguís' : 'tus puestos') + '.',
         ordenar: { match: 'Ordenar por match', nuevos: 'Ordenar por más nuevos' },
       },
@@ -398,7 +400,8 @@ window.T = (function () {
         empresa: 'Se postula en el sitio de la empresa, en un formulario que Terna todavía no sabe completar: lo hacés vos.',
         // propuesta PLAN-UX (brand.md §6.10): desde que Terna crea cuentas por vos (js/cuentas.js, PARA_TODOS en true) ya no es cierto
         // que «no crea ni usa cuentas». Hasta acá: «…Terna no crea ni usa cuentas: lo hacés vos.»
-        empresaCuenta: 'El sitio de la empresa pide crear una cuenta para postular, y esta Terna no la crea: lo hacés vos. Terna crea cuentas solo en algunos sitios y si se lo pediste en Preferencias › Postulación.',
+        // propuesta PLAN-PREFERENCIAS (brand.md §6.10): el bloque se llama Postulaciones. Antes: «…en Preferencias › Postulación.»
+        empresaCuenta: 'El sitio de la empresa pide crear una cuenta para postular, y esta Terna no la crea: lo hacés vos. Terna crea cuentas solo en algunos sitios y si se lo pediste en Preferencias › Postulaciones.',
         empresaViaLinkedin: 'El botón "Postularse" del aviso en LinkedIn lleva al sitio de la empresa, y ahí Terna no encontró un formulario que sepa completar: lo hacés vos.',
         // Desde brand.md 0.23 sin "Si no querés esperar, pegá el texto.": la persona ya no pega textos.
         confirmar: 'Terna todavía no leyó la página del aviso en LinkedIn. La lee en las próximas corridas (una por día): trae el texto y te dice si se postula con Easy Apply o en el sitio de la empresa.',
@@ -932,7 +935,9 @@ window.T = (function () {
         elegido_por_usuario: 'Elegiste postular vos.',
       },
       completarRespuestas: 'Completar respuestas para formularios',
-      completarPreferencias: 'Completar Preferencias',
+      // propuesta PLAN-PREFERENCIAS §4.6 (brand.md §6.5): lleva a donde está el campo (secundario, viajar, portfolio, analítico, DNI).
+      // Antes: «Completar Preferencias».
+      completarPreferencias: 'Completar en Preferencias',
       completarPerfil: 'Completar Mi perfil',
       // Cuántas veces lo intentó Terna, en la ficha (brand.md 0.28 §6.5).
       intentos: (n) => 'Terna lo intentó ' + n + (n === 1 ? ' vez.' : ' veces.'),
@@ -980,23 +985,50 @@ window.T = (function () {
 
     perfil: {
       titulo: 'Mi perfil',
-      // propuesta PLAN-UX §5.6 (brand.md §6.6): en una oración.
-      intro: 'Con este perfil Terna elige avisos, arma tus documentos y responde formularios.',
+      // propuesta PLAN-PREFERENCIAS §4.6 (brand.md §6.6): Mi perfil es lo mínimo (D2). Antes: «Con este perfil Terna elige avisos, arma
+      // tus documentos y responde formularios.»
+      intro: 'Quién sos y lo que va en tu CV. Lo demás se configura en Preferencias.',
+      // propuesta PLAN-PREFERENCIAS §4.6 (brand.md §6.6): nuevo, debajo de la intro mientras falte algo (perfil_faltantes).
+      // propuesta PLAN-PREFERENCIAS (brand.md §6.6), FEEDBACK-PREFERENCIAS P2-7: no repite la lista (el indicador ya dice qué falta, y
+      // a quien le falta solo un idioma le listaba cuatro cosas) y dice lo que nadie decía: lo demás es opcional. La revisión proponía
+      // «Con eso Terna ya puede buscar. Lo demás de esta página es opcional.», pero la línea va debajo de la intro, no del indicador:
+      // «Con eso» señalaba la intro, y la intro ya termina en «Lo demás se configura en Preferencias.». Antes: «Para empezar hacen falta
+      // tu nombre, tu ciudad, una experiencia o un estudio y un idioma.»
+      minimo: 'Cuando completes lo que falta, Terna ya puede buscar; el resto de esta página es opcional.',
+      // propuesta PLAN-PREFERENCIAS §4.6 y §8.2 (brand.md §6.6): la marca chica y gris de lo opcional que queda (teléfono, LinkedIn,
+      // promedio), siempre con las mismas palabras. Reemplaza al «(opcional)» que llevaban esas etiquetas.
+      opcional: 'Opcional',
+      enTuCv: 'Va en tu CV.',
       completo: 'Perfil completo.',
       falta: (lista) => 'Falta: ' + lista + '.',
       // propuesta PLAN-WEB §4.1 (brand.md §6.6): el marbete de un bloque de Mi perfil y el chip de Mi perfil en el carril.
       faltaCorto: 'Falta',
-      // Los bloques y sus subtemas (brand.md 0.7 §6.6; diseno.md 0.19 §9.2): Datos junta Contacto, Identificación y Respuestas para
-      // formularios (antes en Preferencias); CV junta el CV original, el perfil estructurado y el analítico.
+      // Los bloques (brand.md 0.7 §6.6; diseno.md 0.19 §9.2). Desde PLAN-PREFERENCIAS (D2 y D5, 23/11/2026) Datos va sin subtemas (lo
+      // de Contacto) y CV junta el CV original y el perfil estructurado; Identificación, Dirección, Portfolio, GitHub, Analítico y
+      // Respuestas para formularios pasaron a Preferencias › Postulaciones (js/formularios.js, js/respuestas.js), que usa estas
+      // mismas claves de T.perfil (renombrarlas es una limpieza posterior, §4.6).
       datos: 'Datos',
       contacto: 'Contacto',
       nombre: 'Nombre', apellido: 'Apellido', mail: 'Mail', mailAyuda: 'Es el de tu cuenta. Va en tus postulaciones.',
-      telefono: 'Teléfono (opcional)', ciudad: 'Ciudad',
+      // propuesta PLAN-PREFERENCIAS §4.6 (brand.md §6.6): sin «(opcional)», que pasa a la marca Opcional. Antes: «Teléfono (opcional)»,
+      // «LinkedIn (opcional)».
+      telefono: 'Teléfono', ciudad: 'Ciudad',
       ciudadAyuda: 'Terna busca en tu ciudad y alrededores; si ponés Buenos Aires, incluye CABA y el Gran Buenos Aires.',
-      linkedin: 'LinkedIn (opcional)',
-      portfolio: 'Portfolio o sitio propio (opcional)', portfolioAyuda: 'Un link a tu trabajo. Terna lo usa solo si un formulario lo pide.',
+      linkedin: 'LinkedIn',
+      // propuesta PLAN-PREFERENCIAS §4.6 (brand.md §6.6): nuevos, al final de Datos.
+      // propuesta PLAN-PREFERENCIAS (brand.md §6.6), FEEDBACK-PREFERENCIAS P1-2: la línea sube arriba de todo, debajo de la intro y fuera
+      // de los bloques (al final de Datos, cerrado en el celular, no la veía quien seguía una traba vieja: «Cargalo en Mi perfil ›
+      // Identificación»), con dos links: las respuestas (#formularios) y los datos, que caen en el DNI (#identificacion). Antes: «Las
+      // respuestas y los datos para formularios (DNI, dirección, portfolio, analítico) están en Preferencias › Postulaciones.» + «Ir a
+      // Preferencias › Postulaciones».
+      datosEnPreferencias: (respuestas, datos) => ['Lo que Terna usa solo para postular está en Preferencias › Postulaciones: ', respuestas, ' y ', datos, '.'],
+      datosEnPreferenciasLink: 'Respuestas para formularios',
+      datosEnPreferenciasDatos: 'DNI, dirección, portfolio y analítico',
+      // propuesta PLAN-PREFERENCIAS §4.6: en Preferencias › Postulaciones › Datos para formularios, donde todo es opcional (lo dice la
+      // intro del subtema una vez). Antes: «Portfolio o sitio propio (opcional)», «GitHub (opcional)».
+      portfolio: 'Portfolio o sitio propio', portfolioAyuda: 'Un link a tu trabajo. Terna lo usa solo si un formulario lo pide.',
       // 0049 (brand.md 0.35 §6.6): el GitHub, al lado del portfolio.
-      github: 'GitHub (opcional)', githubAyuda: 'Terna lo pone cuando un formulario pide tu GitHub, o un sitio y no cargaste portfolio.',
+      github: 'GitHub', githubAyuda: 'Terna lo pone cuando un formulario pide tu GitHub, o un sitio y no cargaste portfolio.',
       // Experiencia laboral (brand.md 0.7 §6.6): cada trabajo en su propia caja, con un título que dice cuál es.
       experiencia: 'Experiencia laboral',
       puesto: 'Puesto', empresa: 'Empresa', desde: 'Desde', hasta: 'Hasta', mes: 'Mes', anio: 'Año', actual: 'Trabajo actual',
@@ -1022,7 +1054,10 @@ window.T = (function () {
       tipoEstudioAyuda: 'Un curso o una certificación no cuentan como título universitario ni llevan promedio.',
       tiposEstudio: { grado:'Carrera de grado (licenciatura, ingeniería…)', posgrado: 'Posgrado (maestría, MBA, especialización, doctorado)', terciario: 'Terciario (tecnicatura, profesorado)', curso: 'Curso o certificación', secundario: 'Secundario' },
       anioAyuda: 'El año en que terminaste. Si está en curso, el año en que esperás terminar.',
-      promedio: 'Promedio (opcional)', promedioAyuda: 'Como figura en tu analítico, con la escala: 8,5/10 o 3,4/4. No va en el CV: Terna lo usa solo si un formulario lo pide.',
+      // propuesta PLAN-PREFERENCIAS §4.6 (brand.md §6.6): con la marca Opcional y sin «como figura en tu analítico» (el analítico ya no
+      // está en Mi perfil). Antes: «Promedio (opcional)» / «Como figura en tu analítico, con la escala: 8,5/10 o 3,4/4. No va en el CV:
+      // Terna lo usa solo si un formulario lo pide.»
+      promedio: 'Promedio', promedioAyuda: 'Con la escala: 8,5/10 o 3,4/4. No va en el CV: Terna lo usa solo si un formulario lo pide.',
       agregarEstudio: 'Agregar estudio', sinEstudios: 'Todavía no cargaste estudios.',
       topeEstudios: (x) => 'Hasta ' + x + ' estudios.',
       idiomas: 'Idiomas', idioma: 'Idioma', nivel: 'Nivel', nativo: 'Nativo',
@@ -1037,10 +1072,14 @@ window.T = (function () {
       cvPendiente: 'Terna lo lee en la próxima corrida y arma tu perfil estructurado.',
       subiendo: 'Subiendo…',
       sinCv: 'Todavía no subiste tu CV.',
-      // 0021 (brand.md 0.4.14): el analítico, que pidió obligatorio un formulario real.
-      analitico: 'Analítico (opcional)',
+      // 0021 (brand.md 0.4.14): el analítico, que pidió obligatorio un formulario real. Desde PLAN-PREFERENCIAS (D5), en Preferencias ›
+      // Postulaciones › Datos para formularios; propuesta §4.6: sin «(opcional)». Antes: «Analítico (opcional)».
+      analitico: 'Analítico',
       analiticoAyuda: 'El certificado con las materias y notas de tu carrera, en PDF. Terna lo adjunta solo si un formulario lo pide; no lo lee ni lo manda a nadie más.',
       analiticoCargado: (f) => 'Analítico cargado el ' + f + '.',
+      // propuesta PLAN-PREFERENCIAS (brand.md §6.7), FEEDBACK-PREFERENCIAS P3-4: nuevos, el nombre accesible de «Ver», «Reemplazar» y
+      // «Quitar» del analítico (con lector de pantalla se oía «Ver» a secas). Empiezan con el texto a la vista.
+      analiticoAccesible: { ver: 'Ver el analítico', reemplazar: 'Reemplazar el analítico', quitar: 'Quitar el analítico' },
       sinAnalitico: 'Todavía no subiste tu analítico.',
       subirAnalitico: (mb) => 'Subir analítico (PDF, hasta ' + mb + ' MB)',
       estructurado: 'Perfil estructurado',
@@ -1051,14 +1090,20 @@ window.T = (function () {
       unaPorLinea: 'Una por línea.',
       topeHabilidades: (x) => 'Hasta ' + x + ' habilidades.',
       topeCertificaciones: (x) => 'Hasta ' + x + ' certificaciones.',
-      // Hasta 0.6 de brand.md, el bloque "Datos para formularios"; desde 0.7, el subtema Identificación de Datos.
+      // Hasta 0.6 de brand.md, el bloque "Datos para formularios"; de 0.7 a PLAN-PREFERENCIAS, el subtema Identificación de Mi perfil ›
+      // Datos; desde PLAN-PREFERENCIAS (D5), un ítem de Preferencias › Postulaciones › Datos para formularios.
       identificacion: 'Identificación',
       dni: 'DNI', cuil: 'CUIL', nacimiento: 'Fecha de nacimiento',
-      identificacionAyuda: 'Opcionales. Nunca van en el CV. Si un formulario los pide, Terna los escribe; si no los cargaste, esa postulación queda para hacer a mano. Se guardan cifrados.',
+      // propuesta PLAN-PREFERENCIAS §4.6 («nunca van en el CV» sube a la intro del subtema). Antes: «Opcionales. Nunca van en el CV. Si
+      // un formulario los pide, Terna los escribe; si no los cargaste, esa postulación queda para hacer a mano. Se guardan cifrados.»
+      identificacionAyuda: 'Si un formulario los pide, Terna los escribe; si no están, esa postulación queda a mano. Se guardan cifrados.',
       // Dirección (brand.md 0.19 §6.6; datos.md 0.32 §5.4b, 0036): debajo de la fecha de nacimiento, cifrada como el DNI. Las
       // provincias, con el nombre con que las guarda la base (provincia_normalizada): la Ciudad y Buenos Aires primero.
-      direccion: 'Dirección (opcional)',
-      direccionAyuda: 'Algunos formularios, como los de Workday, la piden para postular. Nunca va en el CV. Si un formulario la pide, Terna la escribe; si no la cargaste, esa postulación queda para hacer a mano. Se guarda cifrada.',
+      // propuesta PLAN-PREFERENCIAS §4.6. Antes: «Dirección (opcional)» / «Algunos formularios, como los de Workday, la piden para
+      // postular. Nunca va en el CV. Si un formulario la pide, Terna la escribe; si no la cargaste, esa postulación queda para hacer a
+      // mano. Se guarda cifrada.»
+      direccion: 'Dirección',
+      direccionAyuda: 'Algunos formularios, como los de Workday, la piden. Si no está, esa postulación queda a mano. Se guarda cifrada.',
       calle: 'Calle y número', calleEjemplo: 'Av. Corrientes 1234, 5.º B',
       codigoPostal: 'Código postal', codigoPostalEjemplo: '1414 o C1414ABC',
       provincia: 'Provincia', provinciaVacia: 'Elegí una provincia',
@@ -1066,6 +1111,10 @@ window.T = (function () {
         'La Pampa', 'La Rioja', 'Mendoza', 'Misiones', 'Neuquén', 'Río Negro', 'Salta', 'San Juan', 'San Luis', 'Santa Cruz', 'Santa Fe', 'Santiago del Estero',
         'Tierra del Fuego', 'Tucumán'],
       borrarDireccion: 'Borrar dirección',
+      // propuesta PLAN-PREFERENCIAS (brand.md §6.7), FEEDBACK-PREFERENCIAS P2-1: nuevo, debajo de «Borrar dirección», que borra al tocar
+      // mientras el resto de la dirección espera al botón. La revisión decía «…sin esperar a Guardar.»: el botón se llama «Guardar
+      // preferencias».
+      borrarDireccionAyuda: 'Se borra al tocar, sin esperar a «Guardar preferencias».',
       // Tu cuenta (desde brand.md 0.7 en Mi perfil; hasta 0.6, en Preferencias).
       cuenta: 'Tu cuenta',
       pausar: 'Pausar mi cuenta',
@@ -1082,11 +1131,18 @@ window.T = (function () {
       idiomasSugeridos: ['español', 'inglés', 'portugués', 'italiano', 'francés', 'alemán', 'chino', 'japonés'],
     },
 
-    // Respuestas para formularios (js/respuestas.js; brand.md 0.7 §6.6, datos.md §5.6). Desde 0.7 son un subtema de Mi perfil ›
-    // Datos; hasta 0.6 eran un bloque de Preferencias. Opciones y defaults desde brand.md 0.4.6 (datos.md 0.10, 0016).
+    // Respuestas para formularios (js/respuestas.js; brand.md 0.7 §6.6, datos.md §5.6). Hasta 0.6 eran un bloque de Preferencias; de
+    // 0.7 a PLAN-PREFERENCIAS, un subtema de Mi perfil › Datos; desde PLAN-PREFERENCIAS (D2, 23/11/2026), un subtema de Preferencias ›
+    // Postulaciones, junto con secundario y viajar. Opciones y defaults desde brand.md 0.4.6 (datos.md 0.10, 0016).
     respuestas: {
       titulo: 'Respuestas para formularios',
-      intro: 'Lo que Terna responde cuando un formulario pregunta si podés trabajar en un país, cuándo podés empezar o si te mudarías. Van solo al empleador del aviso en que postula.',
+      // propuesta PLAN-PREFERENCIAS §4.4 (brand.md §6.7). Antes: «Lo que Terna responde cuando un formulario pregunta si podés trabajar
+      // en un país, cuándo podés empezar o si te mudarías. Van solo al empleador del aviso en que postula.»
+      // propuesta PLAN-PREFERENCIAS (brand.md §6.7), FEEDBACK-PREFERENCIAS P2-1: qué guarda el botón (al lado, las preguntas voluntarias
+      // se guardan al elegir). En singular, como el resto de la intro («Lo que Terna contesta… Va…») y como Datos para formularios; la
+      // revisión decía «Se guardan». Antes: «Lo que Terna contesta cuando un formulario lo pregunta. Va solo al empleador del aviso en
+      // que postula. Sin respuesta, Terna deja esa pregunta para vos.»
+      intro: 'Lo que Terna contesta cuando un formulario lo pregunta. Va solo al empleador del aviso en que postula. Sin respuesta, Terna deja esa pregunta para vos. Se guarda con «Guardar preferencias».',
       autorizacion: 'Autorización para trabajar',
       argentina: 'Argentina',
       autArgentina: '¿Podés trabajar en Argentina?',
@@ -1123,16 +1179,77 @@ window.T = (function () {
 
     preferencias: {
       titulo: 'Preferencias',
-      intro: 'Lo que Terna usa para filtrar, armar y postular. Se aplica desde la próxima corrida.',
-      // Los bloques de la página (brand.md 0.7 §6.7): Búsqueda, Paquetes y postulación y Alertas por mail, que usa su propio título.
-      // Respuestas para formularios y Tu cuenta pasaron a Mi perfil (T.respuestas, T.perfil.cuenta).
-      grupos: { busqueda: 'Búsqueda', paquetes: 'Paquetes y postulación' },
-      // Los dos subtemas de Paquetes y postulación (brand.md 0.7.1 §6.7; diseno.md 0.20 §9.3): primero lo del paquete, después
-      // lo de postular.
-      temas: { paquetes: 'Paquetes', postulacion: 'Postulación' },
+      // propuesta PLAN-PREFERENCIAS §4.1 (brand.md §6.7). Antes: «Lo que Terna usa para filtrar, armar y postular. Se aplica desde la
+      // próxima corrida.»
+      // propuesta PLAN-PREFERENCIAS (brand.md §6.7), FEEDBACK-PREFERENCIAS P2-8: a quien recién empieza, nada le decía que puede no
+      // tocar nada. Antes: «Cómo querés que Terna busque, arme y postule. Se aplica desde la próxima corrida.»
+      intro: 'Cómo querés que Terna busque, arme y postule. Todo tiene un valor de arranque: cambiá solo lo que quieras. Se aplica desde la próxima corrida.',
+      // Los bloques de la página, uno por herramienta y en el orden del muelle (propuesta PLAN-PREFERENCIAS §4.1, brand.md §6.7): Empleos,
+      // Paquetes, Postulaciones y Quién te ve (T.preferencias.contratar.titulo). Antes: Búsqueda (grupos.busqueda), Paquetes y
+      // postulación (grupos.paquetes) y Alertas por mail, que ahora es un subtema de Empleos. Respuestas para formularios volvió de Mi
+      // perfil a Postulaciones (D2); Tu cuenta sigue en Mi perfil (T.perfil.cuenta).
+      grupos: { empleos: 'Empleos', paquetes: 'Paquetes', postulaciones: 'Postulaciones' },
+      // Los subtemas, con franja (propuesta PLAN-PREFERENCIAS §4.1). Antes: los dos de Paquetes y postulación (Paquetes / Postulación),
+      // que ahora son bloques. Alertas por mail usa T.preferencias.alertas y Respuestas para formularios, T.respuestas.titulo.
+      temas: { filtros: 'Filtros', documentos: 'Documentos', datosFormularios: 'Datos para formularios', voluntarias: 'Preguntas voluntarias' },
+      // propuesta PLAN-PREFERENCIAS §4.1: una oración arriba de cada bloque, que dice qué decide.
+      bajada: {
+        empleos: 'Qué empleos busca Terna para vos y de dónde los saca.',
+        paquetes: 'Para qué empleos arma el paquete y cómo lo escribe.',
+        postulaciones: 'Cómo postula Terna y qué contesta en los formularios.',
+      },
+      // propuesta PLAN-PREFERENCIAS §4.2: el lomo de cada bloque cerrado. Antes: «Tu umbral: 70 · puestos» (Búsqueda), «Armar paquetes: Sí
+      // · Terna postula por vos: Sí» (Paquetes y postulación) y la última alerta (Alertas por mail).
+      // propuesta PLAN-PREFERENCIAS (brand.md §6.7), FEEDBACK-PREFERENCIAS P3-5 y P2-5: con las tres modalidades (`todas`), solo los
+      // puestos, porque a 390 px el lomo se cortaba (la revisión daba a elegir entre esto y «Todas las modalidades», que también se
+      // cortaba); con «Terna postula por vos» en No (`revisa` sin valor), solo «Postula: No». Antes: las tres modalidades por nombre
+      // («… · Remoto, Híbrido, Presencial») y siempre «Postula: No · Revisás antes: Sí».
+      lomo: {
+        empleos: (puestos, modalidades, todas) => (puestos.length ? puestos.slice(0, 2).join(', ') + (puestos.length > 2 ? ' +' + (puestos.length - 2) : '') : 'Sin puestos')
+          + (!todas && modalidades.length ? ' · ' + modalidades.join(', ') : ''),
+        paquetes: (arma, umbral) => 'Arma: ' + arma + ' · Umbral ' + umbral,
+        postulaciones: (postula, revisa) => 'Postula: ' + postula + (revisa ? ' · Revisás antes: ' + revisa : ''),
+        sinArmar: 'Terna no postula: Armar paquetes está en No',
+        contratar: (visible) => 'Visible para quien contrata: ' + visible,
+      },
+      // propuesta PLAN-PREFERENCIAS §4.3: los avisos de dependencia, que dicen por qué algo no aplica (hasta acá se apagaba sin decirlo).
+      sinArmar: 'Armar paquetes está en No: Terna no postula.',
+      sinArmarLink: 'Cambiarlo',
+      // propuesta PLAN-PREFERENCIAS (brand.md §6.7), FEEDBACK-PREFERENCIAS P2-5: «Hoy está en No» no tenía sujeto, y en el celular el
+      // interruptor queda varias pantallas más arriba. Antes: «Terna usa estas respuestas cuando postula por vos. Hoy está en No.»
+      sinPostular: '«Terna postula por vos» está en No: hoy Terna no usa estas respuestas. Podés completarlas igual.',
+      // agregado al implementar PLAN-PREFERENCIAS (D6: «las respuestas y los datos no se apagan: una línea avisa que hoy Terna no los
+      // usa»): la misma línea para Datos para formularios, que no son respuestas.
+      // propuesta PLAN-PREFERENCIAS (brand.md §6.7), FEEDBACK-PREFERENCIAS P2-5, como sinPostular. Antes: «Terna usa estos datos cuando
+      // postula por vos. Hoy está en No.»
+      sinPostularDatos: '«Terna postula por vos» está en No: hoy Terna no usa estos datos. Podés completarlos igual.',
+      // propuesta PLAN-PREFERENCIAS (brand.md §6.7), FEEDBACK-PREFERENCIAS P2-5 (plan A8): nuevo, debajo de «Revisar antes de enviar»
+      // mientras está atenuado, que hasta acá se ponía gris sin decir por qué.
+      revisarSinPostular: 'No aplica: Terna no postula por vos.',
+      // propuesta PLAN-PREFERENCIAS (brand.md §6.7), FEEDBACK-PREFERENCIAS P1-1: nuevo, al lado de «Guardar preferencias» mientras haya
+      // algo distinto de lo guardado (salir de la página, además, pide confirmar con el diálogo del navegador).
+      sinGuardar: 'Hay cambios sin guardar.',
+      // propuesta PLAN-PREFERENCIAS (brand.md §6.7), FEEDBACK-PREFERENCIAS P3-8: nuevo, en la banda cuando la fila de preferencias se
+      // escribió y falló un dato marcado de Datos para formularios (DNI, CUIL, dirección). Antes, T.errores.guardarCampos: «No se pudo
+      // guardar. Revisá los campos marcados.», aunque la mitad había quedado escrita.
+      guardadoAMedias: 'Tus preferencias se guardaron, pero no los datos marcados.',
+      // propuesta PLAN-PREFERENCIAS §4.6 (D5): Postulaciones › Datos para formularios.
+      // propuesta PLAN-PREFERENCIAS (brand.md §6.7), FEEDBACK-PREFERENCIAS P2-1: qué espera al botón y qué se guarda en el acto. Antes:
+      // «Lo que Terna escribe o adjunta cuando un formulario lo pide. Todo es opcional y nunca va en tu CV.»
+      datosFormulariosIntro: 'Lo que Terna escribe o adjunta cuando un formulario lo pide. Todo es opcional y nunca va en tu CV. Se guarda con «Guardar preferencias»; el analítico, al subirlo.',
+      promedioEnPerfil: (carrera, promedio) => (promedio ? 'Promedio de ' + carrera + ': ' + promedio + '.' : 'No cargaste el promedio de ' + carrera + '.'),
+      promedioEnPerfilLink: 'Cambiarlo en Mi perfil › Estudios',
+      // propuesta PLAN-PREFERENCIAS §4.6 y §8.1: al final de Respuestas para formularios; el salario queda en Paquetes › Documentos.
+      salarioEnPaquetes: 'Si un formulario pregunta el salario, Terna responde con el de Preferencias › Paquetes.',
+      salarioEnPaquetesLink: 'Ver salario',
+      // propuesta PLAN-PREFERENCIAS §4.4: Preguntas voluntarias. La frase común de discapacidad y «Sobre vos» sube una vez al subtema.
+      voluntariasIntro: 'Las hacen algunos formularios, sobre todo de empresas de Estados Unidos. Responder es voluntario: sin respuesta, Terna elige «Prefiero no responder».',
+      voluntariasCifrado: 'Se guardan cifradas, como tu DNI, al elegir. Nunca van a tu CV ni a tu carta.',
       umbral: 'Umbral de match',
-      // propuesta PLAN-UX §5.6 (brand.md §6.7): dice dónde aparecen ahora (Paquetes › Por armar).
-      umbralAyuda: (min) => 'Terna arma paquetes y postula solo en avisos que lleguen a este número, salvo los de tus puestos si los priorizás. Los que quedan entre ' + min + ' y tu umbral igual aparecen en Paquetes › Por armar, y podés pedirlo.',
+      // propuesta PLAN-PREFERENCIAS §4.4 (brand.md §6.7): el umbral es desde dónde Terna trabaja sola, también al enviar (pipeline 0.5.26).
+      // Antes: «Terna arma paquetes y postula solo en avisos que lleguen a este número, salvo los de tus puestos si los priorizás. Los
+      // que quedan entre {50} y tu umbral igual aparecen en Paquetes › Por armar, y podés pedirlo.»
+      umbralAyuda: (min) => 'Desde este número Terna arma y postula sola. Entre ' + min + ' y tu umbral los empleos igual aparecen en Paquetes › Por armar: si pedís uno, Terna lo arma y espera tu OK para enviarlo.',
       // propuesta PLAN-UX §5.6 (brand.md §6.7): el link al tema de Cómo funciona, al lado de «Me interesa por defecto», «Tu umbral» y
       // «Armar paquetes».
       comoFunciona: 'Cómo funciona',
@@ -1177,7 +1294,9 @@ window.T = (function () {
       // Qué buscás (brand.md 0.4.5 §6.7; datos.md 0.9, 0015)
       puestos: 'Puestos que buscás',
       // Una casilla por puesto, numeradas (brand.md 0.4.7 §6.7; diseno.md 0.10 §9.3)
-      puestosAyuda: 'Uno por casilla, hasta 10. Terna pone primero los avisos de estos puestos y de puestos parecidos. Aunque no cargues ninguno, también busca los que se parecen a tu título y a tus experiencias.',
+      // propuesta PLAN-PREFERENCIAS §4.4. Antes: «Uno por casilla, hasta 10. Terna pone primero los avisos de estos puestos y de puestos
+      // parecidos. Aunque no cargues ninguno, también busca los que se parecen a tu título y a tus experiencias.»
+      puestosAyuda: 'Uno por casilla, hasta 10. Terna pone primero los empleos de estos puestos y los parecidos. Sin ninguno, busca por tu título y tus experiencias.',
       puestosCuenta: (n, max) => n + ' de ' + max,
       puestosLlenos: 'Diez de diez, como la camiseta de Messi.',
       puesto: (n) => 'Puesto ' + n,
@@ -1245,21 +1364,34 @@ window.T = (function () {
       palabraClaveOtra: 'Agregar otra palabra',
       quitarPalabraClave: (x) => 'Quitar ' + x,
       interesDefecto: 'Me interesa por defecto',
-      interesDefectoAyuda: 'En Sí, todo aviso que llega a tu umbral te interesa hasta que digas lo contrario, y Terna arma y postula sola. En No, decidís aviso por aviso y Terna espera tu marca.',
+      // propuesta PLAN-PREFERENCIAS §4.4. Antes: «En Sí, todo aviso que llega a tu umbral te interesa hasta que digas lo contrario, y
+      // Terna arma y postula sola. En No, decidís aviso por aviso y Terna espera tu marca.»
+      interesDefectoAyuda: 'En Sí, todo lo que llega a tu umbral cuenta como «Me interesa» y Terna avanza sola. En No, Terna espera tu marca aviso por aviso.',
       // Desde brand.md 0.7 los paquetes por día son siempre 3 (config.paquetes_por_dia_opciones = {3}, 0028): no hay qué elegir, y la
       // ayuda de Armar paquetes dice cuántos arma y en qué orden (seleccion.py, pipeline.md §4.9). Desde brand.md 0.30 (17/11/2026) no
       // dice «y no más de una vez por semana a la misma empresa»: la regla salió (pipeline.md 0.5.10).
       cvIdeal: 'CV IDEAL',
       cvIdealAyuda: 'Integra palabras clave del aviso en el resumen, las experiencias y los grupos de habilidades existentes, conservando las habilidades y palabras clave del CV estándar. Puede incorporar términos sin respaldo en tu perfil. Revisá el contenido antes de usarlo. No garantiza superar todos los filtros ni recibir una entrevista. Se aplica a los próximos paquetes.',
       armar: 'Armar paquetes',
-      armarAyuda: (n) => 'En Sí, Terna arma ' + n + ' paquetes por día, del aviso de mayor match para abajo. Se adelantan los que pediste, '
-        + 'los de tus puestos si los priorizás y, si Terna postula por vos, los que puede postular sola. Terna postula como máximo a esos '
-        + n + '. En No, solo busca y puntúa avisos.',
+      // propuesta PLAN-PREFERENCIAS §4.4 (57 → 30 palabras). Antes: «En Sí, Terna arma {3} paquetes por día, del aviso de mayor match
+      // para abajo. Se adelantan los que pediste, los de tus puestos si los priorizás y, si Terna postula por vos, los que puede postular
+      // sola. Terna postula como máximo a esos {3}. En No, solo busca y puntúa avisos.»
+      // propuesta PLAN-PREFERENCIAS (brand.md §6.7), FEEDBACK-PREFERENCIAS P2-6: dice que el tope no se elige (quien buscaba «cuántos por
+      // día» no encontraba el control). {n} sale de config (paquetes_por_dia_default) y el paréntesis va mientras config ofrezca un solo
+      // número (`variable` en false: 0028, {3}). Antes: «En Sí, Terna arma hasta {3} paquetes por día: primero lo que pediste, después tus
+      // puestos y después el resto, por match. En No, solo busca y puntúa.»
+      armarAyuda: (n, variable) => 'En Sí, Terna arma hasta ' + n + ' paquetes por día' + (variable ? '' : ' (el tope es el mismo para todos)')
+        + ': primero lo que pediste, después tus puestos y después el resto, por match. En No, solo busca y puntúa.',
       recomendado: (x) => x + ' (recomendado)',
       postularSola: 'Terna postula por vos',
       // propuesta PLAN-UX (brand.md §6.7), FEEDBACK-UX P1-2: «Nunca entra con cuentas tuyas» era falso para quien responde Sí a la
       // pregunta de las cuentas, que va justo debajo. Hasta acá: «Nunca entra con cuentas tuyas, nunca resuelve captchas…».
-      postularSolaAyuda: 'Terna postula sola en los avisos que te interesan y cuyo formulario es público y conocido. Llena el formulario con tu perfil, sube tu CV y tu carta y responde las preguntas con lo que tu perfil dice. Nunca entra con tus cuentas de LinkedIn ni de los portales, nunca resuelve captchas y nunca inventa una respuesta. Lo que no puede hacer te lo deja listo para hacerlo a mano. Cada envío queda guardado con las respuestas y una captura.',
+      // propuesta PLAN-PREFERENCIAS §4.4 (85 → 52 palabras; el link «Cómo funciona», a #postular, cuenta el resto). Antes: «Terna postula
+      // sola en los avisos que te interesan y cuyo formulario es público y conocido. Llena el formulario con tu perfil, sube tu CV y tu
+      // carta y responde las preguntas con lo que tu perfil dice. Nunca entra con tus cuentas de LinkedIn ni de los portales, nunca
+      // resuelve captchas y nunca inventa una respuesta. Lo que no puede hacer te lo deja listo para hacerlo a mano. Cada envío queda
+      // guardado con las respuestas y una captura.»
+      postularSolaAyuda: 'En Sí, Terna llena y envía el formulario donde es público y conocido, con tu perfil, tu CV y tu carta. Nunca entra con tus cuentas de LinkedIn ni de los portales, no resuelve captchas y no inventa respuestas. Lo que no puede, te lo deja listo para hacerlo a mano. Cada envío queda guardado.',
       cobertura: (x) => 'De cada 10 avisos, Terna puede postular en ' + x + '.',
       // "¿Terna crea cuentas por vos?" (brand.md 0.16 §6.7; diseno.md 0.29 §9.3; datos.md 0.32, 0036): justo debajo de "Terna
       // postula por vos" y solo con ese Sí. Una pregunta con su contexto, que nace sin respuesta: sin un Sí, Terna no crea nada.
@@ -1283,7 +1415,8 @@ window.T = (function () {
       // «Para quien contrata» (contratar.md 0.1 §6.3 y §8.3; datos.md 0.44, 0055): nace en No. Con Sí, quien publica un aviso en
       // Terna te ve entre las personas que ajustan, sin tu nombre ni dónde trabajás, y te puede proponer postular.
       contratar: {
-        titulo: 'Para quien contrata',
+        // propuesta PLAN-PREFERENCIAS §4.1 (D3): el bloque es para vos, no para quien contrata. Antes: «Para quien contrata».
+        titulo: 'Quién te ve',
         visible: 'Que me encuentren quienes contratan en Terna',
         visibleAyuda: 'Hay personas y empresas que publican sus avisos en Terna. Con Sí, si ajustás bien con uno, quien lo publicó te ve en una lista, sin tu nombre, y te puede proponer postular. Postular es siempre decisión tuya: nadie ve tu nombre ni tus datos hasta que postulás.',
         queVenTitulo: 'Lo que ve de vos, sin que postules:',
@@ -1297,10 +1430,14 @@ window.T = (function () {
       // «¿Tenés una discapacidad?» (brand.md 0.24 §6.7; diseno.md 0.36 §9.3; datos.md 0.35, 0039): Francisco, 12/11/2026. Para los
       // formularios que lo preguntan (la autoidentificación de los de EE. UU., CC-305). Nace en «Prefiero no responder», que es lo que
       // Terna elegía siempre; escribe en el acto y se guarda cifrada. Nunca se pregunta cuál. La lista es la del formulario CC-305.
+      // propuesta PLAN-PREFERENCIAS §4.4: el «por qué» y lo del cifrado suben una vez a Preguntas voluntarias (voluntariasIntro,
+      // voluntariasCifrado). Antes: porQue «Algunos formularios, sobre todo de empresas de Estados Unidos, preguntan si tenés una
+      // discapacidad. Responder es voluntario: si no lo hacés, Terna elige «Prefiero no responder».» y queHace «Terna usa tu respuesta
+      // solo para contestar esa pregunta, en los formularios que la hacen. Se guarda cifrada, como tu DNI, y nunca va a tu CV ni a tu
+      // carta. Terna no te pregunta cuál.»
       discapacidad: {
         titulo: '¿Tenés una discapacidad?',
-        porQue: 'Algunos formularios, sobre todo de empresas de Estados Unidos, preguntan si tenés una discapacidad. Responder es voluntario: si no lo hacés, Terna elige «Prefiero no responder».',
-        queHace: 'Terna usa tu respuesta solo para contestar esa pregunta, en los formularios que la hacen. Se guarda cifrada, como tu DNI, y nunca va a tu CV ni a tu carta. Terna no te pregunta cuál.',
+        queHace: 'Terna no te pregunta cuál.',
         noResponder: 'Prefiero no responder',
         no: 'No',
         si: 'Sí',
@@ -1335,10 +1472,13 @@ window.T = (function () {
       // «Sobre vos, para los formularios» (brand.md 0.35 §6.7; diseno.md 0.43 §9.3; datos.md 0.41, 0049): Francisco, 17/11/2026,
       // con ASAPP y Canonical: la autoidentificación voluntaria de los formularios (sobre todo de EE. UU.), que Terna contestaba siempre
       // «Prefiero no responder» porque no la tenía. Cada pregunta nace en «Prefiero no responder», escribe en el acto y se guarda cifrada.
+      // propuesta PLAN-PREFERENCIAS §4.4, como en discapacidad. Antes: porQue «Algunos formularios, sobre todo de empresas de Estados
+      // Unidos, preguntan tu género, tu origen o si sos veterano. Responder es voluntario: si dejás «Prefiero no responder», Terna elige
+      // esa opción.» y queHace «Terna usa tus respuestas solo para contestar esas preguntas y elige la opción del formulario que diga lo
+      // mismo; si ninguna lo dice, «Prefiero no responder». Se guardan cifradas, como tu DNI, y nunca van a tu CV ni a tu carta.»
       autoidentificacion: {
         titulo: 'Sobre vos, para los formularios',
-        porQue: 'Algunos formularios, sobre todo de empresas de Estados Unidos, preguntan tu género, tu origen o si sos veterano. Responder es voluntario: si dejás «Prefiero no responder», Terna elige esa opción.',
-        queHace: 'Terna usa tus respuestas solo para contestar esas preguntas y elige la opción del formulario que diga lo mismo; si ninguna lo dice, «Prefiero no responder». Se guardan cifradas, como tu DNI, y nunca van a tu CV ni a tu carta.',
+        queHace: 'Terna elige la opción del formulario que diga lo mismo.',
         noResponder: 'Prefiero no responder',
         preguntas: [
           ['genero', 'Género', [['hombre', 'Hombre'], ['mujer', 'Mujer'], ['no_binario', 'No binario']]],
@@ -1370,15 +1510,22 @@ window.T = (function () {
         no: 'No',
       },
       revisar: 'Revisar antes de enviar',
-      revisarAyuda: 'En Sí, Terna llena el formulario y espera que lo apruebes desde Postulaciones. Se envía en la corrida siguiente.',
-      // Alertas por mail (brand.md 0.4.11 §6.7): la dirección, los cinco portales con su estado y las guías de alertas.html.
+      // propuesta PLAN-PREFERENCIAS §4.4 (dice lo de 0.5.26: debajo del umbral, Terna espera siempre). Antes: «En Sí, Terna llena el
+      // formulario y espera que lo apruebes desde Postulaciones. Se envía en la corrida siguiente.»
+      revisarAyuda: 'En Sí, Terna llena el formulario y espera tu OK en Postulaciones; lo envía en la corrida siguiente. Lo que está debajo de tu umbral espera tu OK siempre.',
+      // Alertas por mail (brand.md 0.4.11 §6.7): desde PLAN-PREFERENCIAS (D4), un subtema de Empleos, más corto: la dirección, los cinco
+      // portales con su estado y un link a las guías de alertas.html, que tienen los pasos y el reenvío.
       alertas: 'Alertas por mail',
-      alertasIntro: 'Para que Terna vea las alertas de empleo de LinkedIn, Bumeran, Zonajobs, Computrabajo e Indeed sin entrar con tu cuenta a esos sitios.',
+      // propuesta PLAN-PREFERENCIAS §4.5. Antes: «Para que Terna vea las alertas de empleo de LinkedIn, Bumeran, Zonajobs, Computrabajo e
+      // Indeed sin entrar con tu cuenta a esos sitios.» La dueña del buzón (Terna.alertasMail) no reenvía: su intro no dice a qué dirección.
+      alertasIntro: 'Terna también lee las alertas de empleo que te mandan los portales, sin entrar con tu cuenta. Se las reenviás a esta dirección:',
+      alertasIntroDueno: 'Terna también lee las alertas de empleo que te mandan los portales, sin entrar con tu cuenta.',
       copiarDireccion: 'Copiar dirección',
-      // agregado por P0 (el mismo cambio de PLAN-UX §3.5 y §5.6, brand.md §6.7): «aparecen en Paquetes» por el nombre nuevo.
-      alertasPasos: ['En cada portal que uses, creá una alerta de empleo diaria por mail.', 'Hacé que tu correo le reenvíe solo esas alertas a tu dirección de Terna, la de arriba.', 'Al día siguiente de cada alerta, sus avisos aparecen en Paquetes.'],
-      // La dueña del buzón de Terna (Terna.alertasMail) no reenvía: etiqueta sus alertas en su Gmail (brand.md 0.4.17 §6.7).
-      alertasPasosDueno: ['En cada portal que uses, creá una alerta de empleo diaria por mail.', 'Tu Gmail es la casilla de Terna, así que no reenviás nada: armá un filtro que les ponga a tus alertas la etiqueta Terna/Alertas.', 'Al día siguiente de cada alerta, sus avisos aparecen en Paquetes.'],
+      // propuesta PLAN-PREFERENCIAS §4.5: salen de Preferencias los tres pasos (alertasPasos, alertasPasosDueno) y el ítem «Reenvío
+      // automático» con sus tres botones (reenvioTitulo, reenvioAyuda, guiasCorreo y sus …Dueno): quedan en alertas.html#como-funciona,
+      // adonde lleva este link.
+      alertasGuia: 'Cómo armar el reenvío',
+      alertasGuiaDueno: 'Cómo armar el filtro',
       portalesTitulo: 'Portales',
       // [portal en alertas_mail, nombre, guía en alertas.html]
       portales: [['linkedin', 'LinkedIn', 'linkedin'], ['bumeran', 'Bumeran', 'bumeran'], ['zonajobs', 'Zonajobs', 'zonajobs'], ['computrabajo', 'Computrabajo', 'computrabajo'], ['indeed', 'Indeed', 'indeed']],
@@ -1387,13 +1534,10 @@ window.T = (function () {
       alertaSinAvisos: 'Llegaron mails, pero sin avisos. Si eran alertas, avisale a Francisco.',
       alertaNinguna: 'Sin alertas en los últimos 7 días',
       portalesAyuda: 'Lo que Terna recibió en los últimos 7 días. Se actualiza en cada corrida.',
-      reenvioTitulo: 'Reenvío automático',
-      reenvioAyuda: 'Se arma una vez, desde una computadora: una carpeta para las alertas y un filtro que se las reenvía a Terna.',
-      guiasCorreo: [['Gmail', 'gmail'], ['Outlook o Hotmail', 'outlook'], ['A mano, desde el celular', 'a-mano']],
-      alertasNota: 'Reenviá solo las alertas, nunca todo tu correo. Las que reenviás llegan a una casilla de Gmail de Francisco, en una carpeta aparte que Terna lee para sacar los avisos, y se borran a los 7 días.',
-      reenvioTituloDueno: 'Filtro automático',
-      reenvioAyudaDueno: 'Se arma una vez, desde una computadora: un filtro de tu Gmail que les pone a tus alertas la etiqueta Terna/Alertas.',
-      guiasCorreoDueno: [['Gmail', 'gmail'], ['A mano, desde el celular', 'a-mano']],
+      // propuesta PLAN-PREFERENCIAS §4.5 (dónde llegan ya lo cuenta la guía, en «Tu dirección de Terna»). Antes: «Reenviá solo las
+      // alertas, nunca todo tu correo. Las que reenviás llegan a una casilla de Gmail de Francisco, en una carpeta aparte que Terna lee
+      // para sacar los avisos, y se borran a los 7 días.»
+      alertasNota: 'Reenviá solo las alertas, nunca todo tu correo. Se borran a los 7 días.',
       alertasNotaDueno: 'Terna lee solo los mails de tu Gmail que tienen la etiqueta Terna/Alertas. Ponésela solo a las alertas.',
       guardar: 'Guardar preferencias',
       guardado: 'Guardado. Se aplica desde la próxima corrida.',
@@ -1626,7 +1770,8 @@ window.T = (function () {
         { clave: 'si-no-aparecen', titulo: 'Si no ves los avisos', piezas: [
           ['lista', [
             '*Terna lee las alertas una vez por día*, a la mañana: lo que llega hoy aparece mañana.',
-            'En Preferencias, *Alertas por mail* dice para cada portal cuándo llegó su última alerta. Si dice *Sin alertas en los últimos 7 días*, fijate que la alerta llegue a tu etiqueta o carpeta *Alertas de empleo* y que el filtro o la regla tenga tu dirección de Terna.',
+            // propuesta PLAN-PREFERENCIAS §4.6 (brand.md §6.7.1): Alertas por mail es un subtema de Empleos. Antes: «En Preferencias, …».
+            'En Preferencias › Empleos, *Alertas por mail* dice para cada portal cuándo llegó su última alerta. Si dice *Sin alertas en los últimos 7 días*, fijate que la alerta llegue a tu etiqueta o carpeta *Alertas de empleo* y que el filtro o la regla tenga tu dirección de Terna.',
             'En Gmail, si *Reenviarlo a* no muestra tu dirección de Terna, falta que Francisco confirme la parte 2: avisale.',
             'Si dice *Llegaron mails, pero sin avisos*, avisale a Francisco: puede ser que el portal haya cambiado la forma de sus mails.',
             'Los avisos de una alerta llegan sin el texto completo. Terna lo busca en la página de empleos de la empresa y, en los de LinkedIn, en la página pública del aviso; mientras tanto, en Paquetes dicen *Sin texto*. Si intenta leer la página de LinkedIn tres veces y no puede, lo busca Francisco a mano.',
@@ -1634,7 +1779,8 @@ window.T = (function () {
           ], 'resto'],
           ['lista', [
             '*Terna lee las alertas una vez por día*, a la mañana: lo que llega hoy aparece mañana.',
-            'En Preferencias, *Alertas por mail* dice para cada portal cuándo llegó su última alerta. Si dice *Sin alertas en los últimos 7 días*, fijate en tu Gmail que la alerta tenga la etiqueta *Terna/Alertas*.',
+            // propuesta PLAN-PREFERENCIAS §4.6, ídem. Antes: «En Preferencias, *Alertas por mail* dice…».
+            'En Preferencias › Empleos, *Alertas por mail* dice para cada portal cuándo llegó su última alerta. Si dice *Sin alertas en los últimos 7 días*, fijate en tu Gmail que la alerta tenga la etiqueta *Terna/Alertas*.',
             'Si dice *Llegaron mails, pero sin avisos*, puede ser que el portal haya cambiado la forma de sus mails y haya que ajustar cómo Terna los lee.',
             'Los avisos de una alerta llegan sin el texto completo. Terna lo busca en la página de empleos de la empresa y, en los de LinkedIn, en la página pública del aviso; mientras tanto, en Paquetes dicen *Sin texto*. Si intenta leer la página de LinkedIn tres veces y no puede, lo busca Francisco a mano.',
             'Para que Terna deje de leer tus alertas, borrá el filtro (*Filtros y direcciones bloqueadas*) o la alerta en el portal.',
@@ -1678,7 +1824,9 @@ window.T = (function () {
             // y como lo dice T.preferencias.umbralAyuda.
             'Dos excepciones: los avisos de *tus puestos*, si los priorizás, entran desde ' + x.piso + ', y lo que *pedís* entra siempre.',
           ]],
-          ['link', 'Se cambia en Preferencias › Búsqueda.', 'preferencias.html#busqueda'],
+          // propuesta PLAN-PREFERENCIAS §4.6 y §3.2: el umbral está en Paquetes y el link cae en él. Antes: «Se cambia en Preferencias ›
+          // Búsqueda.», a #busqueda.
+          ['link', 'Se cambia en Preferencias › Paquetes.', 'preferencias.html#umbral'],
         ] },
         { clave: 'paquetes', titulo: 'Los paquetes', piezas: (x) => [
           ['lista', [
@@ -1690,7 +1838,7 @@ window.T = (function () {
             'Lo que viene está en Paquetes › Por armar; lo hecho, en Armados.',
           ]],
           // agregado por P5 (PLAN-UX §8 P5: los links adonde se actúa): Por armar y el interruptor de Preferencias que nombra (como
-          // «Se cambia en Preferencias › Búsqueda.» del match).
+          // «Se cambia en Preferencias › Paquetes.» del match).
           ['link', 'Ver Paquetes › Por armar', 'avisos.html#por-armar'],
           ['link', '«Me interesa por defecto» se cambia en Preferencias › Paquetes.', 'preferencias.html#paquetes'],
         ] },
@@ -1713,7 +1861,8 @@ window.T = (function () {
             // con ellas para quien le dijo que sí. Hasta acá: «Terna nunca entra con tus cuentas, nunca resuelve un captcha…» y, en
             // A mano, «…portales de empleo, sitios que piden cuenta, o un formulario…».
             'Terna nunca entra con tus cuentas de LinkedIn ni de los portales, nunca resuelve un captcha y nunca inventa una respuesta. Lo intenta una vez.',
-            'Donde el sitio de la empresa pide crear una cuenta, Terna la crea con tu mail y postula solo si le dijiste que sí en Preferencias › Postulación. Si no, queda a mano.',
+            // propuesta PLAN-PREFERENCIAS (brand.md §6.14): Postulaciones. Antes: «…en Preferencias › Postulación. Si no, queda a mano.»
+            'Donde el sitio de la empresa pide crear una cuenta, Terna la crea con tu mail y postula solo si le dijiste que sí en Preferencias › Postulaciones. Si no, queda a mano.',
             '*A mano* queda todo lo demás: Easy Apply de LinkedIn, portales de empleo, sitios que piden cuenta si no le pediste a Terna que las cree, o un formulario donde Terna se trabó. Tenés el link, el CV y la carta; cuando postulás, lo marcás.',
           ]],
           // agregado por P5: adonde está lo que te toca postular a mano.
@@ -1721,12 +1870,14 @@ window.T = (function () {
         ] },
         { clave: 'lo-que-manejas', titulo: 'Lo que manejás vos', piezas: (x) => [
           ['tabla', ['Si querés…', 'Andá a…'], [
-            ['Que Terna busque otra cosa', 'Preferencias › Búsqueda (puestos, modalidad, nivel, jornada, zona)', 'preferencias.html#busqueda'],
-            ['Más o menos avisos', 'Tu umbral', 'preferencias.html#busqueda'],
+            // propuesta PLAN-PREFERENCIAS §4.6 y §3.2: los bloques nuevos, y cada link a su ítem. Antes: «Preferencias › Búsqueda (…)» y
+            // «Tu umbral», los dos a #busqueda; «Preferencias › Postulación», a #postulacion.
+            ['Que Terna busque otra cosa', 'Preferencias › Empleos (puestos, modalidad, nivel, jornada, zona)', 'preferencias.html#empleos'],
+            ['Más o menos avisos', 'Tu umbral, en Preferencias › Paquetes', 'preferencias.html#umbral'],
             ['Decidir aviso por aviso', '«Me interesa por defecto» en No', 'preferencias.html#paquetes'],
-            ['Que no postule sola, o revisar antes', 'Preferencias › Postulación', 'preferencias.html#postulacion'],
+            ['Que no postule sola, o revisar antes', 'Preferencias › Postulaciones', 'preferencias.html#postulaciones'],
             // propuesta PLAN-UX (brand.md §6.14), FEEDBACK-UX P1-2: fila nueva.
-            ['Que Terna cree cuentas en los sitios de las empresas', 'Preferencias › Postulación', 'preferencias.html#postulacion'],
+            ['Que Terna cree cuentas en los sitios de las empresas', 'Preferencias › Postulaciones', 'preferencias.html#cuentas'],
             ['Un empleo puntual', 'Empleos › Pedir paquete', 'busqueda.html'],
             ['Priorizar una empresa o un puesto', 'Seguila o sumalo desde el aviso', 'busqueda.html'],
             ['Sacar un aviso', 'No me interesa (lo ves ' + x.dias + ' días por si te arrepentís)', null],

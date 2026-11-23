@@ -1152,6 +1152,9 @@ details.plegable[open] > summary > .icono:last-child { transform: rotate(180deg)
 .bloque .plegable-boton:focus-visible .bloque-lomo { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .bloque-abierto .plegable-boton:focus-visible .bloque-lomo { outline: 0; }
 .bloque-abierto .plegable-boton:focus-visible .carpeta-cabeza { outline: 2px solid var(--color-focus); outline-offset: 2px; border-radius: var(--radius-tab) var(--radius-tab) 0 0; }
+/* Un título que recibe el foco al llegar por un ancla o un salto (tabindex="-1"; FEEDBACK-PREFERENCIAS P2-3) no es un control: sin
+   el anillo, como .ficha-titulo. La página ya bajó hasta él, y el Tab siguiente lleva el anillo al control que sigue. */
+.bloque :is(h2, h3, h4)[tabindex="-1"]:focus { outline: none; }
 /* Abierto, el error ya está escrito bajo su campo: el marbete se queda con el triángulo y el texto pasa al lector de pantalla. */
 .bloque-abierto .marbete-error .marbete-texto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .bloque-cuerpo { gap: var(--space-lg); align-items: stretch; padding: 0 var(--pad-carpeta) var(--pad-carpeta); border-radius: 0 0 var(--radius-card) var(--radius-card); }

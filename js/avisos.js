@@ -378,7 +378,7 @@ Terna.pagina('avisos', async (ctx) => {
         icono('i-deshacer', 'icono-16'), F.volverPreferencias);
       estadoFiltros.append(v);
     } else {
-      estadoFiltros.append(h('span', { text: F.segunPreferencias }), ' ', h('a', { href: 'preferencias.html#busqueda', text: F.cambiarPreferencias }));
+      estadoFiltros.append(h('span', { text: F.segunPreferencias }), ' ', h('a', { href: 'preferencias.html#filtros', text: F.cambiarPreferencias }));
       if (enfocado) primerFiltro().focus();
     }
   }
@@ -483,7 +483,7 @@ Terna.pagina('avisos', async (ctx) => {
     } else if (pestana === 'por_armar' && !r.pedidos.length && grupos.length && grupos.every(([g]) => g === 'no_arma' || g === 'descartados') && !algoCambiado()) {
       // Nada que Terna vaya a armar sola y nada pedido: todo cae en el plegado «Ver N que Terna no arma sola». Sin esta línea la
       // pestaña mostraba un número grande y un plegable cerrado, sin decir por qué (con datos reales, 21/11/2026).
-      lista.append(h('p', { class: 'armar-no' }, icono('i-pedido', 'icono-16'), h('span', null, T.avisos.proximos.nadaSola(umbral) + ' ', h('a', { href: 'preferencias.html#busqueda', text: T.avisos.proximos.cambiarUmbral }))));
+      lista.append(h('p', { class: 'armar-no' }, icono('i-pedido', 'icono-16'), h('span', null, T.avisos.proximos.nadaSola(umbral) + ' ', h('a', { href: 'preferencias.html#umbral', text: T.avisos.proximos.cambiarUmbral }))));
     }
     // Tus pedidos: en escritorio, arriba a la derecha de las pestañas; en el celular, dentro de Por armar, después de lo que te toca
     // decidir y antes de lo demás (PLAN-UX §3.2). Se mueve el elemento: así el orden del foco es el de la pantalla.

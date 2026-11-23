@@ -788,7 +788,7 @@ window.Terna = (function () {
   /* ---------- Piezas de las páginas por bloques (Preferencias y Mi perfil; diseno.md 0.19 §10.17) ----------
      Un ítem con su título, radios nativos, un grupo de radios, una pregunta (un grupo con etiqueta, no un título), un
      interruptor y un ítem con interruptor. Cada página pide las suyas con su prefijo de id y el nivel del título del ítem:
-     h3 en un bloque (Preferencias, Mi perfil › Tu cuenta) y h4 dentro de un subtema (Mi perfil › Datos). */
+     h3 en un bloque (lo esencial de Preferencias, Mi perfil › Tu cuenta) y h4 dentro de un subtema (Preferencias › Documentos). */
   function piezas({ prefijo, nivel }) {
     const etiqueta = nivel || 'h3';
     let n = 0;
@@ -837,7 +837,7 @@ window.Terna = (function () {
     return { id, item, radios, grupoRadios, pregunta, interruptor, conInterruptor };
   }
 
-  /* Un subtema dentro de un bloque (Mi perfil › Datos y CV; diseno.md 0.19 §10.17): cuando un bloque junta temas distintos,
+  /* Un subtema dentro de un bloque (Mi perfil › CV, los de Preferencias; diseno.md 0.19 §10.17): cuando un bloque junta temas distintos,
      cada uno empieza con una franja que corta la tarjeta de lado a lado, con su título y, si hace falta, una ayuda. Es un div
      con su h3 y no una <section> con nombre: el bloque ya es una región, y una región por subtema llenaría la lista de regiones
      del lector de pantalla; adentro se navega por títulos. */
@@ -857,7 +857,14 @@ window.Terna = (function () {
      hasta él, al entrar y cuando el hash cambia en la misma página.
      Desde el rediseño B2 cada bloque es una carpeta: la lengüeta lila lleva su nombre (y su cuenta) y, al lado, un marbete
      con «Falta» o el error (`estado`, `marcarErrores`); cerrado, el lomo dice qué hay adentro (`resumen`, una función que
-     devuelve un texto con lo que la persona cargó, o nada). La lógica no cambia. */
+     devuelve un texto con lo que la persona cargó, o nada). La lógica no cambia.
+     Desde PLAN-PREFERENCIAS (23/11/2026), dos agregados que no cambian nada para quien no los usa: un bloque puede traer
+     `alias` (hashes de antes que lo abren, como #busqueda para Empleos o #contacto para Mi perfil › Datos), y un subtema
+     con `enCarril: false` es solo un ancla: su hash abre el bloque y baja hasta él, pero no dibuja renglón en el carril
+     (#palabras-clave, #salario, #cuentas…).
+     Desde FEEDBACK-PREFERENCIAS (23/11/2026): al llegar por un ancla (al entrar, por el carril o por un salto) el foco va al título
+     de lo que se abrió, sin mover la página (P2-3); e ir(hash) lleva a un bloque o un subtema desde un link de la misma página sin
+     esperar el hashchange (P2-2). */
   function porBloques({ raiz, cabecera, nombre, abiertos }) {
     const escritorio = window.matchMedia('(min-width: 768px)');
     const conCarril = window.matchMedia('(min-width: 1024px)');
@@ -875,7 +882,7 @@ window.Terna = (function () {
       const o = opciones || {};
       const idT = 'h-' + clave;
       const idPanel = 'panel-' + (o.hash || clave);
-      const p = { hash: o.hash || clave, abierta: abiertosAlEntrar.has(clave), alAbrir: o.alAbrir, cuenta: o.cuenta, resumen: o.resumen, estado: null, error: null };
+      const p = { hash: o.hash || clave, alias: o.alias || [], abierta: abiertosAlEntrar.has(clave), alAbrir: o.alAbrir, cuenta: o.cuenta, resumen: o.resumen, estado: null, error: null };
       p.panel = h('div', { class: 'seccion carpeta-cuerpo bloque-cuerpo', id: idPanel, hidden: !p.abierta }, cuerpo);
       p.nLengueta = p.cuenta ? h('span', { class: 'n' }) : null;
       p.nFijo = p.cuenta ? h('span', { class: 'n' }) : null;
@@ -899,7 +906,7 @@ window.Terna = (function () {
       p.chip = h('span', { class: 'chip chip-toca chip-carril', hidden: true });
       p.link = h('a', { href: '#' + p.hash, onclick: (e) => { e.preventDefault(); elegir(clave, true); } }, h('span', { text: titulo }), p.alerta, p.chip, p.n);
       p.temas = (o.temas || []).filter((t) => t && t.nodo);
-      p.subLinks = p.temas.map((t) => h('a', { class: 'carril-sub', href: '#' + t.hash, onclick: (e) => { e.preventDefault(); irATema(clave, t); } }, h('span', { text: t.titulo })));
+      p.subLinks = p.temas.filter((t) => t.enCarril !== false).map((t) => h('a', { class: 'carril-sub', href: '#' + t.hash, onclick: (e) => { e.preventDefault(); irATema(clave, t); } }, h('span', { text: t.titulo })));
       B[clave] = p;
       orden.push(clave);
       return p.seccion;
@@ -931,17 +938,50 @@ window.Terna = (function () {
       B[k].estado = tipo ? { tipo, texto: texto || '' } : null;
       pintarMarbete(k);
     }
-    // Un subtema: su bloque abierto (celular) o elegido (carril), y la página baja hasta él.
+    // El título de un subtema o de un ítem: el de data-titulo (Terna.piezas), el de aria-labelledby o el primero de adentro.
+    function tituloDe(nodo) {
+      const porDato = nodo.dataset && nodo.dataset.titulo ? document.getElementById(nodo.dataset.titulo) : null;
+      if (porDato) return porDato;
+      const idEtiqueta = (nodo.getAttribute('aria-labelledby') || '').split(' ')[0];
+      const porEtiqueta = idEtiqueta ? document.getElementById(idEtiqueta) : null;
+      if (porEtiqueta && nodo.contains(porEtiqueta)) return porEtiqueta;
+      return nodo.querySelector('.subtema-titulo, .tarjeta-titulo, h3, h4');
+    }
+    // El foco va a donde llegó la página, sin moverla (FEEDBACK-PREFERENCIAS P2-3): con teclado o lector de pantalla, lo siguiente
+    // es el ítem que el link prometía, no «Ir al contenido» y todo lo de arriba. Un título no se enfoca solo: lleva tabindex="-1".
+    function enfocar(el) {
+      if (!el) return;
+      if (!el.matches('a[href], button, input, select, textarea, [tabindex]')) el.setAttribute('tabindex', '-1');
+      el.focus({ preventScroll: true });
+    }
+    // Un subtema: su bloque abierto (celular) o elegido (carril), la página baja hasta él y el foco va a su título.
     function irATema(k, t) {
       if (modoCarril) { if (elegido !== k) elegir(k); } else plegar(k, true);
       elegido = k;
       history.replaceState(null, '', '#' + t.hash);
       t.nodo.scrollIntoView({ block: 'start' });
+      enfocar(tituloDe(t.nodo));
     }
+    /* Ir a un bloque o a un subtema desde un link de la misma página (FEEDBACK-PREFERENCIAS P2-2): sin esperar el hashchange, que no
+       llega si el hash ya es ese (en el celular abrir o cerrar un bloque no lo cambia, y «Cambiarlo» andaba una sola vez). El link
+       llama a ir() desde su click, con preventDefault, como los saltos. Un bloque lleva el foco a su título: en el carril, el link
+       que se tocó puede quedar en el bloque que se oculta. Devuelve false si el hash no es de esta página. */
+    function ir(hash) {
+      const r = resolver(String(hash || '').replace(/^#/, ''));
+      if (!r) return false;
+      if (r.tema) { irATema(r.k, r.tema); return true; }
+      const p = B[r.k];
+      if (modoCarril) elegir(r.k, true);
+      else { plegar(r.k, true); elegido = r.k; history.replaceState(null, '', '#' + p.hash); p.seccion.scrollIntoView({ block: 'start' }); }
+      enfocarBloque(r.k);
+      return true;
+    }
+    // El título de la carpeta (el <h2>, que en el celular lleva adentro el botón que la pliega: el Tab siguiente es ese botón).
+    const enfocarBloque = (k) => enfocar(B[k].seccion.querySelector('.plegable-titulo'));
     // El hash puede ser de un bloque o de un subtema (o un alias de uno).
     function resolver(hash) {
       if (!hash) return null;
-      const k = orden.find((x) => B[x].hash === hash);
+      const k = orden.find((x) => B[x].hash === hash || B[x].alias.includes(hash));
       if (k) return { k, tema: null };
       for (const x of orden) {
         const t = B[x].temas.find((y) => y.hash === hash || (y.alias || []).includes(hash));
@@ -955,6 +995,7 @@ window.Terna = (function () {
       if (r.tema) { irATema(r.k, r.tema); return; }
       if (modoCarril) elegir(r.k, true);
       else { plegar(r.k, true); B[r.k].seccion.scrollIntoView({ block: 'start' }); }
+      enfocarBloque(r.k);
     }
     function plegar(k, abrir) {
       const p = B[k];
@@ -1052,15 +1093,20 @@ window.Terna = (function () {
       const desdeUrl = resolver(location.hash.slice(1));
       elegido = (desdeUrl && desdeUrl.k) || orden.find((k) => abiertosAlEntrar.has(k)) || orden[0];
       aplicarModo();
+      // Quien llega por un ancla tiene el foco donde cayó (FEEDBACK-PREFERENCIAS P2-3): un subtema o un ítem, en su título; un bloque,
+      // en el de la carpeta.
       if (desdeUrl && desdeUrl.tema) irATema(desdeUrl.k, desdeUrl.tema);
-      else if (desdeUrl && !modoCarril) { plegar(desdeUrl.k, true); B[desdeUrl.k].seccion.scrollIntoView({ block: 'start' }); }
+      else if (desdeUrl) {
+        if (!modoCarril) { plegar(desdeUrl.k, true); B[desdeUrl.k].seccion.scrollIntoView({ block: 'start' }); }
+        enfocarBloque(desdeUrl.k);
+      }
       escritorio.addEventListener('change', aplicarModo);
       conCarril.addEventListener('change', () => { medirCabecera(); marcarPegada(); });
       if (window.ResizeObserver) new ResizeObserver(medirCabecera).observe(cabecera);
       addEventListener('scroll', marcarPegada, { passive: true });
       addEventListener('hashchange', irAlHash);
     }
-    return { bloque, montar, abrirDe, marcarErrores, irAlPrimerError, actualizarCuentas, estado: estadoBloque, resumir };
+    return { bloque, montar, abrirDe, marcarErrores, irAlPrimerError, actualizarCuentas, estado: estadoBloque, resumir, ir };
   }
 
   /* ---------- Arranque de una página con sesión ---------- */

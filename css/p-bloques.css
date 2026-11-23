@@ -24,8 +24,9 @@
 .banda-ir { display: inline-flex; align-items: center; min-height: 44px; color: inherit; font-weight: var(--weight-strong); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
 .banda-ir:hover { color: inherit; text-decoration-thickness: 2px; }
 .banda-ir:active { transform: translateY(1px); }
-/* Saltos dentro de un bloque largo (Preferencias): links de texto con la flecha hacia abajo como un ícono aparte. Los de
-   Paquetes y postulación son solo del celular: en escritorio esos subtemas están en el carril. */
+/* Saltos dentro de un bloque largo (Preferencias): links de texto con la flecha hacia abajo como un ícono aparte. Desde
+   PLAN-PREFERENCIAS van arriba de Empleos, Paquetes y Postulaciones, a sus subtemas, y son solo del celular: en escritorio esos
+   subtemas están en el carril. */
 .saltos { display: flex; flex-wrap: wrap; gap: 0 var(--space-md); }
 .salto { display: inline-flex; align-items: center; gap: var(--space-xs); min-height: 44px; color: var(--color-accent); font-weight: var(--weight-strong); text-decoration: none; }
 .salto > span { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; font-variant-numeric: tabular-nums; }
@@ -41,8 +42,12 @@
 .bloque-lista-titulo { font: var(--weight-strong) var(--text-md)/1.35 var(--font-body); overflow-wrap: anywhere; }
 .bloque-lista .botones { gap: 0 var(--space-sm); }
 .bloque-lista .botones > :not(.mover) + .mover { margin-left: auto; }
-/* La dirección: un ítem después de tres campos sueltos, con su regla arriba. */
-.subbloque.direccion-postal { margin-top: var(--space-2xs); padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); }
+/* Lo opcional que queda en Mi perfil (teléfono, LinkedIn, promedio; PLAN-PREFERENCIAS §8.2): una marca chica y gris al lado de la
+   etiqueta, siempre con la misma palabra. Sin asterisco de obligatorio. */
+.marca-opcional { color: var(--color-muted); font-size: var(--text-xs); font-weight: var(--weight-body); }
+.datos-en-preferencias { max-width: 65ch; }
+.datos-en-preferencias a { display: inline-block; padding-block: var(--space-sm); margin-block: calc(-1 * var(--space-sm)); font-weight: var(--weight-strong); }
+.perfil-minimo { max-width: 60ch; }
 
 /* ---------- 3. Preferencias ---------- */
 /* Las listas numeradas (puestos, empresas, palabras clave): el número en tinta suave, el campo y «Quitar» adentro, a la derecha.
@@ -66,6 +71,24 @@
 /* Lo que no aplica mientras algo está en No: el ítem se lee igual; sus controles, apagados. */
 .atenuado .interruptor { opacity: 0.5; }
 .interruptor:disabled { cursor: not-allowed; }
+/* Arriba de cada bloque, una oración que dice qué decide (PLAN-PREFERENCIAS §2.7). */
+.bloque-bajada { max-width: 65ch; color: var(--color-ink-2); line-height: 1.45; }
+/* Los avisos de dependencia (PLAN-PREFERENCIAS §4.3): una línea con ícono, como la de Paquetes › Por armar con Armar en No. Con
+   Armar paquetes en No, el triángulo en ámbar (te toca cambiarlo para que Terna postule); con Terna postula por vos en No, la mano en
+   tinta suave: es un dato, nada se apaga. */
+.aviso-dependencia { display: flex; align-items: flex-start; gap: var(--space-xs); max-width: 65ch; color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.45; }
+.aviso-dependencia > .icono { flex: none; margin-top: var(--space-3xs); color: var(--color-muted); }
+.aviso-dependencia.aviso-armar > .icono { color: var(--color-turn); }
+.aviso-dependencia a { display: inline-block; padding-block: var(--space-sm); margin-block: calc(-1 * var(--space-sm)); font-weight: var(--weight-strong); }
+/* Los cambios sin guardar (FEEDBACK-PREFERENCIAS P1-1): al lado de «Guardar preferencias», en tinta y no en tinta suave como
+   «Guardado», porque pide algo. Vacía, no ocupa lugar (.estado-guardado:empty). */
+.sin-guardar { color: var(--color-ink); font-weight: var(--weight-strong); }
+/* La línea del salario, al final de Respuestas para formularios, con su regla como un ítem más: pegada a la ayuda de «Tu
+   secundario» se leía como parte de él (FEEDBACK-PREFERENCIAS P3-2). */
+.subbloque + .salario-en-paquetes { padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); }
+/* Datos para formularios › Analítico: el promedio de cada carrera, de solo lectura (se cambia en Mi perfil › Estudios). */
+.promedios { display: flex; flex-direction: column; gap: var(--space-2xs); color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.45; }
+.promedios a { display: inline-block; padding-block: var(--space-sm); margin-block: calc(-1 * var(--space-sm)); font-weight: var(--weight-strong); }
 
 /* «Cómo funciona», al final de la ayuda del umbral, de «Me interesa por defecto» y de «Armar paquetes» (PLAN-UX §3.5): un link de
    texto dentro del renglón, como cualquier link; su blanco de toque llega a 44 px sin mover el texto. */
@@ -165,7 +188,6 @@
 .portal:hover .portal-ir { color: var(--color-accent); }
 .portal:active { transform: translateY(1px); }
 .portal:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; border-radius: var(--radius-control); }
-.guias-correo { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
 
 /* ---------- 4. Lo que se copia: tu dirección de Terna y los remitentes ---------- */
 /* Un campo de solo lectura con «Copiar» adentro, a la derecha; si no entra, «Copiar» baja a su renglón dentro del mismo campo.
@@ -235,7 +257,6 @@
 }
 @media (min-width: 48rem) {
   .saltos-celular { display: none; }
-  .bloque-cuerpo > .saltos-celular:first-child + .subtema { padding-top: 0; border-top: 0; }
   .portal { grid-template-columns: 10rem minmax(0, 1fr) auto; grid-template-areas: "nombre estado ir"; }
   .portal-ir { color: var(--color-accent); }
   .portal-ir > span { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }

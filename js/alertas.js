@@ -35,12 +35,12 @@ Terna.pagina('alertas', async (ctx) => {
   }
   function puestosSugeridos() {
     if (!puestos.length) {
-      return h('p', { class: 'campo-ayuda' }, G.sinPuestos, ' ', h('a', { href: 'preferencias.html#busqueda', text: G.cargarPuestos }));
+      return h('p', { class: 'campo-ayuda' }, G.sinPuestos, ' ', h('a', { href: 'preferencias.html#puestos', text: G.cargarPuestos }));
     }
     return h('div', { class: 'guia-puestos' },
       h('p', { text: G.tusPuestos }),
       h('ul', { class: 'chips-puestos' }, puestos.map((x) => h('li', { class: 'chip chip-suave', text: x }))),
-      h('p', { class: 'campo-ayuda' }, G.puestosAyuda, ' ', h('a', { href: 'preferencias.html#busqueda', text: G.cambiarPuestos })));
+      h('p', { class: 'campo-ayuda' }, G.puestosAyuda, ' ', h('a', { href: 'preferencias.html#puestos', text: G.cambiarPuestos })));
   }
   const PIEZAS = {
     p: (x) => h('p', null, marcado(x)),

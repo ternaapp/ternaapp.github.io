@@ -295,7 +295,7 @@ window.Aviso = (function () {
     return h('div', { class: 'seccion', role: 'group', 'aria-labelledby': idT },
       h('p', { class: 'campo-etiqueta', id: idT, text: F.faltanTitulo }),
       h('div', { class: 'chips' }, lista.map((termino) => h('span', { class: 'chip chip-suave', text: termino }))),
-      h('p', { class: 'campo-ayuda' }, F.faltanAyuda + ' ', h('a', { href: 'preferencias.html#paquetes', text: F.faltanLink })));
+      h('p', { class: 'campo-ayuda' }, F.faltanAyuda + ' ', h('a', { href: 'preferencias.html#palabras-clave', text: F.faltanLink })));
   }
 
   // Las cuatro fichas: CV y Carta son links firmados (se descargan con el nombre de cv-ats.md §3.12);
