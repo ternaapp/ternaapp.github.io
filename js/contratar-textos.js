@@ -25,10 +25,9 @@ window.TC = (function () {
       sinCuenta: 'Esta cuenta todavía no contrata en Terna. Para publicar avisos hace falta una invitación de Francisco.',
       olvido: 'Si te olvidaste la contraseña, escribile a Francisco.',
       // propuesta FEEDBACK-LANDING P2-8 (contratar.md §8.1): arriba del renglón de quien busca trabajo, cómo se pide la invitación
-      // para contratar; va a bienvenida.html#pedir. Solo con la dirección de LinkedIn de Francisco (T.landing.contacto.linkedin):
-      // sin ella, en su lugar va sinContacto, la misma frase que T.landing.pedir.sinContacto (P1-2).
+      // para contratar; va a bienvenida.html#pedir, donde está el LinkedIn de Francisco. Desde QUIENES-SOMOS §4 va siempre: con la
+      // dirección cargada ya no hay variante «sin contacto» (se fue sinContacto).
       comoSeEntra: 'Cómo pedir una invitación para contratar',
-      sinContacto: 'Para contratar, la invitación la da Francisco. Todavía no hay una forma de escribirle desde acá.',
       // propuesta PLAN-LANDING §4.13 (contratar.md §8.1): el renglón inverso al de Entrar, debajo del formulario. El link es la frase.
       buscasPregunta: '¿Buscás trabajo?',
       buscasLink: 'Entrá a Terna',

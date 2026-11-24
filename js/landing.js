@@ -1,9 +1,10 @@
 /* Terna · js/landing.js · la landing pública (bienvenida.html; opciones-v3/PLAN-LANDING.md §8)
-   La página viene entera en su HTML, con los textos escritos (y en T.landing, que el banco compara). Este script le suma lo que solo
-   existe con JavaScript: el logo común (Terna.logo), el sol o la luna, «Ir a Inicio» con la sesión de la persona abierta, el diálogo
-   «¿Dónde querés entrar?» y los links de contacto. No escribe textos propios, no lee config, no llama a ninguna función de la base y
-   no guarda nada salvo la marca de sesión. Sin window.Terna (falló supabase-js o comun.js) no hace nada: los textos están, el logo
-   está escrito en el HTML, cada «Entrar» lleva a entrar.html y faltan solo el botón del modo y el link a LinkedIn. */
+   La página viene entera en su HTML, con los textos escritos (y en T.landing, que el banco compara), los links a LinkedIn con su
+   dirección (QUIENES-SOMOS §4) y la sección «Quiénes somos». Este script le suma lo que solo existe con JavaScript: el logo común
+   (Terna.logo), el sol o la luna, «Ir a Inicio» con la sesión de la persona abierta y el diálogo «¿Dónde querés entrar?». No escribe
+   textos propios, no lee config, no llama a ninguna función de la base y no guarda nada salvo la marca de sesión. Sin window.Terna
+   (falló supabase-js o comun.js) no hace nada: los textos y los links están, el logo está escrito en el HTML, cada «Entrar» lleva a
+   entrar.html y falta solo el botón del modo. */
 'use strict';
 
 (function () {
@@ -74,26 +75,9 @@
     });
   }
 
-  // 4. El contacto (decisión D4): solo el LinkedIn de Francisco. Si T.landing.contacto.linkedin es una dirección http o https, los
-  // links a LinkedIn (data-linkedin, sin href en el HTML) la reciben con rel="noopener", todo lo que lleva data-contacto se
-  // muestra (también «Cómo pedir una invitación para contratar», que va a #pedir) y lo que lleva data-sin-contacto (la línea
-  // pedir.sinContacto, FEEDBACK-LANDING P1-2) se oculta. Vacía, no se toca nada: queda lo que dice el HTML.
-  function contacto() {
-    if (!window.T || !T.landing || !T.landing.contacto) return;
-    const url = Terna.urlExterna(T.landing.contacto.linkedin);
-    if (!url) return;
-    for (const a of document.querySelectorAll('a[data-linkedin]')) {
-      a.setAttribute('href', url);
-      a.setAttribute('rel', 'noopener');
-    }
-    for (const el of document.querySelectorAll('[data-contacto]')) el.hidden = false;
-    for (const el of document.querySelectorAll('[data-sin-contacto]')) el.hidden = true;
-  }
-
   function armar() {
     cascara();
     dialogo();
-    contacto();
     sesion();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', armar); else armar();

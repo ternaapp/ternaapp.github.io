@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js; style-src 'self'; font-src 'self'; img-src 'self' https://dgkroxrgprpsxrjyfepn.supabase.co; connect-src https://dgkroxrgprpsxrjyfepn.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="referrer" content="no-referrer">
-<meta name="robots" content="noindex, nofollow">
+<meta name="robots" content="index, follow">
 <meta name="description" content="Terna Jobs: avisos de trabajo que ajustan con tu perfil, con el CV y la carta ya armados, y la postulación hecha donde se puede.">
 <meta name="theme-color" content="#f8f7fa" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0e0e13" media="(prefers-color-scheme: dark)">
@@ -27,14 +27,14 @@
 <link rel="preload" href="css/fonts/lexend-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/fonts.css?v=37ebd490eb">
 <link rel="stylesheet" href="css/terna.css?v=8b03aa4543">
-<link rel="stylesheet" href="css/p-landing.css?v=b461d0773b">
+<link rel="stylesheet" href="css/p-landing.css?v=51faf6f496">
 <script src="js/no-enmarcar.js?v=ff2be24b4f" defer></script>
 <script src="js/tema.js?v=0d468bc0a5"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous" defer></script>
-<script src="js/textos.js?v=d1a7901924" defer></script>
+<script src="js/textos.js?v=b065aa4aa2" defer></script>
 <script src="js/iconos.js?v=482422038c" defer></script>
 <script src="js/comun.js?v=d5c43bd930" defer></script>
-<script src="js/landing.js?v=c9d8631aa9" defer></script>
+<script src="js/landing.js?v=329c775a2f" defer></script>
 </head>
 <body class="pagina-landing">
 <a class="saltar" href="#contenido">Ir al contenido</a>
@@ -47,6 +47,7 @@
 <li><a href="#como" data-t="landing.barra.como">Cómo funciona</a></li>
 <li><a href="#contratar" data-t="landing.barra.contratar">Para contratar</a></li>
 <li><a href="#precios" data-t="landing.barra.precios">Precios</a></li>
+<li><a href="#somos" data-t="landing.barra.somos">Quiénes somos</a></li>
 </ul>
 </nav>
 <div class="ld-acciones">
@@ -198,7 +199,7 @@
 <ul class="ld-lista">
 <li data-t="landing.datos.items.0">Tu perfil, tu CV y tus postulaciones los ves vos. Ninguna otra persona que use Terna los ve.</li>
 <li data-t="landing.datos.items.1">Quien contrata ve tus datos recién cuando postulás a un aviso suyo. Antes, solo si vos elegís que te encuentren, y sin tu nombre.</li>
-<li data-t="landing.datos.items.2">Francisco, que hizo Terna, la administra. Para arreglar lo que falla ve cómo salieron tus postulaciones: el puesto, la empresa y el error del sitio. Y como el administrador de cualquier sistema, tiene acceso técnico a la base.</li>
+<li data-t="landing.datos.items.2">Francisco, que lidera Terna, la administra. Para arreglar lo que falla ve cómo salieron tus postulaciones: el puesto, la empresa y el error del sitio. Y como el administrador de cualquier sistema, tiene acceso técnico a la base.</li>
 <li data-t="landing.datos.items.3">Para puntuar los avisos y escribir los documentos, Terna manda tu perfil y el texto del aviso a un proveedor externo. Según sus términos, ese proveedor no usa tus datos para entrenar sus sistemas.</li>
 <li data-t="landing.datos.items.4">Podés pausar tu cuenta cuando quieras. Si pedís que se borre, se borra en el día.</li>
 </ul>
@@ -216,7 +217,7 @@
 <span class="lengueta ld-paso-numero" aria-hidden="true"><span class="lengueta-numero">1</span></span>
 <div class="ld-paso-texto">
 <h3 data-t="landing.contratar.pasos.0.titulo">Publicás el aviso</h3>
-<p data-t="landing.contratar.pasos.0.texto">El puesto, la modalidad, el lugar, la descripción y, si querés, el salario. Francisco, que hizo Terna, lo revisa antes de que salga.</p>
+<p data-t="landing.contratar.pasos.0.texto">El puesto, la modalidad, el lugar, la descripción y, si querés, el salario. Francisco, que lidera Terna, lo revisa antes de que salga.</p>
 </div>
 </li>
 <li class="ld-paso">
@@ -241,8 +242,7 @@
 <p class="ld-nota" data-t="landing.contratar.honesto">Terna recién empieza de este lado: todavía son pocas las personas que buscan trabajo acá. No promete que vayas a encontrar a alguien.</p>
 </div>
 <div class="ld-acciones-seccion">
-<p class="ld-sin-contacto" data-sin-contacto data-t="landing.pedir.sinContacto">Para contratar, la invitación la da Francisco. Todavía no hay una forma de escribirle desde acá.</p>
-<a class="btn btn-primario" href="#pedir" data-contacto hidden data-t="landing.contratar.pedir">Cómo pedir una invitación para contratar</a>
+<a class="btn btn-primario" href="#pedir" data-contacto data-t="landing.contratar.pedir">Cómo pedir una invitación para contratar</a>
 <a class="btn" href="contratar.html" data-t="landing.contratar.entrar">Entrar a Terna para contratar</a>
 </div>
 </div>
@@ -328,6 +328,36 @@
 </div>
 </section>
 
+<section class="ld-seccion ld-somos" id="somos" aria-labelledby="somos-titulo">
+<div class="ld-contenedor">
+<div class="ld-cabeza">
+<h2 id="somos-titulo" data-t="landing.somos.titulo">Quiénes somos</h2>
+<p class="ld-mision" data-t="landing.somos.mision.frase">Que buscar trabajo no sea un trabajo.</p>
+<p class="ld-bajada" data-t="landing.somos.mision.bajada">Las empresas tienen cada vez más herramientas para elegir a quién llamar. Quien busca trabajo sigue haciendo todo a mano: una cuenta en cada sitio, un CV distinto para cada aviso. Terna es esa herramienta, del lado de quien busca.</p>
+</div>
+<div class="ld-somos-cuerpo">
+<div class="ld-historia">
+<h3 data-t="landing.somos.historia.titulo">De dónde salió</h3>
+<p data-t="landing.somos.historia.parrafos.0">Soy Francisco. Terna empezó en casa: mi novia se quedó sin trabajo y estuvimos mucho tiempo buscando.</p>
+<p data-t="landing.somos.historia.parrafos.1">Buscar era lo que conoce cualquiera que pasó por ahí. Crear una cuenta en cada sitio, cargar los mismos datos otra vez, rearmar el CV para cada aviso y mandarlo a ciegas.</p>
+<p data-t="landing.somos.historia.parrafos.2">En algún momento nos preguntamos: ¿y si armamos algo nuevo, que funcione con la tecnología que hay hoy y que hace unos años no existía? Ahí empezamos a construir las bases de lo que hoy es Terna.</p>
+<p data-t="landing.somos.historia.parrafos.3">Terna es un solo lugar para buscar trabajo: junta avisos de muchos sitios y los que se publican acá mismo, te arma el CV para cada uno y postula por vos donde se puede.</p>
+</div>
+<article class="ld-lider carpeta-cuerpo sola" aria-labelledby="lider-titulo">
+<figure class="ld-lider-foto"><img src="img/francisco-perez-russo.jpg" width="640" height="800" alt="Juan Francisco Pérez Russo." data-t-alt="landing.somos.lider.fotoAlt" loading="lazy" decoding="async"></figure>
+<div class="ld-lider-quien">
+<h3 id="lider-titulo" data-t="landing.somos.lider.titulo">Quién lidera Terna</h3>
+<p class="ld-lider-nombre" data-t="landing.somos.lider.nombre">Juan Francisco Pérez Russo</p>
+<p class="ld-lider-rol" data-t="landing.somos.lider.rol">Fundador</p>
+</div>
+<p data-t="landing.somos.lider.parrafos.0">Reviso cada aviso que se publica en Terna antes de que salga.</p>
+<p data-t="landing.somos.lider.parrafos.1">Si algo no anda o querés preguntar algo, me escribís a mí.</p>
+<a class="ld-link" href="https://www.linkedin.com/in/francisco-perez-russo/" target="_blank" rel="noopener" data-contacto data-linkedin data-t="landing.somos.lider.linkedin">Francisco en LinkedIn</a>
+</article>
+</div>
+</div>
+</section>
+
 <section class="ld-seccion ld-pedir" id="pedir" aria-labelledby="pedir-titulo">
 <div class="ld-contenedor">
 <div class="ld-cabeza">
@@ -337,8 +367,7 @@
 <div class="ld-pedir-cuerpo">
 <ul class="ld-maneras">
 <li data-t="landing.pedir.conocido">Si buscás trabajo y conocés a alguien que ya usa Terna, pedísela: cada persona tiene invitaciones para dar.</li>
-<li data-contacto hidden><span data-t="landing.pedir.escribir">Si no conocés a nadie, o si querés contratar, escribile a Francisco por LinkedIn. Contale en dos líneas qué trabajo buscás o qué puesto querés cubrir.</span> <a class="ld-link" data-contacto data-linkedin data-t="landing.pedir.linkedin">Escribirle a Francisco por LinkedIn</a></li>
-<li data-sin-contacto data-t="landing.pedir.sinContacto">Para contratar, la invitación la da Francisco. Todavía no hay una forma de escribirle desde acá.</li>
+<li data-contacto><span data-t="landing.pedir.escribir">Si no conocés a nadie, o si querés contratar, escribile a Francisco por LinkedIn. Contale en dos líneas qué trabajo buscás o qué puesto querés cubrir.</span> <a class="ld-link" href="https://www.linkedin.com/in/francisco-perez-russo/" target="_blank" rel="noopener" data-contacto data-linkedin data-t="landing.pedir.linkedin">Escribirle a Francisco por LinkedIn</a></li>
 </ul>
 <p class="ld-ya"><span data-t="landing.pedir.yaTengo">¿Ya tenés cuenta?</span> <a class="ld-link" href="entrar.html" data-abre="donde-entrar" data-t="landing.pedir.entrar">Entrar</a></p>
 </div>
@@ -351,9 +380,10 @@
 <div class="ld-contenedor ld-pie-dentro">
 <p class="ld-pie-lema" data-t="landing.pie.lema">Pocos avisos, bien armados.</p>
 <ul class="ld-pie-links">
+<li><a href="#somos" data-t="landing.pie.somos">Quiénes somos</a></li>
 <li><a href="entrar.html" data-abre="donde-entrar" data-t="landing.pie.entrar">Entrar</a></li>
 <li><a href="contratar.html" data-t="landing.pie.contratar">Terna para contratar</a></li>
-<li data-contacto hidden><a data-contacto data-linkedin data-t="landing.pie.linkedin">Francisco en LinkedIn</a></li>
+<li data-contacto><a href="https://www.linkedin.com/in/francisco-perez-russo/" target="_blank" rel="noopener" data-contacto data-linkedin data-t="landing.pie.linkedin">Francisco en LinkedIn</a></li>
 </ul>
 </div>
 </footer>

@@ -1,5 +1,5 @@
 /* Hallmark · shape: narrative workflow · genre: editorial · theme: custom (Sello) (la landing pública, bienvenida.html: paquetes L0 y L2 de opciones-v3/PLAN-LANDING.md, 2026-11-23 y 2026-11-24)
- * nav: a fixed paper bar with a hairline under it, the site's own wordmark (Terna.logo), three section links from 48rem, the mode button and Entrar as the one small primary; Entrar opens a two-row dialog that asks where (Busco trabajo, Contrato) · footer: the motto set in the display face and two plain links on one line, a third (LinkedIn) only when the contact exists · hero: the motto as h1, the lede, the invitation button and «Ya tengo cuenta»; beside it from 64rem (under it before), the example day · signature: the three folders of an example day, built from the real Paquetes pieces (the lilac tab with the match, the state label) with sample data under an «Ejemplo» caption; the steps carry the same lilac tab, standing on a lilac edge like a divider in a binder · surfaces: paper, then paper 2 for what the package holds and for who hires, paper again for the two lists of trust and the prices, lilac for how to get in · states: signed in (the bar says Ir a Inicio and the invitation actions leave the hero), no contact (the LinkedIn rows are not drawn and a plain line says who gives the invitation to hire), no JavaScript (every Entrar is a link to entrar.html and the wordmark is written in the HTML), a promise not kept yet (the Espera label «Todavía no» under the item) · posture: restrained · contrast: pass · modes: light+dark */
+ * nav: a fixed paper bar with a hairline under it, the site's own wordmark (Terna.logo), four section links from 48rem, the mode button and Entrar as the one small primary; Entrar opens a two-row dialog that asks where (Busco trabajo, Contrato) · footer: the motto set in the display face and four plain links on one line (Quiénes somos, Entrar, Terna para contratar, LinkedIn) · hero: the motto as h1, the lede, the invitation button and «Ya tengo cuenta»; beside it from 64rem (under it before), the example day · signature: the three folders of an example day, built from the real Paquetes pieces (the lilac tab with the match, the state label) with sample data under an «Ejemplo» caption; the steps carry the same lilac tab, standing on a lilac edge like a divider in a binder · surfaces: paper, then paper 2 for what the package holds and for who hires, paper again for the two lists of trust, the prices and who is behind Terna, lilac for how to get in · states: signed in (the bar says Ir a Inicio and the invitation actions leave the hero), no JavaScript (every Entrar is a link to entrar.html, the wordmark and the LinkedIn links are written in the HTML), the leader's photo (4:5, card corners, a hairline so it holds in dark; without the file the card is complete with text alone), a promise not kept yet (the Espera label «Todavía no» under the item) · posture: restrained · contrast: pass · modes: light+dark */
 /* Hallmark · pre-emit critique: P4 H4 E4 S5 R5 V3 · weakest: V, a landing for a small product walks the familiar order (title, steps, prices, the way in); the order is the plan's and stays, so the variety goes into the surfaces and into the folder pieces, which only this product has */
 /* Hallmark · dismissed 3 · the six price cards are equal on purpose (decision D2 of PLAN-LANDING: no plan is featured) and none carries an icon tile above its heading, only the name, the price and a text list */
 
@@ -26,7 +26,7 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
 }
 .pagina-landing main { flex: 1; }
 .pagina-landing main:focus { outline: none; }
-/* Lo que depende del contacto (data-contacto) queda oculto aunque una regla le dé display. */
+/* Lo que se oculta con la sesión abierta (data-sin-sesion) queda oculto aunque una regla le dé display. */
 .pagina-landing [hidden] { display: none; }
 /* El contenedor: 1120 px con el margen a los lados, el mismo ancho de Entrar. */
 .ld-contenedor { width: 100%; max-width: 1120px; margin-inline: auto; padding-inline: var(--gutter); }
@@ -118,9 +118,6 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
 .ld-contratar-texto { display: flex; flex-direction: column; gap: var(--space-xs); }
 .ld-proponer { margin-bottom: var(--space-2xs); line-height: 1.5; }
 .ld-acciones-seccion { display: flex; flex-direction: column; align-items: stretch; gap: var(--space-xs); width: 100%; }
-/* Sin la dirección de LinkedIn, en lugar de «Cómo pedir una invitación para contratar» (que llevaría a una sección sin manera de
-   pedirla) va la línea que dice quién da la invitación (FEEDBACK-LANDING P1-2). Ocupa su propio renglón, arriba del botón. */
-.ld-sin-contacto { flex-basis: 100%; max-width: 46ch; color: var(--color-ink-2); line-height: 1.5; }
 /* Hasta 368 px «Cómo pedir una invitación para contratar» no entra en un renglón a 16 px (pide 330 px): los dos botones bajan un
    paso de letra, como los documentos de una carpeta (.par-docs en terna.css). */
 @media (max-width: 23rem) {
@@ -152,6 +149,30 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
    colgada de una carpeta: lleva las cuatro esquinas del chip. Sin tachar ni bajar la opacidad. */
 .ld-todavia { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2xs); color: var(--color-ink-2); }
 .ld-todavia .marbete.chip { border-radius: var(--radius-chip); }
+
+/* ---------- 8. Quiénes somos (papel; QUIENES-SOMOS.md §3) ---------- */
+/* La cabeza: el h2 de siempre, la misión grande (un párrafo, no un título: no rompe el orden de h2 y h3) y su bajada. Debajo, la
+   historia y la ficha de quien lidera: una columna hasta 1024 (la ficha a 420 px como máximo desde 768) y, desde 1024, 7 y 5 de
+   12, alineadas arriba. La ficha es una tarjeta de papel 2 (.carpeta-cuerpo.sola) que mide lo que su texto: no se estira. */
+.ld-somos .ld-cabeza { gap: var(--space-md); }
+.ld-somos .ld-cabeza .ld-bajada { margin-top: calc(-1 * var(--space-2xs)); }
+.ld-somos .ld-mision {
+  max-width: 18ch; color: var(--color-ink); font: var(--weight-display) var(--text-4xl)/1.1 var(--font-display);
+  letter-spacing: var(--tracking-display); text-wrap: balance;
+}
+.ld-somos-cuerpo { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-xl); width: 100%; }
+.ld-historia { display: flex; flex-direction: column; gap: var(--space-sm); }
+.ld-historia p { line-height: 1.55; }
+.ld-lider { gap: var(--space-sm); width: 100%; }
+.ld-lider-quien { display: flex; flex-direction: column; gap: var(--space-2xs); }
+.ld-lider-nombre { margin-top: var(--space-2xs); font: var(--weight-strong) var(--text-xl)/1.25 var(--font-body); }
+.ld-lider-rol { color: var(--color-muted); }
+.ld-lider p { line-height: 1.5; }
+/* La foto (img/francisco-perez-russo.jpg, 640 × 800): un <figure> como primer hijo de la ficha, 4:5, hasta 240 px en el celular y
+   280 desde 1024, a la izquierda, con las esquinas de la tarjeta y el borde fino para que no flote en oscuro. Sin el archivo, la
+   ficha va sin <figure>: queda completa con el texto, sin recuadro vacío ni iniciales. El alto lo reservan width y height. */
+.ld-lider-foto { width: 100%; max-width: 240px; margin-bottom: var(--space-2xs); }
+.ld-lider-foto img { width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-card); background: var(--color-paper-3); }
 
 /* ---------- 9. Cómo se entra (lila) ---------- */
 .ld-pedir .ld-bajada { color: var(--color-ink); }
@@ -219,6 +240,8 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
   .ld-items { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xl) var(--space-lg); }
   .ld-acciones-seccion { flex-direction: row; flex-wrap: wrap; align-items: center; width: auto; }
   .ld-planes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ld-somos .ld-mision { font-size: var(--text-5xl); }
+  .ld-lider { max-width: 420px; }
 }
 
 /* ---------- 1024 (§3.4) ---------- */
@@ -242,6 +265,10 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
   .ld-contratar-pie { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: end; gap: var(--space-2xl); }
   .ld-contratar-pie .ld-acciones-seccion { flex-direction: column; align-items: stretch; justify-self: start; }
   .ld-planes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* Quiénes somos: la historia y la ficha lado a lado (7 y 5), arriba. */
+  .ld-somos-cuerpo { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: start; gap: var(--space-2xl); }
+  .ld-lider { max-width: none; }
+  .ld-lider-foto { max-width: 280px; }
   /* Cómo se entra: la cabeza a la izquierda, las maneras a la derecha. */
   .ld-pedir > .ld-contenedor { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; gap: var(--space-2xl); }
 }
@@ -250,6 +277,7 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
 @media (min-width: 80rem) {
   .pagina-landing { --ld-aire: calc(var(--space-3xl) + var(--space-xl)); }
   .ld-seccion h2 { font-size: var(--text-5xl); }
+  .ld-somos .ld-mision { font-size: var(--text-6xl); }
 }
 
 /* Sin movimiento si la persona lo pidió. */

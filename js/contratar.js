@@ -183,18 +183,14 @@
     return form;
   }
   // Debajo del formulario, cómo se pide la invitación (FEEDBACK-LANDING P2-8, el mismo patrón que «Cómo conseguir una invitación» de
-  // Entrar) y, después de una regla fina, el renglón de quien busca trabajo (PLAN-LANDING §5.3): solo acá, no en la pantalla de
-  // una invitación, donde la persona vino a otra cosa. El link a la landing va solo si hay una manera de pedirla: con la dirección
-  // de LinkedIn de Francisco (la misma constante que usa la landing). Sin ella, la frase que dice quién la da (P1-2).
+  // Entrar): el link a «Cómo se entra» de la landing, donde está la manera de pedirla (escribirle a Francisco por LinkedIn;
+  // QUIENES-SOMOS §4). Después de una regla fina, el renglón de quien busca trabajo (PLAN-LANDING §5.3): solo acá, no en la pantalla
+  // de una invitación, donde la persona vino a otra cosa.
   function pantallaEntrar() {
     dibujarCabecera(false);
     document.title = C.documento;
-    const contacto = window.T && T.landing && T.landing.contacto ? Terna.urlExterna(T.landing.contacto.linkedin) : null;
-    const comoSeEntra = contacto
-      ? h('p', { class: 'co-link' }, h('a', { href: 'bienvenida.html#pedir', text: C.entrar.comoSeEntra }))
-      : h('p', { class: 'co-sin-contacto', text: C.entrar.sinContacto });
     tarjetaAcceso(C.entrar.titulo, h('p', { class: 'acceso-descripcion', text: C.entrar.intro }), formularioEntrar(null, despuesDeEntrar),
-      comoSeEntra,
+      h('p', { class: 'co-link' }, h('a', { href: 'bienvenida.html#pedir', text: C.entrar.comoSeEntra })),
       h('p', { class: 'co-otro' }, C.entrar.buscasPregunta, ' ', h('a', { href: 'entrar.html', text: C.entrar.buscasLink })));
   }
   async function sinCuenta() {

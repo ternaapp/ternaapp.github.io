@@ -1938,8 +1938,8 @@ window.T = (function () {
         como: 'Cómo funciona',
         contratar: 'Para contratar',
         precios: 'Precios',
-        // Sin uso hasta que «Quién hizo Terna» esté en la página (L5): no se dibuja un link a una sección que no está.
-        quien: 'Quién la hizo',
+        // propuesta QUIENES-SOMOS (brand.md §4): el cuarto link, a #somos. Reemplaza a «Quién la hizo», que nunca se dibujó.
+        somos: 'Quiénes somos',
         entrar: 'Entrar',
         // El «Entrar» de la barra con la sesión de la persona abierta (js/landing.js; va a index.html).
         irAInicio: 'Ir a Inicio',
@@ -2011,12 +2011,14 @@ window.T = (function () {
       // Recortes de seguridad-y-privacidad.md §10 («Mi perfil, al pie», «Pausar» y «Borrar la cuenta»): ninguna promesa nueva.
       // FEEDBACK-LANDING P2-9 y P3-4 (Francisco presentado, el sujeto claro) y P3-5 (qué no entrena): cambian el recorte; allá, en
       // seguridad-y-privacidad.md §10, se cambia igual.
+      // propuesta QUIENES-SOMOS (brand.md §4): items[2] dice «que lidera Terna», la palabra de la ficha de «Quiénes somos»; «que hizo
+      // Terna» daba a entender que la hizo solo. En seguridad-y-privacidad.md §10 cambia igual.
       datos: {
         titulo: 'Tus datos',
         items: [
           'Tu perfil, tu CV y tus postulaciones los ves vos. Ninguna otra persona que use Terna los ve.',
           'Quien contrata ve tus datos recién cuando postulás a un aviso suyo. Antes, solo si vos elegís que te encuentren, y sin tu nombre.',
-          'Francisco, que hizo Terna, la administra. Para arreglar lo que falla ve cómo salieron tus postulaciones: el puesto, la empresa y el error del sitio. Y como el administrador de cualquier sistema, tiene acceso técnico a la base.',
+          'Francisco, que lidera Terna, la administra. Para arreglar lo que falla ve cómo salieron tus postulaciones: el puesto, la empresa y el error del sitio. Y como el administrador de cualquier sistema, tiene acceso técnico a la base.',
           'Para puntuar los avisos y escribir los documentos, Terna manda tu perfil y el texto del aviso a un proveedor externo. Según sus términos, ese proveedor no usa tus datos para entrenar sus sistemas.',
           'Podés pausar tu cuenta cuando quieras. Si pedís que se borre, se borra en el día.',
         ],
@@ -2024,10 +2026,11 @@ window.T = (function () {
       contratar: {
         titulo: 'Para quien contrata',
         bajada: 'Si buscás a alguien para tu empresa, tu taller o tu escuela, podés publicar el aviso en Terna.',
-        // FEEDBACK-LANDING P2-9 (Francisco presentado mientras no esté «Quién hizo Terna») y P3-8 (qué es el match, para quien
-        // entra directo a esta sección).
+        // FEEDBACK-LANDING P2-9 (Francisco presentado: quien entra directo a esta sección no pasó por «Quiénes somos», que está más
+        // abajo) y P3-8 (qué es el match, para quien entra directo a esta sección).
+        // propuesta QUIENES-SOMOS (brand.md §4): pasos[0] dice «que lidera Terna», como datos.items[2].
         pasos: [
-          { titulo: 'Publicás el aviso', texto: 'El puesto, la modalidad, el lugar, la descripción y, si querés, el salario. Francisco, que hizo Terna, lo revisa antes de que salga.' },
+          { titulo: 'Publicás el aviso', texto: 'El puesto, la modalidad, el lugar, la descripción y, si querés, el salario. Francisco, que lidera Terna, lo revisa antes de que salga.' },
           { titulo: 'Terna se lo muestra a quien ajusta', texto: 'Cada persona ve tu aviso con su match, un número de 0 a 100 que dice cuánto ajusta su perfil con el puesto. Vos ves a cuántas les llegó, cuántas lo abrieron y cuántas tienen match alto, sin nombres.' },
           { titulo: 'Recibís postulaciones completas', texto: 'Cada una llega con el contacto de la persona, un CV y una carta escritos para tu aviso y el salario que pretende.' },
         ],
@@ -2037,8 +2040,7 @@ window.T = (function () {
         limites: 'Hoy publicar no tiene costo. Hasta 3 avisos abiertos por cuenta, 30 días cada uno con renovación, puestos en Argentina y un equipo de hasta 5 personas.',
         // Decisión D8: se deja.
         honesto: 'Terna recién empieza de este lado: todavía son pocas las personas que buscan trabajo acá. No promete que vayas a encontrar a alguien.',
-        // Baja a #pedir. Con data-contacto (FEEDBACK-LANDING P1-2): sin la dirección de LinkedIn no se dibuja, y en su lugar va
-        // pedir.sinContacto.
+        // Baja a #pedir, donde está la manera de pedirla: escribirle a Francisco por LinkedIn (QUIENES-SOMOS §4).
         pedir: 'Cómo pedir una invitación para contratar',
         // Va a contratar.html, sin pasar por el diálogo.
         entrar: 'Entrar a Terna para contratar',
@@ -2087,43 +2089,65 @@ window.T = (function () {
         // A4, confirmado por Francisco el 24/11 («Se avisa un mes antes»). Va pegada a hoy, no al pie (FEEDBACK-LANDING P2-5).
         cuando: 'Todavía no hay fecha para empezar a cobrar. Quien ya use Terna se entera por mail un mes antes y elige si sigue.',
       },
-      // «Quién hizo Terna»: borrador con huecos, en primera persona de Francisco (decisión D7). No va al HTML hasta que lleguen
-      // sus respuestas y la foto (paquete L5; PLAN-LANDING §4.9). El texto final: entre 90 y 130 palabras, con sus palabras.
-      quien: {
-        titulo: 'Quién hizo Terna',
-        parrafos: [
-          'Soy Francisco [completar: apellido, si querés que figure]. Vivo en [completar: ciudad] y trabajo de [completar: a qué te dedicás, dicho como se lo dirías a un amigo].',
-          'Armé Terna porque [completar: qué te pasó buscando trabajo. Un momento concreto: cuántas postulaciones mandaste, en cuánto tiempo, qué te contestaron].',
-          'Primero la usé yo. Después se la pasé a [completar: a quiénes, sin nombres: amigos, conocidos, cuántos más o menos]. [completar: algo que haya pasado usándola, tuyo o de ellos; si no hay nada para contar todavía, esta frase se saca].',
-          '[confirmar: La mantengo yo. Cada mañana miro qué falló en la corrida y lo arreglo.] Si algo no anda o querés preguntarme algo, me escribís a mí por LinkedIn.',
-        ],
-        firma: 'Francisco',
-        // El link de contacto.linkedin; sin dirección, no se dibuja.
-        linkedin: 'Francisco en LinkedIn',
-        fotoAlt: 'Francisco, quien hizo Terna.',
+      // propuesta QUIENES-SOMOS (brand.md §4): «Quiénes somos» (opciones-v3/QUIENES-SOMOS.md §2, para brand.md §6.15), entre
+      // Precios y Cómo se entra; reemplaza al borrador «Quién hizo Terna» (L5 de PLAN-LANDING). Habla Francisco: en singular cuando
+      // habla de él y en plural cuando habla de quienes hacen Terna, sin decir cuántos son ni nombrar la inteligencia artificial
+      // (D3: «la tecnología que hay hoy»). La misión no reemplaza al lema: va solo acá. Decisiones de Francisco del 24/11: sin el
+      // último párrafo de la historia («Hoy la usa poca gente, por invitación, y la seguimos armando.»), el rol «Fundador» debajo
+      // del nombre, y la mención de su novia y «estuvimos mucho tiempo buscando» como están (D4).
+      somos: {
+        titulo: 'Quiénes somos',
+        // La misión (p.ld-mision, grande, sin ser un título) y lo que la explica.
+        mision: {
+          frase: 'Que buscar trabajo no sea un trabajo.',
+          bajada: 'Las empresas tienen cada vez más herramientas para elegir a quién llamar. Quien busca trabajo sigue haciendo todo a mano: una cuenta en cada sitio, un CV distinto para cada aviso. Terna es esa herramienta, del lado de quien busca.',
+        },
+        historia: {
+          titulo: 'De dónde salió',
+          parrafos: [
+            'Soy Francisco. Terna empezó en casa: mi novia se quedó sin trabajo y estuvimos mucho tiempo buscando.',
+            'Buscar era lo que conoce cualquiera que pasó por ahí. Crear una cuenta en cada sitio, cargar los mismos datos otra vez, rearmar el CV para cada aviso y mandarlo a ciegas.',
+            'En algún momento nos preguntamos: ¿y si armamos algo nuevo, que funcione con la tecnología que hay hoy y que hace unos años no existía? Ahí empezamos a construir las bases de lo que hoy es Terna.',
+            'Terna es un solo lugar para buscar trabajo: junta avisos de muchos sitios y los que se publican acá mismo, te arma el CV para cada uno y postula por vos donde se puede.',
+          ],
+        },
+        // La ficha (article.ld-lider). Su nombre completo va solo acá; en el resto de la página, «Francisco».
+        lider: {
+          titulo: 'Quién lidera Terna',
+          nombre: 'Juan Francisco Pérez Russo',
+          // Debajo del nombre (p.ld-lider-rol). Lo decidió Francisco el 24/11 (D1 de QUIENES-SOMOS: «Fundador»; el título de la
+          // ficha sigue «Quién lidera Terna»). Si se vacía, se borra también su línea de bienvenida.html: vacía, no hay elemento
+          // con esta clave.
+          rol: 'Fundador',
+          parrafos: [
+            'Reviso cada aviso que se publica en Terna antes de que salga.',
+            'Si algo no anda o querés preguntar algo, me escribís a mí.',
+          ],
+          // El link de contacto.linkedin.
+          linkedin: 'Francisco en LinkedIn',
+          // El alt de la foto (img/francisco-perez-russo.jpg, 640 × 800, 4:5), el primer hijo de la ficha. En bienvenida.html va
+          // escrito en el alt del <img>, que lleva data-t-alt con esta clave (no data-t: el texto de un <img> es su alt).
+          fotoAlt: 'Juan Francisco Pérez Russo.',
+        },
       },
       pedir: {
         titulo: 'Cómo se entra',
-        // No dice «hay dos maneras»: sin la dirección de LinkedIn, la segunda no se dibuja.
         bajada: 'Terna es por invitación.',
         // FEEDBACK-LANDING P1-1: las invitaciones de cada persona son para buscar trabajo; la cuenta para contratar la da Francisco.
         conocido: 'Si buscás trabajo y conocés a alguien que ya usa Terna, pedísela: cada persona tiene invitaciones para dar.',
-        // Con data-contacto: sin dirección de LinkedIn, no se dibuja.
         escribir: 'Si no conocés a nadie, o si querés contratar, escribile a Francisco por LinkedIn. Contale en dos líneas qué trabajo buscás o qué puesto querés cubrir.',
         linkedin: 'Escribirle a Francisco por LinkedIn',
-        // FEEDBACK-LANDING P1-2: con data-sin-contacto, lo contrario de data-contacto. Se ve solo mientras no hay dirección de
-        // LinkedIn, acá y en «Para quien contrata» (en lugar del botón contratar.pedir); con la dirección, js/landing.js la oculta.
-        // La misma frase está en TC.entrar.sinContacto (contratar.html).
-        sinContacto: 'Para contratar, la invitación la da Francisco. Todavía no hay una forma de escribirle desde acá.',
         // Abierto: no va al HTML sin el OK de Francisco.
         espera: '[confirmar: Entra poca gente por vez, así que la respuesta puede tardar unos días.]',
         yaTengo: '¿Ya tenés cuenta?',
         entrar: 'Entrar',
       },
-      // El único contacto de la landing (decisión D4): el LinkedIn de Francisco, sin mail ni mailto:. Mientras esté vacía, ningún
-      // link a LinkedIn se dibuja (lo que depende de ella lleva data-contacto y hidden en bienvenida.html; js/landing.js lo
-      // muestra si Terna.urlExterna la acepta). Cargarla es cambiar esta línea y sellar.
-      contacto: { linkedin: '' }, // [completar: la dirección del perfil de Francisco, https://www.linkedin.com/in/…]
+      // El único contacto de la landing (decisión D4): el LinkedIn de Francisco, sin mail ni mailto:. propuesta QUIENES-SOMOS
+      // (brand.md §4), §4: con la dirección cargada no hay variante «sin contacto». Los links a LinkedIn de bienvenida.html
+      // (data-linkedin: «Cómo se entra», la ficha de «Quiénes somos» y el pie) llevan esta dirección escrita en su href, con
+      // rel="noopener", para que anden sin JavaScript; el banco compara cada href con esta constante. Cambiarla es cambiar esta
+      // línea y esos tres href, y sellar.
+      contacto: { linkedin: 'https://www.linkedin.com/in/francisco-perez-russo/' },
       // El diálogo «¿Dónde querés entrar?» de «Entrar» (PLAN-LANDING §5.1). El botón de cerrar usa T.comun.cerrar.
       donde: {
         titulo: '¿Dónde querés entrar?',
@@ -2133,9 +2157,10 @@ window.T = (function () {
       },
       pie: {
         lema: LEMA,
+        // propuesta QUIENES-SOMOS (brand.md §4): el primer link del pie, a #somos.
+        somos: 'Quiénes somos',
         entrar: 'Entrar',
         contratar: 'Terna para contratar',
-        // Con data-contacto: sin dirección de LinkedIn, no se dibuja.
         linkedin: 'Francisco en LinkedIn',
         // Abierto: no va al HTML hasta que Francisco lo complete.
         hecha: '[completar: una línea de quién es Terna hoy, por ejemplo «Terna la hace Francisco [apellido], en [ciudad]». Cuando exista la sociedad, va su nombre.]',
