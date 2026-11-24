@@ -14,7 +14,9 @@ window.TC = (function () {
 
     entrar: {
       titulo: 'Terna para contratar',
-      intro: 'Publicá tus avisos y recibí postulaciones de personas cuyo perfil ajusta con el puesto. Se entra por invitación.',
+      // propuesta PLAN-LANDING-2 (contratar.md §8.1), 24/11: la web pública ya no dice «por invitación» (Francisco, «Sí, cambialos»). Antes terminaba
+      // con «Se entra por invitación.».
+      intro: 'Publicá tus avisos y recibí postulaciones de personas cuyo perfil ajusta con el puesto.',
       mail: 'Mail',
       contrasena: 'Contraseña',
       boton: 'Entrar',
@@ -27,7 +29,9 @@ window.TC = (function () {
       // propuesta FEEDBACK-LANDING P2-8 (contratar.md §8.1): arriba del renglón de quien busca trabajo, cómo se pide la invitación
       // para contratar; va a bienvenida.html#pedir, donde está el LinkedIn de Francisco. Desde QUIENES-SOMOS §4 va siempre: con la
       // dirección cargada ya no hay variante «sin contacto» (se fue sinContacto).
-      comoSeEntra: 'Cómo pedir una invitación para contratar',
+      // propuesta PLAN-LANDING-2 (contratar.md §8.1), 24/11: la web pública ya no dice «por invitación» (Francisco, «Sí, cambialos»). Antes: «Cómo pedir una
+      // invitación para contratar», a bienvenida.html#pedir; ahora a la sección de quien contrata.
+      comoSeEntra: 'Cómo funciona Terna para contratar',
       // propuesta PLAN-LANDING §4.13 (contratar.md §8.1): el renglón inverso al de Entrar, debajo del formulario. El link es la frase.
       buscasPregunta: '¿Buscás trabajo?',
       buscasLink: 'Entrá a Terna',

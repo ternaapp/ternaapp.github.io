@@ -135,10 +135,10 @@
       Terna.guardarMarcaSesion(true);
       location.replace(volver);
     });
-    // Debajo de la nota de la invitación (PLAN-LANDING §5.2): cómo se consigue una, en la landing, y, después de una regla fina, el
-    // renglón de quien contrata. El link es la frase entera.
-    cont.append(carpeta(form), h('p', { class: 'acceso-nota', text: C.porInvitacion }),
-      h('p', { class: 'acceso-nota acceso-link' }, h('a', { href: 'bienvenida.html#pedir', text: C.comoSeEntra })),
+    // Debajo del formulario (PLAN-LANDING §5.2; desde PLAN-LANDING-2, sin invitaciones): quien no tiene cuenta va a los planes de
+    // la landing y, después de una regla fina, el renglón de quien contrata. El link es la frase entera.
+    cont.append(carpeta(form), h('p', { class: 'acceso-nota', text: C.sinCuenta }),
+      h('p', { class: 'acceso-nota acceso-link' }, h('a', { href: 'bienvenida.html#precios', text: C.verPlanes })),
       h('p', { class: 'acceso-otro' }, C.contratasPregunta, ' ', h('a', { href: 'contratar.html', text: C.contratasLink })));
   }
 

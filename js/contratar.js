@@ -190,7 +190,7 @@
     dibujarCabecera(false);
     document.title = C.documento;
     tarjetaAcceso(C.entrar.titulo, h('p', { class: 'acceso-descripcion', text: C.entrar.intro }), formularioEntrar(null, despuesDeEntrar),
-      h('p', { class: 'co-link' }, h('a', { href: 'bienvenida.html#pedir', text: C.entrar.comoSeEntra })),
+      h('p', { class: 'co-link' }, h('a', { href: 'bienvenida.html#contratar', text: C.entrar.comoSeEntra })),
       h('p', { class: 'co-otro' }, C.entrar.buscasPregunta, ' ', h('a', { href: 'entrar.html', text: C.entrar.buscasLink })));
   }
   async function sinCuenta() {

@@ -20,7 +20,9 @@ window.T = (function () {
     lema: LEMA,
     descripcionCorta: DESCRIPCION_CORTA,
     // propuesta LOGOS (brand.md §1): la primera mención es la presentación; la segunda, Terna que busca, sigue «Terna».
-    descripcionLarga: 'Terna Jobs es una web privada, por invitación. Cargás tu perfil una vez y, todos los días, Terna busca avisos de trabajo nuevos, se queda con los que ajustan con vos, arma para los mejores el CV, la carta de presentación, un salario sugerido y notas para la entrevista, y postula por vos donde el formulario lo permite. Lo que no puede hacer te lo deja listo para hacerlo a mano. Vos entrás cuando querés, mirás cómo viene y marcás qué te interesa y qué postulaste vos.',
+    // propuesta PLAN-LANDING-2 (brand.md §6.2), 24/11: la web pública ya no dice «por invitación» (Francisco, «Sí, cambialos»).
+    // Antes: «Terna Jobs es una web privada, por invitación. Cargás tu perfil una vez y, …».
+    descripcionLarga: 'Con Terna Jobs cargás tu perfil una vez y, todos los días, Terna busca avisos de trabajo nuevos, se queda con los que ajustan con vos, arma para los mejores el CV, la carta de presentación, un salario sugerido y notas para la entrevista, y postula por vos donde el formulario lo permite. Lo que no puede hacer te lo deja listo para hacerlo a mano. Vos entrás cuando querés, mirás cómo viene y marcás qué te interesa y qué postulaste vos.',
 
     comun: {
       irAlContenido: 'Ir al contenido',
@@ -55,7 +57,9 @@ window.T = (function () {
       // (Terna.dibujarPie ya no dibuja nada) y quedan en Entrar, Crear cuenta y Contraseña, que los traen escritos en su HTML.
       // Sin uso en el código mientras tanto.
       pie1: 'Pocos avisos, bien armados.',
-      pie2: 'Web privada, por invitación. Tus datos solo los ves vos.',
+      // propuesta PLAN-LANDING-2 (brand.md §6.2), 24/11: la web pública ya no dice «por invitación» (Francisco, «Sí, cambialos»). Antes: «Web privada, por invitación. Tus datos solo los
+      // ves vos.».
+      pie2: 'Tus datos solo los ves vos.',
       // propuesta LOGOS (brand.md §1): el <title> de cada página («Preferencias | Terna Jobs»). Lo usan también Crear cuenta y
       // Contraseña (js/cuenta.js).
       titulo: (pestana) => pestana + ' | Terna Jobs',
@@ -78,7 +82,9 @@ window.T = (function () {
       entrar: 'Entrar',
       olvide: 'Olvidé mi contraseña',
       sinSmtp: 'Por ahora, para cambiar la contraseña escribile a Francisco.',
-      porInvitacion: 'Terna es por invitación. Si no tenés cuenta, pedile una invitación a alguien que ya la use.',
+      // propuesta PLAN-LANDING-2 (brand.md §6.2), 24/11: la web pública ya no dice «por invitación» (Francisco, «Sí, cambialos»).
+      // Antes porInvitacion: «Terna es por invitación. Si no tenés cuenta, pedile una invitación a alguien que ya la use.».
+      sinCuenta: '¿Todavía no tenés cuenta?',
       crearTitulo: 'Crear tu cuenta',
       // propuesta LOGOS (brand.md §1 y §6.2): quien recibe la invitación oye el nombre por primera vez.
       teInvito: (nombre) => nombre + ' te invitó a Terna Jobs.',
@@ -111,7 +117,9 @@ window.T = (function () {
       // dibuja js/cuenta.js, paquete L1). El link es la frase entera, sin «entrá acá». comoSeEntra lleva a bienvenida.html#pedir.
       contratasPregunta: '¿Contratás?',
       contratasLink: 'Publicá tu aviso en Terna para contratar',
-      comoSeEntra: 'Cómo conseguir una invitación',
+      // propuesta PLAN-LANDING-2 (brand.md §6.2), 24/11: la web pública ya no dice «por invitación» (Francisco, «Sí, cambialos»).
+      // Antes comoSeEntra: «Cómo conseguir una invitación», a bienvenida.html#pedir; ahora va a los planes.
+      verPlanes: 'Ver los planes',
     },
 
     inicio: {
