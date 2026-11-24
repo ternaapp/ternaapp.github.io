@@ -119,11 +119,13 @@
   function dibujarCabecera(conSesion) {
     vaciar(cabecera);
     cabecera.append(h('div', { class: 'op-barra' },
-      h('a', { class: 'logo', href: 'ops.html', 'aria-label': O.documento },
-        icono('i-marca', 'logo-marca'), h('span', { class: 'logo-palabra', 'aria-hidden': 'true', text: 'terna' })),
+      // El logo «terna jobs» es el de la web (Terna.logo; propuesta LOGOS, brand.md §5.3).
+      h('a', { class: 'logo', href: 'ops.html', 'aria-label': O.documento }, Terna.logo()),
       h('span', { class: 'op-marca', text: O.marca }),
       h('div', { class: 'op-cuenta' }, Terna.botonTema('btn-barra'),
-        conSesion ? h('button', { class: 'btn btn-texto btn-barra', type: 'button', onclick: salir }, icono('i-salir'), O.entrar.salir) : null)));
+        // En el celular, Salir queda en su ícono (css/ops.css): el nombre sigue en el span, para el lector de pantalla, y en el title.
+        conSesion ? h('button', { class: 'btn btn-texto btn-barra op-salir', type: 'button', title: O.entrar.salir, onclick: salir },
+          icono('i-salir'), h('span', { class: 'op-salir-texto', text: O.entrar.salir })) : null)));
   }
   async function salir() {
     try { await sb.auth.signOut({ scope: 'local' }); } catch (e) { /* igual se sale */ }

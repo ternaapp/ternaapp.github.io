@@ -23,8 +23,13 @@
    juntaran este archivo y aquel, no habría vuelta infinita (esos hashes el archivo viejo no los conoce y abre la página arriba). */
 (function () {
   const MUDADAS = { respuestas: 'formularios', identificacion: 'identificacion', formularios: 'datos-formularios', analitico: 'analitico' };
-  const destino = MUDADAS[location.hash.slice(1)];
-  if (destino) location.replace('preferencias.html#' + destino);
+  const mudar = () => {
+    const destino = MUDADAS[location.hash.slice(1)];
+    if (destino) location.replace('preferencias.html#' + destino);
+  };
+  mudar();
+  // También si el hash cambia con la página ya abierta (un link viejo en la misma página o escrito a mano).
+  window.addEventListener('hashchange', mudar);
 }());
 
 Terna.pagina('perfil', async (ctx) => {

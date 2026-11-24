@@ -6,16 +6,26 @@
 window.T = (function () {
   const n = (x) => new Intl.NumberFormat('es-AR').format(x);
   const plural = (cant, uno, varios) => (cant === 1 ? uno : varios);
+  // El lema y la descripción corta, en un solo lugar: los usa también la landing (T.landing: el título, el pie y la descripción).
+  const LEMA = 'Pocos avisos, bien armados.';
+  // propuesta LOGOS (brand.md §1): la regla del nombre. «Terna Jobs» donde el producto se presenta (el <title>, la descripción,
+  // la primera mención en Entrar, la invitación, el nombre accesible del logo); «Terna» a secas en las frases donde hace algo o
+  // es un lugar («Terna postula por vos», «Publicado en Terna»); «terna jobs», en minúscula y dos colores, solo en el logo.
+  const DESCRIPCION_CORTA = 'Terna Jobs: avisos de trabajo que ajustan con tu perfil, con el CV y la carta ya armados, y la postulación hecha donde se puede.';
 
   return {
-    marca: 'Terna',
-    lema: 'Pocos avisos, bien armados.',
-    descripcionCorta: 'Terna: avisos de trabajo que ajustan con tu perfil, con el CV y la carta ya armados, y la postulación hecha donde se puede.',
-    descripcionLarga: 'Terna es una web privada, por invitación. Cargás tu perfil una vez y, todos los días, Terna busca avisos de trabajo nuevos, se queda con los que ajustan con vos, arma para los mejores el CV, la carta de presentación, un salario sugerido y notas para la entrevista, y postula por vos donde el formulario lo permite. Lo que no puede hacer te lo deja listo para hacerlo a mano. Vos entrás cuando querés, mirás cómo viene y marcás qué te interesa y qué postulaste vos.',
+    // propuesta LOGOS (brand.md §1): el nombre del producto. Es el aria-label del logo que Entrar, Crear cuenta, Contraseña y la
+    // landing traen escrito en su HTML.
+    marca: 'Terna Jobs',
+    lema: LEMA,
+    descripcionCorta: DESCRIPCION_CORTA,
+    // propuesta LOGOS (brand.md §1): la primera mención es la presentación; la segunda, Terna que busca, sigue «Terna».
+    descripcionLarga: 'Terna Jobs es una web privada, por invitación. Cargás tu perfil una vez y, todos los días, Terna busca avisos de trabajo nuevos, se queda con los que ajustan con vos, arma para los mejores el CV, la carta de presentación, un salario sugerido y notas para la entrevista, y postula por vos donde el formulario lo permite. Lo que no puede hacer te lo deja listo para hacerlo a mano. Vos entrás cuando querés, mirás cómo viene y marcás qué te interesa y qué postulaste vos.',
 
     comun: {
       irAlContenido: 'Ir al contenido',
-      logo: 'Terna, ir a Inicio',
+      // propuesta LOGOS (brand.md §1): el nombre accesible del logo de la barra y del carril.
+      logo: 'Terna Jobs, ir a Inicio',
       // propuesta PLAN-UX §5.1 (brand.md §6.1): Búsqueda pasa a «Empleos» y Avisos a «Paquetes» (decisión D4 de PLAN-UX §10; los
       // archivos y las claves no cambian), y nace «Cómo funciona», la página 13, en la hoja de Cuenta y en el carril.
       pestanas: { inicio: 'Inicio', busqueda: 'Empleos', avisos: 'Paquetes', postulaciones: 'Postulaciones', perfil: 'Mi perfil', preferencias: 'Preferencias', invitaciones: 'Invitaciones', admin: 'Admin', alertas: 'Guías de alertas', comoFunciona: 'Cómo funciona' },
@@ -46,7 +56,9 @@ window.T = (function () {
       // Sin uso en el código mientras tanto.
       pie1: 'Pocos avisos, bien armados.',
       pie2: 'Web privada, por invitación. Tus datos solo los ves vos.',
-      titulo: (pestana) => pestana + ' | Terna',
+      // propuesta LOGOS (brand.md §1): el <title> de cada página («Preferencias | Terna Jobs»). Lo usan también Crear cuenta y
+      // Contraseña (js/cuenta.js).
+      titulo: (pestana) => pestana + ' | Terna Jobs',
     },
 
     bandas: {
@@ -59,7 +71,8 @@ window.T = (function () {
     faltantes: { nombre: 'el nombre', ciudad: 'la ciudad', experiencia: 'un trabajo o un estudio', idioma: 'un idioma' },
 
     cuenta: {
-      entrarTitulo: 'Entrar a Terna',
+      // propuesta LOGOS (brand.md §1 y §6.2): la primera mención en la pantalla de Entrar.
+      entrarTitulo: 'Entrar a Terna Jobs',
       mail: 'Mail', contrasena: 'Contraseña',
       mostrar: 'Mostrar contraseña', ocultar: 'Ocultar contraseña',
       entrar: 'Entrar',
@@ -67,7 +80,8 @@ window.T = (function () {
       sinSmtp: 'Por ahora, para cambiar la contraseña escribile a Francisco.',
       porInvitacion: 'Terna es por invitación. Si no tenés cuenta, pedile una invitación a alguien que ya la use.',
       crearTitulo: 'Crear tu cuenta',
-      teInvito: (nombre) => nombre + ' te invitó a Terna.',
+      // propuesta LOGOS (brand.md §1 y §6.2): quien recibe la invitación oye el nombre por primera vez.
+      teInvito: (nombre) => nombre + ' te invitó a Terna Jobs.',
       nombre: 'Nombre',
       mailInvitacion: 'Es el mail de tu invitación.',
       contrasenaAyuda: 'Al menos 8 caracteres',
@@ -93,6 +107,11 @@ window.T = (function () {
       nueva: 'Contraseña nueva', repetila: 'Repetila',
       guardarContrasena: 'Guardar contraseña',
       contrasenaGuardada: 'Contraseña guardada. Ya podés entrar.',
+      // propuesta PLAN-LANDING §4.13 (brand.md §6.2): los renglones nuevos de Entrar, debajo de la nota de la invitación (los
+      // dibuja js/cuenta.js, paquete L1). El link es la frase entera, sin «entrá acá». comoSeEntra lleva a bienvenida.html#pedir.
+      contratasPregunta: '¿Contratás?',
+      contratasLink: 'Publicá tu aviso en Terna para contratar',
+      comoSeEntra: 'Cómo conseguir una invitación',
     },
 
     inicio: {
@@ -1899,13 +1918,238 @@ window.T = (function () {
       ],
     },
 
+    // propuesta PLAN-LANDING (brand.md §6.15): la landing pública, bienvenida.html (opciones-v3/PLAN-LANDING.md §4, decisiones
+    // del 23/11/2026). Los textos van escritos en el HTML, para que se vean sin JavaScript, en Google y al compartir, y también
+    // acá, que sigue siendo la verdad: cada elemento lleva su clave en data-t (con índice: data-t="landing.precios.planes.2.precio")
+    // y el banco compara uno por uno. js/landing.js no escribe textos, salvo «Ir a Inicio» con la sesión abierta. Lo que lleva
+    // [completar: …] o [confirmar: …] espera a Francisco y no va al HTML (paquete L5). Las frases dicen «Terna»: se revisan cuando
+    // esté la regla del nombre «terna jobs» (decisión D11), igual que el <title>, og:site_name, og:title e imagenAlt.
+    landing: {
+      // propuesta LOGOS (brand.md §1): el <title>, og:site_name, og:title y la descripción de la imagen dicen «Terna Jobs»; las
+      // frases de la página, donde Terna busca, arma y postula, siguen «Terna».
+      meta: {
+        titulo: 'Terna Jobs: avisos que ajustan con tu perfil, con el CV y la carta armados',
+        descripcion: DESCRIPCION_CORTA,
+        imagenAlt: 'El logo de Terna Jobs y el lema: pocos avisos, bien armados.',
+      },
+      barra: {
+        // El nombre accesible del nav de las secciones (desde 768 px).
+        secciones: 'Secciones de la página',
+        como: 'Cómo funciona',
+        contratar: 'Para contratar',
+        precios: 'Precios',
+        // Sin uso hasta que «Quién hizo Terna» esté en la página (L5): no se dibuja un link a una sección que no está.
+        quien: 'Quién la hizo',
+        entrar: 'Entrar',
+        // El «Entrar» de la barra con la sesión de la persona abierta (js/landing.js; va a index.html).
+        irAInicio: 'Ir a Inicio',
+      },
+      hero: {
+        // El lema es el título de la landing (decisión D10).
+        titulo: LEMA,
+        // FEEDBACK-LANDING P2-11: lo que trae un paquete se lista en «Qué trae un paquete»; acá, solo el CV y la carta.
+        bajada: 'Cargás tu perfil una vez. Cada mañana Terna busca avisos, se queda con los que ajustan con vos y te arma el CV y la carta para cada uno, hasta tres por día. Donde el formulario lo permite, postula por vos. Donde no, te deja todo listo.',
+        // Baja a #pedir; no abre ningún correo (decisión D4).
+        pedir: 'Cómo conseguir una invitación',
+        yaTengo: 'Ya tengo cuenta',
+        // FEEDBACK-LANDING P2-6: «¿es gratis?» se contesta en la primera pantalla.
+        nota: 'Hoy se entra por invitación y no se cobra.',
+        // FEEDBACK-LANDING P3-9: el atajo de quien contrata, debajo de la nota; baja a #contratar.
+        contratas: '¿Contratás? Mirá cómo publicar un aviso',
+        ejemploEtiqueta: 'Ejemplo',
+        ejemploTitulo: 'Un día de ejemplo: tres paquetes armados, dos enviados por Terna y uno para mandar a mano.',
+        // Las tres carpetas del ejemplo, con datos de ejemplo (ninguna empresa ni persona real). El marbete es el texto de
+        // T.avisos.postulacion[estado] y la palabra debajo del número es T.avisos.matchPalabra: el HTML los referencia
+        // (data-t="avisos.postulacion.enviada"), no los copia.
+        // FEEDBACK-LANDING P3-6: la clase de empresa y no «Empresa de ejemplo»; siguen sin ser empresas reales.
+        // El punto medio va entre espacios que no parten ( ; &nbsp; en el HTML): así no queda colgando al final de un renglón.
+        ejemplo: [
+          { match: '91', estado: 'enviada', puesto: 'Analista de datos', empresa: 'Una fintech · Remoto',
+            nota: 'Enviada a las 06:41. Quedan guardados el CV, la carta y lo que Terna respondió.' },
+          { match: '84', estado: 'enviada', puesto: 'Analista de negocio', empresa: 'Una consultora · Híbrido, Buenos Aires',
+            nota: 'Enviada a las 06:44.' },
+          { match: '78', estado: 'a_mano', puesto: 'Analista de operaciones', empresa: 'Una empresa de logística · Presencial, Córdoba',
+            nota: 'El sitio pide un captcha. El CV y la carta están listos para que los mandes vos.' },
+        ],
+      },
+      como: {
+        titulo: 'Cómo funciona',
+        pasos: [
+          { titulo: 'Cargás tu perfil, una vez', texto: 'Subís tu CV y Terna completa tu perfil con lo que dice. Lo revisás, elegís qué puestos buscás, dónde y con qué modalidad, y listo.' },
+          { titulo: 'Terna busca todos los días', texto: 'Cada mañana trae los avisos nuevos de los sitios de las empresas y de las alertas de empleo que le reenviás. Descarta los que no cumplen lo que pediste y a los demás les pone un match de 0 a 100.' },
+          // FEEDBACK-LANDING P2-11: sin volver a listar lo que trae (está en «Qué trae un paquete»).
+          { titulo: 'Arma hasta tres paquetes', texto: 'Un paquete por cada aviso con mejor match: todo lo que hace falta para postular. Tres por día, no más.' },
+          { titulo: 'Postula donde puede', texto: 'Si la empresa usa un formulario público que Terna conoce, lo completa con tu perfil, sube el CV y la carta y te muestra qué respondió. Donde no puede, te deja el paquete listo y postulás vos.' },
+        ],
+        // FEEDBACK-LANDING P3-1.
+        formas: 'Podés dejar que Terna haga todo sola, o decidir vos, aviso por aviso, qué te interesa.',
+      },
+      paquete: {
+        titulo: 'Qué trae un paquete',
+        bajada: 'Un paquete es todo lo que hace falta para postular a un aviso.',
+        items: [
+          { titulo: 'CV para ese aviso', texto: 'Con tu experiencia real y las palabras del aviso, en un formato legible por los sistemas que leen CV.' },
+          { titulo: 'Carta de presentación', texto: 'Corta, sobre ese puesto y esa empresa, en el idioma del aviso.' },
+          { titulo: 'Salario sugerido', texto: 'Un número para cuando te lo pregunten, con el razonamiento a la vista.' },
+          { titulo: 'Notas para la entrevista', texto: 'Qué mirar de la empresa y qué te pueden preguntar, por si te llaman.' },
+        ],
+      },
+      // Cada una está en vision.md §5 o en brand.md §3 y §8. No dice «nunca inventa una respuesta» (decisión D9).
+      // FEEDBACK-LANDING P3-2 (sin «probabilidad», prohibida en brand.md §4) y P3-3 (sin el lema «Lo que dice, se ve»).
+      limites: {
+        titulo: 'Lo que Terna no hace',
+        bajada: 'Conviene saberlo antes de entrar.',
+        items: [
+          'No promete trabajo ni entrevistas. El match mide cuánto ajusta tu perfil con un aviso, y nada más.',
+          'No inventa experiencia en tu CV ni en tu carta. Elige, ordena y redacta lo que tenés.',
+          'No esconde palabras en tu CV para pasar filtros. Todo lo que el CV dice está a la vista.',
+          'No entra a tu LinkedIn ni a tu mail, y no te pide ninguna contraseña.',
+          'No postula en todos lados. Solo donde el formulario es público y lo conoce; si un sitio pide un captcha, ese paso queda para vos.',
+          'No manda decenas de postulaciones por día. Son tres paquetes, elegidos.',
+        ],
+      },
+      // Recortes de seguridad-y-privacidad.md §10 («Mi perfil, al pie», «Pausar» y «Borrar la cuenta»): ninguna promesa nueva.
+      // FEEDBACK-LANDING P2-9 y P3-4 (Francisco presentado, el sujeto claro) y P3-5 (qué no entrena): cambian el recorte; allá, en
+      // seguridad-y-privacidad.md §10, se cambia igual.
+      datos: {
+        titulo: 'Tus datos',
+        items: [
+          'Tu perfil, tu CV y tus postulaciones los ves vos. Ninguna otra persona que use Terna los ve.',
+          'Quien contrata ve tus datos recién cuando postulás a un aviso suyo. Antes, solo si vos elegís que te encuentren, y sin tu nombre.',
+          'Francisco, que hizo Terna, la administra. Para arreglar lo que falla ve cómo salieron tus postulaciones: el puesto, la empresa y el error del sitio. Y como el administrador de cualquier sistema, tiene acceso técnico a la base.',
+          'Para puntuar los avisos y escribir los documentos, Terna manda tu perfil y el texto del aviso a un proveedor externo. Según sus términos, ese proveedor no usa tus datos para entrenar sus sistemas.',
+          'Podés pausar tu cuenta cuando quieras. Si pedís que se borre, se borra en el día.',
+        ],
+      },
+      contratar: {
+        titulo: 'Para quien contrata',
+        bajada: 'Si buscás a alguien para tu empresa, tu taller o tu escuela, podés publicar el aviso en Terna.',
+        // FEEDBACK-LANDING P2-9 (Francisco presentado mientras no esté «Quién hizo Terna») y P3-8 (qué es el match, para quien
+        // entra directo a esta sección).
+        pasos: [
+          { titulo: 'Publicás el aviso', texto: 'El puesto, la modalidad, el lugar, la descripción y, si querés, el salario. Francisco, que hizo Terna, lo revisa antes de que salga.' },
+          { titulo: 'Terna se lo muestra a quien ajusta', texto: 'Cada persona ve tu aviso con su match, un número de 0 a 100 que dice cuánto ajusta su perfil con el puesto. Vos ves a cuántas les llegó, cuántas lo abrieron y cuántas tienen match alto, sin nombres.' },
+          { titulo: 'Recibís postulaciones completas', texto: 'Cada una llega con el contacto de la persona, un CV y una carta escritos para tu aviso y el salario que pretende.' },
+        ],
+        proponer: 'Si una persona eligió que la encuentren y su perfil ajusta, la ves sin su nombre y le podés proponer que postule. Decide ella.',
+        // Los números de config (contratar.md §2, punto 11): si cambian ahí, cambia este texto. FEEDBACK-LANDING P2-7: primero, lo
+        // que cuesta.
+        limites: 'Hoy publicar no tiene costo. Hasta 3 avisos abiertos por cuenta, 30 días cada uno con renovación, puestos en Argentina y un equipo de hasta 5 personas.',
+        // Decisión D8: se deja.
+        honesto: 'Terna recién empieza de este lado: todavía son pocas las personas que buscan trabajo acá. No promete que vayas a encontrar a alguien.',
+        // Baja a #pedir. Con data-contacto (FEEDBACK-LANDING P1-2): sin la dirección de LinkedIn no se dibuja, y en su lugar va
+        // pedir.sinContacto.
+        pedir: 'Cómo pedir una invitación para contratar',
+        // Va a contratar.html, sin pasar por el diálogo.
+        entrar: 'Entrar a Terna para contratar',
+      },
+      // Decisión D2: planes con números (monetizacion.md 0.2). Primero lo de hoy (hoy), después los planes; lo que un plan promete
+      // y Terna todavía no hace va marcado (todavia: true). Ninguna tarjeta va destacada. FEEDBACK-LANDING P2-1: dos subtítulos
+      // separan «hoy» de «después» (hoyTitulo arriba de hoy; planesTitulo arriba de la bajada y las tarjetas).
+      precios: {
+        titulo: 'Precios',
+        hoyTitulo: 'Hoy',
+        // FEEDBACK-LANDING P2-3: que pagar un plan no se lea como recibir menos sin explicación.
+        hoy: 'Hoy Terna es por invitación y no cobra. Quien entra ahora la usa completa: hasta tres paquetes por día y las postulaciones. Con los planes eso cambia: cada uno dice cuántos paquetes trae.',
+        planesTitulo: 'Cuando Terna empiece a cobrar',
+        // FEEDBACK-LANDING P2-2: sin «promete».
+        bajada: 'Así van a ser los planes. Ninguno se puede contratar todavía. Lo que figura en un plan y Terna hoy no hace lleva la marca «Todavía no».',
+        todavia: 'Todavía no',
+        // Para el lector de pantalla, después del ítem marcado (la marca visible va con aria-hidden).
+        todaviaAccesible: 'Terna todavía no lo hace.',
+        // Los planes, en un solo lugar: ningún número de precios está escrito en otra clave ni en el CSS. Para cambiar un precio
+        // se cambia acá y en el elemento de bienvenida.html que lleva esa clave (el banco avisa si quedan distintos). Los montos,
+        // con el signo pegado y el punto de miles, sin decimales. Gratis, «sin vencimiento»: lo confirmó Francisco el 24/11
+        // (FEEDBACK-LANDING P2-5).
+        // FEEDBACK-LANDING P2-4: el ítem 0 de Gratis y el de Radar, sin el «aviso» que es notificación ni «tus empresas» o «tu
+        // umbral», que la página no explica.
+        planes: [
+          { clave: 'prueba', nombre: 'Prueba', precio: '$0', periodo: 'una sola vez', items: [
+            { texto: '7 días con todo lo que hace Terna.' },
+            { texto: '3 paquetes.' } ] },
+          { clave: 'gratis', nombre: 'Gratis', precio: '$0', periodo: 'sin vencimiento', items: [
+            { texto: 'Terna busca avisos y les pone el match dos veces por semana, no todos los días.', todavia: true },
+            { texto: '1 paquete por mes.' } ] },
+          { clave: 'radar', nombre: 'Radar', precio: '$8.000', periodo: 'por mes', items: [
+            { texto: 'Te avisa en el momento cuando una empresa que seguís publica un aviso, o cuando aparece uno con match alto.', todavia: true },
+            { texto: '4 paquetes por mes.' } ] },
+          { clave: 'activa', nombre: 'Búsqueda activa', precio: '$19.200', periodo: 'por mes', otro: 'o $8.000 por semana', items: [
+            { texto: '1 paquete por día.' },
+            { texto: 'Terna postula por vos donde el formulario lo permite.' } ] },
+          { clave: 'sueltos', nombre: 'Paquetes sueltos', precio: '$8.000', periodo: 'una vez', items: [
+            { texto: '5 paquetes, sin plan.' } ] },
+        ],
+        // La sexta tarjeta, la de quien contrata (contratar.md §11.9: sin costo, por ahora).
+        contrata: { titulo: 'Si contratás', precio: 'Sin costo', periodo: 'por ahora', items: ['Publicar avisos y recibir postulaciones.'] },
+        // FEEDBACK-LANDING P2-5: la nota dice solo lo seguro. «Precios finales» (sin IVA aparte, A3) espera a que se sepa cómo
+        // factura Terna; con los planes presentados como «así van a ser», además, «finales» se leía como «definitivos».
+        pie: 'Precios en pesos.',
+        // A4, confirmado por Francisco el 24/11 («Se avisa un mes antes»). Va pegada a hoy, no al pie (FEEDBACK-LANDING P2-5).
+        cuando: 'Todavía no hay fecha para empezar a cobrar. Quien ya use Terna se entera por mail un mes antes y elige si sigue.',
+      },
+      // «Quién hizo Terna»: borrador con huecos, en primera persona de Francisco (decisión D7). No va al HTML hasta que lleguen
+      // sus respuestas y la foto (paquete L5; PLAN-LANDING §4.9). El texto final: entre 90 y 130 palabras, con sus palabras.
+      quien: {
+        titulo: 'Quién hizo Terna',
+        parrafos: [
+          'Soy Francisco [completar: apellido, si querés que figure]. Vivo en [completar: ciudad] y trabajo de [completar: a qué te dedicás, dicho como se lo dirías a un amigo].',
+          'Armé Terna porque [completar: qué te pasó buscando trabajo. Un momento concreto: cuántas postulaciones mandaste, en cuánto tiempo, qué te contestaron].',
+          'Primero la usé yo. Después se la pasé a [completar: a quiénes, sin nombres: amigos, conocidos, cuántos más o menos]. [completar: algo que haya pasado usándola, tuyo o de ellos; si no hay nada para contar todavía, esta frase se saca].',
+          '[confirmar: La mantengo yo. Cada mañana miro qué falló en la corrida y lo arreglo.] Si algo no anda o querés preguntarme algo, me escribís a mí por LinkedIn.',
+        ],
+        firma: 'Francisco',
+        // El link de contacto.linkedin; sin dirección, no se dibuja.
+        linkedin: 'Francisco en LinkedIn',
+        fotoAlt: 'Francisco, quien hizo Terna.',
+      },
+      pedir: {
+        titulo: 'Cómo se entra',
+        // No dice «hay dos maneras»: sin la dirección de LinkedIn, la segunda no se dibuja.
+        bajada: 'Terna es por invitación.',
+        // FEEDBACK-LANDING P1-1: las invitaciones de cada persona son para buscar trabajo; la cuenta para contratar la da Francisco.
+        conocido: 'Si buscás trabajo y conocés a alguien que ya usa Terna, pedísela: cada persona tiene invitaciones para dar.',
+        // Con data-contacto: sin dirección de LinkedIn, no se dibuja.
+        escribir: 'Si no conocés a nadie, o si querés contratar, escribile a Francisco por LinkedIn. Contale en dos líneas qué trabajo buscás o qué puesto querés cubrir.',
+        linkedin: 'Escribirle a Francisco por LinkedIn',
+        // FEEDBACK-LANDING P1-2: con data-sin-contacto, lo contrario de data-contacto. Se ve solo mientras no hay dirección de
+        // LinkedIn, acá y en «Para quien contrata» (en lugar del botón contratar.pedir); con la dirección, js/landing.js la oculta.
+        // La misma frase está en TC.entrar.sinContacto (contratar.html).
+        sinContacto: 'Para contratar, la invitación la da Francisco. Todavía no hay una forma de escribirle desde acá.',
+        // Abierto: no va al HTML sin el OK de Francisco.
+        espera: '[confirmar: Entra poca gente por vez, así que la respuesta puede tardar unos días.]',
+        yaTengo: '¿Ya tenés cuenta?',
+        entrar: 'Entrar',
+      },
+      // El único contacto de la landing (decisión D4): el LinkedIn de Francisco, sin mail ni mailto:. Mientras esté vacía, ningún
+      // link a LinkedIn se dibuja (lo que depende de ella lleva data-contacto y hidden en bienvenida.html; js/landing.js lo
+      // muestra si Terna.urlExterna la acepta). Cargarla es cambiar esta línea y sellar.
+      contacto: { linkedin: '' }, // [completar: la dirección del perfil de Francisco, https://www.linkedin.com/in/…]
+      // El diálogo «¿Dónde querés entrar?» de «Entrar» (PLAN-LANDING §5.1). El botón de cerrar usa T.comun.cerrar.
+      donde: {
+        titulo: '¿Dónde querés entrar?',
+        persona: { titulo: 'Busco trabajo', texto: 'Tu Inicio, tus paquetes y tus postulaciones.' },
+        contrata: { titulo: 'Contrato', texto: 'Tus avisos publicados y las postulaciones que recibiste.' },
+        nota: 'Si usás Terna para las dos cosas, es el mismo mail y la misma contraseña.',
+      },
+      pie: {
+        lema: LEMA,
+        entrar: 'Entrar',
+        contratar: 'Terna para contratar',
+        // Con data-contacto: sin dirección de LinkedIn, no se dibuja.
+        linkedin: 'Francisco en LinkedIn',
+        // Abierto: no va al HTML hasta que Francisco lo complete.
+        hecha: '[completar: una línea de quién es Terna hoy, por ejemplo «Terna la hace Francisco [apellido], en [ciudad]». Cuando exista la sociedad, va su nombre.]',
+      },
+    },
+
     invitaciones: {
       titulo: 'Invitaciones',
       intro: (quedan, cupo, dias) => 'Te quedan ' + quedan + ' de ' + cupo + '. Cada invitación vale ' + dias + ' días.',
       nueva: 'Nueva invitación',
       mailPersona: 'Mail de la persona', mailAyuda: 'El link solo funciona con ese mail.',
       crear: 'Crear invitación',
-      mensaje: (link, dias) => 'Hola, te invito a Terna. Es una web privada que busca avisos de trabajo que ajusten con tu perfil, te deja armados el CV y la carta para cada uno y postula por vos donde puede. Cargás tu perfil una vez y después entrás cuando querés. Es gratis y solo por invitación. Creá tu cuenta acá: ' + link + '. El link vale ' + dias + ' días.',
+      // propuesta LOGOS (brand.md §1 y §6.13): el mensaje de invitación presenta el producto con su nombre completo.
+      mensaje: (link, dias) => 'Hola, te invito a Terna Jobs. Es una web privada que busca avisos de trabajo que ajusten con tu perfil, te deja armados el CV y la carta para cada uno y postula por vos donde puede. Cargás tu perfil una vez y después entrás cuando querés. Es gratis y solo por invitación. Creá tu cuenta acá: ' + link + '. El link vale ' + dias + ' días.',
       copiarMensaje: 'Copiar mensaje', copiarLink: 'Copiar link',
       mandalo: 'Mandalo por WhatsApp o por donde quieras.',
       estados: { pendiente: 'Pendiente', usada: 'Usada', vencida: 'Vencida' },

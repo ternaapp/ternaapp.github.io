@@ -1,5 +1,5 @@
 /* Hallmark · shape: app screen · genre: editorial · theme: custom (Sello) (B2 «Sello» de opciones-v3/b2 llevado a la web real, opciones-v3/PLAN-WEB.md paquete P1, 2026-11-20)
- * nav: a 56px paper bar with the three-ink wordmark, the person button (Cuenta, with an amber dot when the profile misses something) and the mode button, and a four-slot paper-2 dock (Inicio, Empleos, Paquetes, Postulaciones) under 64rem; from 64rem the same bar is a 232px paper-2 rail on the left with every section, Cómo funciona, the name, the mode and Salir; the active slot sits on the lilac pill with its name in seal violet; counts ride the slot as small pills, amber for what is yours to do and lilac for new packages · footer: none on signed-in pages (PLAN-UX 2026-11-21), two plain lines on Entrar, Crear cuenta and Contraseña · hero: none, every screen opens on its h1 and the first thing to do · signature: two tabs on every packaged posting, Terna's lilac tab holding the match (never on a state colour) and a 28px state label beside it with its icon and name; the three inks (seal, mid, lilac) make the mark in the logo, the favicon and the three tabs of Entrar · states: te toca (amber tint), espera (neutral with a clock), resuelta (solid green), falló (red tint with an inset contour), empty, error, disabled, full
+ * nav: a 56px paper bar with the «terna jobs» wordmark (the three-ink mark, «terna» in ink and «jobs» in violet), the person button (Cuenta, with an amber dot when the profile misses something) and the mode button, and a four-slot paper-2 dock (Inicio, Empleos, Paquetes, Postulaciones) under 64rem; from 64rem the same bar is a 232px paper-2 rail on the left with every section, Cómo funciona, the name, the mode and Salir; the active slot sits on the lilac pill with its name in seal violet; counts ride the slot as small pills, amber for what is yours to do and lilac for new packages · footer: none on signed-in pages (PLAN-UX 2026-11-21), two plain lines on Entrar, Crear cuenta and Contraseña · hero: none, every screen opens on its h1 and the first thing to do · signature: two tabs on every packaged posting, Terna's lilac tab holding the match (never on a state colour) and a 28px state label beside it with its icon and name; the three inks (seal, mid, lilac) make the mark in the logo, the favicon and the three tabs of Entrar · states: te toca (amber tint), espera (neutral with a clock), resuelta (solid green), falló (red tint with an inset contour), empty, error, disabled, full
  * axes: neutral-cool-paper/rounded-geometric-humanist/restrained-violet · posture: restrained · contrast: pass · modes: light+dark · data: live · v1.0.0 */
 /* Hallmark · dismissed F7 · PLAN-WEB.md §2.6 keeps the pill only for the dock's active slot, the count badges (amber for what is yours to do, lilac for new packages since PLAN-UX D3, and the amber dot on the Cuenta button) and the switch track, whose knob is a circle; chips, filters and segmented controls use 6px and 8px corners */
 
@@ -29,6 +29,8 @@
   --color-accent-tint: oklch(90.5% 0.045 300);/* lila lengüeta #e4dafa · el acento encima 8,6 · la tinta 13,3 · lo suave 5,3 */
   --color-accent-mid: oklch(60% 0.110 300);   /* violeta medio · segundo trazo del logo · 3,9 sobre papel */
   --color-logo-3: oklch(80% 0.085 300);       /* el tercer trazo del logo */
+  /* propuesta LOGOS (brand.md §1): «jobs» en el logo «terna jobs» (palabra A). El violeta medio daba 3,9 sobre papel. */
+  --color-logo-jobs: oklch(52% 0.120 300);    /* #7457a3 · 5,4 papel · 4,9 papel 2 (el carril) */
   --color-focus: oklch(42% 0.150 300);        /* 8,5 papel · 7,8 papel 2 · 6,8 sobre el lila */
   --color-elegido: oklch(99.5% 0.002 290);    /* opción elegida de un segmentado o de un chip de opción */
   --color-turn: oklch(38% 0.085 65);   --color-turn-tint: oklch(91% 0.085 82);    /* te toca · 7,8 · sobre papel 9,6 */
@@ -45,8 +47,9 @@
   --font-body: "Figtree", ui-sans-serif, system-ui, sans-serif;
   /* La del sistema, para lo que se copia tal cual: una dirección para reenviar, una contraseña. */
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  /* Tres pesos: Lexend 500 (logo, h1, el match y las cifras de Inicio), Figtree 400 y 600 (todo lo demás). */
-  --weight-display: 500; --weight-body: 400; --weight-strong: 600;
+  /* Tres pesos: Lexend 500 (h1, el match y las cifras de Inicio), Figtree 400 y 600 (todo lo demás). El logo lleva los suyos:
+     «terna» en Lexend 600 y «jobs» en 400 (propuesta LOGOS, brand.md §1 y §5.3; la letra es variable, no suma archivos). */
+  --weight-display: 500; --weight-body: 400; --weight-strong: 600; --weight-logo: 600;
   --tracking-display: -0.015em;
 
   /* La escala, en px: 13, 14, 16, 18, 20, 22, 26, 32, 40, 44, 48, 52, 72 */
@@ -92,6 +95,7 @@
   --color-accent-tint: oklch(32% 0.060 300);  /* la lengüeta en lila oscuro · el acento encima 6,8 · la tinta 11,2 */
   --color-accent-mid: oklch(60% 0.110 300);   /* 4,7 sobre papel */
   --color-logo-3: oklch(50% 0.090 300);
+  --color-logo-jobs: oklch(70% 0.105 300);    /* #a88fd6 · 7,0 papel · 6,4 papel 2 (el carril) */
   --color-focus: oklch(80% 0.085 300);        /* 10,1 · 9,3 · 6,8 sobre el lila */
   --color-elegido: oklch(33% 0.025 290);      /* la tinta encima 10,6 */
   --color-turn: oklch(87% 0.100 85);   --color-turn-tint: oklch(32% 0.058 78);    /* 8,6 */
@@ -434,11 +438,14 @@ body.app { padding-bottom: calc(var(--dock) + env(safe-area-inset-bottom, 0px));
 .barra { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); min-height: var(--bar); padding: 0 var(--space-xs) 0 var(--gutter); }
 .logo { display: inline-flex; align-items: center; gap: var(--space-xs); min-height: 44px; color: var(--color-ink); text-decoration: none; }
 .logo:hover { color: var(--color-ink); }
-/* El logo: tres trazos de largo decreciente, cada uno en una tinta (sello, medio, lila). */
-.logo-marca { width: 28px; height: 28px; stroke-width: 2.6; color: var(--color-accent); }
+/* El logo «terna jobs» (propuesta LOGOS, brand.md §1 y §5.3; idea 1 con la palabra A): tres trazos en proporción 3 : 2 : 1, cada
+   uno en una tinta (sello, medio, lila), y la palabra en minúscula, con un espacio de verdad: «terna» en tinta y Lexend 600,
+   «jobs» en violeta y Lexend 400, del mismo cuerpo. La palabra es aria-hidden: el nombre accesible va en el link. */
+.logo-marca { width: 28px; height: 28px; stroke-width: 3.2; color: var(--color-accent); }
 .logo-marca .trazo-2, #i-marca .trazo-2 { stroke: var(--color-accent-mid); }
 .logo-marca .trazo-3, #i-marca .trazo-3 { stroke: var(--color-logo-3); }
-.logo-palabra { font: var(--weight-display) var(--text-logo)/1 var(--font-display); letter-spacing: var(--tracking-display); }
+.logo-palabra { font: var(--weight-logo) var(--text-logo)/1 var(--font-display); letter-spacing: var(--tracking-display); white-space: nowrap; }
+.logo-jobs { font-weight: var(--weight-body); color: var(--color-logo-jobs); }
 /* En el celular la barra lleva el logo y el modo; las secciones van en el muelle y el nombre y Salir, en la hoja de Cuenta. */
 .pestanas, .cuenta-nombre, .btn-salir { display: none; }
 .cuenta { display: flex; align-items: center; gap: var(--space-2xs); min-width: 0; }

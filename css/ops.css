@@ -24,6 +24,17 @@
   background: var(--color-accent-tint); color: var(--color-accent); font: var(--weight-strong) var(--text-xs)/1 var(--font-body); white-space: nowrap;
 }
 .op-cuenta { display: flex; align-items: center; gap: var(--space-2xs); margin-left: auto; }
+/* El logo «terna jobs» (propuesta LOGOS, brand.md §5.3) es unos 46 px más ancho que «terna» y Salir se salía de la pantalla del
+   celular. Por debajo de 30rem, Salir queda en su ícono, de 44 px (el nombre sigue para el lector de pantalla y en el title, como
+   los íconos de la barra de la web); por debajo de 360 px y con la sesión abierta, el sello también se va: lo dicen las
+   secciones de abajo. Sin sesión (Entrar) hay lugar y queda. */
+@media (max-width: 29.99rem) {
+  .btn.btn-barra.op-salir { width: 44px; padding: 0; }
+  .op-salir-texto { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+@media (max-width: 22.5rem) {
+  .op-barra:has(.op-salir) .op-marca { display: none; }
+}
 .pagina-ops { scroll-padding-top: calc(var(--bar) + var(--space-md)); }
 .pagina-ops .contenido { max-width: var(--contenido-ancho); gap: var(--space-lg); }
 #ops { display: flex; flex-direction: column; gap: var(--space-lg); min-width: 0; }

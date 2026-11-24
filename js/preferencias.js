@@ -44,6 +44,7 @@
 // PLAN-PREFERENCIAS #respuestas ya no se va: las respuestas para formularios volvieron a esta página (D2) y es un alias de
 // #formularios. Mi perfil nunca redirige a #cuenta ni a #respuestas, así que entre las dos páginas no hay vuelta (§3.1).
 if (location.hash === '#cuenta') location.replace('perfil.html#cuenta');
+window.addEventListener('hashchange', () => { if (location.hash === '#cuenta') location.replace('perfil.html#cuenta'); });
 
 Terna.pagina('preferencias', async (ctx) => {
   const { h, icono } = Terna;

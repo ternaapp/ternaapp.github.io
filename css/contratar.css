@@ -54,3 +54,31 @@
 #contratar { display: flex; flex-direction: column; gap: var(--space-lg); min-width: 0; }
 /* «Tus avisos», arriba del detalle: a la izquierda, no estirado al ancho de la columna. */
 #contratar > .btn-texto { align-self: flex-start; }
+
+/* Debajo del formulario de entrar, el renglón de quien busca trabajo (PLAN-LANDING §5.3): la regla fina y el link de 44 px para el
+   dedo, iguales a los del renglón de quien contrata en Entrar (css/p-acceso.css, .acceso-otro). Si no entra en un renglón, el link
+   baja entero. Arriba de la regla hay texto, no un link de 44 px: menos relleno, para que el aire quede parejo a los dos lados. */
+.co-otro {
+  display: flex; flex-wrap: wrap; align-items: center; column-gap: 0.3em;
+  padding-top: var(--space-xs); border-top: var(--rule-hair) solid var(--color-rule);
+  color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.45;
+}
+.co-otro a {
+  display: inline-flex; align-items: center; min-height: 44px;
+  font-weight: var(--weight-strong); transition: transform var(--dur-tab) var(--ease-out);
+}
+.co-otro a:active { transform: translateY(1px); }
+/* Arriba de esa regla, cómo se pide la invitación (FEEDBACK-LANDING P2-8): con la dirección de LinkedIn, el link a la landing
+   (#pedir), pegado a la ayuda del formulario como el «Cómo conseguir una invitación» de Entrar (el link de 44 px ya trae su aire);
+   sin ella, la frase que dice quién da la invitación, en el tono de la ayuda (P1-2). */
+.co-link { margin-top: calc(-1 * var(--space-sm)); font-size: var(--text-sm); line-height: 1.45; }
+.co-link a {
+  display: inline-flex; align-items: center; min-height: 44px;
+  font-weight: var(--weight-strong); transition: transform var(--dur-tab) var(--ease-out);
+}
+.co-link a:active { transform: translateY(1px); }
+.co-sin-contacto { max-width: 46ch; color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.45; }
+@media (prefers-reduced-motion: reduce) {
+  .co-otro a, .co-link a { transition: none; }
+  .co-otro a:active, .co-link a:active { transform: none; }
+}

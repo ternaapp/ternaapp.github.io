@@ -136,12 +136,15 @@
       selector = s;
     }
     cabecera.append(h('div', { class: 'op-barra' },
-      h('a', { class: 'logo', href: 'contratar.html', 'aria-label': C.documento },
-        icono('i-marca', 'logo-marca'), h('span', { class: 'logo-palabra', 'aria-hidden': 'true', text: 'terna' })),
+      // El logo «terna jobs» es el de la web (Terna.logo; propuesta LOGOS, brand.md §5.3). Sin sesión lleva a la landing, como el de
+      // Entrar: es la vuelta para quien llegó sin cuenta (FEEDBACK-LANDING P2-8).
+      h('a', { class: 'logo', href: conSesion ? 'contratar.html' : 'bienvenida.html', 'aria-label': C.documento }, Terna.logo()),
       h('span', { class: 'op-marca', text: C.marca }),
       conSesion && estado.cuentas.length === 1 ? h('span', { class: 'co-nombre-cuenta', text: cuentaActual().nombre }) : selector,
       h('div', { class: 'op-cuenta' }, Terna.botonTema('btn-barra'),
-        conSesion ? h('button', { class: 'btn btn-texto btn-barra', type: 'button', onclick: salir }, icono('i-salir'), C.entrar.salir) : null)));
+        // En el celular, Salir queda en su ícono (css/ops.css): el nombre sigue en el span, para el lector de pantalla, y en el title.
+        conSesion ? h('button', { class: 'btn btn-texto btn-barra op-salir', type: 'button', title: C.entrar.salir, onclick: salir },
+          icono('i-salir'), h('span', { class: 'op-salir-texto', text: C.entrar.salir })) : null)));
   }
   async function salir() {
     try { await sb.auth.signOut({ scope: 'local' }); } catch (e) { /* igual se sale */ }
@@ -179,10 +182,20 @@
     });
     return form;
   }
+  // Debajo del formulario, cómo se pide la invitación (FEEDBACK-LANDING P2-8, el mismo patrón que «Cómo conseguir una invitación» de
+  // Entrar) y, después de una regla fina, el renglón de quien busca trabajo (PLAN-LANDING §5.3): solo acá, no en la pantalla de
+  // una invitación, donde la persona vino a otra cosa. El link a la landing va solo si hay una manera de pedirla: con la dirección
+  // de LinkedIn de Francisco (la misma constante que usa la landing). Sin ella, la frase que dice quién la da (P1-2).
   function pantallaEntrar() {
     dibujarCabecera(false);
     document.title = C.documento;
-    tarjetaAcceso(C.entrar.titulo, h('p', { class: 'acceso-descripcion', text: C.entrar.intro }), formularioEntrar(null, despuesDeEntrar));
+    const contacto = window.T && T.landing && T.landing.contacto ? Terna.urlExterna(T.landing.contacto.linkedin) : null;
+    const comoSeEntra = contacto
+      ? h('p', { class: 'co-link' }, h('a', { href: 'bienvenida.html#pedir', text: C.entrar.comoSeEntra }))
+      : h('p', { class: 'co-sin-contacto', text: C.entrar.sinContacto });
+    tarjetaAcceso(C.entrar.titulo, h('p', { class: 'acceso-descripcion', text: C.entrar.intro }), formularioEntrar(null, despuesDeEntrar),
+      comoSeEntra,
+      h('p', { class: 'co-otro' }, C.entrar.buscasPregunta, ' ', h('a', { href: 'entrar.html', text: C.entrar.buscasLink })));
   }
   async function sinCuenta() {
     dibujarCabecera(true);

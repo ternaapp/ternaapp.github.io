@@ -8,7 +8,8 @@ window.TC = (function () {
   const n = (x) => Number(x || 0).toLocaleString('es-AR');
   const plural = (x, uno, varios) => (Number(x) === 1 ? uno : varios);
   return {
-    documento: 'Contratar | Terna',
+    // propuesta LOGOS (brand.md §1): el <title> y el nombre accesible del logo. «Terna para contratar» sigue así.
+    documento: 'Contratar | Terna Jobs',
     marca: 'Contratar',
 
     entrar: {
@@ -23,6 +24,14 @@ window.TC = (function () {
       salir: 'Salir',
       sinCuenta: 'Esta cuenta todavía no contrata en Terna. Para publicar avisos hace falta una invitación de Francisco.',
       olvido: 'Si te olvidaste la contraseña, escribile a Francisco.',
+      // propuesta FEEDBACK-LANDING P2-8 (contratar.md §8.1): arriba del renglón de quien busca trabajo, cómo se pide la invitación
+      // para contratar; va a bienvenida.html#pedir. Solo con la dirección de LinkedIn de Francisco (T.landing.contacto.linkedin):
+      // sin ella, en su lugar va sinContacto, la misma frase que T.landing.pedir.sinContacto (P1-2).
+      comoSeEntra: 'Cómo pedir una invitación para contratar',
+      sinContacto: 'Para contratar, la invitación la da Francisco. Todavía no hay una forma de escribirle desde acá.',
+      // propuesta PLAN-LANDING §4.13 (contratar.md §8.1): el renglón inverso al de Entrar, debajo del formulario. El link es la frase.
+      buscasPregunta: '¿Buscás trabajo?',
+      buscasLink: 'Entrá a Terna',
     },
 
     invitacion: {

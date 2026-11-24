@@ -8,7 +8,8 @@ window.TO = (function () {
   const n = (x) => Number(x || 0).toLocaleString('es-AR');
   const plural = (x, uno, varios) => (Number(x) === 1 ? uno : varios);
   return {
-    documento: 'Operación | Terna',
+    // propuesta LOGOS (brand.md §1): el <title> y el nombre accesible del logo. «Operación de Terna» y lo demás siguen así.
+    documento: 'Operación | Terna Jobs',
     marca: 'Operación',
     titulo: 'Operación',
 

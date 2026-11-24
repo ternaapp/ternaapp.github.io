@@ -99,7 +99,9 @@
     // Si se llegó por sesión vencida, la sesión que quedó guardada no sirve: se borra (si no, volvería y daría vueltas).
     if (q.get('motivo') === 'sesion') { try { await sb.auth.signOut({ scope: 'local' }); } catch (e) { /* igual */ } }
     const { data } = await sb.auth.getSession();
-    if (data && data.session) { location.replace(volver); return; }
+    // Con la sesión abierta, la marca que mira js/puerta.js va antes de salir hacia la raíz (PLAN-LANDING §6.2): así la puerta no
+    // depende solo del nombre de la clave de supabase-js.
+    if (data && data.session) { Terna.guardarMarcaSesion(true); location.replace(volver); return; }
     const cont = raiz();
     // La descripción va fuera del formulario (PLAN-WEB.md §3.10): en escritorio, en la columna del logo; en el celular, al final.
     const descripcion = document.getElementById('descripcion');
@@ -130,14 +132,19 @@
         b.focus();
         return;
       }
+      Terna.guardarMarcaSesion(true);
       location.replace(volver);
     });
-    cont.append(carpeta(form), h('p', { class: 'acceso-nota', text: C.porInvitacion }));
+    // Debajo de la nota de la invitación (PLAN-LANDING §5.2): cómo se consigue una, en la landing, y, después de una regla fina, el
+    // renglón de quien contrata. El link es la frase entera.
+    cont.append(carpeta(form), h('p', { class: 'acceso-nota', text: C.porInvitacion }),
+      h('p', { class: 'acceso-nota acceso-link' }, h('a', { href: 'bienvenida.html#pedir', text: C.comoSeEntra })),
+      h('p', { class: 'acceso-otro' }, C.contratasPregunta, ' ', h('a', { href: 'contratar.html', text: C.contratasLink })));
   }
 
   /* ---------- Crear tu cuenta ---------- */
   async function crearCuenta() {
-    document.title = C.crearTitulo + ' | Terna';
+    document.title = T.comun.titulo(C.crearTitulo);
     const cont = raiz();
     // El código llega después de # (crear-cuenta.html#token=…; informe de seguridad del 06/11/2026, H1) o, en los links
     // anteriores, con ?token=. Se lee de los dos lados y la barra se limpia en el acto, antes de consultar nada.
@@ -202,7 +209,7 @@
 
   /* ---------- Cambiar la contraseña ---------- */
   async function contrasena() {
-    document.title = C.cambiarTitulo + ' | Terna';
+    document.title = T.comun.titulo(C.cambiarTitulo);
     const cont = raiz();
     const hash = new URLSearchParams(Terna.hashInicial.slice(1));
     if (hash.get('error_code') === 'otp_expired' || hash.get('error') === 'access_denied') {

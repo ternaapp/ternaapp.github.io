@@ -77,9 +77,10 @@
     'i-arriba': P('M12 19V5M6 11l6-6 6 6'),
     'i-abajo': P('M12 5v14M6 13l6 6 6-6'),
   };
-  // Tres trazos con su clase, como el logo de comun.js (Terna.marca): css/terna.css les da las tres tintas del sello también a
-  // través del <use> (ops.html dibuja su logo con este símbolo). Sin esa hoja, los tres van en currentColor.
-  const marca = '<path class="trazo-1" d="M3 6h18"/><path class="trazo-2" d="M3 12h12"/><path class="trazo-3" d="M3 18h7"/>';
+  // Tres trazos con su clase, como el logo de comun.js (Terna.marca), en proporción 3 : 2 : 1 desde el logo «terna jobs»
+  // (propuesta LOGOS, brand.md §5.3): css/terna.css les da las tres tintas del sello también a través del <use>. Sin esa hoja,
+  // los tres van en currentColor. Desde ese cambio, ops.html y contratar.html dibujan el logo con Terna.logo, como la barra.
+  const marca = '<path class="trazo-1" d="M3.6 6h16.8"/><path class="trazo-2" d="M3.6 12h11.2"/><path class="trazo-3" d="M3.6 18h5.6"/>';
 
   let simbolos = '';
   for (const id in S) simbolos += '<symbol id="' + id + '" viewBox="0 0 24 24">' + S[id] + '</symbol>';

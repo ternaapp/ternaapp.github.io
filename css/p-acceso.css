@@ -17,7 +17,8 @@
 .btn-acceso-tema { align-self: flex-end; }
 .acceso-logo { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-sm); }
 .acceso-logo .logo { gap: var(--space-sm); }
-.acceso-logo .logo-marca { width: 40px; height: 40px; stroke-width: 3; }
+/* El trazo del logo es el de css/terna.css (3,2 desde el logo «terna jobs»; propuesta LOGOS): acá solo cambia el tamaño. */
+.acceso-logo .logo-marca { width: 40px; height: 40px; }
 .acceso-logo .logo-palabra { font-size: var(--text-5xl); letter-spacing: -0.03em; }
 .acceso-lema { color: var(--color-ink-2); font-size: var(--text-lg); line-height: 1.35; }
 .acceso #contenido { display: block; }
@@ -51,16 +52,25 @@
 /* Lo que sale bien (el link mandado, la contraseña guardada) no te toca a vos: el ícono va en tinta, no en ámbar. */
 .acceso-carpeta .banda:not(.banda-error) > .icono { color: var(--color-ink-2); }
 /* Los links de texto de la carpeta y de abajo: 44 px de alto para el dedo, el subrayado del sistema. */
-.acceso-olvide a, .acceso-volver a {
+.acceso-olvide a, .acceso-volver a, .acceso-link a, .acceso-otro a {
   display: inline-flex; align-items: center; gap: var(--space-2xs); min-height: 44px;
   font-weight: var(--weight-strong); transition: transform var(--dur-tab) var(--ease-out);
 }
-.acceso-olvide a:active, .acceso-volver a:active { transform: translateY(1px); }
+.acceso-olvide a:active, .acceso-volver a:active, .acceso-link a:active, .acceso-otro a:active { transform: translateY(1px); }
 .acceso-volver .icono { width: 16px; height: 16px; }
 
 /* ---------- Lo que acompaña a la carpeta ---------- */
 .acceso-invito { color: var(--color-ink); font-size: var(--text-lg); line-height: 1.35; }
 .acceso-nota { color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.45; }
+/* Los renglones de Entrar (PLAN-LANDING §5.2): «Cómo conseguir una invitación», pegado a la nota que habla de la invitación (el link
+   de 44 px ya trae su aire), y el de quien contrata, después de una regla fina. La pregunta y el link van en un renglón; si no
+   entran, el link baja entero. */
+.acceso-link { margin-top: calc(-1 * var(--space-sm)); }
+.acceso-otro {
+  display: flex; flex-wrap: wrap; align-items: center; column-gap: 0.3em;
+  padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule);
+  color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.45;
+}
 
 /* ---------- El modo, al crear la cuenta (PLAN-WEB.md §3.11) ---------- */
 /* Tres filas de 56 px con el radio a la vista (el banco los marca con check()). Dentro de la carpeta, cada fila es un relleno un
@@ -96,8 +106,10 @@
   .acceso:has(> #descripcion) > #contenido { grid-area: lado; align-self: center; justify-self: center; width: 100%; max-width: 420px; }
   .acceso:has(> #descripcion) > #descripcion { grid-area: texto; color: var(--color-ink-2); font-size: var(--text-md); }
   .acceso:has(> #descripcion) > .pie { grid-area: pie; }
-  .acceso:has(> #descripcion) .logo-marca { width: 64px; height: 64px; }
-  .acceso:has(> #descripcion) .logo-palabra { font-size: var(--text-8xl); }
+  /* «terna jobs» (propuesta LOGOS) es más ancho que «terna»: entre 48 y 64rem la columna mide unos 320 px y el logo va a 48;
+     desde 64rem, a 72. */
+  .acceso:has(> #descripcion) .logo-marca { width: 44px; height: 44px; }
+  .acceso:has(> #descripcion) .logo-palabra { font-size: var(--text-6xl); }
   .acceso:has(> #descripcion) .acceso-lema { font-size: var(--text-2xl); }
   /* Crear cuenta y Contraseña: la carpeta sola, de 420 px, con el logo arriba; el grupo, centrado en alto. El modo queda en el
      borde derecho de esa columna, no en el de la pantalla. */
@@ -105,11 +117,15 @@
   .acceso:not(:has(> #descripcion)) > .acceso-logo { margin-top: auto; }
   .acceso-carpeta .carpeta-cuerpo { padding: var(--space-xl) var(--space-lg); }
 }
+@media (min-width: 64rem) {
+  .acceso:has(> #descripcion) .logo-marca { width: 64px; height: 64px; }
+  .acceso:has(> #descripcion) .logo-palabra { font-size: var(--text-8xl); }
+}
 
 /* Sin movimiento si la persona lo pidió: los tiempos ya bajan a casi cero en terna.css; acá, además, nada se desplaza al tocar. */
 @media (prefers-reduced-motion: reduce) {
-  .modo, .acceso-olvide a, .acceso-volver a { transition: none; }
-  .modo:active, .acceso-olvide a:active, .acceso-volver a:active { transform: none; }
+  .modo, .acceso-olvide a, .acceso-volver a, .acceso-link a, .acceso-otro a { transition: none; }
+  .modo:active, .acceso-olvide a:active, .acceso-volver a:active, .acceso-link a:active, .acceso-otro a:active { transform: none; }
 }
 
 @media (forced-colors: active) {

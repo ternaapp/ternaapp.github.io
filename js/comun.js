@@ -164,6 +164,11 @@ window.Terna = (function () {
     const archivo = location.pathname.split('/').pop() || 'index.html';
     return Object.values(PAGINAS).includes(archivo) ? archivo : 'index.html';
   }
+  // La marca de sesión (PLAN-LANDING §6.3): '1' en terna.sesion mientras este navegador tiene la sesión de la web abierta. La mira
+  // js/puerta.js en la raíz: sin marca y sin la clave de supabase-js, la raíz va a la landing. No dice si la sesión vale.
+  function guardarMarcaSesion(si) {
+    try { if (si) localStorage.setItem('terna.sesion', '1'); else localStorage.removeItem('terna.sesion'); } catch (e) { /* sin almacenamiento */ }
+  }
   function irAEntrar(motivo) {
     if (estado.saliendo) return;
     estado.saliendo = true;
@@ -172,6 +177,7 @@ window.Terna = (function () {
     if (volver !== 'index.html') q.set('volver', volver);
     if (motivo) q.set('motivo', motivo);
     const s = q.toString();
+    guardarMarcaSesion(false);
     location.replace('entrar.html' + (s ? '?' + s : ''));
   }
   // Solo deja volver a una página propia, con un hash simple.
@@ -182,6 +188,7 @@ window.Terna = (function () {
     estado.saliendo = true;
     try { sessionStorage.removeItem(CLAVE_TOCAN); sessionStorage.removeItem(CLAVE_PAQUETES); } catch (e) { /* sin almacenamiento */ }
     try { await sb.auth.signOut({ scope: 'local' }); } catch (e) { /* igual se sale */ }
+    guardarMarcaSesion(false);
     location.replace('entrar.html');
   }
   sb.auth.onAuthStateChange((evento, sesion) => {
@@ -191,20 +198,29 @@ window.Terna = (function () {
   function token() { return estado.sesion ? estado.sesion.access_token : null; }
 
   /* ---------- La cáscara: barra (carril desde 64rem), muelle y hoja de Cuenta (PLAN-WEB.md §2.1) ---------- */
-  // El logo: los tres trazos en línea (no por el sprite), para que cada uno tome su tinta: sello, medio y lila.
+  // El logo: los tres trazos en línea (no por el sprite), para que cada uno tome su tinta: sello, medio y lila. Desde el logo
+  // «terna jobs» (propuesta LOGOS, brand.md §5.3; idea 1, «La lista corta»), en proporción 3 : 2 : 1 y con el trazo de 3,2.
   function marca(clase) {
     const svg = document.createElementNS(SVG, 'svg');
     svg.setAttribute('class', 'icono logo-marca' + (clase ? ' ' + clase : ''));
     svg.setAttribute('viewBox', '0 0 24 24');
     svg.setAttribute('aria-hidden', 'true');
     svg.setAttribute('focusable', 'false');
-    for (const [c, d] of [['trazo-1', 'M3 6h18'], ['trazo-2', 'M3 12h12'], ['trazo-3', 'M3 18h7']]) {
+    for (const [c, d] of [['trazo-1', 'M3.6 6h16.8'], ['trazo-2', 'M3.6 12h11.2'], ['trazo-3', 'M3.6 18h5.6']]) {
       const trazo = document.createElementNS(SVG, 'path');
       trazo.setAttribute('class', c);
       trazo.setAttribute('d', d);
       svg.appendChild(trazo);
     }
     return svg;
+  }
+  // El logo común: la marca y la palabra, lo que va adentro del link del logo. Lo usan la barra, la landing (js/landing.js),
+  // Contratar (js/contratar.js) y Operación (js/ops.js): es el «un solo lugar» de PLAN-LANDING D11. Entrar, Crear cuenta y
+  // Contraseña lo traen escrito en su HTML, igual a este. La palabra (propuesta LOGOS, brand.md §1 y §5.3) es «terna jobs» en
+  // minúscula, con un espacio de verdad para que se lea y se copie así: «terna» en tinta y «jobs» en su violeta
+  // (.logo-jobs). Es aria-hidden: el nombre accesible, «Terna Jobs», lo lleva el link.
+  function logo() {
+    return [marca(), h('span', { class: 'logo-palabra', 'aria-hidden': 'true' }, 'terna ', h('span', { class: 'logo-jobs', text: 'jobs' }))];
   }
   // Un solo DOM para la barra del celular y el carril de escritorio: el CSS decide qué se ve. .pestanas tiene como hijos solo los
   // links (ocho desde PLAN-UX §2.1, los mismos para todos) y en #barra hay un solo .btn-tema (el banco lo controla).
@@ -218,8 +234,7 @@ window.Terna = (function () {
     for (const clave of ['inicio', 'busqueda', 'avisos', 'postulaciones', 'perfil', 'preferencias', 'invitaciones', 'como']) nav.append(pestana(clave, pagina));
     const nombre = h('span', { class: 'cuenta-nombre', id: 'cuenta-nombre' });
     const barra = h('div', { class: 'barra' },
-      h('a', { class: 'logo', href: 'index.html', 'aria-label': T.comun.logo },
-        marca(), h('span', { class: 'logo-palabra', 'aria-hidden': 'true', text: 'terna' })),
+      h('a', { class: 'logo', href: 'index.html', 'aria-label': T.comun.logo }, logo()),
       nav,
       h('div', { class: 'cuenta' }, nombre, botonCuenta(pagina), botonTema('btn-barra'),
         h('button', { class: 'btn btn-texto btn-barra btn-salir', type: 'button', onclick: salir }, icono('i-salir'), T.comun.salir)));
@@ -1122,6 +1137,7 @@ window.Terna = (function () {
     const { data } = await sb.auth.getSession();
     if (!data || !data.session) { irAEntrar(); return null; }
     estado.sesion = data.session;
+    guardarMarcaSesion(true);
     const uid = data.session.user.id;
     let u, p, f, c;
     try {
@@ -1143,6 +1159,7 @@ window.Terna = (function () {
       estado.saliendo = true;
       const rC = await sb.rpc('contrata_mis_cuentas').then((x) => x, () => ({ data: null }));
       await sb.auth.signOut({ scope: 'local' });
+      guardarMarcaSesion(false);
       location.replace(rC && Array.isArray(rC.data) && rC.data.length ? 'contratar.html' : 'entrar.html');
       return null;
     }
@@ -1199,8 +1216,8 @@ window.Terna = (function () {
     CONFIG, sb, estado, hashInicial, h, agregar, vaciar, icono, oculto, idUnico,
     hoy, sumarDias, diasEntre, aFechaLocal, fechaCorta, fechaLarga, hora, relativa, numero, decimal,
     leerLocal, guardarLocal, textoError, siSesionVencida, esErrorDeSesion,
-    irAEntrar, volverValido, salir, token, dibujarPie, botonTema, listaFaltantes, cambiarEstadoCuenta, bandas,
-    marca, dibujarMuelle, abrirCuenta, cuentaToca, cuentaPaquetes, nombrePestana,
+    irAEntrar, volverValido, salir, guardarMarcaSesion, token, dibujarPie, botonTema, listaFaltantes, cambiarEstadoCuenta, bandas,
+    marca, logo, dibujarMuelle, abrirCuenta, cuentaToca, cuentaPaquetes, nombrePestana,
     avisoBreve, cerrarBreve, cargando, errorDeCarga, dialogo, confirmar, devolverFoco,
     abrirHoja, cerrarHoja, hojaAbierta, reemplazarCuerpoHoja, anchoLinea, anchoEscritorio,
     copiar, urlExterna, nombreDescarga, urlFirmada, linkFirmado, leerConfig, pagina, actualizarFaltantes, actualizarPerfil, porBloques,

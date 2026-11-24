@@ -1,0 +1,264 @@
+/* Hallmark · shape: narrative workflow · genre: editorial · theme: custom (Sello) (la landing pública, bienvenida.html: paquetes L0 y L2 de opciones-v3/PLAN-LANDING.md, 2026-11-23 y 2026-11-24)
+ * nav: a fixed paper bar with a hairline under it, the site's own wordmark (Terna.logo), three section links from 48rem, the mode button and Entrar as the one small primary; Entrar opens a two-row dialog that asks where (Busco trabajo, Contrato) · footer: the motto set in the display face and two plain links on one line, a third (LinkedIn) only when the contact exists · hero: the motto as h1, the lede, the invitation button and «Ya tengo cuenta»; beside it from 64rem (under it before), the example day · signature: the three folders of an example day, built from the real Paquetes pieces (the lilac tab with the match, the state label) with sample data under an «Ejemplo» caption; the steps carry the same lilac tab, standing on a lilac edge like a divider in a binder · surfaces: paper, then paper 2 for what the package holds and for who hires, paper again for the two lists of trust and the prices, lilac for how to get in · states: signed in (the bar says Ir a Inicio and the invitation actions leave the hero), no contact (the LinkedIn rows are not drawn and a plain line says who gives the invitation to hire), no JavaScript (every Entrar is a link to entrar.html and the wordmark is written in the HTML), a promise not kept yet (the Espera label «Todavía no» under the item) · posture: restrained · contrast: pass · modes: light+dark */
+/* Hallmark · pre-emit critique: P4 H4 E4 S5 R5 V3 · weakest: V, a landing for a small product walks the familiar order (title, steps, prices, the way in); the order is the plan's and stays, so the variety goes into the surfaces and into the folder pieces, which only this product has */
+/* Hallmark · dismissed 3 · the six price cards are equal on purpose (decision D2 of PLAN-LANDING: no plan is featured) and none carries an icon tile above its heading, only the name, the price and a text list */
+
+/* Terna · css/p-landing.css · la landing (bienvenida.html)
+   Las reglas propias de la landing pública; se carga después de css/terna.css (las fichas, la base y las piezas comunes: .btn,
+   .chip, .carpeta, .lengueta, .marbete, .carpeta-cuerpo, .dialogo). Clases con prefijo ld-. Todo con fichas que ya existen: ningún
+   color, tamaño ni espacio suelto (el aire entre secciones, --ld-aire, es una ficha local hecha de dos que ya están).
+   L0 (PLAN-LANDING §3 y §5.1): la barra, el contenedor de 1120 px, la tipografía de las secciones, el pie y el diálogo
+   «¿Dónde querés entrar?». L2 (§3.1 a §3.5 y §4.8): cada sección a 390, 768, 1024 y 1280 px; las tres carpetas al lado del
+   título desde 1024; los pasos con su lengüeta; los cuatro ítems del paquete con el ícono de cada documento, el mismo de
+   Paquetes; las dos listas de la confianza lado a lado desde 1024; las seis tarjetas de precios iguales; las bandas de papel 2 y
+   lila. Sin sombras, degradados, ilustraciones ni animaciones al bajar: lo único que se mueve son los botones y el diálogo.
+   La barra de la landing es .ld-barra y no .barra: desde 64rem, .barra es el carril de las páginas con sesión. */
+
+/* ---------- La página ---------- */
+/* El aire entre secciones (§3.1): 48 px en el celular, 64 desde 768 y 96 desde 1280. */
+.pagina-landing { --ld-aire: var(--space-2xl); }
+/* La barra es fija a todos los anchos (en las páginas con sesión, desde 64rem el carril la reemplaza y html baja su
+   scroll-padding): acá el salto a un ancla lo resuelve el scroll-margin de cada sección. Suave solo si la persona no pidió
+   menos movimiento. */
+html:has(> body.pagina-landing) { scroll-padding-top: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  html:has(> body.pagina-landing) { scroll-behavior: smooth; }
+}
+.pagina-landing main { flex: 1; }
+.pagina-landing main:focus { outline: none; }
+/* Lo que depende del contacto (data-contacto) queda oculto aunque una regla le dé display. */
+.pagina-landing [hidden] { display: none; }
+/* El contenedor: 1120 px con el margen a los lados, el mismo ancho de Entrar. */
+.ld-contenedor { width: 100%; max-width: 1120px; margin-inline: auto; padding-inline: var(--gutter); }
+
+/* ---------- La barra ---------- */
+/* Fija arriba a todos los anchos (fixed y no sticky: la barra de las páginas con sesión ya es sticky en terna.css, y las dos no van
+   nunca juntas, pero así no hay dos reglas sticky en las mismas hojas). La página le deja su alto arriba. */
+.pagina-landing { padding-top: calc(var(--bar) + var(--rule-hair)); }
+.ld-barra { position: fixed; top: 0; left: 0; right: 0; z-index: var(--z-nav); border-bottom: var(--rule-hair) solid var(--color-rule); background: var(--color-paper); }
+.ld-barra-dentro { display: flex; align-items: center; gap: var(--space-md); min-height: var(--bar); }
+/* El logo lo pone js/landing.js (Terna.logo): su alto queda reservado para que la barra no salte. */
+.ld-barra .logo { flex: none; min-height: 44px; }
+.ld-secciones { display: none; }
+.ld-acciones { display: flex; align-items: center; gap: var(--space-2xs); margin-left: auto; }
+.ld-entrar { white-space: nowrap; }
+
+/* ---------- Las secciones ---------- */
+/* El salto a un ancla deja el título debajo de la barra fija. Cada sección: la cabeza (el h2 y su bajada, juntos) y, más abajo,
+   lo que la cabeza anuncia. */
+.ld-seccion { padding-block: var(--ld-aire); scroll-margin-top: calc(var(--bar) + var(--space-md)); }
+.ld-seccion > .ld-contenedor { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-xl); }
+.ld-cabeza { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-sm); }
+.ld-seccion p { max-width: 62ch; }
+/* Los títulos: Lexend 500 con el tracking de la marca. El de la página es el lema (decisión D10). */
+.ld-seccion h2 { font-family: var(--font-display); font-weight: var(--weight-display); letter-spacing: var(--tracking-display); font-size: var(--text-3xl); line-height: 1.15; text-wrap: balance; }
+.ld-bajada { color: var(--color-ink-2); font-size: var(--text-lg); line-height: 1.45; }
+.ld-nota { color: var(--color-muted); font-size: var(--text-sm); line-height: 1.45; }
+/* Los links de texto sueltos (Ya tengo cuenta, Entrar, LinkedIn): 44 × 44 como mínimo para el dedo; el ancho solo cuenta en
+   «Entrar», que mide 39 (FEEDBACK-LANDING P3-10). */
+.ld-link { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; font-weight: var(--weight-strong); }
+/* Las bandas: papel 2 para lo que trae un paquete y para quien contrata; lila para cómo se entra (§3.1). La tinta sobre el
+   lila da 13,3 en claro y 11,2 en oscuro; el violeta de los links, 8,6 y 6,8; lo suave, 5,4 y 5,6. */
+.ld-paquete, .ld-contratar { background: var(--color-paper-2); }
+.ld-pedir { background: var(--color-accent-tint); }
+
+/* ---------- 1. El título y el ejemplo ---------- */
+/* Arriba, menos aire que entre secciones: la barra ya separa. En el celular, el texto y debajo las tres carpetas; desde 768, las
+   carpetas en fila de tres; desde 1024, al lado del texto (7 y 5 de 12), centradas en alto. */
+.ld-seccion.ld-hero { padding-top: var(--space-xl); }
+.ld-hero > .ld-contenedor { gap: var(--space-2xl); }
+.ld-hero-texto { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-md); width: 100%; }
+.ld-hero h1 { max-width: 20ch; font-size: var(--text-5xl); line-height: 1.08; text-wrap: balance; }
+/* En el celular el botón va a lo ancho y «Ya tengo cuenta» debajo, en su renglón de 44 px. */
+.ld-hero-acciones { display: flex; flex-direction: column; align-items: stretch; gap: var(--space-2xs); width: 100%; margin-top: var(--space-2xs); }
+.ld-hero-acciones .ld-link { align-self: flex-start; }
+/* El ejemplo: la etiqueta «Ejemplo» (un chip de dato) con su leyenda, y las tres carpetas de Paquetes. */
+.ld-ejemplo { display: flex; flex-direction: column; gap: var(--space-md); width: 100%; }
+.ld-ejemplo-titulo { max-width: 62ch; color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.6; }
+.ld-ejemplo-etiqueta { margin-right: var(--space-2xs); }
+.ld-carpetas { gap: var(--space-md); }
+/* Si la fila estira una carpeta, crece el cuerpo y no la cabeza: la lengüeta queda pegada. */
+.ld-carpetas .carpeta { grid-template-rows: auto 1fr; }
+.ld-ejemplo-puesto { font-size: var(--text-lg); font-weight: var(--weight-strong); line-height: 1.25; }
+/* El atajo de quien contrata (FEEDBACK-LANDING P3-9), debajo de la nota: en el celular su sección está nueve pantallas más abajo. */
+.ld-hero .ld-contratas { margin-top: calc(-1 * var(--space-xs)); text-align: left; }
+/* El título y Cómo funciona van sobre el mismo papel: entre los dos, un solo aire y no dos. */
+.ld-hero + .ld-como { padding-top: 0; }
+.ld-ejemplo-nota { color: var(--color-muted); font-size: var(--text-sm); line-height: 1.4; }
+
+/* ---------- 2 y 6. Los pasos (Cómo funciona y Para quien contrata) ---------- */
+/* El número va en la lengüeta lila, como el match, parada sobre un borde del mismo lila: el separador de una carpeta. El orden lo
+   dice la lista (ol); el número se dibuja para la vista. */
+.ld-pasos { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-xl); width: 100%; }
+.ld-paso { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+.ld-paso-numero { min-width: 0; padding-inline: var(--space-md); }
+.ld-paso-texto { display: flex; flex-direction: column; gap: var(--space-xs); align-self: stretch; padding-top: var(--space-sm); border-top: 2px solid var(--color-accent-tint); }
+.ld-paso-texto p { line-height: 1.5; }
+.ld-como .ld-cierre { color: var(--color-ink-2); font-size: var(--text-lg); line-height: 1.45; }
+
+/* ---------- 3. Qué trae un paquete (papel 2) ---------- */
+/* Cada pieza con el ícono que tiene en Paquetes (CV, carta, salario, notas), al lado del nombre y no encima: una regla fina arriba
+   y ningún recuadro. */
+.ld-items { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); width: 100%; }
+.ld-item { display: flex; flex-direction: column; gap: var(--space-xs); min-width: 0; padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule-2); }
+.ld-item-cabeza { display: flex; align-items: center; gap: var(--space-xs); }
+.ld-item-cabeza .icono { width: 20px; height: 20px; color: var(--color-ink-2); }
+.ld-item p { color: var(--color-ink-2); line-height: 1.5; }
+
+/* ---------- 4 y 5. Lo que Terna no hace y Tus datos ---------- */
+/* Dos listas que se leen juntas: un renglón por afirmación, entre reglas finas. Hasta 1024 una debajo de la otra (la segunda sin
+   el aire de arriba: siguen la misma conversación); desde 1024, lado a lado, con las dos listas a la misma altura. */
+.ld-par > .ld-seccion { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-lg); }
+.ld-par > .ld-seccion + .ld-seccion { padding-top: 0; }
+.ld-lista { display: flex; flex-direction: column; width: 100%; max-width: 62ch; border-bottom: var(--rule-hair) solid var(--color-rule); }
+.ld-lista > li { padding-block: var(--space-sm); border-top: var(--rule-hair) solid var(--color-rule); line-height: 1.5; }
+
+/* ---------- 6. Para quien contrata (papel 2) ---------- */
+.ld-contratar-pie { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-lg); width: 100%; }
+.ld-contratar-texto { display: flex; flex-direction: column; gap: var(--space-xs); }
+.ld-proponer { margin-bottom: var(--space-2xs); line-height: 1.5; }
+.ld-acciones-seccion { display: flex; flex-direction: column; align-items: stretch; gap: var(--space-xs); width: 100%; }
+/* Sin la dirección de LinkedIn, en lugar de «Cómo pedir una invitación para contratar» (que llevaría a una sección sin manera de
+   pedirla) va la línea que dice quién da la invitación (FEEDBACK-LANDING P1-2). Ocupa su propio renglón, arriba del botón. */
+.ld-sin-contacto { flex-basis: 100%; max-width: 46ch; color: var(--color-ink-2); line-height: 1.5; }
+/* Hasta 368 px «Cómo pedir una invitación para contratar» no entra en un renglón a 16 px (pide 330 px): los dos botones bajan un
+   paso de letra, como los documentos de una carpeta (.par-docs en terna.css). */
+@media (max-width: 23rem) {
+  .ld-acciones-seccion .btn { padding-inline: var(--space-sm); font-size: var(--text-sm); }
+}
+
+/* ---------- 7. Precios ---------- */
+/* Dos bloques con su subtítulo (FEEDBACK-LANDING P2-1): «Hoy» (no cobra), en el tamaño de una bajada y en tinta, y «Cuando Terna
+   empiece a cobrar», con su bajada un paso más chica y las tarjetas. Entre los dos, una regla fina; sin cinta ni color nuevo.
+   Seis tarjetas iguales, ninguna destacada: sin cinta, sin borde de color, sin fondo distinto y sin botón. Las de una fila, del
+   mismo alto. */
+.ld-precios-bloque { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-sm); width: 100%; }
+.ld-precios-planes { gap: var(--space-md); padding-top: var(--space-xl); border-top: var(--rule-hair) solid var(--color-rule); }
+.ld-precios-planes > .ld-precios-bajada { margin-top: calc(-1 * var(--space-2xs)); }
+.ld-precios-subtitulo { font: var(--weight-display) var(--text-2xl)/1.2 var(--font-display); letter-spacing: var(--tracking-display); }
+.ld-precios-hoy { color: var(--color-ink); font-size: var(--text-lg); line-height: 1.45; }
+.ld-precios-bajada { color: var(--color-ink-2); line-height: 1.5; }
+.ld-planes { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-md); width: 100%; margin-top: var(--space-2xs); }
+.ld-planes > li { display: flex; min-width: 0; }
+.ld-plan { flex: 1; gap: var(--space-sm); }
+.ld-plan h4 { font-size: var(--text-lg); line-height: 1.25; }
+.ld-plan-precio { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2xs) var(--space-xs); }
+.ld-plan-monto { font: var(--weight-display) var(--text-4xl)/1.1 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-display); }
+.ld-plan-periodo { color: var(--color-muted); font-size: var(--text-sm); }
+.ld-plan-otro { margin-top: calc(-1 * var(--space-2xs)); color: var(--color-ink-2); font-size: var(--text-sm); }
+.ld-plan-items { display: flex; flex-direction: column; gap: var(--space-sm); align-self: stretch; margin-top: var(--space-2xs); padding-top: var(--space-sm); border-top: var(--rule-hair) solid var(--color-rule-2); }
+.ld-plan-items > li { line-height: 1.45; }
+/* Lo que Terna todavía no hace: el texto en tinta 2 y, debajo, la marca de «Espera» con su reloj (el de «En cola»). Suelta, no
+   colgada de una carpeta: lleva las cuatro esquinas del chip. Sin tachar ni bajar la opacidad. */
+.ld-todavia { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2xs); color: var(--color-ink-2); }
+.ld-todavia .marbete.chip { border-radius: var(--radius-chip); }
+
+/* ---------- 9. Cómo se entra (lila) ---------- */
+.ld-pedir .ld-bajada { color: var(--color-ink); }
+.ld-pedir-cuerpo { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-md); width: 100%; }
+.ld-maneras { display: flex; flex-direction: column; gap: var(--space-md); width: 100%; }
+.ld-maneras > li { max-width: 62ch; font-size: var(--text-lg); line-height: 1.45; }
+.ld-ya { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-xs); color: var(--color-ink-2); }
+
+/* ---------- 10. El pie ---------- */
+/* Sin regla arriba: la banda lila ya cierra la página. El lema, en la letra del título, como firma. */
+.ld-pie { padding-block: var(--space-xl) var(--space-lg); color: var(--color-muted); font-size: var(--text-sm); }
+.ld-pie-dentro { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs) var(--space-lg); }
+.ld-pie-lema { color: var(--color-ink); font: var(--weight-display) var(--text-lg)/1.3 var(--font-display); letter-spacing: var(--tracking-display); }
+.ld-pie-links { display: flex; flex-wrap: wrap; gap: 0 var(--space-lg); }
+.ld-pie-links a { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; font-weight: var(--weight-strong); white-space: nowrap; }
+
+/* ---------- El diálogo «¿Dónde querés entrar?» (PLAN-LANDING §5.1) ---------- */
+/* El diálogo centrado de siempre (.dialogo), también en el celular: son dos renglones. La cruz arriba a la derecha. */
+.ld-donde h2 { padding-right: calc(var(--control-s) + var(--space-xs)); }
+.ld-donde-cerrar { position: absolute; top: var(--space-sm); right: var(--space-sm); color: var(--color-ink-2); }
+.ld-donde-cerrar:hover { background: var(--color-paper-3); color: var(--color-ink); }
+/* Las dos opciones son links: una fila de 72 px como mínimo, en papel 2, con la flecha a la derecha (la forma de .modo). */
+.ld-opcion {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "titulo flecha" "texto flecha";
+  align-items: center; gap: var(--space-3xs) var(--space-sm); min-height: 72px; padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-control); background: var(--color-paper-2); color: var(--color-ink); text-decoration: none;
+  transition: background-color var(--dur-pill) var(--ease-out), transform var(--dur-tab) var(--ease-out);
+}
+.ld-opcion:hover { background: var(--color-paper-3); color: var(--color-ink); }
+.ld-opcion:active { transform: scale(0.99); }
+.ld-opcion-titulo { grid-area: titulo; align-self: end; font-weight: var(--weight-strong); line-height: 1.3; }
+.ld-opcion-texto { grid-area: texto; align-self: start; color: var(--color-muted); font-size: var(--text-sm); line-height: 1.4; }
+.ld-opcion-flecha { grid-area: flecha; color: var(--color-muted); }
+.ld-opcion:hover .ld-opcion-flecha { color: var(--color-accent); }
+.ld-donde-nota { color: var(--color-muted); font-size: var(--text-sm); }
+
+/* ---------- 768 (§3.3) ---------- */
+@media (min-width: 48rem) {
+  .pagina-landing { --ld-aire: var(--space-3xl); }
+  .ld-secciones { display: block; }
+  .ld-secciones ul { display: flex; flex-wrap: wrap; gap: 0 var(--space-lg); }
+  .ld-secciones a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-ink-2); font-size: var(--text-sm); font-weight: var(--weight-strong); text-decoration: none; white-space: nowrap; }
+  .ld-secciones a:hover { color: var(--color-ink); text-decoration: underline; text-decoration-thickness: 2px; }
+  .ld-hero h1 { font-size: var(--text-7xl); }
+  .ld-seccion h2 { font-size: var(--text-4xl); }
+  /* Los dos botones del título en fila; las tres carpetas, en fila de tres. */
+  .ld-hero-acciones { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-lg); width: auto; }
+  /* En fila, cada carpeta mide unos 234 px: la lengüeta y el marbete se ajustan un paso (sin el ancho mínimo de la lengüeta y con
+     menos relleno a los lados) para quedar en el mismo renglón, pegados al cuerpo, como en Paquetes; si un marbete igual no entra,
+     parte en dos renglones y no baja debajo de la lengüeta. */
+  /* Las tres cabezas comparten el alto (subgrid): si un marbete parte en dos renglones («Para postular a mano»), las otras dos
+     crecen igual y sus pestañas quedan abajo, pegadas al cuerpo; los tres cuerpos arrancan a la misma altura (FEEDBACK-LANDING
+     P3-7). */
+  .ld-carpetas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto 1fr; gap: 0 var(--space-xs); }
+  .ld-carpetas .carpeta { grid-row: span 2; grid-template-rows: subgrid; }
+  .ld-carpetas .carpeta-cabeza { flex-wrap: nowrap; }
+  .ld-carpetas .lengueta { min-width: 0; padding-inline: var(--space-xs); }
+  .ld-carpetas .marbete.chip { padding-inline: var(--space-xs); text-wrap: balance; }
+  .ld-carpetas .carpeta-cuerpo { padding: var(--space-md); }
+  /* La empresa, un paso más chica: así el punto medio de «Empresa · Lugar» cierra un renglón y no abre el siguiente. */
+  .ld-carpetas .empresa { font-size: var(--text-sm); }
+  /* Cómo funciona y Qué trae un paquete, 2 × 2; los tres pasos de quien contrata, en fila. */
+  .ld-pasos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xl) var(--space-lg); }
+  .ld-pasos-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ld-items { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xl) var(--space-lg); }
+  .ld-acciones-seccion { flex-direction: row; flex-wrap: wrap; align-items: center; width: auto; }
+  .ld-planes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- 1024 (§3.4) ---------- */
+@media (min-width: 64rem) {
+  .ld-hero h1 { font-size: var(--text-8xl); }
+  /* El título y el ejemplo en dos columnas (7 y 5), centradas en alto; las carpetas, apiladas otra vez. */
+  .ld-seccion.ld-hero { padding-top: var(--space-2xl); }
+  .ld-hero > .ld-contenedor { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: center; gap: var(--space-2xl); }
+  .ld-carpetas { display: flex; flex-direction: column; gap: var(--space-md); }
+  .ld-carpetas .carpeta { grid-row: auto; grid-template-rows: auto 1fr; }
+  .ld-carpetas .lengueta { min-width: var(--tab-min); padding-inline: var(--space-sm); }
+  .ld-carpetas .marbete.chip { padding-inline: var(--space-sm); }
+  .ld-carpetas .carpeta-cuerpo { padding: var(--pad-carpeta); }
+  .ld-carpetas .empresa { font-size: inherit; }
+  .ld-pasos-4, .ld-items { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  /* Las dos listas lado a lado, con la cabeza de cada una en la misma fila: las listas arrancan a la misma altura. */
+  .ld-par { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto auto; gap: var(--space-lg) var(--space-3xl); padding-block: var(--ld-aire); }
+  .ld-par > .ld-seccion { display: grid; grid-row: span 2; grid-template-rows: subgrid; align-content: start; padding-block: 0; }
+  .ld-par > .ld-seccion > .ld-cabeza { align-self: start; }
+  /* Quien contrata: lo que puede hacer y los límites a la izquierda, los dos botones a la derecha, abajo. */
+  .ld-contratar-pie { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: end; gap: var(--space-2xl); }
+  .ld-contratar-pie .ld-acciones-seccion { flex-direction: column; align-items: stretch; justify-self: start; }
+  .ld-planes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* Cómo se entra: la cabeza a la izquierda, las maneras a la derecha. */
+  .ld-pedir > .ld-contenedor { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; gap: var(--space-2xl); }
+}
+
+/* ---------- 1280 (§3.5): el contenedor en sus 1120 px, 96 px entre secciones y los h2 a 40. Arriba no cambia nada más. ---------- */
+@media (min-width: 80rem) {
+  .pagina-landing { --ld-aire: calc(var(--space-3xl) + var(--space-xl)); }
+  .ld-seccion h2 { font-size: var(--text-5xl); }
+}
+
+/* Sin movimiento si la persona lo pidió. */
+@media (prefers-reduced-motion: reduce) {
+  .ld-opcion { transition: none; }
+  .ld-opcion:active { transform: none; }
+}
+
+@media (forced-colors: active) {
+  .ld-opcion { border: var(--rule-hair) solid CanvasText; }
+  .ld-pedir { border-block: var(--rule-hair) solid CanvasText; }
+}
