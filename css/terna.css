@@ -27,6 +27,8 @@
   --color-accent-press: oklch(30% 0.120 300);
   --color-accent-ink: oklch(98% 0.006 300);   /* 10,9 sobre el acento · 13,5 sobre el presionado */
   --color-accent-tint: oklch(90.5% 0.045 300);/* lila lengüeta #e4dafa · el acento encima 8,6 · la tinta 13,3 · lo suave 5,3 */
+  /* propuesta PLAN-LANDING-2 §6.2: el lila lavado, una banda de la landing y la columna destacada de sus precios. */
+  --color-accent-wash: oklch(95.5% 0.022 300);/* tinta 15,6 · tinta 2 12,0 · suave 6,3 · violeta de links 10,1 · foco 7,9 */
   --color-accent-mid: oklch(60% 0.110 300);   /* violeta medio · segundo trazo del logo · 3,9 sobre papel */
   --color-logo-3: oklch(80% 0.085 300);       /* el tercer trazo del logo */
   /* propuesta LOGOS (brand.md §1): «jobs» en el logo «terna jobs» (palabra A). El violeta medio daba 3,9 sobre papel. */
@@ -93,6 +95,7 @@
   --color-accent-press: oklch(74% 0.095 300);
   --color-accent-ink: oklch(19% 0.040 300);   /* 9,7 · 7,8 sobre el presionado */
   --color-accent-tint: oklch(32% 0.060 300);  /* la lengüeta en lila oscuro · el acento encima 6,8 · la tinta 11,2 */
+  --color-accent-wash: oklch(22% 0.040 300);  /* tinta 15,1 · tinta 2 12,1 · suave 7,5 · violeta de links 9,1 · foco 9,1 */
   --color-accent-mid: oklch(60% 0.110 300);   /* 4,7 sobre papel */
   --color-logo-3: oklch(50% 0.090 300);
   --color-logo-jobs: oklch(70% 0.105 300);    /* #a88fd6 · 7,0 papel · 6,4 papel 2 (el carril) */

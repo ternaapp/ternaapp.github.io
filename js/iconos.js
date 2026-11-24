@@ -1,6 +1,6 @@
 /* Terna · js/iconos.js
    El set de íconos de diseno.md §11.2 (más los de 0.3: foco, hablar, preguntar, viejo, bajo-minimo, subir,
-   sin-conexion), como sprite de <symbol> que se inserta al principio del <body>. Trazo, sin relleno, currentColor.
+   sin-conexion; y los de la landing de PLAN-LANDING-2: campana, menos), como sprite de <symbol> que se inserta al principio del <body>. Trazo, sin relleno, currentColor.
    Cada uso: <svg class="icono"><use href="#i-avisos"/></svg>, con aria-hidden cuando acompaña texto. */
 'use strict';
 
@@ -76,6 +76,10 @@
     // Subir y bajar un pedido en Próximos paquetes (diseno.md 0.21 §11.2).
     'i-arriba': P('M12 19V5M6 11l6-6 6 6'),
     'i-abajo': P('M12 5v14M6 13l6 6 6-6'),
+    // La landing (opciones-v3/PLAN-LANDING-2.md §3.1): la campana de «Te avisa al instante» en la tabla de precios; la raya de lo
+    // que un plan no incluye.
+    'i-campana': P('M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0'),
+    'i-menos': P('M6 12h12'),
   };
   // Tres trazos con su clase, como el logo de comun.js (Terna.marca), en proporción 3 : 2 : 1 desde el logo «terna jobs»
   // (propuesta LOGOS, brand.md §5.3): css/terna.css les da las tres tintas del sello también a través del <use>. Sin esa hoja,

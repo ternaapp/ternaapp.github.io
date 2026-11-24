@@ -26,15 +26,15 @@
 <link rel="preload" href="css/fonts/figtree-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="css/fonts/lexend-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/fonts.css?v=37ebd490eb">
-<link rel="stylesheet" href="css/terna.css?v=8b03aa4543">
-<link rel="stylesheet" href="css/p-landing.css?v=51faf6f496">
+<link rel="stylesheet" href="css/terna.css?v=86a0ceb6bd">
+<link rel="stylesheet" href="css/p-landing.css?v=13669d8829">
 <script src="js/no-enmarcar.js?v=ff2be24b4f" defer></script>
 <script src="js/tema.js?v=0d468bc0a5"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous" defer></script>
-<script src="js/textos.js?v=b065aa4aa2" defer></script>
-<script src="js/iconos.js?v=482422038c" defer></script>
+<script src="js/textos.js?v=491bb569ab" defer></script>
+<script src="js/iconos.js?v=5479fd61d1" defer></script>
 <script src="js/comun.js?v=d5c43bd930" defer></script>
-<script src="js/landing.js?v=329c775a2f" defer></script>
+<script src="js/landing.js?v=4dc130938d" defer></script>
 </head>
 <body class="pagina-landing">
 <a class="saltar" href="#contenido">Ir al contenido</a>
@@ -58,20 +58,20 @@
 
 <main id="contenido" tabindex="-1">
 
-<section class="ld-seccion ld-hero" id="que-es" aria-labelledby="ld-titulo">
+<section class="ld-seccion ld-hero ld-banda-papel" id="que-es" aria-labelledby="ld-titulo">
 <div class="ld-contenedor">
 <div class="ld-hero-texto">
 <h1 id="ld-titulo" data-t="landing.hero.titulo">Pocos avisos, bien armados.</h1>
-<p class="ld-bajada" data-t="landing.hero.bajada">Cargás tu perfil una vez. Cada mañana Terna busca avisos, se queda con los que ajustan con vos y te arma el CV y la carta para cada uno, hasta tres por día. Donde el formulario lo permite, postula por vos. Donde no, te deja todo listo.</p>
-<div class="ld-hero-acciones" data-sin-sesion>
-<a class="btn btn-primario" href="#pedir" data-t="landing.hero.pedir">Cómo conseguir una invitación</a>
-<a class="ld-link" href="entrar.html" data-abre="donde-entrar" data-t="landing.hero.yaTengo">Ya tengo cuenta</a>
+<p class="ld-bajada" data-t="landing.hero.bajada">Que buscar trabajo no sea un trabajo. Terna busca los avisos, arma tu CV para cada uno y postula por vos donde se puede.</p>
+<div class="ld-hero-acciones">
+<button type="button" class="btn btn-primario" data-plan="prueba" data-accion="suscribir" data-t="landing.precios.planes.0.boton">Probar 7 días</button>
+<a class="btn ld-btn-baja" href="#precios"><span data-t="landing.hero.verPlanes">Ver planes</span><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-abajo"/></svg></a>
+<a class="ld-link" href="entrar.html" data-abre="donde-entrar" data-sin-sesion data-t="landing.hero.yaTengo">Ya tengo cuenta</a>
 </div>
-<p class="ld-nota" data-sin-sesion data-t="landing.hero.nota">Hoy se entra por invitación y no se cobra.</p>
 <a class="ld-link ld-contratas" href="#contratar" data-t="landing.hero.contratas">¿Contratás? Mirá cómo publicar un aviso</a>
 </div>
 <figure class="ld-ejemplo">
-<figcaption class="ld-ejemplo-titulo"><span class="chip chip-suave ld-ejemplo-etiqueta" data-t="landing.hero.ejemploEtiqueta">Ejemplo</span> <span data-t="landing.hero.ejemploTitulo">Un día de ejemplo: tres paquetes armados, dos enviados por Terna y uno para mandar a mano.</span></figcaption>
+<figcaption class="oculto-visual" data-t="landing.hero.ejemploAccesible">Ejemplo de paquetes armados por Terna.</figcaption>
 <ul class="carpetas ld-carpetas">
 <li class="carpeta">
 <div class="carpeta-cabeza chips">
@@ -81,7 +81,6 @@
 <div class="carpeta-cuerpo">
 <p class="ld-ejemplo-puesto" data-t="landing.hero.ejemplo.0.puesto">Analista de datos</p>
 <p class="empresa" data-t="landing.hero.ejemplo.0.empresa">Una fintech&nbsp;·&nbsp;Remoto</p>
-<p class="ld-ejemplo-nota" data-t="landing.hero.ejemplo.0.nota">Enviada a las 06:41. Quedan guardados el CV, la carta y lo que Terna respondió.</p>
 </div>
 </li>
 <li class="carpeta">
@@ -92,7 +91,6 @@
 <div class="carpeta-cuerpo">
 <p class="ld-ejemplo-puesto" data-t="landing.hero.ejemplo.1.puesto">Analista de negocio</p>
 <p class="empresa" data-t="landing.hero.ejemplo.1.empresa">Una consultora&nbsp;·&nbsp;Híbrido, Buenos Aires</p>
-<p class="ld-ejemplo-nota" data-t="landing.hero.ejemplo.1.nota">Enviada a las 06:44.</p>
 </div>
 </li>
 <li class="carpeta">
@@ -103,7 +101,6 @@
 <div class="carpeta-cuerpo">
 <p class="ld-ejemplo-puesto" data-t="landing.hero.ejemplo.2.puesto">Analista de operaciones</p>
 <p class="empresa" data-t="landing.hero.ejemplo.2.empresa">Una empresa de logística&nbsp;·&nbsp;Presencial, Córdoba</p>
-<p class="ld-ejemplo-nota" data-t="landing.hero.ejemplo.2.nota">El sitio pide un captcha. El CV y la carta están listos para que los mandes vos.</p>
 </div>
 </li>
 </ul>
@@ -111,265 +108,326 @@
 </div>
 </section>
 
-<section class="ld-seccion ld-como" id="como" aria-labelledby="como-titulo">
+<section class="ld-seccion ld-como ld-banda-2" id="como" aria-labelledby="como-titulo">
+<span class="ld-solapa" aria-hidden="true"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-foco"/></svg></span>
 <div class="ld-contenedor">
-<div class="ld-cabeza">
+<div class="ld-cabeza ld-aparece">
 <h2 id="como-titulo" data-t="landing.como.titulo">Cómo funciona</h2>
 </div>
-<ol class="ld-pasos ld-pasos-4">
-<li class="ld-paso">
-<span class="lengueta ld-paso-numero" aria-hidden="true"><span class="lengueta-numero">1</span></span>
-<div class="ld-paso-texto">
-<h3 data-t="landing.como.pasos.0.titulo">Cargás tu perfil, una vez</h3>
-<p data-t="landing.como.pasos.0.texto">Subís tu CV y Terna completa tu perfil con lo que dice. Lo revisás, elegís qué puestos buscás, dónde y con qué modalidad, y listo.</p>
+<ol class="ld-pasos ld-pasos-4" id="ld-pasos">
+<li class="ld-paso carpeta ld-aparece">
+<div class="carpeta-cabeza"><span class="lengueta ld-paso-numero" aria-hidden="true"><span class="lengueta-numero">1</span></span></div>
+<div class="ld-paso-cuerpo">
+<h3 class="ld-paso-titulo"><svg class="icono ld-paso-icono" aria-hidden="true" focusable="false"><use href="#i-cv"/></svg><span data-t="landing.como.pasos.0.titulo">Cargás tu CV</span></h3>
+<div class="ld-paso-panel" id="ld-paso-1"><div class="ld-paso-dentro"><div class="ld-paso-relleno">
+<p data-t="landing.como.pasos.0.texto">Terna arma tu perfil con lo que dice. Vos elegís qué puestos buscás, dónde y con qué modalidad.</p>
+<svg class="ld-il ld-il-1" viewBox="0 0 160 120" aria-hidden="true" focusable="false">
+<path class="il-hoja" d="M20 20h36l14 14v56a6 6 0 0 1-6 6H20a6 6 0 0 1-6-6V26a6 6 0 0 1 6-6z"/>
+<path class="il-renglon" d="M56 21v13h13"/>
+<path class="il-renglon" d="M24 48h32M24 58h36M24 68h28M24 78h34"/>
+<path class="il-acento" d="M78 60h14M86 54l6 6-6 6"/>
+<rect class="il-hoja" x="100" y="30" width="48" height="60" rx="6"/>
+<circle class="il-lila" cx="124" cy="47" r="8"/>
+<path class="il-renglon il-traza" pathLength="1" d="M112 66h24"/>
+<path class="il-renglon il-traza" pathLength="1" d="M115 77h18"/>
+</svg>
+</div></div></div>
 </div>
 </li>
-<li class="ld-paso">
-<span class="lengueta ld-paso-numero" aria-hidden="true"><span class="lengueta-numero">2</span></span>
-<div class="ld-paso-texto">
-<h3 data-t="landing.como.pasos.1.titulo">Terna busca todos los días</h3>
-<p data-t="landing.como.pasos.1.texto">Cada mañana trae los avisos nuevos de los sitios de las empresas y de las alertas de empleo que le reenviás. Descarta los que no cumplen lo que pediste y a los demás les pone un match de 0 a 100.</p>
+<li class="ld-paso carpeta ld-aparece">
+<div class="carpeta-cabeza"><span class="lengueta ld-paso-numero" aria-hidden="true"><span class="lengueta-numero">2</span></span></div>
+<div class="ld-paso-cuerpo">
+<h3 class="ld-paso-titulo"><svg class="icono ld-paso-icono" aria-hidden="true" focusable="false"><use href="#i-buscar"/></svg><span data-t="landing.como.pasos.1.titulo">Terna busca</span></h3>
+<div class="ld-paso-panel" id="ld-paso-2"><div class="ld-paso-dentro"><div class="ld-paso-relleno">
+<p data-t="landing.como.pasos.1.texto">Cada mañana trae los avisos nuevos y le pone a cada uno un match de 0 a 100 con tu perfil.</p>
+<svg class="ld-il ld-il-2" viewBox="0 0 160 120" aria-hidden="true" focusable="false">
+<rect class="il-hoja" x="12" y="14" width="120" height="24" rx="6"/>
+<path class="il-renglon" d="M24 26h64"/>
+<rect class="il-hoja" x="12" y="48" width="120" height="24" rx="6"/>
+<rect class="il-lila il-marca" x="18" y="53" width="22" height="14" rx="4"/>
+<path class="il-renglon" d="M48 60h56"/>
+<rect class="il-hoja" x="12" y="82" width="120" height="24" rx="6"/>
+<path class="il-renglon" d="M24 94h48"/>
+<g class="il-lupa"><circle class="il-acento" cx="122" cy="58" r="14"/><path class="il-acento" d="M132 68l10 10"/></g>
+</svg>
+</div></div></div>
 </div>
 </li>
-<li class="ld-paso">
-<span class="lengueta ld-paso-numero" aria-hidden="true"><span class="lengueta-numero">3</span></span>
-<div class="ld-paso-texto">
-<h3 data-t="landing.como.pasos.2.titulo">Arma hasta tres paquetes</h3>
-<p data-t="landing.como.pasos.2.texto">Un paquete por cada aviso con mejor match: todo lo que hace falta para postular. Tres por día, no más.</p>
+<li class="ld-paso carpeta ld-aparece">
+<div class="carpeta-cabeza"><span class="lengueta ld-paso-numero" aria-hidden="true"><span class="lengueta-numero">3</span></span></div>
+<div class="ld-paso-cuerpo">
+<h3 class="ld-paso-titulo"><svg class="icono ld-paso-icono" aria-hidden="true" focusable="false"><use href="#i-paquete"/></svg><span data-t="landing.como.pasos.2.titulo">Arma tus paquetes</span></h3>
+<div class="ld-paso-panel" id="ld-paso-3"><div class="ld-paso-dentro"><div class="ld-paso-relleno">
+<p data-t="landing.como.pasos.2.texto">Un paquete por cada aviso que mejor ajusta: todo lo que hace falta para postular.</p>
+<svg class="ld-il ld-il-3" viewBox="0 0 160 120" aria-hidden="true" focusable="false">
+<path class="il-lila" d="M24 52v-8a8 8 0 0 1 8-8h24a8 8 0 0 1 8 8v8z"/>
+<path class="il-carpeta" d="M24 52h102a10 10 0 0 1 10 10v44a10 10 0 0 1-10 10H34a10 10 0 0 1-10-10z"/>
+<g class="il-hojas">
+<g transform="rotate(-6 62 56)"><rect class="il-hoja" x="43" y="26" width="38" height="58" rx="4"/><path class="il-renglon" d="M51 38h22M51 47h16"/></g>
+<g transform="rotate(5 100 54)"><rect class="il-hoja" x="80" y="24" width="38" height="58" rx="4"/><path class="il-renglon" d="M88 36h22M88 45h18"/></g>
+</g>
+<path class="il-carpeta" d="M24 68h112v38a10 10 0 0 1-10 10H34a10 10 0 0 1-10-10z"/>
+</svg>
+</div></div></div>
 </div>
 </li>
-<li class="ld-paso">
-<span class="lengueta ld-paso-numero" aria-hidden="true"><span class="lengueta-numero">4</span></span>
-<div class="ld-paso-texto">
-<h3 data-t="landing.como.pasos.3.titulo">Postula donde puede</h3>
-<p data-t="landing.como.pasos.3.texto">Si la empresa usa un formulario público que Terna conoce, lo completa con tu perfil, sube el CV y la carta y te muestra qué respondió. Donde no puede, te deja el paquete listo y postulás vos.</p>
+<li class="ld-paso carpeta ld-aparece">
+<div class="carpeta-cabeza"><span class="lengueta ld-paso-numero" aria-hidden="true"><span class="lengueta-numero">4</span></span></div>
+<div class="ld-paso-cuerpo">
+<h3 class="ld-paso-titulo"><svg class="icono ld-paso-icono" aria-hidden="true" focusable="false"><use href="#i-enviada"/></svg><span data-t="landing.como.pasos.3.titulo">Postula por vos</span></h3>
+<div class="ld-paso-panel" id="ld-paso-4"><div class="ld-paso-dentro"><div class="ld-paso-relleno">
+<p data-t="landing.como.pasos.3.texto">Donde el formulario lo permite, lo completa y lo envía. Donde no, te deja todo listo para que lo mandes vos.</p>
+<svg class="ld-il ld-il-4" viewBox="0 0 160 120" aria-hidden="true" focusable="false">
+<path class="il-puntos" d="M46 50Q68 20 92 32"/>
+<rect class="il-hoja" x="96" y="26" width="52" height="68" rx="6"/>
+<path class="il-renglon" d="M104 40h36M104 52h36M104 64h24"/>
+<rect class="il-lila" x="104" y="74" width="24" height="10" rx="3"/>
+<g class="il-avion"><path class="il-acento" d="M41.5 54.5L25 71M41.5 54.5l-10.5 27-6-10.5-10.5-6z"/></g>
+<g class="il-sello"><circle class="il-hecho" cx="146" cy="28" r="11"/><path class="il-hecho-tilde" d="M141 28.5l3.5 3.5 6.5-7"/></g>
+</svg>
+</div></div></div>
 </div>
 </li>
 </ol>
-<p class="ld-cierre" data-t="landing.como.formas">Podés dejar que Terna haga todo sola, o decidir vos, aviso por aviso, qué te interesa.</p>
 </div>
 </section>
 
-<section class="ld-seccion ld-paquete" id="paquete" aria-labelledby="paquete-titulo">
+<section class="ld-seccion ld-paquete ld-banda-papel" id="paquete" aria-labelledby="paquete-titulo">
+<span class="ld-solapa" aria-hidden="true"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-paquete"/></svg></span>
 <div class="ld-contenedor">
-<div class="ld-cabeza">
+<div class="ld-cabeza ld-aparece">
 <h2 id="paquete-titulo" data-t="landing.paquete.titulo">Qué trae un paquete</h2>
-<p class="ld-bajada" data-t="landing.paquete.bajada">Un paquete es todo lo que hace falta para postular a un aviso.</p>
+<p class="ld-bajada" data-t="landing.paquete.bajada">Todo lo que hace falta para postular a un aviso.</p>
 </div>
-<ul class="ld-items">
-<li class="ld-item">
-<div class="ld-item-cabeza"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-cv"/></svg><h3 data-t="landing.paquete.items.0.titulo">CV para ese aviso</h3></div>
-<p data-t="landing.paquete.items.0.texto">Con tu experiencia real y las palabras del aviso, en un formato legible por los sistemas que leen CV.</p>
+<div class="ld-paquete-cuerpo">
+<svg class="ld-il ld-il-paquete ld-aparece" viewBox="0 0 320 240" aria-hidden="true" focusable="false">
+<path class="il-lila" d="M48 116v-12a12 12 0 0 1 12-12h56a12 12 0 0 1 12 12v12z"/>
+<path class="il-carpeta" d="M48 116h212a12 12 0 0 1 12 12v82a12 12 0 0 1-12 12H60a12 12 0 0 1-12-12z"/>
+<g class="il-doc" data-doc="0"><g transform="rotate(-27 160 230)"><rect class="il-hoja" x="124" y="34" width="72" height="120" rx="6"/><g class="il-doc-icono" transform="translate(142 48) scale(1.5)"><path class="il-acento" d="M6 3h8l4 4v14H6zM14 3v4h4M9 13h6M9 17h6"/></g><path class="il-renglon" d="M140 100h40M144 110h32"/></g></g>
+<g class="il-doc" data-doc="1"><g transform="rotate(-9 160 230)"><rect class="il-hoja" x="124" y="34" width="72" height="120" rx="6"/><g class="il-doc-icono" transform="translate(142 48) scale(1.5)"><rect class="il-acento" x="3" y="5" width="18" height="14" rx="2"/><path class="il-acento" d="M3 7l9 6 9-6"/></g><path class="il-renglon" d="M140 100h40M144 110h32"/></g></g>
+<g class="il-doc" data-doc="2"><g transform="rotate(9 160 230)"><rect class="il-hoja" x="124" y="34" width="72" height="120" rx="6"/><g class="il-doc-icono" transform="translate(142 48) scale(1.5)"><rect class="il-acento" x="2" y="6" width="20" height="12" rx="2"/><circle class="il-acento" cx="12" cy="12" r="3"/></g><path class="il-renglon" d="M140 100h40M144 110h32"/></g></g>
+<g class="il-doc" data-doc="3"><g transform="rotate(27 160 230)"><rect class="il-hoja" x="124" y="34" width="72" height="120" rx="6"/><g class="il-doc-icono" transform="translate(142 48) scale(1.5)"><path class="il-acento" d="M5 4h14v16H5zM8 9h8M8 13h8M8 17h5"/></g><path class="il-renglon" d="M140 100h40M144 110h32"/></g></g>
+<path class="il-carpeta" d="M48 150h224v60a12 12 0 0 1-12 12H60a12 12 0 0 1-12-12z"/>
+</svg>
+<ul class="ld-docs" id="ld-docs">
+<li class="ld-doc ld-aparece" data-doc="0">
+<span class="ld-cuadro"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-cv"/></svg></span>
+<div class="ld-doc-texto"><h3 data-t="landing.paquete.items.0.titulo">CV para ese aviso</h3><p data-t="landing.paquete.items.0.texto">Con tu experiencia real y las palabras del aviso.</p></div>
 </li>
-<li class="ld-item">
-<div class="ld-item-cabeza"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-sobre"/></svg><h3 data-t="landing.paquete.items.1.titulo">Carta de presentación</h3></div>
-<p data-t="landing.paquete.items.1.texto">Corta, sobre ese puesto y esa empresa, en el idioma del aviso.</p>
+<li class="ld-doc ld-aparece" data-doc="1">
+<span class="ld-cuadro"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-sobre"/></svg></span>
+<div class="ld-doc-texto"><h3 data-t="landing.paquete.items.1.titulo">Carta de presentación</h3><p data-t="landing.paquete.items.1.texto">Corta, sobre ese puesto, en el idioma del aviso.</p></div>
 </li>
-<li class="ld-item">
-<div class="ld-item-cabeza"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-salario"/></svg><h3 data-t="landing.paquete.items.2.titulo">Salario sugerido</h3></div>
-<p data-t="landing.paquete.items.2.texto">Un número para cuando te lo pregunten, con el razonamiento a la vista.</p>
+<li class="ld-doc ld-aparece" data-doc="2">
+<span class="ld-cuadro"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-salario"/></svg></span>
+<div class="ld-doc-texto"><h3 data-t="landing.paquete.items.2.titulo">Salario sugerido</h3><p data-t="landing.paquete.items.2.texto">Un número para cuando te lo pregunten.</p></div>
 </li>
-<li class="ld-item">
-<div class="ld-item-cabeza"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-notas"/></svg><h3 data-t="landing.paquete.items.3.titulo">Notas para la entrevista</h3></div>
-<p data-t="landing.paquete.items.3.texto">Qué mirar de la empresa y qué te pueden preguntar, por si te llaman.</p>
+<li class="ld-doc ld-aparece" data-doc="3">
+<span class="ld-cuadro"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-notas"/></svg></span>
+<div class="ld-doc-texto"><h3 data-t="landing.paquete.items.3.titulo">Notas para la entrevista</h3><p data-t="landing.paquete.items.3.texto">Qué mirar de la empresa, por si te llaman.</p></div>
 </li>
 </ul>
+</div>
 </div>
 </section>
 
-<div class="ld-contenedor ld-par">
-<section class="ld-seccion ld-limites" id="limites" aria-labelledby="limites-titulo">
-<div class="ld-cabeza">
-<h2 id="limites-titulo" data-t="landing.limites.titulo">Lo que Terna no hace</h2>
-<p class="ld-bajada" data-t="landing.limites.bajada">Conviene saberlo antes de entrar.</p>
-</div>
-<ul class="ld-lista">
-<li data-t="landing.limites.items.0">No promete trabajo ni entrevistas. El match mide cuánto ajusta tu perfil con un aviso, y nada más.</li>
-<li data-t="landing.limites.items.1">No inventa experiencia en tu CV ni en tu carta. Elige, ordena y redacta lo que tenés.</li>
-<li data-t="landing.limites.items.2">No esconde palabras en tu CV para pasar filtros. Todo lo que el CV dice está a la vista.</li>
-<li data-t="landing.limites.items.3">No entra a tu LinkedIn ni a tu mail, y no te pide ninguna contraseña.</li>
-<li data-t="landing.limites.items.4">No postula en todos lados. Solo donde el formulario es público y lo conoce; si un sitio pide un captcha, ese paso queda para vos.</li>
-<li data-t="landing.limites.items.5">No manda decenas de postulaciones por día. Son tres paquetes, elegidos.</li>
-</ul>
-</section>
-<section class="ld-seccion ld-datos" id="datos" aria-labelledby="datos-titulo">
-<div class="ld-cabeza">
-<h2 id="datos-titulo" data-t="landing.datos.titulo">Tus datos</h2>
-</div>
-<ul class="ld-lista">
-<li data-t="landing.datos.items.0">Tu perfil, tu CV y tus postulaciones los ves vos. Ninguna otra persona que use Terna los ve.</li>
-<li data-t="landing.datos.items.1">Quien contrata ve tus datos recién cuando postulás a un aviso suyo. Antes, solo si vos elegís que te encuentren, y sin tu nombre.</li>
-<li data-t="landing.datos.items.2">Francisco, que lidera Terna, la administra. Para arreglar lo que falla ve cómo salieron tus postulaciones: el puesto, la empresa y el error del sitio. Y como el administrador de cualquier sistema, tiene acceso técnico a la base.</li>
-<li data-t="landing.datos.items.3">Para puntuar los avisos y escribir los documentos, Terna manda tu perfil y el texto del aviso a un proveedor externo. Según sus términos, ese proveedor no usa tus datos para entrenar sus sistemas.</li>
-<li data-t="landing.datos.items.4">Podés pausar tu cuenta cuando quieras. Si pedís que se borre, se borra en el día.</li>
-</ul>
-</section>
-</div>
-
-<section class="ld-seccion ld-contratar" id="contratar" aria-labelledby="contratar-titulo">
+<section class="ld-seccion ld-contratar ld-banda-lavado" id="contratar" aria-labelledby="contratar-titulo">
+<span class="ld-solapa" aria-hidden="true"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-empresa"/></svg></span>
 <div class="ld-contenedor">
-<div class="ld-cabeza">
+<div class="ld-cabeza ld-aparece">
 <h2 id="contratar-titulo" data-t="landing.contratar.titulo">Para quien contrata</h2>
-<p class="ld-bajada" data-t="landing.contratar.bajada">Si buscás a alguien para tu empresa, tu taller o tu escuela, podés publicar el aviso en Terna.</p>
+<p class="ld-bajada" data-t="landing.contratar.bajada">Publicá tu aviso en Terna y recibí postulaciones completas.</p>
 </div>
-<ol class="ld-pasos ld-pasos-3">
-<li class="ld-paso">
-<span class="lengueta ld-paso-numero" aria-hidden="true"><span class="lengueta-numero">1</span></span>
-<div class="ld-paso-texto">
-<h3 data-t="landing.contratar.pasos.0.titulo">Publicás el aviso</h3>
-<p data-t="landing.contratar.pasos.0.texto">El puesto, la modalidad, el lugar, la descripción y, si querés, el salario. Francisco, que lidera Terna, lo revisa antes de que salga.</p>
-</div>
-</li>
-<li class="ld-paso">
-<span class="lengueta ld-paso-numero" aria-hidden="true"><span class="lengueta-numero">2</span></span>
-<div class="ld-paso-texto">
-<h3 data-t="landing.contratar.pasos.1.titulo">Terna se lo muestra a quien ajusta</h3>
-<p data-t="landing.contratar.pasos.1.texto">Cada persona ve tu aviso con su match, un número de 0 a 100 que dice cuánto ajusta su perfil con el puesto. Vos ves a cuántas les llegó, cuántas lo abrieron y cuántas tienen match alto, sin nombres.</p>
+<ol class="ld-docs ld-docs-3">
+<li class="carpeta ld-contrata-paso ld-aparece">
+<div class="carpeta-cabeza"><span class="lengueta ld-paso-numero" aria-hidden="true"><span class="lengueta-numero">1</span></span></div>
+<div class="ld-doc ld-tarjeta">
+<span class="ld-cuadro"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-avisos"/></svg></span>
+<div class="ld-doc-texto"><h3 data-t="landing.contratar.pasos.0.titulo">Publicás el aviso</h3><p data-t="landing.contratar.pasos.0.texto">Francisco, que lidera Terna, lo revisa antes de que salga.</p></div>
 </div>
 </li>
-<li class="ld-paso">
-<span class="lengueta ld-paso-numero" aria-hidden="true"><span class="lengueta-numero">3</span></span>
-<div class="ld-paso-texto">
-<h3 data-t="landing.contratar.pasos.2.titulo">Recibís postulaciones completas</h3>
-<p data-t="landing.contratar.pasos.2.texto">Cada una llega con el contacto de la persona, un CV y una carta escritos para tu aviso y el salario que pretende.</p>
+<li class="carpeta ld-contrata-paso ld-aparece">
+<div class="carpeta-cabeza"><span class="lengueta ld-paso-numero" aria-hidden="true"><span class="lengueta-numero">2</span></span></div>
+<div class="ld-doc ld-tarjeta">
+<span class="ld-cuadro"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-foco"/></svg></span>
+<div class="ld-doc-texto"><h3 data-t="landing.contratar.pasos.1.titulo">Llega a quien ajusta</h3><p data-t="landing.contratar.pasos.1.texto">Cada persona lo ve con su match: cuánto ajusta su perfil con el puesto, de 0 a 100.</p></div>
+</div>
+</li>
+<li class="carpeta ld-contrata-paso ld-aparece">
+<div class="carpeta-cabeza"><span class="lengueta ld-paso-numero" aria-hidden="true"><span class="lengueta-numero">3</span></span></div>
+<div class="ld-doc ld-tarjeta">
+<span class="ld-cuadro"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-postulaciones"/></svg></span>
+<div class="ld-doc-texto"><h3 data-t="landing.contratar.pasos.2.titulo">Recibís postulaciones completas</h3><p data-t="landing.contratar.pasos.2.texto">Con el contacto, un CV y una carta escritos para tu aviso, y el salario que pretende.</p></div>
 </div>
 </li>
 </ol>
 <div class="ld-contratar-pie">
-<div class="ld-contratar-texto">
-<p class="ld-proponer" data-t="landing.contratar.proponer">Si una persona eligió que la encuentren y su perfil ajusta, la ves sin su nombre y le podés proponer que postule. Decide ella.</p>
-<p class="ld-nota" data-t="landing.contratar.limites">Hoy publicar no tiene costo. Hasta 3 avisos abiertos por cuenta, 30 días cada uno con renovación, puestos en Argentina y un equipo de hasta 5 personas.</p>
-<p class="ld-nota" data-t="landing.contratar.honesto">Terna recién empieza de este lado: todavía son pocas las personas que buscan trabajo acá. No promete que vayas a encontrar a alguien.</p>
-</div>
+<p class="ld-proponer" data-t="landing.contratar.proponer">También le podés proponer postular a quien eligió que la encuentren. Decide ella.</p>
 <div class="ld-acciones-seccion">
-<a class="btn btn-primario" href="#pedir" data-contacto data-t="landing.contratar.pedir">Cómo pedir una invitación para contratar</a>
+<button type="button" class="btn btn-primario" data-accion="publicar" data-t="landing.contratar.publicar">Publicar un aviso</button>
 <a class="btn" href="contratar.html" data-t="landing.contratar.entrar">Entrar a Terna para contratar</a>
 </div>
 </div>
 </div>
 </section>
 
-<section class="ld-seccion ld-precios" id="precios" aria-labelledby="precios-titulo">
+<section class="ld-seccion ld-precios ld-banda-papel" id="precios" aria-labelledby="precios-titulo">
+<span class="ld-solapa" aria-hidden="true"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-salario"/></svg></span>
 <div class="ld-contenedor">
-<div class="ld-cabeza">
+<div class="ld-cabeza ld-aparece">
 <h2 id="precios-titulo" data-t="landing.precios.titulo">Precios</h2>
+<p class="ld-bajada" data-t="landing.precios.bajada">Elegí según cuánto estés buscando.</p>
 </div>
-<div class="ld-precios-bloque">
-<h3 class="ld-precios-subtitulo" data-t="landing.precios.hoyTitulo">Hoy</h3>
-<p class="ld-precios-hoy" data-t="landing.precios.hoy">Hoy Terna es por invitación y no cobra. Quien entra ahora la usa completa: hasta tres paquetes por día y las postulaciones. Con los planes eso cambia: cada uno dice cuántos paquetes trae.</p>
-<p class="ld-precios-bajada" data-t="landing.precios.cuando">Todavía no hay fecha para empezar a cobrar. Quien ya use Terna se entera por mail un mes antes y elige si sigue.</p>
+<span id="ld-elegir" hidden data-t="landing.precios.elegir">Elegí un plan</span>
+<div class="ld-tabla-marco ld-aparece" role="region" aria-labelledby="ld-tabla-titulo">
+<table class="ld-tabla">
+<caption class="oculto-visual" id="ld-tabla-titulo" data-t="landing.precios.tablaTitulo">Qué incluye cada plan</caption>
+<thead>
+<tr>
+<td class="ld-tabla-esquina"></td>
+<th scope="col" class="ld-plan-col"><div class="ld-plan-cabeza">
+<span class="ld-plan-nombre" id="plan-prueba" data-t="landing.precios.planes.0.nombre">Prueba</span>
+<span class="ld-plan-monto" data-t="landing.precios.planes.0.precio">$0</span>
+<span class="ld-plan-periodo" data-t="landing.precios.planes.0.periodo">7 días, una sola vez</span>
+<span class="ld-plan-antes"></span></div>
+</th>
+<th scope="col" class="ld-plan-col"><div class="ld-plan-cabeza">
+<span class="ld-plan-nombre" id="plan-gratis" data-t="landing.precios.planes.1.nombre">Gratis</span>
+<span class="ld-plan-monto" data-t="landing.precios.planes.1.precio">$0</span>
+<span class="ld-plan-periodo" data-t="landing.precios.planes.1.periodo">sin vencimiento</span>
+<span class="ld-plan-antes"></span></div>
+</th>
+<th scope="col" class="ld-plan-col"><div class="ld-plan-cabeza">
+<span class="ld-plan-nombre" id="plan-radar" data-t="landing.precios.planes.2.nombre">Radar</span>
+<span class="ld-plan-monto"><span class="oculto-visual" data-t="landing.precios.precioAccesible">Precio de lanzamiento:</span> <span data-t="landing.precios.planes.2.precio">$8.000</span></span>
+<span class="ld-plan-periodo" data-t="landing.precios.planes.2.periodo">por mes</span>
+<span class="ld-plan-antes"><span class="ld-plan-lista"><span class="oculto-visual" data-t="landing.precios.listaAccesible">Precio de lista:</span> <s data-t="landing.precios.planes.2.lista">$13.500</s></span> <span class="chip ld-plan-descuento" data-t="landing.precios.descuento">40 % menos</span></span></div>
+</th>
+<th scope="col" class="ld-plan-col ld-plan-destacado"><div class="ld-plan-cabeza">
+<span class="chip ld-plan-recomendado" data-t="landing.precios.recomendado">El más completo</span>
+<span class="ld-plan-nombre" id="plan-activa" data-t="landing.precios.planes.3.nombre">Búsqueda activa</span>
+<span class="ld-plan-monto"><span class="oculto-visual" data-t="landing.precios.precioAccesible">Precio de lanzamiento:</span> <span data-t="landing.precios.planes.3.precio">$19.200</span></span>
+<span class="ld-plan-periodo" data-t="landing.precios.planes.3.periodo">por mes</span>
+<span class="ld-plan-antes"><span class="ld-plan-lista"><span class="oculto-visual" data-t="landing.precios.listaAccesible">Precio de lista:</span> <s data-t="landing.precios.planes.3.lista">$32.000</s></span> <span class="chip ld-plan-descuento" data-t="landing.precios.descuento">40 % menos</span></span>
+<span class="ld-plan-otro"><span class="oculto-visual" data-t="landing.precios.listaAccesible">Precio de lista:</span> <s data-t="landing.precios.planes.3.otroLista">$13.500</s> <span data-t="landing.precios.planes.3.otro">o $8.000 por semana</span></span></div>
+</th>
+</tr>
+<tr class="ld-tabla-acciones">
+<td></td>
+<td><button type="button" class="btn ld-plan-accion" data-plan="prueba" data-accion="suscribir" aria-describedby="plan-prueba" data-t="landing.precios.planes.0.boton">Probar 7 días</button></td>
+<td><button type="button" class="btn ld-plan-accion" data-plan="gratis" data-accion="suscribir" aria-describedby="plan-gratis" data-t="landing.precios.planes.1.boton">Empezar gratis</button></td>
+<td><button type="button" class="btn ld-plan-accion" data-plan="radar" data-accion="suscribir" aria-describedby="plan-radar" data-t="landing.precios.planes.2.boton">Suscribirme</button></td>
+<td><button type="button" class="btn btn-primario ld-plan-accion" data-plan="activa" data-accion="suscribir" aria-describedby="plan-activa" data-t="landing.precios.planes.3.boton">Suscribirme</button></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row"><span class="ld-fila-rotulo"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-paquete"/></svg><span data-t="landing.precios.filas.0.rotulo">Paquetes</span></span></th>
+<td data-t="landing.precios.filas.0.valores.0">3 en los 7 días</td>
+<td data-t="landing.precios.filas.0.valores.1">1 por mes</td>
+<td data-t="landing.precios.filas.0.valores.2">4 por mes</td>
+<td data-t="landing.precios.filas.0.valores.3">1 por día</td>
+</tr>
+<tr>
+<th scope="row"><span class="ld-fila-rotulo"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-buscar"/></svg><span data-t="landing.precios.filas.1.rotulo">Búsqueda de avisos con match</span></span></th>
+<td data-t="landing.precios.filas.1.valores.0">Todos los días</td>
+<td data-t="landing.precios.filas.1.valores.1">2 veces por semana</td>
+<td data-t="landing.precios.filas.1.valores.2">Todos los días</td>
+<td data-t="landing.precios.filas.1.valores.3">Todos los días</td>
+</tr>
+<tr>
+<th scope="row"><span class="ld-fila-rotulo"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-enviada"/></svg><span data-t="landing.precios.filas.2.rotulo">Terna postula por vos</span></span> <span class="ld-fila-ayuda" data-t="landing.precios.filas.2.ayuda">Donde el formulario lo permite.</span></th>
+<td><svg class="icono ld-si" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12l4 4L19 6"/></svg><span class="oculto-visual" data-t="landing.precios.si">Incluido</span></td>
+<td><svg class="icono ld-no" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 12h12"/></svg><span class="oculto-visual" data-t="landing.precios.no">No incluido</span></td>
+<td><svg class="icono ld-no" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 12h12"/></svg><span class="oculto-visual" data-t="landing.precios.no">No incluido</span></td>
+<td><svg class="icono ld-si" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12l4 4L19 6"/></svg><span class="oculto-visual" data-t="landing.precios.si">Incluido</span></td>
+</tr>
+<tr>
+<th scope="row"><span class="ld-fila-rotulo"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-campana"/></svg><span data-t="landing.precios.filas.3.rotulo">Te avisa al instante</span></span> <span class="ld-fila-ayuda" data-t="landing.precios.filas.3.ayuda">Cuando publica una empresa que seguís o aparece un match alto.</span></th>
+<td><span class="ld-pronto"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-pedido"/></svg><span data-t="landing.precios.pronto">Pronto</span></span></td>
+<td><svg class="icono ld-no" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 12h12"/></svg><span class="oculto-visual" data-t="landing.precios.no">No incluido</span></td>
+<td><span class="ld-pronto"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-pedido"/></svg><span data-t="landing.precios.pronto">Pronto</span></span></td>
+<td><span class="ld-pronto"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-pedido"/></svg><span data-t="landing.precios.pronto">Pronto</span></span></td>
+</tr>
+</tbody>
+</table>
 </div>
-<div class="ld-precios-bloque ld-precios-planes">
-<h3 class="ld-precios-subtitulo" data-t="landing.precios.planesTitulo">Cuando Terna empiece a cobrar</h3>
-<p class="ld-precios-bajada" data-t="landing.precios.bajada">Así van a ser los planes. Ninguno se puede contratar todavía. Lo que figura en un plan y Terna hoy no hace lleva la marca «Todavía no».</p>
-<ul class="ld-planes">
-<li>
-<article class="ld-plan carpeta-cuerpo sola" aria-labelledby="plan-prueba">
-<h4 id="plan-prueba" data-t="landing.precios.planes.0.nombre">Prueba</h4>
-<p class="ld-plan-precio"><span class="ld-plan-monto" data-t="landing.precios.planes.0.precio">$0</span> <span class="ld-plan-periodo" data-t="landing.precios.planes.0.periodo">una sola vez</span></p>
-<ul class="ld-plan-items">
-<li data-t="landing.precios.planes.0.items.0.texto">7 días con todo lo que hace Terna.</li>
-<li data-t="landing.precios.planes.0.items.1.texto">3 paquetes.</li>
-</ul>
-</article>
-</li>
-<li>
-<article class="ld-plan carpeta-cuerpo sola" aria-labelledby="plan-gratis">
-<h4 id="plan-gratis" data-t="landing.precios.planes.1.nombre">Gratis</h4>
-<p class="ld-plan-precio"><span class="ld-plan-monto" data-t="landing.precios.planes.1.precio">$0</span> <span class="ld-plan-periodo" data-t="landing.precios.planes.1.periodo">sin vencimiento</span></p>
-<ul class="ld-plan-items">
-<li class="ld-todavia"><span data-t="landing.precios.planes.1.items.0.texto">Terna busca avisos y les pone el match dos veces por semana, no todos los días.</span> <span class="marbete chip marbete-espera" aria-hidden="true"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-pedido"/></svg><span data-t="landing.precios.todavia">Todavía no</span></span><span class="oculto-visual" data-t="landing.precios.todaviaAccesible">Terna todavía no lo hace.</span></li>
-<li data-t="landing.precios.planes.1.items.1.texto">1 paquete por mes.</li>
-</ul>
-</article>
-</li>
-<li>
-<article class="ld-plan carpeta-cuerpo sola" aria-labelledby="plan-radar">
-<h4 id="plan-radar" data-t="landing.precios.planes.2.nombre">Radar</h4>
-<p class="ld-plan-precio"><span class="ld-plan-monto" data-t="landing.precios.planes.2.precio">$8.000</span> <span class="ld-plan-periodo" data-t="landing.precios.planes.2.periodo">por mes</span></p>
-<ul class="ld-plan-items">
-<li class="ld-todavia"><span data-t="landing.precios.planes.2.items.0.texto">Te avisa en el momento cuando una empresa que seguís publica un aviso, o cuando aparece uno con match alto.</span> <span class="marbete chip marbete-espera" aria-hidden="true"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-pedido"/></svg><span data-t="landing.precios.todavia">Todavía no</span></span><span class="oculto-visual" data-t="landing.precios.todaviaAccesible">Terna todavía no lo hace.</span></li>
-<li data-t="landing.precios.planes.2.items.1.texto">4 paquetes por mes.</li>
-</ul>
-</article>
-</li>
-<li>
-<article class="ld-plan carpeta-cuerpo sola" aria-labelledby="plan-activa">
-<h4 id="plan-activa" data-t="landing.precios.planes.3.nombre">Búsqueda activa</h4>
-<p class="ld-plan-precio"><span class="ld-plan-monto" data-t="landing.precios.planes.3.precio">$19.200</span> <span class="ld-plan-periodo" data-t="landing.precios.planes.3.periodo">por mes</span></p>
-<p class="ld-plan-otro" data-t="landing.precios.planes.3.otro">o $8.000 por semana</p>
-<ul class="ld-plan-items">
-<li data-t="landing.precios.planes.3.items.0.texto">1 paquete por día.</li>
-<li data-t="landing.precios.planes.3.items.1.texto">Terna postula por vos donde el formulario lo permite.</li>
-</ul>
-</article>
-</li>
-<li>
-<article class="ld-plan carpeta-cuerpo sola" aria-labelledby="plan-sueltos">
-<h4 id="plan-sueltos" data-t="landing.precios.planes.4.nombre">Paquetes sueltos</h4>
-<p class="ld-plan-precio"><span class="ld-plan-monto" data-t="landing.precios.planes.4.precio">$8.000</span> <span class="ld-plan-periodo" data-t="landing.precios.planes.4.periodo">una vez</span></p>
-<ul class="ld-plan-items">
-<li data-t="landing.precios.planes.4.items.0.texto">5 paquetes, sin plan.</li>
-</ul>
-</article>
-</li>
-<li>
-<article class="ld-plan carpeta-cuerpo sola" aria-labelledby="plan-contrata">
-<h4 id="plan-contrata" data-t="landing.precios.contrata.titulo">Si contratás</h4>
-<p class="ld-plan-precio"><span class="ld-plan-monto" data-t="landing.precios.contrata.precio">Sin costo</span> <span class="ld-plan-periodo" data-t="landing.precios.contrata.periodo">por ahora</span></p>
-<ul class="ld-plan-items">
-<li data-t="landing.precios.contrata.items.0">Publicar avisos y recibir postulaciones.</li>
-</ul>
-</article>
-</li>
-</ul>
-<p class="ld-nota" data-t="landing.precios.pie">Precios en pesos.</p>
+<div class="ld-franjas">
+<div class="ld-franja ld-aparece">
+<span class="ld-cuadro"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-paquete"/></svg></span>
+<div class="ld-franja-texto"><h3 data-t="landing.precios.sueltos.nombre">Paquetes sueltos</h3><p data-t="landing.precios.sueltos.texto">5 paquetes, sin plan. Se suman a cualquiera.</p></div>
+<div class="ld-franja-compra">
+<p class="ld-franja-precio"><span class="chip ld-plan-descuento" data-t="landing.precios.descuento">40 % menos</span> <span class="ld-franja-lista"><span class="oculto-visual" data-t="landing.precios.listaAccesible">Precio de lista:</span> <s data-t="landing.precios.sueltos.lista">$13.500</s></span> <span class="ld-franja-monto"><span class="oculto-visual" data-t="landing.precios.precioAccesible">Precio de lanzamiento:</span> <span data-t="landing.precios.sueltos.precio">$8.000</span></span> <span class="ld-plan-periodo" data-t="landing.precios.sueltos.periodo">una vez</span></p>
+<button type="button" class="btn ld-franja-boton" data-plan="sueltos" data-accion="comprar" data-t="landing.precios.sueltos.boton">Comprar</button>
 </div>
+</div>
+<div class="ld-franja ld-aparece">
+<span class="ld-cuadro"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-empresa"/></svg></span>
+<div class="ld-franja-texto"><h3 data-t="landing.precios.contrata.titulo">Si contratás</h3><p data-t="landing.precios.contrata.texto">Publicar avisos y recibir postulaciones no tiene costo.</p></div>
+<a class="ld-link ld-franja-link" href="#contratar" data-t="landing.precios.contrata.link">Ver cómo publicar</a>
+</div>
+</div>
+<p class="ld-nota" data-t="landing.precios.pie">Precios en pesos. El precio tachado es el de lista: el que rige cuando termine el lanzamiento.</p>
 </div>
 </section>
 
-<section class="ld-seccion ld-somos" id="somos" aria-labelledby="somos-titulo">
-<div class="ld-contenedor">
-<div class="ld-cabeza">
+<section class="ld-seccion ld-somos ld-banda-2" id="somos" aria-labelledby="somos-titulo">
+<span class="ld-solapa" aria-hidden="true"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-perfil"/></svg></span>
+<div class="ld-contenedor ld-somos-grilla">
+<div class="ld-mision ld-aparece">
 <h2 id="somos-titulo" data-t="landing.somos.titulo">Quiénes somos</h2>
-<p class="ld-mision" data-t="landing.somos.mision.frase">Que buscar trabajo no sea un trabajo.</p>
-<p class="ld-bajada" data-t="landing.somos.mision.bajada">Las empresas tienen cada vez más herramientas para elegir a quién llamar. Quien busca trabajo sigue haciendo todo a mano: una cuenta en cada sitio, un CV distinto para cada aviso. Terna es esa herramienta, del lado de quien busca.</p>
+<svg class="ld-trazos" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="ld-trazo-1" pathLength="1" d="M3.6 6h16.8"/><path class="ld-trazo-2" pathLength="1" d="M3.6 12h11.2"/><path class="ld-trazo-3" pathLength="1" d="M3.6 18h5.6"/></svg>
+<p class="ld-mision-frase" data-t="landing.somos.mision.frase">Que buscar trabajo no sea un trabajo.</p>
+<p class="ld-mision-bajada" data-t="landing.somos.mision.bajada">Terna es la herramienta del lado de quien busca.</p>
 </div>
-<div class="ld-somos-cuerpo">
-<div class="ld-historia">
-<h3 data-t="landing.somos.historia.titulo">De dónde salió</h3>
-<p data-t="landing.somos.historia.parrafos.0">Soy Francisco. Terna empezó en casa: mi novia se quedó sin trabajo y estuvimos mucho tiempo buscando.</p>
-<p data-t="landing.somos.historia.parrafos.1">Buscar era lo que conoce cualquiera que pasó por ahí. Crear una cuenta en cada sitio, cargar los mismos datos otra vez, rearmar el CV para cada aviso y mandarlo a ciegas.</p>
-<p data-t="landing.somos.historia.parrafos.2">En algún momento nos preguntamos: ¿y si armamos algo nuevo, que funcione con la tecnología que hay hoy y que hace unos años no existía? Ahí empezamos a construir las bases de lo que hoy es Terna.</p>
-<p data-t="landing.somos.historia.parrafos.3">Terna es un solo lugar para buscar trabajo: junta avisos de muchos sitios y los que se publican acá mismo, te arma el CV para cada uno y postula por vos donde se puede.</p>
-</div>
-<article class="ld-lider carpeta-cuerpo sola" aria-labelledby="lider-titulo">
+<article class="ld-lider ld-aparece" aria-labelledby="lider-titulo">
 <figure class="ld-lider-foto"><img src="img/francisco-perez-russo.jpg" width="640" height="800" alt="Juan Francisco Pérez Russo." data-t-alt="landing.somos.lider.fotoAlt" loading="lazy" decoding="async"></figure>
+<div class="ld-lider-ficha">
 <div class="ld-lider-quien">
 <h3 id="lider-titulo" data-t="landing.somos.lider.titulo">Quién lidera Terna</h3>
 <p class="ld-lider-nombre" data-t="landing.somos.lider.nombre">Juan Francisco Pérez Russo</p>
 <p class="ld-lider-rol" data-t="landing.somos.lider.rol">Fundador</p>
 </div>
-<p data-t="landing.somos.lider.parrafos.0">Reviso cada aviso que se publica en Terna antes de que salga.</p>
-<p data-t="landing.somos.lider.parrafos.1">Si algo no anda o querés preguntar algo, me escribís a mí.</p>
+<p class="ld-lider-cita" data-t="landing.somos.lider.cita">Reviso cada aviso antes de que salga. Si algo no anda, me escribís a mí.</p>
 <a class="ld-link" href="https://www.linkedin.com/in/francisco-perez-russo/" target="_blank" rel="noopener" data-contacto data-linkedin data-t="landing.somos.lider.linkedin">Francisco en LinkedIn</a>
+</div>
 </article>
+<div class="ld-historia">
+<h3 data-t="landing.somos.historia.titulo">De dónde salió</h3>
+<ol class="ld-momentos">
+<li class="ld-momento ld-aparece">
+<span class="ld-nodo"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-remoto"/></svg></span>
+<div class="ld-momento-texto"><h4 data-t="landing.somos.historia.momentos.0.titulo">Empezó en casa</h4><p data-t="landing.somos.historia.momentos.0.texto">Mi novia se quedó sin trabajo y estuvimos mucho tiempo buscando.</p></div>
+</li>
+<li class="ld-momento ld-aparece">
+<span class="ld-nodo"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-probar"/></svg></span>
+<div class="ld-momento-texto"><h4 data-t="landing.somos.historia.momentos.1.titulo">Siempre lo mismo</h4><p data-t="landing.somos.historia.momentos.1.texto">Una cuenta en cada sitio, los mismos datos otra vez, un CV para cada aviso.</p></div>
+</li>
+<li class="ld-momento ld-aparece">
+<span class="ld-nodo"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-paquete"/></svg></span>
+<div class="ld-momento-texto"><h4 data-t="landing.somos.historia.momentos.2.titulo">Armamos algo nuevo</h4><p data-t="landing.somos.historia.momentos.2.texto">Con la tecnología que hay hoy y que hace unos años no existía. Eso es Terna.</p></div>
+</li>
+</ol>
 </div>
 </div>
 </section>
 
-<section class="ld-seccion ld-pedir" id="pedir" aria-labelledby="pedir-titulo">
+<section class="ld-seccion ld-pedir ld-banda-lila" id="pedir" aria-labelledby="pedir-titulo">
+<span class="ld-solapa" aria-hidden="true"><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-enviar"/></svg></span>
 <div class="ld-contenedor">
-<div class="ld-cabeza">
-<h2 id="pedir-titulo" data-t="landing.pedir.titulo">Cómo se entra</h2>
-<p class="ld-bajada" data-t="landing.pedir.bajada">Terna es por invitación.</p>
+<div class="ld-cabeza ld-aparece">
+<h2 id="pedir-titulo" data-t="landing.pedir.titulo">Empezá hoy</h2>
+<p class="ld-bajada" data-t="landing.pedir.bajada">Elegí un plan y cargá tu CV. Terna se encarga del resto.</p>
 </div>
-<div class="ld-pedir-cuerpo">
-<ul class="ld-maneras">
-<li data-t="landing.pedir.conocido">Si buscás trabajo y conocés a alguien que ya usa Terna, pedísela: cada persona tiene invitaciones para dar.</li>
-<li data-contacto><span data-t="landing.pedir.escribir">Si no conocés a nadie, o si querés contratar, escribile a Francisco por LinkedIn. Contale en dos líneas qué trabajo buscás o qué puesto querés cubrir.</span> <a class="ld-link" href="https://www.linkedin.com/in/francisco-perez-russo/" target="_blank" rel="noopener" data-contacto data-linkedin data-t="landing.pedir.linkedin">Escribirle a Francisco por LinkedIn</a></li>
-</ul>
+<div class="ld-pedir-cuerpo ld-aparece">
+<div class="ld-pedir-botones">
+<button type="button" class="btn btn-primario" data-plan="prueba" data-accion="suscribir" data-t="landing.precios.planes.0.boton">Probar 7 días</button>
+<a class="btn ld-btn-sube" href="#precios"><span data-t="landing.hero.verPlanes">Ver planes</span><svg class="icono" aria-hidden="true" focusable="false"><use href="#i-arriba"/></svg></a>
+</div>
+<div class="ld-pedir-preguntas">
 <p class="ld-ya"><span data-t="landing.pedir.yaTengo">¿Ya tenés cuenta?</span> <a class="ld-link" href="entrar.html" data-abre="donde-entrar" data-t="landing.pedir.entrar">Entrar</a></p>
+<p class="ld-ya"><span data-t="landing.pedir.dudas">¿Tenés dudas?</span> <a class="ld-link" href="https://www.linkedin.com/in/francisco-perez-russo/" target="_blank" rel="noopener" data-contacto data-linkedin data-t="landing.pedir.escribir">Escribile a Francisco</a></p>
+</div>
 </div>
 </div>
 </section>
@@ -402,6 +460,7 @@
 <svg class="icono ld-opcion-flecha" aria-hidden="true" focusable="false"><use href="#i-adelante"/></svg>
 </a>
 <p class="ld-donde-nota" data-t="landing.donde.nota">Si usás Terna para las dos cosas, es el mismo mail y la misma contraseña.</p>
+<p class="ld-donde-sin" data-sin-sesion><span data-t="landing.donde.sinCuenta">¿No tenés cuenta?</span> <a class="ld-link" href="#precios" data-t="landing.hero.verPlanes">Ver planes</a></p>
 </dialog>
 </body>
 </html>
