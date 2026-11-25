@@ -2000,7 +2000,9 @@ window.T = (function () {
         pasos: [
           { titulo: 'Cargás tu CV', texto: 'Terna arma tu perfil con lo que dice. Vos elegís qué puestos buscás, dónde y con qué modalidad.' },
           { titulo: 'Terna busca', texto: 'Cada mañana trae los avisos nuevos y le pone a cada uno un match de 0 a 100 con tu perfil.' },
-          { titulo: 'Arma tus paquetes', texto: 'Un paquete por cada aviso que mejor ajusta: todo lo que hace falta para postular.' },
+          // propuesta PLAN-LANDING-2, 24/11: el paso nombra los filtros ATS (Francisco: «si se te ocurre en algún otro lugar, también
+          // ponelo»). Antes: «Un paquete por cada aviso que mejor ajusta: todo lo que hace falta para postular.».
+          { titulo: 'Arma tus paquetes', texto: 'Para cada aviso que mejor ajusta: un CV pensado para pasar los filtros ATS y todo lo que hace falta para postular.' },
           // «Postula por vos» es la forma de brand.md («Terna postula por vos»); el límite va en la segunda frase.
           { titulo: 'Postula por vos', texto: 'Donde el formulario lo permite, lo completa y lo envía. Donde no, te deja todo listo para que lo mandes vos.' },
         ],
@@ -2010,11 +2012,16 @@ window.T = (function () {
       paquete: {
         titulo: 'Qué trae un paquete',
         bajada: 'Todo lo que hace falta para postular a un aviso.',
+        // propuesta PLAN-LANDING-2 (brand.md §6.15), 24/11, Francisco: el CV destaca los filtros ATS («que te ayuda a pasar los famosos
+        // filtros ATS… utiliza las palabras clave»); la carta pierde «en el idioma del aviso» para no alargar los dos; las notas
+        // nombran las preguntas que te pueden hacer (el bloque «Lo que te pueden preguntar» de cv-ats.md 0.7 §7). Antes: «Con tu
+        // experiencia real y las palabras del aviso.», «Corta, sobre ese puesto, en el idioma del aviso.» y «Qué mirar de la empresa,
+        // por si te llaman.».
         items: [
-          { titulo: 'CV para ese aviso', texto: 'Con tu experiencia real y las palabras del aviso.' },
-          { titulo: 'Carta de presentación', texto: 'Corta, sobre ese puesto, en el idioma del aviso.' },
+          { titulo: 'CV para ese aviso', texto: 'Te ayuda a pasar los famosos «filtros ATS» (usa las palabras clave del aviso).' },
+          { titulo: 'Carta de presentación', texto: 'Corta, sobre ese puesto y esa empresa.' },
           { titulo: 'Salario sugerido', texto: 'Un número para cuando te lo pregunten.' },
-          { titulo: 'Notas para la entrevista', texto: 'Qué mirar de la empresa, por si te llaman.' },
+          { titulo: 'Notas para la entrevista', texto: 'Qué preparar y las preguntas que te pueden hacer, con su respuesta.' },
         ],
       },
       // propuesta PLAN-LANDING-2 (brand.md §6.15): más corta y sin limites («Hoy publicar no tiene costo. Hasta 3 avisos abiertos
