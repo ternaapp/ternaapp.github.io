@@ -114,6 +114,12 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
 .il-carpeta { fill: var(--color-paper-3); }
 .il-hecho { fill: var(--color-done); }
 .il-hecho-tilde { fill: none; stroke: var(--color-done-ink); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+/* plan-lados.md 0.2 (25/11): el dibujo del match (.ld-il-match), el número sobre un anillo y los requisitos con su estado. */
+.il-anillo-fondo { fill: none; stroke: var(--color-accent-tint); stroke-width: 7; }
+.il-anillo { fill: none; stroke: var(--color-accent); stroke-width: 7; stroke-linecap: round; stroke-dasharray: 0.91 1; }
+.il-numero { fill: var(--color-ink); font: var(--weight-display) 20px var(--font-display); font-variant-numeric: tabular-nums; }
+.il-falta { fill: var(--color-paper-3); stroke: var(--color-rule-2); stroke-width: 1.5; }
+.il-falta-raya { fill: none; stroke: var(--color-muted); stroke-width: 2; stroke-linecap: round; }
 /* El ícono de cada hoja de la carpeta abierta va a escala 1,5: el trazo, más fino para que quede como el del resto. */
 .il-doc-icono .il-acento { stroke-width: 1.4; }
 
@@ -416,7 +422,6 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
 /* El pie: la nota del mismo mail y «¿No tenés cuenta? Ver planes» (FEEDBACK-LANDING-2 punto 8: cierra el diálogo y baja a
    Precios), debajo de una línea fina. */
 .ld-donde-pie { display: flex; flex-direction: column; gap: var(--space-2xs); padding-top: var(--space-sm); border-top: var(--rule-hair) solid var(--color-rule); }
-.ld-donde-nota { color: var(--color-muted); font-size: var(--text-sm); }
 .ld-donde-sin { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-xs); color: var(--color-ink-2); }
 
 /* ---------- El llamado fijo de abajo (PLAN-LADOS, 24/11, Francisco; FEEDBACK-LADOS punto 2) ---------- */
@@ -676,8 +681,10 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
   .ld-paso-chevron { transition: transform var(--dur-state) var(--ease-out); }
   .ld-vivo .ld-paso-cuerpo { transition: background-color var(--dur-pill) var(--ease-out), border-color var(--dur-pill) var(--ease-out); }
   /* El dibujo de cada paso se mueve una vez, cuando su paso se abre. */
-  .ld-paso.activo .ld-il-1 .il-traza { stroke-dasharray: 1 1.2; animation: ld-traza var(--dur-sheet) var(--ease-out) 200ms backwards; }
-  .ld-paso.activo .ld-il-1 .il-traza + .il-traza { animation-delay: 320ms; }
+  .ld-paso.activo .ld-il-match .il-anillo { animation: ld-llena var(--dur-sheet) var(--ease-out) 160ms backwards; }
+  .ld-paso.activo .ld-il-match .il-requisito { animation: ld-funde var(--dur-state) var(--ease-out) 360ms backwards; }
+  .ld-paso.activo .ld-il-match .il-requisito + .il-requisito { animation-delay: 460ms; }
+  .ld-paso.activo .ld-il-match .il-requisito + .il-requisito + .il-requisito { animation-delay: 560ms; }
   .ld-paso.activo .ld-il-2 .il-lupa { animation: ld-recorre var(--dur-sheet) var(--ease-out) 120ms backwards; }
   .ld-paso.activo .ld-il-2 .il-marca { animation: ld-funde var(--dur-state) var(--ease-out) 440ms backwards; }
   .ld-paso.activo .ld-il-3 .il-hojas { animation: ld-sube var(--dur-sheet) var(--ease-out) 160ms backwards; }
@@ -712,7 +719,7 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
 @keyframes ld-entra { from { opacity: 0; transform: translateY(16px); } }
 @keyframes ld-sella { from { opacity: 0; transform: scale(1.25) rotate(-3deg); } }
 @keyframes ld-funde { from { opacity: 0; } }
-@keyframes ld-traza { from { stroke-dashoffset: 1.05; } to { stroke-dashoffset: 0; } }
+@keyframes ld-llena { from { stroke-dasharray: 0 1; } }
 @keyframes ld-recorre { from { transform: translateY(-34px); } }
 @keyframes ld-sube { from { transform: translateY(10px); } }
 @keyframes ld-vuela { from { opacity: 0; transform: translate(-16px, 10px); } }

@@ -1956,7 +1956,11 @@ window.T = (function () {
         titulo: 'Terna Jobs: avisos que ajustan con tu perfil y el CV ya armado',
         descripcion: 'Terna busca los avisos de trabajo que ajustan con tu perfil, arma para cada uno un CV que te ayuda a pasar los filtros ATS y postula por vos donde se puede.',
         compartirTitulo: 'Que buscar trabajo no sea un trabajo.',
-        compartirDescripcion: 'Terna busca los avisos por vos, arma para cada uno un CV que te ayuda a pasar los filtros ATS y postula donde se puede.',
+        // propuesta PLAN-LADOS 0.2 (brand.md §6.15), 25/11: como la bajada, dice que Terna busca los avisos que ajustan con tu perfil; el
+        // «por vos» pasa a «postula», donde pesa. Queda igual a descripcion, pero sigue siendo otra clave (son dos piezas que pueden
+        // separarse). Antes: «Terna busca los avisos por vos, arma para cada uno un CV que te ayuda a pasar los filtros ATS y postula
+        // donde se puede.».
+        compartirDescripcion: 'Terna busca los avisos que ajustan con tu perfil, arma para cada uno un CV que te ayuda a pasar los filtros ATS y postula por vos donde se puede.',
         imagenAlt: 'Tres trazos lila, cada uno más corto que el anterior, sobre fondo violeta: el símbolo de Terna Jobs.',
       },
       barra: {
@@ -1982,7 +1986,11 @@ window.T = (function () {
         // vos. Donde no, te deja todo listo.»
         // propuesta PLAN-LADOS (brand.md §2), 24/11, Francisco: sin la misión adelante, que ahora es el título; el CV nombra los
         // filtros ATS. Antes: «Que buscar trabajo no sea un trabajo. Terna busca los avisos, arma tu CV para cada uno y postula por vos donde se puede.».
-        bajada: 'Terna busca los avisos, arma para cada uno un CV pensado para pasar los filtros ATS y postula por vos automáticamente donde se puede.',
+        // propuesta PLAN-LADOS 0.2 (brand.md §6.15), 25/11, Francisco («no sé si corresponde aclarar… lo del match»): el match se nombra
+        // como beneficio (Terna se queda con los avisos que ajustan con vos) y no como mecanismo (el número de 0 a 100 queda en el
+        // paso «Terna busca» y en las lengüetas del dibujo); en dos frases, para que se lea de un vistazo. Antes: «Terna busca los
+        // avisos, arma para cada uno un CV pensado para pasar los filtros ATS y postula por vos automáticamente donde se puede.».
+        bajada: 'Terna busca los avisos que ajustan con tu perfil. Para cada uno arma un CV pensado para pasar los filtros ATS y postula por vos automáticamente donde se puede.',
         // propuesta PLAN-LANDING-2 (brand.md §6.15): D4 de Francisco (24/11): la landing se presenta como si el alta fuera por
         // suscripción; ningún texto visible habla de invitaciones. El primario del título baja a #precios. Antes: «Cómo conseguir una
         // invitación» (y, en la primera versión de este plan, «Pedir una invitación», a #pedir).
@@ -2013,23 +2021,40 @@ window.T = (function () {
       // la frase de cierre (formas: «Podés dejar que Terna haga todo sola, o decidir vos, aviso por aviso, qué te interesa.»).
       // Ninguno nombra una cantidad. El nombre accesible del botón de cada paso es su título: no hay clave aparte.
       // Antes: «Cargás tu perfil, una vez», «Terna busca todos los días», «Arma hasta tres paquetes», «Postula donde puede».
+      // propuesta PLAN-LADOS 0.2 (brand.md §6.15), 25/11, Francisco («tiene esos cuatro pilares: un solo lugar donde encontrás
+      // toda la data de trabajos… te va diciendo si sos bueno o no para este trabajo… paquetes especializados en explotar tus
+      // cualidades al máximo… el postulado automático, donde no tenés que preocuparte»; «no quiero que vayas tan técnico»): las
+      // cuatro carpetas son lo que hace Terna y lo que hace la persona («Cargás tu CV») pasa a la bajada. El match tiene su carpeta
+      // (dibujo .ld-il-match: el número y los requisitos con su estado), como en Precios. Sin «calibrando, cada vez mejor»: la
+      // calibración que hay es general y a mano (motor/terna/calibracion.py), no aprende de cada persona. Las alertas de otros
+      // portales salen de acá (no entraban sin pisar el dibujo en escritorio) y van a la ayuda de la primera fila de Precios. El
+      // paso 3 pierde «filtros ATS», que ya dicen la bajada del título y «Qué trae un paquete». Antes: sin bajada; pasos «Cargás
+      // tu CV» («Terna arma tu perfil con lo que dice. Vos elegís qué puestos buscás, dónde y con qué modalidad.»), «Terna busca»
+      // («Cada mañana trae los avisos nuevos y le pone a cada uno un match de 0 a 100 con tu perfil.»), «Arma tus paquetes» («Para
+      // cada aviso que mejor ajusta: un CV pensado para pasar los filtros ATS y todo lo que hace falta para postular.») y
+      // «Postula por vos» (igual).
       como: {
         titulo: 'Cómo funciona',
+        bajada: 'Cargás tu CV y elegís qué buscás. Del resto se ocupa Terna.',
         pasos: [
-          { titulo: 'Cargás tu CV', texto: 'Terna arma tu perfil con lo que dice. Vos elegís qué puestos buscás, dónde y con qué modalidad.' },
-          { titulo: 'Terna busca', texto: 'Cada mañana trae los avisos nuevos y le pone a cada uno un match de 0 a 100 con tu perfil.' },
-          // propuesta PLAN-LANDING-2, 24/11: el paso nombra los filtros ATS (Francisco: «si se te ocurre en algún otro lugar, también
-          // ponelo»). Antes: «Un paquete por cada aviso que mejor ajusta: todo lo que hace falta para postular.».
-          { titulo: 'Arma tus paquetes', texto: 'Para cada aviso que mejor ajusta: un CV pensado para pasar los filtros ATS y todo lo que hace falta para postular.' },
+          // «Los ves todos juntos» y no «a un solo lugar» ni «todos los avisos»: promete comodidad sobre lo que Terna trae, no
+          // cobertura total (la base tira a empresas medianas y grandes, tecnología y remoto).
+          { titulo: 'Busca los avisos', texto: 'Cada mañana trae los avisos nuevos de cientos de empresas. Los ves todos juntos, sin entrar sitio por sitio.' },
+          // «Por qué ajusta» y los requisitos con su estado son los de la ficha del aviso (match.v2; T.avisos).
+          { titulo: 'Te dice cuánto ajustás', texto: 'Le pone a cada aviso un match de 0 a 100 y te muestra por qué: qué requisitos cumplís y cuáles te faltan.' },
+          { titulo: 'Arma tus paquetes', texto: 'Para los avisos que mejor ajustan: un CV para ese aviso con tu experiencia real y todo lo que hace falta para postular.' },
           // «Postula por vos» es la forma de brand.md («Terna postula por vos»); el límite va en la segunda frase.
           { titulo: 'Postula por vos', texto: 'Donde el formulario lo permite, lo completa y lo envía. Donde no, te deja todo listo para que lo mandes vos.' },
         ],
       },
       // propuesta PLAN-LANDING-2 (brand.md §6.15): más corta; los títulos de los cuatro documentos, iguales. Antes, la bajada: «Un
       // paquete es todo lo que hace falta para postular a un aviso.».
+      // propuesta PLAN-LADOS 0.2 (brand.md §6.15), 25/11, Francisco («paquetes especializados en explotar tus cualidades al
+      // máximo… dándote una mano en base a lo que vos tenés»): la bajada lo dice sin prometer de más (redaccion-cv.md: nada
+      // inventado). Antes: «Todo lo que hace falta para postular a un aviso.».
       paquete: {
         titulo: 'Qué trae un paquete',
-        bajada: 'Todo lo que hace falta para postular a un aviso.',
+        bajada: 'Cada paquete muestra lo mejor de tu experiencia para ese aviso. Sin inventar nada.',
         // propuesta PLAN-LANDING-2 (brand.md §6.15), 24/11, Francisco: el CV destaca los filtros ATS («que te ayuda a pasar los famosos
         // filtros ATS… utiliza las palabras clave»); la carta pierde «en el idioma del aviso» para no alargar los dos; las notas
         // nombran las preguntas que te pueden hacer (el bloque «Lo que te pueden preguntar» de cv-ats.md 0.7 §7). Antes: «Con tu
@@ -2054,15 +2079,29 @@ window.T = (function () {
       // puesto, de 0 a 100.» y «Con el contacto, un CV y una carta escritos para tu aviso, y el salario que pretende.».
       contratar: {
         titulo: 'Terna Jobs Empresas',
-        bajada: 'Para tu empresa, tu comercio o tu escuela: publicá un aviso en minutos y recibí postulaciones completas.',
+        // propuesta PLAN-LADOS 0.2 (brand.md §6.15), 25/11: la bajada era los títulos de los pasos 1 y 3 casi palabra por palabra;
+        // ahora dice lo que distingue a Terna (gratis y te acerca a quien ajusta). Antes: «Para tu empresa, tu comercio o tu
+        // escuela: publicá un aviso en minutos y recibí postulaciones completas.».
+        bajada: 'Para tu empresa, tu comercio o tu escuela: publicá un aviso gratis y Terna te acerca a las personas que ajustan con el puesto.',
         // «Publicás en minutos» es lo que tarda cargarlo, no que sale al instante (lo revisa Terna). «Sin costo» es lo mismo que
         // dice la franja «Si contratás» de Precios; si no va acá, se borran esas dos palabras y nada más.
+        // propuesta PLAN-LADOS 0.2 (brand.md §6.15), 25/11, Francisco (del paso 3: «suena muy raro cómo está dicho»): el paso 2
+        // pierde «No salís a buscar a nadie.», que contradecía proponer (que es justamente ir a buscar); el paso 3 dice qué trae
+        // cada postulación con un verbo y «el salario que pide» (como la pantalla, TC.aviso.salario). Antes, el texto del paso 3:
+        // «El contacto, un CV y una carta escritos para tu aviso, y el salario que pretende. Todo en un lugar.».
         pasos: [
           { titulo: 'Publicás en minutos', texto: 'Un formulario corto: el puesto, qué buscás y qué ofrecés. Sin costo.' },
-          { titulo: 'Llega a quien ajusta', texto: 'Terna se lo muestra a quienes buscan un puesto así, con su match: cuánto ajusta su perfil con tu aviso. No salís a buscar a nadie.' },
-          { titulo: 'Recibís postulaciones completas', texto: 'El contacto, un CV y una carta escritos para tu aviso, y el salario que pretende. Todo en un lugar.' },
+          { titulo: 'Llega a quien ajusta', texto: 'Terna se lo muestra a quienes buscan un puesto así, con su match: cuánto ajusta su perfil con tu aviso.' },
+          { titulo: 'Recibís postulaciones completas', texto: 'Cada una trae un CV y una carta escritos para tu aviso, el salario que pide la persona y cómo contactarla. Todas en un mismo lugar.' },
         ],
-        proponer: 'También le podés proponer postular a quien eligió que la encuentren. Decide ella.',
+        // propuesta PLAN-LADOS 0.2 (brand.md §6.15), 25/11, Francisco («no se entiende nada esa frase… menos va a entender una
+        // persona totalmente externa»): la lista «Personas que ajustan» de cada aviso (TC.aviso.recomendados; 0055), dicha desde el
+        // beneficio y como un extra después de los tres pasos, sin «quien eligió que la encuentren» ni «Decide ella» (la decisión
+        // de la persona la dice «si acepta»). «Si hay» porque la lista puede estar vacía en un aviso nuevo. proponerEntrada va en
+        // negrita (strong.ld-proponer-entrada) y proponer, a continuación, en el mismo párrafo. Antes, proponer: «También le podés
+        // proponer postular a quien eligió que la encuentren. Decide ella.».
+        proponerEntrada: '¿No querés esperar?',
+        proponer: 'Si hay personas que ajustan y todavía no se postularon, Terna te las muestra sin su nombre. Le proponés postular a quien te interese y, si acepta, te llega su postulación.',
         // propuesta PLAN-LADOS (brand.md §6.15), 24/11: el único botón de la sección, un link (a.btn-primario) a contratar.html,
         // sin pasar por el diálogo. Antes (PLAN-LANDING-2, D4): un <button data-accion="publicar"> sin efecto, al lado de «Entrar a
         // Terna para contratar» (entrar, a contratar.html), que se fue.
@@ -2118,9 +2157,20 @@ window.T = (function () {
         // propuesta PLAN-LANDING-2 (brand.md §6.15), FEEDBACK-LANDING-2: «Te avisa al instante» queda (lo decidió Francisco) y pasa a
         // la última fila (punto 3, opción B), así la tabla cierra con lo que todavía no está; el valor de Prueba en Paquetes dice en
         // cuánto tiempo (punto 12; antes: «3»).
+        // propuesta PLAN-LADOS 0.2 (brand.md §6.15), 25/11, Francisco («hay otra ventaja que no está escrita… el acceso a la
+        // plataforma… las búsquedas son en múltiples bases de datos»; «el porcentaje del match… algo aparte de búsqueda de
+        // avisos»): «Búsqueda de avisos con match» se parte en dos y la tabla sigue el orden del producto (avisos, match, paquetes,
+        // postular, avisar), no el de lo que más cambia entre planes. La fila nueva es Empleos (busqueda.html), el piso de todos
+        // los planes: dice «cientos de empresas» y no una cifra, ni «todos los avisos», ni el nombre de ningún portal (LinkedIn,
+        // Bumeran, Zonajobs, Computrabajo e Indeed entran solo por las alertas que reenvía la persona: arquitectura.md §7.4 y
+        // §7.8; fuentes.md §6); D3 sigue: «sí» en los cuatro lo dedujo el plan. En el HTML, el ícono de la fila nueva es el de
+        // Empleos (i-buscar) y el del match, i-foco. Antes: Paquetes, «Búsqueda de avisos con match» (sin ayuda), Terna postula por
+        // vos y Te avisa al instante.
         filas: [
+          // La ayuda suma las alertas que reenvía la persona (salieron del paso «Busca los avisos»), con ella como sujeto.
+          { rotulo: 'Avisos de cientos de empresas', ayuda: 'Todos en un solo lugar: Terna los lee cada día en sus sitios de empleo y suma las alertas de otros portales que le reenviás.', valores: ['si', 'si', 'si', 'si'] },
+          { rotulo: 'Match con tu perfil', ayuda: 'De 0 a 100: cuánto ajusta cada aviso nuevo con vos.', valores: ['Todos los días', '2 veces por semana', 'Todos los días', 'Todos los días'] },
           { rotulo: 'Paquetes', valores: ['3 en los 7 días', '1 por mes', '4 por mes', '1 por día'] },
-          { rotulo: 'Búsqueda de avisos con match', valores: ['Todos los días', '2 veces por semana', 'Todos los días', 'Todos los días'] },
           { rotulo: 'Terna postula por vos', ayuda: 'Donde el formulario lo permite.', valores: ['si', 'no', 'no', 'si'] },
           { rotulo: 'Te avisa al instante', ayuda: 'Cuando publica una empresa que seguís o aparece un match alto.', valores: ['pronto', 'no', 'pronto', 'pronto'] },
         ],
@@ -2151,7 +2201,10 @@ window.T = (function () {
         // Antes: frase «Que buscar trabajo no sea un trabajo.»; bajada «Terna es la herramienta del lado de quien busca.».
         mision: {
           frase: 'Del lado de quien busca.',
-          bajada: 'Las empresas tienen cada vez más herramientas para elegir a quién llamar. Terna es la de quien busca trabajo.',
+          // propuesta PLAN-LADOS 0.2 (brand.md §6.15), 25/11, Francisco («Terna es la de quien busca trabajo… siento que está muy
+          // recortada»; «como Terna es la herramienta de la persona que busca trabajo»): con el sustantivo, en espejo con la frase de
+          // las empresas. Antes: «… Terna es la de quien busca trabajo.».
+          bajada: 'Las empresas tienen cada vez más herramientas para elegir a quién llamar. Terna es la herramienta de quien busca trabajo.',
         },
         // Una línea de tiempo: cada momento con su ícono en el HTML (la casa, la vuelta, el paquete).
         historia: {
@@ -2229,7 +2282,9 @@ window.T = (function () {
         // contrata.texto «Terna Jobs Empresas: tus avisos y las postulaciones que recibiste.».
         persona: { nombre: 'Terna Jobs', titulo: 'Busco trabajo', texto: 'Tu Inicio, tus paquetes y tus postulaciones.' },
         contrata: { nombre: 'Terna Jobs', rotulo: 'Empresas', titulo: 'Publico avisos', texto: 'Tus avisos y las postulaciones que recibiste.' },
-        nota: 'Si usás Terna para las dos cosas, es el mismo mail y la misma contraseña.',
+        // propuesta PLAN-LADOS 0.2 (brand.md §6.15), 25/11, Francisco («no hace falta para nada poner esa frase»): se fue nota, «Si
+        // usás Terna para las dos cosas, es el mismo mail y la misma contraseña.» (p.ld-donde-nota). Lo dice, donde hace falta, la
+        // ayuda de crear la cuenta en contratar.html (TC.invitacion.yaTengoAyuda).
         // propuesta PLAN-LANDING-2 (brand.md §6.15), FEEDBACK-LANDING-2 punto 8: la salida para quien no tiene cuenta, debajo de las
         // dos opciones; el link es hero.verPlanes, cierra el diálogo y baja a #precios.
         sinCuenta: '¿No tenés cuenta?',
