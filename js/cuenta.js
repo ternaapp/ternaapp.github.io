@@ -137,8 +137,9 @@
     });
     // Debajo del formulario (PLAN-LANDING §5.2; desde PLAN-LANDING-2, sin invitaciones): quien no tiene cuenta va a los planes de
     // la landing y, después de una regla fina, el renglón de quien contrata. El link es la frase entera.
-    cont.append(carpeta(form), h('p', { class: 'acceso-nota', text: C.sinCuenta }),
-      h('p', { class: 'acceso-nota acceso-link' }, h('a', { href: 'bienvenida.html#precios', text: C.verPlanes })),
+    // FEEDBACK-LADOS punto 7 (24/11): la pregunta y el link en un renglón, como en contratar.html y como el de quien contrata.
+    cont.append(carpeta(form),
+      h('p', { class: 'acceso-nota acceso-sin-cuenta' }, C.sinCuenta, ' ', h('a', { href: 'bienvenida.html#precios', text: C.verPlanes })),
       h('p', { class: 'acceso-otro' }, C.contratasPregunta, ' ', h('a', { href: 'contratar.html', text: C.contratasLink })));
   }
 

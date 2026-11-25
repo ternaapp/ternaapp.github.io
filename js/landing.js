@@ -2,12 +2,12 @@
    La página viene entera en su HTML, con los textos escritos (y en T.landing, que el banco compara), los links a LinkedIn con su
    dirección (QUIENES-SOMOS §4), los cuatro pasos abiertos y la tabla de precios completa. Este script le suma lo que solo existe
    con JavaScript:
-   - siempre (no usan Terna ni T): los pasos de «Cómo funciona» que se abren de a uno (pasos), el selector de plan del celular
-     (precios), la hoja del dibujo que sube con el mouse sobre un documento (documentos), el espía de la barra (espia) y lo que
-     aparece al bajar (aparecer);
+   - siempre (no usan Terna ni T): los pasos de «Cómo funciona» que se abren de a uno (pasos), la parada de Tab del marco de la
+     tabla de precios (precios), la hoja del dibujo que sube con el mouse sobre un documento (documentos), el espía de la barra
+     (espia), lo que aparece al bajar (aparecer) y el llamado fijo de abajo del celular (fijo; PLAN-LADOS);
    - con window.Terna: el logo común (Terna.logo), el sol o la luna, «Ir a Inicio» con la sesión de la persona abierta y el diálogo
      «¿Dónde querés entrar?».
-   No escribe textos propios (el selector copia el nombre de cada plan de su columna), no usa innerHTML ni pone estilos en línea:
+   No escribe textos propios, no usa innerHTML ni pone estilos en línea:
    solo clases y atributos. No lee config, no llama a ninguna función de la base y no guarda nada salvo la marca de sesión. Sin
    window.Terna (falló supabase-js o comun.js), los textos y los links están, el logo está escrito en el HTML, cada «Entrar» lleva a
    entrar.html y falta solo el botón del modo. */
@@ -90,40 +90,14 @@
     }
   }
 
-  // 2. Precios en el celular (§5.5): un selector con los cuatro planes, antes de la tabla, y data-plan en la tabla; el CSS, hasta
-  // 768, muestra la columna de los rótulos y la del plan elegido (desde 768 el selector no se ve y la tabla va entera). El texto de
-  // cada botón es el nombre del plan de su columna; el nombre del grupo, el <span hidden> de precios.elegir. Arranca en el plan
-  // destacado, Búsqueda activa, la que trae todo.
+  // 2. Precios (§5.5). Desde PLAN-LADOS (24/11) no hay selector de plan: hasta 768 se ven los cuatro planes apilados (ul.ld-planes,
+  // solo CSS) y la tabla no se muestra; desde 768, la tabla entera. Queda una cosa: el marco de la tabla es una parada de Tab solo
+  // cuando hay algo que deslizar (FEEDBACK-LANDING-2 punto 10; por ejemplo, con la letra agrandada), y el Tab no se detiene en una
+  // caja que no hace nada.
   function precios() {
     const marco = document.querySelector('.ld-tabla-marco');
     const tabla = marco && marco.querySelector('.ld-tabla');
-    if (!tabla || tabla.hasAttribute('data-plan')) return;
-    const cabezas = Array.from(tabla.querySelectorAll('thead th'));
-    if (!cabezas.length) return;
-    const grupo = document.createElement('div');
-    grupo.className = 'ld-selector';
-    grupo.setAttribute('role', 'group');
-    if (document.getElementById('ld-elegir')) grupo.setAttribute('aria-labelledby', 'ld-elegir');
-    const botones = cabezas.map((th, i) => {
-      const nombre = th.querySelector('.ld-plan-nombre');
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.textContent = nombre ? nombre.textContent : '';
-      if (nombre && nombre.hasAttribute('data-t')) b.setAttribute('data-t', nombre.getAttribute('data-t'));
-      b.setAttribute('aria-pressed', 'false');
-      b.addEventListener('click', () => elegir(i));
-      grupo.appendChild(b);
-      return b;
-    });
-    function elegir(n) {
-      tabla.setAttribute('data-plan', String(n));
-      botones.forEach((b, i) => b.setAttribute('aria-pressed', i === n ? 'true' : 'false'));
-    }
-    marco.before(grupo);
-    const destacado = cabezas.findIndex((th) => th.classList.contains('ld-plan-destacado'));
-    elegir(destacado >= 0 ? destacado : cabezas.length - 1);
-    // El marco es una parada de Tab solo cuando hay algo que deslizar (FEEDBACK-LANDING-2 punto 10): con el selector o desde 768
-    // la tabla entra entera y el Tab no se detiene en una caja que no hace nada.
+    if (!tabla) return;
     const parada = () => {
       if (marco.scrollWidth > marco.clientWidth + 1) marco.setAttribute('tabindex', '0'); else marco.removeAttribute('tabindex');
     };
@@ -208,6 +182,77 @@
     }, 4000);
   }
 
+  // 5b. El llamado fijo de abajo (PLAN-LADOS, 24/11, Francisco: «que se active si bajás mucho, a partir de cómo funciona»;
+  // FEEDBACK-LADOS punto 2): la barra de un renglón del celular y la tableta (aside.ld-fijo, hidden en el HTML: sin este script no
+  // aparece; desde 1024 el CSS no la muestra). Aparece una sola vez: cuando el final de #como ya pasó por arriba de la pantalla, y se
+  // va al llegar a Empresas (#contratar). Escondida también con el cierre (#pedir) o el pie a la vista, con la sesión de la persona
+  // abierta (sesion) y con el diálogo abierto (dialogo); y una vez que Precios entró en la pantalla (o ya quedó arriba), no vuelve:
+  // dos cambios al bajar y ninguno al subir. Escondida lleva hidden y, mientras sale, inert: no se alcanza con Tab ni la lee el
+  // lector de pantalla; al aparecer no se lleva el foco. Entra y sale con opacity y transform (el CSS; con «reducir movimiento»,
+  // sin transición). «Ver planes» deja el foco en el título de Precios, como el del diálogo.
+  let conSesion = false;
+  let actualizarFijo = () => {};
+  function fijo() {
+    const caja = document.querySelector('.ld-fijo');
+    const como = document.getElementById('como');
+    if (!caja || !como || !('IntersectionObserver' in window)) return;
+    const dlg = document.getElementById(ID_DIALOGO);
+    const precios = document.getElementById('precios');
+    const empresas = document.getElementById('contratar');
+    const secciones = [precios, document.getElementById('pedir'), document.querySelector('.ld-pie')].filter(Boolean);
+    let pasado = false;
+    let vioPrecios = false;
+    let quitar = 0;
+    const aLaVista = new Set();
+    function mostrar(ver) {
+      if (ver === caja.classList.contains('ld-fijo-visto')) return;
+      clearTimeout(quitar);
+      if (ver) {
+        caja.inert = false;
+        caja.hidden = false;
+        // El estado de partida (abajo y transparente) tiene que estar calculado antes de la clase: si no, no se anima la entrada.
+        caja.getBoundingClientRect();
+        caja.classList.add('ld-fijo-visto');
+        return;
+      }
+      caja.inert = true;
+      caja.classList.remove('ld-fijo-visto');
+      quitar = setTimeout(() => { caja.hidden = true; }, vale(MENOS_MOVIMIENTO) ? 0 : 260);
+    }
+    actualizarFijo = () => mostrar(pasado && !vioPrecios && !aLaVista.size && !conSesion && !(dlg && dlg.open));
+    new IntersectionObserver((entradas) => {
+      for (const e of entradas) pasado = !e.isIntersecting && e.boundingClientRect.bottom <= 0;
+      actualizarFijo();
+    }).observe(como);
+    const anotar = (entradas) => {
+      for (const e of entradas) {
+        if (e.isIntersecting) aLaVista.add(e.target); else aLaVista.delete(e.target);
+        const abajo = e.rootBounds ? e.rootBounds.bottom : window.innerHeight;
+        if (e.target === precios && e.boundingClientRect.top < abajo) vioPrecios = true;
+      }
+      actualizarFijo();
+    };
+    // Una sección cuenta como a la vista cuando entra en la parte de adentro de la pantalla (sin la franja de arriba, debajo de la
+    // barra, ni la de abajo): un borde que asoma no la esconde.
+    const obs = new IntersectionObserver(anotar, { rootMargin: '-12% 0px -12% 0px' });
+    for (const el of secciones) obs.observe(el);
+    // Empresas, cuando llega a la mitad de arriba de la pantalla: hasta ahí la barra acompaña «Qué trae un paquete», que en el
+    // celular mide poco más de una pantalla (con el borde de abajo, como las otras, se veía unos 100 px y era un parpadeo).
+    if (empresas) new IntersectionObserver(anotar, { rootMargin: '0px 0px -50% 0px' }).observe(empresas);
+    caja.addEventListener('click', (e) => {
+      const a = e.target instanceof Element ? e.target.closest('a[href^="#"]') : null;
+      if (!a || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const seccion = document.getElementById(a.getAttribute('href').slice(1));
+      const titulo = seccion ? seccion.querySelector('h2') : null;
+      if (!titulo) return;
+      // Después del salto del link (que sigue su camino): el foco, al título, sin mover la página.
+      requestAnimationFrame(() => {
+        titulo.setAttribute('tabindex', '-1');
+        titulo.focus({ preventScroll: true });
+      });
+    });
+  }
+
   // 6. El logo común y el sol o la luna (un solo .btn-tema en la página, como pide el banco). El HTML trae el logo escrito, para
   // cuando no hay JavaScript (FEEDBACK-LANDING P3-10); acá se reemplaza por el de Terna.logo, que es el que manda.
   function cascara() {
@@ -221,8 +266,8 @@
   // sí, por si quiere entrar del lado de quien contrata), y lo que es para quien no tiene cuenta (data-sin-sesion: «Ya tengo
   // cuenta» del título) se oculta (FEEDBACK-LANDING P3-10). Escribe la marca terna.sesion, la que mira js/puerta.js en la raíz. Si
   // getSession falla, queda todo como sin sesión. También se oculta «¿No tenés cuenta? Ver planes» del diálogo. Los botones de los
-  // planes, «Probar 7 días», «Comprar» y «Publicar un aviso» (data-accion) no tienen efecto todavía (D4 de PLAN-LANDING-2): este
-  // script no los toca.
+  // planes, «Probar 7 días» y «Comprar» (data-accion) no tienen efecto todavía (D4 de PLAN-LANDING-2): este script no los toca.
+  // «Publicar un aviso» ya no es uno de ellos: desde PLAN-LADOS (24/11) es un link a contratar.html, sin diálogo.
   async function sesion() {
     let abierta = null;
     try {
@@ -234,6 +279,9 @@
     if (!abierta) return;
     try { localStorage.setItem('terna.sesion', '1'); } catch (e) { /* sin almacenamiento */ }
     for (const el of document.querySelectorAll('[data-sin-sesion]')) el.hidden = true;
+    // El llamado fijo de abajo (fijo) es para quien no tiene cuenta: con la sesión abierta no aparece.
+    conSesion = true;
+    actualizarFijo();
     const entrar = document.querySelector('.ld-barra [data-abre="' + ID_DIALOGO + '"]');
     if (!entrar || !window.T || !T.landing) return;
     entrar.textContent = T.landing.barra.irAInicio;
@@ -259,6 +307,7 @@
       if (dlg.open) return;
       origen = abre;
       dlg.showModal();
+      actualizarFijo();
       const primera = dlg.querySelector('.ld-opcion');
       if (primera) primera.focus();
     });
@@ -278,6 +327,7 @@
     const cerrar = dlg.querySelector('.ld-donde-cerrar');
     if (cerrar) cerrar.addEventListener('click', () => dlg.close());
     dlg.addEventListener('close', () => {
+      actualizarFijo();
       const volver = origen;
       origen = null;
       if (destino) {
@@ -298,6 +348,7 @@
     documentos();
     espia();
     aparecer();
+    fijo();
     if (!window.Terna) return;
     cascara();
     dialogo();

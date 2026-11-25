@@ -7,7 +7,9 @@ window.T = (function () {
   const n = (x) => new Intl.NumberFormat('es-AR').format(x);
   const plural = (cant, uno, varios) => (cant === 1 ? uno : varios);
   // El lema y la descripción corta, en un solo lugar: los usa también la landing (T.landing: el título, el pie y la descripción).
-  const LEMA = 'Pocos avisos, bien armados.';
+  // propuesta PLAN-LADOS (brand.md §2), 24/11, Francisco («da una impresión de que hace poco… va más por otro lado»): el lema es la
+  // misión. Antes: «Pocos avisos, bien armados.».
+  const LEMA = 'Que buscar trabajo no sea un trabajo.';
   // propuesta LOGOS (brand.md §1): la regla del nombre. «Terna Jobs» donde el producto se presenta (el <title>, la descripción,
   // la primera mención en Entrar, la invitación, el nombre accesible del logo); «Terna» a secas en las frases donde hace algo o
   // es un lugar («Terna postula por vos», «Publicado en Terna»); «terna jobs», en minúscula y dos colores, solo en el logo.
@@ -56,7 +58,8 @@ window.T = (function () {
       // propuesta PLAN-UX §5.1 (brand.md §2): el lema y la línea de privacidad salen del pie de las páginas con sesión
       // (Terna.dibujarPie ya no dibuja nada) y quedan en Entrar, Crear cuenta y Contraseña, que los traen escritos en su HTML.
       // Sin uso en el código mientras tanto.
-      pie1: 'Pocos avisos, bien armados.',
+      // propuesta PLAN-LADOS (brand.md §2), 24/11: el lema es la misión. Antes: «Pocos avisos, bien armados.».
+      pie1: 'Que buscar trabajo no sea un trabajo.',
       // propuesta PLAN-LANDING-2 (brand.md §6.2), 24/11: la web pública ya no dice «por invitación» (Francisco, «Sí, cambialos»). Antes: «Web privada, por invitación. Tus datos solo los
       // ves vos.».
       pie2: 'Tus datos solo los ves vos.',
@@ -116,7 +119,9 @@ window.T = (function () {
       // propuesta PLAN-LANDING §4.13 (brand.md §6.2): los renglones nuevos de Entrar, debajo de la nota de la invitación (los
       // dibuja js/cuenta.js, paquete L1). El link es la frase entera, sin «entrá acá». comoSeEntra lleva a bienvenida.html#pedir.
       contratasPregunta: '¿Contratás?',
-      contratasLink: 'Publicá tu aviso en Terna para contratar',
+      // propuesta PLAN-LADOS (brand.md §6.2), 24/11: el lado de quien contrata se llama «Terna Jobs Empresas» (D1). Antes:
+      // «Publicá tu aviso en Terna para contratar». Sigue yendo a contratar.html.
+      contratasLink: 'Publicá tu aviso en Terna Jobs Empresas',
       // propuesta PLAN-LANDING-2 (brand.md §6.2), 24/11: la web pública ya no dice «por invitación» (Francisco, «Sí, cambialos»).
       // Antes comoSeEntra: «Cómo conseguir una invitación», a bienvenida.html#pedir; ahora va a los planes.
       verPlanes: 'Ver los planes',
@@ -1940,16 +1945,27 @@ window.T = (function () {
     landing: {
       // propuesta LOGOS (brand.md §1): el <title>, og:site_name, og:title y la descripción de la imagen dicen «Terna Jobs»; las
       // frases de la página, donde Terna busca, arma y postula, siguen «Terna».
+      // propuesta PLAN-COMPARTIR (brand.md §6.15; plan-landing.md §7.3), 24/11: en la vista previa de un link cada pieza dice una cosa
+      // distinta (la imagen, el símbolo; el título, la promesa; la descripción, lo que hace por vos; el dominio y og:site_name, el
+      // nombre). descripcion es la de Google (<meta name="description"> de bienvenida.html e index.html) y deja de ser
+      // DESCRIPCION_CORTA (que siguen las otras trece páginas); compartirTitulo y compartirDescripcion son og:title y og:description;
+      // imagenAlt, el og:image:alt de img/compartir-2.png. titulo, el <title> de la landing, más corto (Google corta cerca de 60).
+      // Antes: titulo «Terna Jobs: avisos que ajustan con tu perfil, con el CV y la carta armados»; descripcion DESCRIPCION_CORTA (y
+      // og:description igual; og:title «Terna Jobs»); imagenAlt «El logo de Terna Jobs y el lema: pocos avisos, bien armados.».
       meta: {
-        titulo: 'Terna Jobs: avisos que ajustan con tu perfil, con el CV y la carta armados',
-        descripcion: DESCRIPCION_CORTA,
-        imagenAlt: 'El logo de Terna Jobs y el lema: pocos avisos, bien armados.',
+        titulo: 'Terna Jobs: avisos que ajustan con tu perfil y el CV ya armado',
+        descripcion: 'Terna busca los avisos de trabajo que ajustan con tu perfil, arma para cada uno un CV que te ayuda a pasar los filtros ATS y postula por vos donde se puede.',
+        compartirTitulo: 'Que buscar trabajo no sea un trabajo.',
+        compartirDescripcion: 'Terna busca los avisos por vos, arma para cada uno un CV que te ayuda a pasar los filtros ATS y postula donde se puede.',
+        imagenAlt: 'Tres trazos lila, cada uno más corto que el anterior, sobre fondo violeta: el símbolo de Terna Jobs.',
       },
       barra: {
         // El nombre accesible del nav de las secciones (desde 768 px).
         secciones: 'Secciones de la página',
         como: 'Cómo funciona',
-        contratar: 'Para contratar',
+        // propuesta PLAN-LADOS (brand.md §6.15), 24/11: el nombre corto del lado de quien contrata (D1); sigue bajando a #contratar.
+        // Antes: «Para contratar».
+        contratar: 'Empresas',
         precios: 'Precios',
         // propuesta QUIENES-SOMOS (brand.md §4): el cuarto link, a #somos. Reemplaza a «Quién la hizo», que nunca se dibujó.
         somos: 'Quiénes somos',
@@ -1958,13 +1974,15 @@ window.T = (function () {
         irAInicio: 'Ir a Inicio',
       },
       hero: {
-        // El lema es el título de la landing (decisión D10).
+        // El lema es el título de la landing (decisión D10); desde PLAN-LADOS (24/11), la misión.
         titulo: LEMA,
         // propuesta PLAN-LANDING-2 (brand.md §6.15): D1, la bajada 1 (la misión primero y, en una frase, qué hace; la misión vuelve
         // en «Quiénes somos», como eco). Antes: «Cargás tu perfil una vez. Cada mañana Terna busca avisos, se queda con los que
         // ajustan con vos y te arma el CV y la carta para cada uno, hasta tres por día. Donde el formulario lo permite, postula por
         // vos. Donde no, te deja todo listo.»
-        bajada: 'Que buscar trabajo no sea un trabajo. Terna busca los avisos, arma tu CV para cada uno y postula por vos donde se puede.',
+        // propuesta PLAN-LADOS (brand.md §2), 24/11, Francisco: sin la misión adelante, que ahora es el título; el CV nombra los
+        // filtros ATS. Antes: «Que buscar trabajo no sea un trabajo. Terna busca los avisos, arma tu CV para cada uno y postula por vos donde se puede.».
+        bajada: 'Terna busca los avisos, arma para cada uno un CV pensado para pasar los filtros ATS y postula por vos automáticamente donde se puede.',
         // propuesta PLAN-LANDING-2 (brand.md §6.15): D4 de Francisco (24/11): la landing se presenta como si el alta fuera por
         // suscripción; ningún texto visible habla de invitaciones. El primario del título baja a #precios. Antes: «Cómo conseguir una
         // invitación» (y, en la primera versión de este plan, «Pedir una invitación», a #pedir).
@@ -2028,23 +2046,27 @@ window.T = (function () {
       // por cuenta, …») ni honesto («Terna recién empieza de este lado: …»), pedido 11. Que publicar no cuesta lo dice Precios, en la
       // franja «Si contratás». Antes, la bajada: «Si buscás a alguien para tu empresa, tu taller o tu escuela, podés publicar el
       // aviso en Terna.»; los pasos, «Terna se lo muestra a quien ajusta» y textos más largos.
+      // propuesta PLAN-LADOS (brand.md §6.15), 24/11: la sección vende (fácil, rápido, completo) sin nombrar a quien revisa ni la
+      // revisión, que se dice adentro, al enviar el aviso (TC.avisos.enRevision). El título es el nombre del lado, «Terna Jobs
+      // Empresas» (D1); el id de la sección y el de su título no cambian. Antes: titulo «Para quien contrata»; bajada «Publicá tu
+      // aviso en Terna y recibí postulaciones completas.»; pasos «Publicás el aviso» / «Francisco, que lidera Terna, lo revisa antes
+      // de que salga.» (FEEDBACK-LANDING P2-9 y QUIENES-SOMOS), «Cada persona lo ve con su match: cuánto ajusta su perfil con el
+      // puesto, de 0 a 100.» y «Con el contacto, un CV y una carta escritos para tu aviso, y el salario que pretende.».
       contratar: {
-        titulo: 'Para quien contrata',
-        bajada: 'Publicá tu aviso en Terna y recibí postulaciones completas.',
-        // FEEDBACK-LANDING P2-9 (Francisco presentado: quien entra directo a esta sección no pasó por «Quiénes somos») y P3-8
-        // (qué es el match). propuesta QUIENES-SOMOS (brand.md §4): «que lidera Terna».
+        titulo: 'Terna Jobs Empresas',
+        bajada: 'Para tu empresa, tu comercio o tu escuela: publicá un aviso en minutos y recibí postulaciones completas.',
+        // «Publicás en minutos» es lo que tarda cargarlo, no que sale al instante (lo revisa Terna). «Sin costo» es lo mismo que
+        // dice la franja «Si contratás» de Precios; si no va acá, se borran esas dos palabras y nada más.
         pasos: [
-          { titulo: 'Publicás el aviso', texto: 'Francisco, que lidera Terna, lo revisa antes de que salga.' },
-          { titulo: 'Llega a quien ajusta', texto: 'Cada persona lo ve con su match: cuánto ajusta su perfil con el puesto, de 0 a 100.' },
-          { titulo: 'Recibís postulaciones completas', texto: 'Con el contacto, un CV y una carta escritos para tu aviso, y el salario que pretende.' },
+          { titulo: 'Publicás en minutos', texto: 'Un formulario corto: el puesto, qué buscás y qué ofrecés. Sin costo.' },
+          { titulo: 'Llega a quien ajusta', texto: 'Terna se lo muestra a quienes buscan un puesto así, con su match: cuánto ajusta su perfil con tu aviso. No salís a buscar a nadie.' },
+          { titulo: 'Recibís postulaciones completas', texto: 'El contacto, un CV y una carta escritos para tu aviso, y el salario que pretende. Todo en un lugar.' },
         ],
         proponer: 'También le podés proponer postular a quien eligió que la encuentren. Decide ella.',
-        // propuesta PLAN-LANDING-2 (brand.md §6.15): D4 de Francisco (24/11): un botón (data-accion="publicar") que por ahora no
-        // hace nada: cómo se publica desde la landing se construye después. Antes: «Cómo pedir una invitación para contratar», a
-        // #pedir.
+        // propuesta PLAN-LADOS (brand.md §6.15), 24/11: el único botón de la sección, un link (a.btn-primario) a contratar.html,
+        // sin pasar por el diálogo. Antes (PLAN-LANDING-2, D4): un <button data-accion="publicar"> sin efecto, al lado de «Entrar a
+        // Terna para contratar» (entrar, a contratar.html), que se fue.
         publicar: 'Publicar un aviso',
-        // Va a contratar.html, sin pasar por el diálogo.
-        entrar: 'Entrar a Terna para contratar',
       },
       // propuesta PLAN-LANDING-2 (brand.md §6.15): Precios como versión final (pedidos 12 y 13): una tabla que compara los cuatro
       // planes de menor a mayor, con el precio de lista tachado y el de lanzamiento (D2: el tachado es el precio que rige cuando
@@ -2057,9 +2079,8 @@ window.T = (function () {
         bajada: 'Elegí según cuánto estés buscando.',
         // El <caption> de la tabla, solo para el lector de pantalla.
         tablaTitulo: 'Qué incluye cada plan',
-        // El nombre accesible del selector de plan del celular (js/landing.js, precios()). En bienvenida.html va en un <span hidden>
-        // al que apunta aria-labelledby: así el script no escribe el texto ni depende de T.
-        elegir: 'Elegí un plan',
+        // propuesta PLAN-LADOS (brand.md §6.15), 24/11, Francisco: hasta 768 ya no hay selector de plan (se ven los cuatro, apilados,
+        // con los mismos textos de acá), así que se fue elegir, su nombre accesible. Antes: elegir «Elegí un plan».
         descuento: '40 % menos',
         // propuesta PLAN-LANDING-2 (brand.md §6.15), FEEDBACK-LANDING-2 punto 6: el chip arriba de la columna destacada (Búsqueda
         // activa), que dice por qué está destacada. Alternativa que dio la revisión: «Trae todo».
@@ -2084,7 +2105,11 @@ window.T = (function () {
           { clave: 'prueba', nombre: 'Prueba', precio: '$0', periodo: '7 días, una sola vez', boton: 'Probar 7 días' },
           { clave: 'gratis', nombre: 'Gratis', precio: '$0', periodo: 'sin vencimiento', boton: 'Empezar gratis' },
           { clave: 'radar', nombre: 'Radar', lista: '$13.500', precio: '$8.000', periodo: 'por mes', boton: 'Suscribirme' },
-          { clave: 'activa', nombre: 'Búsqueda activa', lista: '$32.000', precio: '$19.200', periodo: 'por mes', otroLista: '$13.500', otro: 'o $8.000 por semana', boton: 'Suscribirme' },
+          // propuesta PLAN-LADOS (brand.md §6.15), 24/11, Francisco («si ponés el precio de 19.200 al mes como final, poné el
+          // equivalente en semanas…; si no, no pongas el semanal»): sin precio semanal aparte, que no cerraba (4 × $8.000 no es
+          // $19.200); en su lugar, sin tachado, lo que da el mensual por semana ($19.200 / 4). Antes: otroLista «$13.500» (tachado) y
+          // otro «o $8.000 por semana».
+          { clave: 'activa', nombre: 'Búsqueda activa', lista: '$32.000', precio: '$19.200', periodo: 'por mes', equivale: 'Equivale a $4.800 por semana.', boton: 'Suscribirme' },
         ],
         // Qué incluye cada plan: una fila por cosa, un valor por plan en el orden de planes (un texto, o 'si', 'no', 'pronto').
         // D3: ningún documento dice estas celdas y las dedujo el plan; Francisco las confirma o las corrige una por una: la búsqueda
@@ -2122,9 +2147,11 @@ window.T = (function () {
         // La misión (p.ld-mision-frase, grande, sin ser un título) y lo que la explica. Antes, la bajada: «Las empresas tienen cada
         // vez más herramientas para elegir a quién llamar. Quien busca trabajo sigue haciendo todo a mano: una cuenta en cada sitio,
         // un CV distinto para cada aviso. Terna es esa herramienta, del lado de quien busca.»
+        // propuesta PLAN-LADOS (brand.md §2), 24/11, Francisco: el bloque violeta no repite la misión, que ahora es el título y el lema.
+        // Antes: frase «Que buscar trabajo no sea un trabajo.»; bajada «Terna es la herramienta del lado de quien busca.».
         mision: {
-          frase: 'Que buscar trabajo no sea un trabajo.',
-          bajada: 'Terna es la herramienta del lado de quien busca.',
+          frase: 'Del lado de quien busca.',
+          bajada: 'Las empresas tienen cada vez más herramientas para elegir a quién llamar. Terna es la de quien busca trabajo.',
         },
         // Una línea de tiempo: cada momento con su ícono en el HTML (la casa, la vuelta, el paquete).
         historia: {
@@ -2143,9 +2170,15 @@ window.T = (function () {
           // ficha sigue «Quién lidera Terna»). Si se vacía, se borra también su línea de bienvenida.html: vacía, no hay elemento
           // con esta clave.
           rol: 'Fundador',
-          cita: 'Reviso cada aviso antes de que salga. Si algo no anda, me escribís a mí.',
-          // El link de contacto.linkedin.
-          linkedin: 'Francisco en LinkedIn',
+          // propuesta PLAN-LADOS (brand.md §6.15), 24/11, Francisco («no hace falta ese texto… algo más general, como cualquier duda,
+          // hablame… más humano, empático, pero no de que yo voy a manejar todo esto»): un solo renglón. Antes: «Reviso cada aviso
+          // antes de que salga. Si algo no anda, me escribís a mí.».
+          cita: '¿Tenés alguna duda? Con gusto te respondo.',
+          // El link de contacto.linkedin. propuesta PLAN-LADOS, 24/11: a la vista, en primera persona, como la cita; su nombre
+          // accesible suma linkedinAccesible (un <span class="oculto-visual"> dentro del link), para que siga diciendo de quién es el
+          // LinkedIn. Antes: «Francisco en LinkedIn» (el link del pie sigue así: pie.linkedin).
+          linkedin: 'Escribime por LinkedIn',
+          linkedinAccesible: '(el LinkedIn de Francisco)',
           // El alt de la foto (img/francisco-perez-russo.jpg, 640 × 800, 4:5). En bienvenida.html va escrito en el alt del <img>,
           // que lleva data-t-alt con esta clave (no data-t: el texto de un <img> es su alt).
           fotoAlt: 'Juan Francisco Pérez Russo.',
@@ -2167,6 +2200,18 @@ window.T = (function () {
         dudas: '¿Tenés dudas?',
         escribir: 'Escribile a Francisco',
       },
+      // propuesta PLAN-LADOS (brand.md §6.15), 24/11, Francisco («abajo a la derecha… algo como Probar 7 días… o Ver planes… que se
+      // active si bajás mucho, a partir de cómo funciona»): el llamado fijo (aside.ld-fijo, fuera de main). Desde FEEDBACK-LADOS
+      // punto 2, solo hasta 1024 y una sola vez: una barra de un renglón con texto y un botón, «Ver planes» (hero.verPlanes, a
+      // #precios), que aparece cuando terminó «Cómo funciona» y se va al llegar a Empresas; después de ver Precios no vuelve
+      // (js/landing.js, fijo()); sin JavaScript no aparece. etiqueta es su nombre accesible (un <span hidden> al que apunta
+      // aria-labelledby).
+      fijo: {
+        etiqueta: 'Planes',
+        // propuesta PLAN-LADOS (brand.md §6.15), FEEDBACK-LADOS punto 2: corto, para un renglón junto al botón. Antes (en esta misma
+        // tanda, sin publicar): «Probá Terna 7 días sin costo.».
+        texto: '7 días de prueba sin costo.',
+      },
       // El único contacto de la landing (decisión D4): el LinkedIn de Francisco, sin mail ni mailto:. propuesta QUIENES-SOMOS
       // (brand.md §4), §4: con la dirección cargada no hay variante «sin contacto». Los links a LinkedIn de bienvenida.html
       // (data-linkedin: la ficha de «Quiénes somos», «¿Tenés dudas?» del cierre y el pie) llevan esta dirección escrita en su href, con
@@ -2176,19 +2221,31 @@ window.T = (function () {
       // El diálogo «¿Dónde querés entrar?» de «Entrar» (PLAN-LANDING §5.1). El botón de cerrar usa T.comun.cerrar.
       donde: {
         titulo: '¿Dónde querés entrar?',
-        persona: { titulo: 'Busco trabajo', texto: 'Tu Inicio, tus paquetes y tus postulaciones.' },
-        contrata: { titulo: 'Contrato', texto: 'Tus avisos publicados y las postulaciones que recibiste.' },
+        // propuesta PLAN-LADOS (brand.md §6.15), 24/11: «Publico avisos» repite la palabra del botón de la sección («Contrato» se
+        // leía también como sustantivo). Antes: contrata.titulo «Contrato»; contrata.texto «Tus avisos publicados y las
+        // postulaciones que recibiste.».
+        // propuesta PLAN-DIALOGO (brand.md §6.15), 24/11: lo grande de cada tarjeta es el nombre del lado y debajo va lo que hacés.
+        // Antes (PLAN-LADOS): sin nombre ni rótulo; persona.texto «Terna Jobs: tu Inicio, tus paquetes y tus postulaciones.»;
+        // contrata.texto «Terna Jobs Empresas: tus avisos y las postulaciones que recibiste.».
+        persona: { nombre: 'Terna Jobs', titulo: 'Busco trabajo', texto: 'Tu Inicio, tus paquetes y tus postulaciones.' },
+        contrata: { nombre: 'Terna Jobs', rotulo: 'Empresas', titulo: 'Publico avisos', texto: 'Tus avisos y las postulaciones que recibiste.' },
         nota: 'Si usás Terna para las dos cosas, es el mismo mail y la misma contraseña.',
         // propuesta PLAN-LANDING-2 (brand.md §6.15), FEEDBACK-LANDING-2 punto 8: la salida para quien no tiene cuenta, debajo de las
         // dos opciones; el link es hero.verPlanes, cierra el diálogo y baja a #precios.
         sinCuenta: '¿No tenés cuenta?',
+        // propuesta PLAN-LADOS (brand.md §6.15), FEEDBACK-LADOS punto 6: el renglón de quien publica avisos, debajo del anterior; el
+        // link cierra el diálogo y baja a #contratar, como «Ver planes». Nuevo.
+        publicasPregunta: '¿Publicás avisos?',
+        publicasLink: 'Conocé Terna Jobs Empresas',
       },
       pie: {
         lema: LEMA,
         // propuesta QUIENES-SOMOS (brand.md §4): el primer link del pie, a #somos.
         somos: 'Quiénes somos',
         entrar: 'Entrar',
-        contratar: 'Terna para contratar',
+        // propuesta PLAN-LADOS (brand.md §6.15), 24/11: el nombre del lado de quien contrata (D1), a contratar.html. Antes: «Terna
+        // para contratar».
+        contratar: 'Terna Jobs Empresas',
         linkedin: 'Francisco en LinkedIn',
         // Abierto: no va al HTML hasta que Francisco lo complete.
         hecha: '[completar: una línea de quién es Terna hoy, por ejemplo «Terna la hace Francisco [apellido], en [ciudad]». Cuando exista la sociedad, va su nombre.]',

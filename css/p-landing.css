@@ -26,6 +26,14 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
 }
 .pagina-landing main { flex: 1; }
 .pagina-landing main:focus { outline: none; }
+/* El logo de la barra y «Ir al contenido» van a #contenido (main): con su margen del alto de la barra, la página queda arriba de
+   todo, con el título entero a la vista (como las secciones, que tienen el suyo). */
+#contenido { scroll-margin-top: calc(var(--bar) + var(--rule-hair)); }
+/* El llamado fijo de abajo (PLAN-LADOS; solo hasta 1024): al moverse con el teclado, lo enfocado queda por encima de donde va
+   (también mientras no se ve: así no lo tapa si aparece justo después). */
+@media (max-width: 63.99rem) {
+  html:has(> body.pagina-landing) { scroll-padding-bottom: calc(44px + 2 * var(--space-xs) + var(--space-sm) + var(--rule-hair) + env(safe-area-inset-bottom, 0px)); }
+}
 /* Lo que se oculta con la sesión abierta (data-sin-sesion) queda oculto aunque una regla le dé display. */
 .pagina-landing [hidden] { display: none; }
 /* El contenedor: 1120 px con el margen a los lados, el mismo ancho de Entrar. */
@@ -120,6 +128,8 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
 /* En el celular el botón va a lo ancho y «Ya tengo cuenta» debajo, en su renglón de 44 px. */
 .ld-hero-acciones { display: flex; flex-direction: column; align-items: stretch; gap: var(--space-2xs); width: 100%; margin-top: var(--space-2xs); }
 .ld-hero-acciones .ld-link { align-self: flex-start; }
+/* FEEDBACK-LADOS punto 5: hasta 768, «Ya tengo cuenta» no va en el título (es lo mismo que «Entrar», en la barra). */
+.ld-hero-acciones .ld-link[data-sin-sesion] { display: none; }
 /* El atajo de quien contrata (FEEDBACK-LANDING P3-9). */
 .ld-hero .ld-contratas { margin-top: calc(-1 * var(--space-xs)); text-align: left; }
 .ld-ejemplo { width: 100%; }
@@ -193,22 +203,34 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
 .ld-acciones-seccion { display: flex; flex-direction: column; align-items: stretch; gap: var(--space-xs); width: 100%; }
 
 /* ---------- 5. Precios: la tabla que compara (§2.5 y §5.5) ---------- */
-/* Sin JavaScript (y como base) la tabla entera se desliza de costado dentro de su marco, con la primera columna fija. Con
-   JavaScript, hasta 768, arriba un selector de plan y la tabla muestra la columna de los rótulos y la del plan elegido. */
-.ld-selector {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3xs); width: 100%; padding: var(--space-3xs);
-  border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-control);
+/* PLAN-LADOS (24/11, Francisco): hasta 768, los cuatro planes apilados como tarjetas (ul.ld-planes), de menor a mayor, y la tabla
+   no se muestra; desde 768, la tabla y no las tarjetas. Con display: none el otro, el lector de pantalla lee uno solo. Sin
+   JavaScript es igual (son reglas por ancho). Se fue el selector de plan del celular. */
+.ld-planes { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); width: 100%; margin: 0; padding: var(--space-md) 0 0; list-style: none; }
+.ld-plan-tarjeta {
+  position: relative; display: flex; flex-direction: column; align-items: stretch; gap: var(--space-xs); padding: var(--space-lg) var(--space-md) var(--space-sm);
+  border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-card); background: var(--color-paper);
 }
-.ld-selector button {
-  flex: 1 1 auto; min-height: 44px; padding: 0 var(--space-xs); border: 0; border-radius: var(--radius-inner); background: transparent;
-  color: var(--color-ink-2); font: var(--weight-strong) var(--text-sm)/1.2 var(--font-body); white-space: nowrap;
+/* Búsqueda activa, la que trae todo: el lila lavado de su columna en la tabla, «El más completo» montado sobre el borde de arriba y
+   el único botón primario de los cuatro (el contraste que se ve en la tabla de escritorio). */
+.ld-plan-tarjeta-destacada { border-color: var(--color-accent-tint); background: var(--color-accent-wash); }
+.ld-plan-tarjeta .ld-plan-recomendado { left: var(--space-md); transform: translateY(-50%); }
+.ld-plan-tarjeta .ld-plan-nombre { font-size: var(--text-xl); }
+.ld-plan-precio { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--space-sm); }
+.ld-plan-tarjeta .ld-plan-monto { font-size: var(--text-4xl); }
+.ld-plan-tarjeta .ld-plan-antes { justify-content: flex-start; margin-top: 0; }
+.ld-plan-tarjeta .ld-plan-otro { margin-top: 0; }
+.ld-plan-tarjeta .ld-plan-accion { margin-block: var(--space-xs) var(--space-2xs); }
+/* Qué incluye: el rótulo (con su ícono y su ayuda) a la izquierda y el valor a la derecha, una línea fina entre filas. */
+.ld-plan-filas { margin: 0; }
+.ld-plan-filas > div {
+  display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: center; gap: var(--space-sm);
+  padding-block: var(--space-xs); border-top: var(--rule-hair) solid var(--color-rule); line-height: 1.35;
 }
-/* FEEDBACK-LANDING-2 punto 5: el elegido en violeta con su tinta (el par del primario: 10,9 en claro y 9,7 en oscuro). */
-.ld-selector button[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-ink); outline: 0; }
-.ld-selector button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
-@media (hover: hover) { .ld-selector button[aria-pressed="false"]:hover { background: var(--color-paper-2); } }
-/* Los cuatro nombres entran en una fila desde 360 px; antes, dos filas de dos. */
-@media (min-width: 22.5rem) { .ld-selector { display: flex; } }
+.ld-plan-filas dd { margin: 0; font-variant-numeric: tabular-nums; text-align: right; }
+/* FEEDBACK-LADOS punto 3: la ayuda de cada fila («Donde el formulario lo permite.»…) va solo en la primera tarjeta; en las otras
+   tres sería la misma, otra vez. El orden de los planes sigue de menor a mayor (Francisco). */
+.ld-plan-tarjeta:not(:first-child) .ld-fila-ayuda { display: none; }
 
 .ld-tabla-marco { width: 100%; padding-top: var(--space-md); overflow-x: auto; border-radius: var(--radius-control); }
 .ld-tabla-marco:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
@@ -244,8 +266,8 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
 .ld-plan-recomendado { position: absolute; top: 0; left: 50%; background: var(--color-accent); color: var(--color-accent-ink); transform: translate(-50%, -50%); }
 .ld-plan-monto { font: var(--weight-display) var(--text-3xl)/1.1 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-display); white-space: nowrap; }
 .ld-plan-periodo { color: var(--color-muted); font-size: var(--text-sm); line-height: 1.4; }
+/* Debajo del precio de Búsqueda activa, lo que da por semana (PLAN-LADOS: sin tachado). */
 .ld-plan-otro { margin-top: var(--space-2xs); color: var(--color-ink-2); font-size: var(--text-sm); font-weight: var(--weight-body); line-height: 1.4; text-wrap: balance; }
-.ld-plan-otro s { color: var(--color-muted); }
 /* Las filas: el ícono (20 px) y el rótulo; debajo, la ayuda chica. En las celdas, el tilde verde, la raya o «Pronto» (FEEDBACK-
    LANDING-2 punto 3: texto chico en tinta suave con el reloj, sin chip, en la última fila, para que no se lea como un hueco al lado
    de los botones). El tilde y la raya van dibujados en el HTML y no por el sprite:
@@ -253,10 +275,10 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
 .ld-fila-rotulo { display: flex; align-items: center; gap: var(--space-xs); font-weight: var(--weight-strong); }
 .ld-fila-rotulo .icono { width: 20px; height: 20px; color: var(--color-ink-2); }
 .ld-fila-ayuda { display: block; margin-top: var(--space-3xs); padding-left: calc(20px + var(--space-xs)); color: var(--color-muted); font-size: var(--text-sm); line-height: 1.4; }
-.ld-tabla .ld-si { width: 22px; height: 22px; color: var(--color-done); }
-.ld-tabla .ld-no { width: 20px; height: 20px; color: var(--color-muted); }
-.ld-tabla .ld-pronto { display: inline-flex; align-items: center; gap: var(--space-2xs); color: var(--color-muted); font-size: var(--text-sm); white-space: nowrap; }
-.ld-tabla .ld-pronto .icono { width: 16px; height: 16px; }
+:is(.ld-tabla, .ld-planes) .ld-si { width: 22px; height: 22px; color: var(--color-done); }
+:is(.ld-tabla, .ld-planes) .ld-no { width: 20px; height: 20px; color: var(--color-muted); }
+:is(.ld-tabla, .ld-planes) .ld-pronto { display: inline-flex; align-items: center; gap: var(--space-2xs); color: var(--color-muted); font-size: var(--text-sm); white-space: nowrap; }
+:is(.ld-tabla, .ld-planes) .ld-pronto .icono { width: 16px; height: 16px; }
 
 /* Las dos franjas debajo de la tabla, en papel 2: los paquetes sueltos (que no son un plan) y quien contrata. */
 .ld-franjas { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-md); width: 100%; }
@@ -272,31 +294,9 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
 .ld-franja-monto { font: var(--weight-display) var(--text-2xl)/1.1 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-display); }
 .ld-franja-link { justify-self: start; justify-content: flex-start; }
 
-/* Hasta 768, con el selector: un plan por vez. La tabla a lo ancho (rótulo a la izquierda, valor a la derecha), sin deslizar, y la
-   cabeza del plan elegido arriba a todo el ancho (sale hacia la izquierda sobre la esquina vacía: misma tabla, ningún texto
-   duplicado). */
+/* Hasta 768, las tarjetas y no la tabla (PLAN-LADOS). */
 @media (max-width: 47.99rem) {
-  .ld-tabla[data-plan] { table-layout: fixed; }
-  .ld-tabla[data-plan] :is(th, td):first-child { position: static; width: 58%; min-width: 0; }
-  .ld-tabla[data-plan] :is(th, td):not(:first-child) { min-width: 0; background: none; text-align: right; }
-  .ld-tabla[data-plan="0"] :is(th, td):not(:first-child, :nth-child(2)),
-  .ld-tabla[data-plan="1"] :is(th, td):not(:first-child, :nth-child(3)),
-  .ld-tabla[data-plan="2"] :is(th, td):not(:first-child, :nth-child(4)),
-  .ld-tabla[data-plan="3"] :is(th, td):not(:first-child, :nth-child(5)) { display: none; }
-  .ld-tabla[data-plan] thead :is(th, td) { padding: 0 0 var(--space-md); }
-  .ld-tabla[data-plan] .ld-plan-cabeza {
-    display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: var(--space-2xs) var(--space-sm);
-    width: calc(100% / 42 * 100); margin-left: calc(-100% / 42 * 58); text-align: left;
-  }
-  .ld-tabla[data-plan] .ld-plan-cabeza > * { grid-column: 1 / -1; justify-self: start; min-height: 0; margin: 0; }
-  .ld-tabla[data-plan] .ld-plan-accion { width: calc(100% / 42 * 100); max-width: none; margin-left: calc(-100% / 42 * 58); }
-  .ld-tabla[data-plan] .ld-plan-nombre { font-size: var(--text-xl); }
-  /* La cabeza mide lo mismo en los cuatro planes (la de Búsqueda activa, la más alta): al cambiar de plan, nada salta. */
-  .ld-tabla[data-plan] .ld-plan-cabeza { min-height: 9rem; align-content: start; }
-  .ld-tabla[data-plan] .ld-plan-recomendado { position: static; transform: none; }
-  .ld-tabla[data-plan] .ld-plan-antes { justify-content: flex-start; }
-  .ld-tabla[data-plan] .ld-plan-monto { grid-column: 1; font-size: var(--text-4xl); }
-  .ld-tabla[data-plan] .ld-plan-periodo { grid-column: 2; }
+  .ld-tabla-marco { display: none; }
 }
 
 /* ---------- 6. Quiénes somos (§2.6) ---------- */
@@ -379,27 +379,60 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
 .ld-pie-links { display: flex; flex-wrap: wrap; gap: 0 var(--space-lg); }
 .ld-pie-links a { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; font-weight: var(--weight-strong); white-space: nowrap; }
 
-/* ---------- El diálogo «¿Dónde querés entrar?» (PLAN-LANDING §5.1) ---------- */
-/* El diálogo centrado de siempre (.dialogo), también en el celular: son dos renglones. La cruz arriba a la derecha. */
+/* ---------- El diálogo «¿Dónde querés entrar?» (PLAN-LANDING §5.1; PLAN-DIALOGO, 24/11) ---------- */
+/* El diálogo centrado de siempre (.dialogo). La cruz arriba a la derecha. Dos tarjetas, una por lado: apiladas en el celular, lado a
+   lado desde 768 (el diálogo, a 640 px). */
 .ld-donde h2 { padding-right: calc(var(--control-s) + var(--space-xs)); }
 .ld-donde-cerrar { position: absolute; top: var(--space-sm); right: var(--space-sm); color: var(--color-ink-2); }
 .ld-donde-cerrar:hover { background: var(--color-paper-3); color: var(--color-ink); }
-/* Las dos opciones son links: una fila de 72 px como mínimo, en papel 2, con la flecha a la derecha (la forma de .modo). */
+.ld-opciones { display: grid; gap: var(--space-sm); }
+/* Cada opción es un link entero: el cuadro con su ícono, el nombre del lado, para quién es y qué hay adentro. Quien busca, en lila
+   lavado con el cuadro de siempre; Empresas, en papel 2 con el cuadro invertido (violeta sello). */
 .ld-opcion {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "titulo flecha" "texto flecha";
-  align-items: center; gap: var(--space-3xs) var(--space-sm); min-height: 72px; padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-control); background: var(--color-paper-2); color: var(--color-ink); text-decoration: none;
-  transition: background-color var(--dur-pill) var(--ease-out), transform var(--dur-tab) var(--ease-out);
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: var(--space-sm);
+  min-height: 88px; padding: var(--space-md); border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-card);
+  color: var(--color-ink); text-decoration: none;
+  transition: border-color var(--dur-pill) var(--ease-out), box-shadow var(--dur-pill) var(--ease-out), transform var(--dur-tab) var(--ease-out);
 }
-.ld-opcion:hover { background: var(--color-paper-3); color: var(--color-ink); }
+.ld-opcion-persona { background: var(--color-accent-wash); }
+.ld-opcion-empresas { background: var(--color-paper-2); }
+.ld-opcion-empresas .ld-cuadro { background: var(--color-accent); color: var(--color-accent-ink); }
+.ld-opcion:hover { color: var(--color-ink); }
 .ld-opcion:active { transform: scale(0.99); }
-.ld-opcion-titulo { grid-area: titulo; align-self: end; font-weight: var(--weight-strong); line-height: 1.3; }
-.ld-opcion-texto { grid-area: texto; align-self: start; color: var(--color-muted); font-size: var(--text-sm); line-height: 1.4; }
-.ld-opcion-flecha { grid-area: flecha; color: var(--color-muted); }
-.ld-opcion:hover .ld-opcion-flecha { color: var(--color-accent); }
+.ld-opcion-cuerpo { display: flex; flex-direction: column; gap: var(--space-3xs); min-width: 0; }
+.ld-opcion-nombre { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2xs) var(--space-xs); font: var(--weight-strong) var(--text-lg)/1.25 var(--font-display); }
+/* La pastilla «Empresas»: los valores de .op-marca (css/ops.css, que la landing no carga). */
+.ld-opcion-rotulo {
+  display: inline-flex; align-items: center; min-height: 22px; padding: 0 var(--space-xs); border-radius: var(--radius-chip);
+  background: var(--color-accent-tint); color: var(--color-accent); font: var(--weight-strong) var(--text-xs)/1 var(--font-body); white-space: nowrap;
+}
+.ld-opcion-titulo { font-weight: var(--weight-strong); line-height: 1.3; }
+.ld-opcion-texto { color: var(--color-muted); font-size: var(--text-sm); line-height: 1.4; }
+.ld-opcion-flecha { color: var(--color-muted); transition: color var(--dur-pill) var(--ease-out), transform var(--dur-pill) var(--ease-out); }
+@media (hover: hover) {
+  .ld-opcion:hover { border-color: var(--color-accent); box-shadow: inset 0 0 0 1px var(--color-accent); }
+  .ld-opcion:hover .ld-opcion-flecha { color: var(--color-accent); transform: translateX(3px); }
+}
+/* El pie: la nota del mismo mail y «¿No tenés cuenta? Ver planes» (FEEDBACK-LANDING-2 punto 8: cierra el diálogo y baja a
+   Precios), debajo de una línea fina. */
+.ld-donde-pie { display: flex; flex-direction: column; gap: var(--space-2xs); padding-top: var(--space-sm); border-top: var(--rule-hair) solid var(--color-rule); }
 .ld-donde-nota { color: var(--color-muted); font-size: var(--text-sm); }
-/* FEEDBACK-LANDING-2 punto 8: «¿No tenés cuenta? Ver planes», que cierra el diálogo y baja a Precios. */
-.ld-donde-sin { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-xs); margin-top: calc(-1 * var(--space-xs)); color: var(--color-ink-2); }
+.ld-donde-sin { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-xs); color: var(--color-ink-2); }
+
+/* ---------- El llamado fijo de abajo (PLAN-LADOS, 24/11, Francisco; FEEDBACK-LADOS punto 2) ---------- */
+/* Hasta 1024, una barra de un renglón pegada abajo (papel, la regla fina arriba, el relleno del borde seguro del teléfono): el texto
+   a la izquierda y «Ver planes» a su ancho. Escondida, un poco más abajo y transparente; js/landing.js (fijo) le pone
+   ld-fijo-visto. Desde 1024 no está (la barra de arriba ya tiene Precios). */
+.ld-fijo {
+  position: fixed; right: 0; bottom: 0; left: 0; z-index: var(--z-sticky);
+  display: flex; align-items: center; gap: var(--space-sm);
+  padding: var(--space-xs) var(--gutter) calc(var(--space-xs) + env(safe-area-inset-bottom, 0px));
+  border-top: var(--rule-hair) solid var(--color-rule); background: var(--color-paper);
+  opacity: 0; transform: translateY(100%);
+}
+.ld-fijo.ld-fijo-visto { opacity: 1; transform: none; }
+.ld-fijo-texto { flex: 1 1 auto; min-width: 0; font-weight: var(--weight-strong); line-height: 1.35; }
+.ld-fijo .btn { flex: none; }
 
 /* ---------- 768 (§7) ---------- */
 @media (min-width: 48rem) {
@@ -418,6 +451,7 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
   .ld-il { width: 160px; height: 120px; }
   /* Los dos botones del título en fila; las tres carpetas, en fila de tres. */
   .ld-hero-acciones { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-lg); width: auto; }
+  .ld-hero-acciones .ld-link[data-sin-sesion]:not([hidden]) { display: inline-flex; }
   /* En fila, cada carpeta mide unos 234 px: la lengüeta y el marbete se ajustan un paso para quedar en el mismo renglón; si un
      marbete igual no entra, parte en dos renglones. Las tres cabezas comparten el alto (subgrid): los tres cuerpos arrancan a la
      misma altura (FEEDBACK-LANDING P3-7). */
@@ -452,8 +486,8 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
   .ld-docs-3 .ld-doc { grid-template-columns: minmax(0, 1fr); }
   .ld-docs-3 .ld-doc-texto { padding-top: 0; }
   .ld-acciones-seccion { flex-direction: row; flex-wrap: wrap; align-items: center; width: auto; }
-  /* Precios: la tabla entera (sin selector), los rótulos a 184 px; las franjas, cada una en una fila con el precio a la derecha. */
-  .ld-selector { display: none; }
+  /* Precios: la tabla entera (y no las tarjetas), los rótulos a 184 px; las franjas, cada una en una fila con el precio a la derecha. */
+  .ld-planes { display: none; }
   .ld-tabla :is(th, td) { padding-inline: var(--space-xs); }
   .ld-tabla :is(th, td):first-child { position: static; width: 184px; min-width: 0; padding-left: 0; }
   .ld-tabla :is(th, td):not(:first-child) { min-width: 0; }
@@ -477,6 +511,14 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
   /* El cierre: los dos botones en fila, a su ancho, y las dos preguntas en una fila. */
   .ld-pedir-botones { flex-direction: row; justify-content: center; width: auto; }
   .ld-pedir-preguntas { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 0 var(--space-xl); }
+  /* El diálogo (PLAN-DIALOGO): a 640 px, las dos tarjetas lado a lado, del mismo alto; cada una con el cuadro arriba a la izquierda,
+     la flecha arriba a la derecha y los tres renglones debajo, a todo el ancho. */
+  .ld-donde { max-width: 640px; }
+  .ld-opciones { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ld-opcion { grid-template-columns: 44px minmax(0, 1fr); grid-template-areas: "cuadro flecha" "cuerpo cuerpo"; align-items: start; align-content: start; gap: var(--space-md) var(--space-sm); padding: var(--space-ml); }
+  .ld-opcion > .ld-cuadro { grid-area: cuadro; }
+  .ld-opcion-cuerpo { grid-area: cuerpo; }
+  .ld-opcion-flecha { grid-area: flecha; justify-self: end; align-self: center; }
 }
 
 /* Entre 768 y 1024 (FEEDBACK-LANDING-2 puntos 6 y 9): en fila, «Para postular a mano» entra en un renglón si la lengüeta lleva solo el
@@ -561,6 +603,8 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
   .ld-lider-foto { grid-row: 1; align-self: end; width: 100%; max-width: 280px; margin-bottom: calc(-1 * var(--ld-sale)); }
   .ld-lider-ficha { grid-row: 2; padding-top: calc(var(--ld-sale) - var(--space-xl) + var(--space-md)); }
   .ld-historia { grid-column: 1; grid-row: 2; }
+  /* El llamado fijo no va en escritorio (FEEDBACK-LADOS punto 2). */
+  .ld-fijo { display: none; }
 }
 
 /* ---------- 1280 (§7): el contenedor en sus 1120 px, 96 px entre secciones y los h2 a 40. ---------- */
@@ -641,11 +685,11 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
   .ld-il-4 .il-sello { transform-box: fill-box; transform-origin: left bottom; }
   .ld-paso.activo .ld-il-4 .il-sello { animation: ld-sella var(--dur-state) var(--ease-out) 480ms backwards; }
 
-  /* Precios en el celular: la columna elegida entra con opacity (una celda que deja de estar oculta arranca su animación). */
-  .ld-tabla[data-plan] :is(th, td):not(:first-child) { animation: ld-funde var(--dur-pill) var(--ease-out); }
-
   /* El espía: el subrayado del link de la sección actual crece desde la izquierda. */
   .ld-secciones a::after { transition: transform var(--dur-state) var(--ease-out); }
+
+  /* El llamado fijo entra y sale deslizándose (PLAN-LADOS). */
+  .ld-fijo { transition: opacity var(--dur-state) var(--ease-out), transform var(--dur-state) var(--ease-out); }
 
   /* Qué trae un paquete, con el mouse: el documento sube 3 px y su hoja del dibujo, 8. */
   @media (hover: hover) {
@@ -676,20 +720,22 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
 
 /* Sin movimiento si la persona lo pidió (lo del diálogo y los botones viene de terna.css). */
 @media (prefers-reduced-motion: reduce) {
-  .ld-opcion { transition: none; }
-  .ld-opcion:active { transform: none; }
+  .ld-opcion, .ld-opcion-flecha { transition: none; }
+  .ld-opcion:active, .ld-opcion:hover .ld-opcion-flecha { transform: none; }
 }
 
 /* Al imprimir, todo a la vista. */
 @media print {
   .ld-espera { opacity: 1; transform: none; }
+  .ld-fijo { display: none; }
 }
 
 @media (forced-colors: active) {
-  .ld-opcion { border: var(--rule-hair) solid CanvasText; }
+  .ld-opcion, .ld-fijo { border: var(--rule-hair) solid CanvasText; }
   .ld-seccion:not(.ld-hero), .ld-solapa { border-color: CanvasText; }
   .ld-pedir { border-block: var(--rule-hair) solid CanvasText; }
-  .ld-paso-cuerpo, .ld-tarjeta, .ld-franja, .ld-mision { border: var(--rule-hair) solid CanvasText; }
+  .ld-paso-cuerpo, .ld-tarjeta, .ld-franja, .ld-mision, .ld-plan-tarjeta { border: var(--rule-hair) solid CanvasText; }
+  .ld-plan-tarjeta-destacada { border-width: 2px; }
   .ld-vivo .ld-paso.activo .ld-paso-cuerpo { border-width: 2px; border-color: CanvasText; }
   .ld-secciones a::after, .ld-docs-3 > li::after { border-color: CanvasText; }
 }

@@ -1,7 +1,8 @@
 /* Terna · js/contratar.js
-   Terna para contratar (contratar.md 0.1; 0055): la página de quien contrata, una empresa o una persona que busca a alguien. Publica
-   avisos (que Francisco revisa antes de abrir), ve las postulaciones que le llegan con el contacto, el CV y la carta del paquete, y las
-   personas que ajustan y aceptan propuestas, sin su nombre ni dónde trabajan. Una cuenta puede tener varias personas en su equipo.
+   Terna Jobs Empresas (hasta el 24/11/2026, «Terna para contratar»; PLAN-LADOS) (contratar.md 0.1; 0055): la página de quien
+   contrata, una empresa o una persona que busca a alguien. Publica avisos (que Terna revisa antes de abrir), ve las postulaciones
+   que le llegan con el contacto, el CV y la carta del paquete, y las personas que ajustan y aceptan propuestas, sin su nombre ni
+   dónde trabajan. Una cuenta puede tener varias personas en su equipo.
    - Su propio cliente de Supabase, con la sesión en localStorage bajo su propia clave ('terna-contratar'): no se mezcla con la de la
      web de quien busca trabajo, aunque sea la misma cuenta de Auth. No usa Terna.pagina (exige una fila en `usuarios`, que una
      cuenta que solo contrata no tiene); de comun.js toma solo las piezas.
@@ -161,13 +162,18 @@
   }
 
   /* ---------- Entrar ---------- */
+  // El LinkedIn de la landing (T.landing.contacto.linkedin), el contacto de quien contrata: «Pedila por LinkedIn» y «escribinos por
+  // LinkedIn». Sin js/textos.js no hay link y queda el texto.
+  const linkedinTerna = () => (window.T && T.landing && T.landing.contacto ? Terna.urlExterna(T.landing.contacto.linkedin) : null);
   function formularioEntrar(mailFijo, alEntrar) {
     const mail = campo(Terna.idUnico('co-mail'), C.entrar.mail, h('input', { class: 'control', type: 'email', autocomplete: 'username', required: true,
       spellcheck: 'false', value: mailFijo || '', readOnly: !!mailFijo }));
     const contra = campo(Terna.idUnico('co-clave'), C.entrar.contrasena, h('input', { class: 'control', type: 'password', autocomplete: 'current-password', required: true }));
     const boton = h('button', { class: 'btn btn-primario btn-ancho', type: 'submit' }, C.entrar.boton);
+    const linkedin = linkedinTerna();
     const form = h('form', { class: 'formulario-angosto', novalidate: true }, mail.nodo, contra.nodo, boton,
-      h('p', { class: 'campo-ayuda', text: C.entrar.olvido }));
+      h('p', { class: 'campo-ayuda' }, C.entrar.olvido(linkedin
+        ? h('a', { href: linkedin, target: '_blank', rel: 'noopener', text: C.entrar.olvidoLink }) : C.entrar.olvidoLink)));
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       marcar(mail, ''); marcar(contra, '');
@@ -182,14 +188,17 @@
     });
     return form;
   }
-  // Debajo del formulario, cómo se pide la invitación (FEEDBACK-LANDING P2-8, el mismo patrón que «Cómo conseguir una invitación» de
-  // Entrar): el link a «Cómo se entra» de la landing, donde está la manera de pedirla (escribirle a Francisco por LinkedIn;
-  // QUIENES-SOMOS §4). Después de una regla fina, el renglón de quien busca trabajo (PLAN-LANDING §5.3): solo acá, no en la pantalla
-  // de una invitación, donde la persona vino a otra cosa.
+  // Debajo del formulario (PLAN-LADOS §6.2, 24/11): la salida para quien no tiene cuenta (D3: «¿Todavía no tenés cuenta? Pedila por
+  // LinkedIn», al LinkedIn de la landing, T.landing.contacto.linkedin, por Terna.urlExterna y en otra pestaña) y el link a la sección
+  // de quien contrata de la landing (FEEDBACK-LANDING P2-8). Después de una regla fina, el renglón de quien busca trabajo
+  // (PLAN-LANDING §5.3): solo acá, no en la pantalla de una invitación, donde la persona vino a otra cosa.
   function pantallaEntrar() {
     dibujarCabecera(false);
     document.title = C.documento;
+    const linkedin = linkedinTerna();
     tarjetaAcceso(C.entrar.titulo, h('p', { class: 'acceso-descripcion', text: C.entrar.intro }), formularioEntrar(null, despuesDeEntrar),
+      linkedin ? h('p', { class: 'co-link' }, C.entrar.sinCuentaPregunta, ' ',
+        h('a', { href: linkedin, target: '_blank', rel: 'noopener', text: C.entrar.sinCuentaLink })) : null,
       h('p', { class: 'co-link' }, h('a', { href: 'bienvenida.html#contratar', text: C.entrar.comoSeEntra })),
       h('p', { class: 'co-otro' }, C.entrar.buscasPregunta, ' ', h('a', { href: 'entrar.html', text: C.entrar.buscasLink })));
   }

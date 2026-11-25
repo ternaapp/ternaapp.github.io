@@ -1,5 +1,6 @@
 /* Terna · js/contratar-textos.js
-   Los textos de Terna para contratar (contratar.html), copiados de contratar.md §8 (en terna-motor/docs). Viven aparte de
+   Los textos de Terna Jobs Empresas (contratar.html; hasta el 24/11/2026, «Terna para contratar»: PLAN-LADOS), copiados de
+   contratar.md §8 (en terna-motor/docs). Viven aparte de
    js/textos.js, como los del portal operativo: son de una página que no ve quien busca trabajo. La voz es la de brand.md §4
    (sereno, honesto, concreto, voseo, sin «nosotros»). El código de contratar.js no escribe textos propios. */
 'use strict';
@@ -8,12 +9,16 @@ window.TC = (function () {
   const n = (x) => Number(x || 0).toLocaleString('es-AR');
   const plural = (x, uno, varios) => (Number(x) === 1 ? uno : varios);
   return {
-    // propuesta LOGOS (brand.md §1): el <title> y el nombre accesible del logo. «Terna para contratar» sigue así.
-    documento: 'Contratar | Terna Jobs',
-    marca: 'Contratar',
+    // propuesta LOGOS (brand.md §1): el <title> y el nombre accesible del logo.
+    // propuesta PLAN-LADOS (contratar.md §8.1; logos.md, «Regla del nombre»), 24/11: el lado de quien contrata se llama «Terna Jobs
+    // Empresas» (D1): el <title> lleva el nombre del lado, como el de Entrar lleva «Terna Jobs», y la pastilla (.op-marca) al lado
+    // del logo «terna jobs» dice «Empresas». Antes: documento «Contratar | Terna Jobs»; marca «Contratar».
+    documento: 'Terna Jobs Empresas',
+    marca: 'Empresas',
 
     entrar: {
-      titulo: 'Terna para contratar',
+      // propuesta PLAN-LADOS (contratar.md §8.1), 24/11: la entrada dice en qué lado estás. Antes: «Terna para contratar».
+      titulo: 'Entrar a Terna Jobs Empresas',
       // propuesta PLAN-LANDING-2 (contratar.md §8.1), 24/11: la web pública ya no dice «por invitación» (Francisco, «Sí, cambialos»). Antes terminaba
       // con «Se entra por invitación.».
       intro: 'Publicá tus avisos y recibí postulaciones de personas cuyo perfil ajusta con el puesto.',
@@ -24,17 +29,32 @@ window.TC = (function () {
       errorCompletar: 'Completá el mail y la contraseña.',
       falla: 'No se pudo. Probá de nuevo.',
       salir: 'Salir',
-      sinCuenta: 'Esta cuenta todavía no contrata en Terna. Para publicar avisos hace falta una invitación de Francisco.',
-      olvido: 'Si te olvidaste la contraseña, escribile a Francisco.',
+      // propuesta PLAN-LADOS (contratar.md §8.1), 24/11: sin nombrar a quien revisa ni decir «invitación» (D4). «Escribinos» va
+      // solo en el contacto (la excepción de brand.md §4 que propone el plan). Antes: sinCuenta «Esta cuenta todavía no contrata en
+      // Terna. Para publicar avisos hace falta una invitación de Francisco.»; olvido «Si te olvidaste la contraseña, escribile a
+      // Francisco.».
+      sinCuenta: 'Esta cuenta todavía no publica avisos en Terna. Para empezar, pedí tu cuenta de Terna Jobs Empresas.',
+      // propuesta PLAN-LADOS (contratar.md §8.1), FEEDBACK-LADOS punto 9: «escribinos por LinkedIn» es un link (olvidoLink, a
+      // T.landing.contacto.linkedin, como «Pedila por LinkedIn»); olvido arma la frase con ese link adentro. Antes (en esta misma
+      // tanda): el texto entero, sin link, «Si te olvidaste la contraseña, escribinos por LinkedIn.».
+      olvido: (link) => ['Si te olvidaste la contraseña, ', link, '.'],
+      olvidoLink: 'escribinos por LinkedIn',
+      // propuesta PLAN-LADOS (contratar.md §8.1), 24/11: la salida para quien llega sin cuenta desde «Publicar un aviso» de la
+      // landing (D3), arriba de comoSeEntra. El link es sinCuentaLink, a T.landing.contacto.linkedin (con Terna.urlExterna, en otra
+      // pestaña). Cuando exista el alta abierta de este lado, pasa a «Creá tu cuenta» y nada más cambia.
+      sinCuentaPregunta: '¿Todavía no tenés cuenta?',
+      sinCuentaLink: 'Pedila por LinkedIn',
       // propuesta FEEDBACK-LANDING P2-8 (contratar.md §8.1): arriba del renglón de quien busca trabajo, cómo se pide la invitación
       // para contratar; va a bienvenida.html#pedir, donde está el LinkedIn de Francisco. Desde QUIENES-SOMOS §4 va siempre: con la
       // dirección cargada ya no hay variante «sin contacto» (se fue sinContacto).
       // propuesta PLAN-LANDING-2 (contratar.md §8.1), 24/11: la web pública ya no dice «por invitación» (Francisco, «Sí, cambialos»). Antes: «Cómo pedir una
       // invitación para contratar», a bienvenida.html#pedir; ahora a la sección de quien contrata.
-      comoSeEntra: 'Cómo funciona Terna para contratar',
+      // propuesta PLAN-LADOS (contratar.md §8.1), 24/11: el nombre del lado (D1). Antes: «Cómo funciona Terna para contratar».
+      comoSeEntra: 'Cómo funciona Terna Jobs Empresas',
       // propuesta PLAN-LANDING §4.13 (contratar.md §8.1): el renglón inverso al de Entrar, debajo del formulario. El link es la frase.
       buscasPregunta: '¿Buscás trabajo?',
-      buscasLink: 'Entrá a Terna',
+      // propuesta PLAN-LADOS (contratar.md §8.1), 24/11: el nombre del otro lado. Antes: «Entrá a Terna».
+      buscasLink: 'Entrá a Terna Jobs',
     },
 
     invitacion: {
@@ -77,8 +97,11 @@ window.TC = (function () {
       errorCarga: 'No se pudo cargar. Probá de nuevo.',
       reintentar: 'Probar de nuevo',
       falta0055: 'Falta aplicar la migración 0055 en la base: sin ella esta página no tiene datos.',
-      cuentaPausada: 'Francisco pausó esta cuenta: tus avisos no se ven y no podés publicar. Escribile para saber por qué.',
-      cerrado: 'Terna para contratar está cerrado por ahora: podés mirar, no publicar.',
+      // propuesta PLAN-LADOS (contratar.md §8.1), 24/11: «Terna» y no quien revisa (D4); el nombre del lado (D1). Antes:
+      // cuentaPausada «Francisco pausó esta cuenta: tus avisos no se ven y no podés publicar. Escribile para saber por qué.»;
+      // cerrado «Terna para contratar está cerrado por ahora: podés mirar, no publicar.».
+      cuentaPausada: 'Terna pausó esta cuenta: tus avisos no se ven y no podés publicar. Escribinos para saber por qué.',
+      cerrado: 'Terna Jobs Empresas está cerrado por ahora: podés mirar, no publicar.',
     },
 
     estados: {
@@ -102,7 +125,9 @@ window.TC = (function () {
       vencioEl: (f) => 'venció el ' + f,
       cerradoEl: (f) => 'cerrado el ' + f,
       postulaciones: (t, nuevas) => n(t) + plural(t, ' postulación', ' postulaciones') + (nuevas ? ' · ' + n(nuevas) + plural(nuevas, ' nueva', ' nuevas') : ''),
-      enRevision: 'Francisco lo revisa antes de publicarlo. Te queda abierto apenas lo apruebe.',
+      // propuesta PLAN-LADOS (contratar.md §8.1), 24/11: «Terna» y no quien revisa (D4). Antes: «Francisco lo revisa antes de
+      // publicarlo. Te queda abierto apenas lo apruebe.».
+      enRevision: 'Terna lo revisa antes de publicarlo. Te queda abierto apenas se apruebe.',
       rechazado: (motivo) => 'No se publicó' + (motivo ? ': ' + motivo : '.') + ' Cambialo y volvé a enviarlo.',
       ver: 'Ver',
       editar: 'Editar',
@@ -122,7 +147,8 @@ window.TC = (function () {
       hechoReanudar: 'Listo: abierto otra vez.',
       hechoRenovar: 'Listo: abierto 30 días más.',
       hechoCerrar: 'Listo: cerrado.',
-      hechoRevision: 'Listo: Francisco lo revisa antes de publicarlo.',
+      // propuesta PLAN-LADOS (contratar.md §8.1), 24/11 (D4). Antes: «Listo: Francisco lo revisa antes de publicarlo.».
+      hechoRevision: 'Listo: Terna lo revisa antes de publicarlo.',
       hechoAbierto: 'Listo: publicado. Terna lo cruza con los perfiles en la próxima corrida, a la mañana.',
     },
 
@@ -265,8 +291,11 @@ window.TC = (function () {
 
     errores: {
       contrata_no_autorizado: 'Esta cuenta no puede hacer eso.',
-      contrata_cuenta_pausada: 'Francisco pausó esta cuenta: no podés publicar ni cambiar avisos.',
-      contrata_cerrado: 'Terna para contratar está cerrado por ahora.',
+      // propuesta PLAN-LADOS (contratar.md §8.1), 24/11: «Terna» y no quien revisa (D4); el nombre del lado (D1). Antes:
+      // contrata_cuenta_pausada «Francisco pausó esta cuenta: no podés publicar ni cambiar avisos.»; contrata_cerrado «Terna para
+      // contratar está cerrado por ahora.».
+      contrata_cuenta_pausada: 'Terna pausó esta cuenta: no podés publicar ni cambiar avisos.',
+      contrata_cerrado: 'Terna Jobs Empresas está cerrado por ahora.',
       contrata_sin_cupo_avisos: 'Llegaste al tope de avisos abiertos o en revisión: cerrá o pausá uno.',
       contrata_transicion_invalida: 'Ese aviso ya cambió: actualizá la página.',
       contrata_publicacion_no_existe: 'Ese aviso ya no existe.',

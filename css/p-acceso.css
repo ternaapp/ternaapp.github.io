@@ -52,11 +52,11 @@
 /* Lo que sale bien (el link mandado, la contraseña guardada) no te toca a vos: el ícono va en tinta, no en ámbar. */
 .acceso-carpeta .banda:not(.banda-error) > .icono { color: var(--color-ink-2); }
 /* Los links de texto de la carpeta y de abajo: 44 px de alto para el dedo, el subrayado del sistema. */
-.acceso-olvide a, .acceso-volver a, .acceso-link a, .acceso-otro a {
+.acceso-olvide a, .acceso-volver a, .acceso-link a, .acceso-otro a, .acceso-sin-cuenta a {
   display: inline-flex; align-items: center; gap: var(--space-2xs); min-height: 44px;
   font-weight: var(--weight-strong); transition: transform var(--dur-tab) var(--ease-out);
 }
-.acceso-olvide a:active, .acceso-volver a:active, .acceso-link a:active, .acceso-otro a:active { transform: translateY(1px); }
+.acceso-olvide a:active, .acceso-volver a:active, .acceso-link a:active, .acceso-otro a:active, .acceso-sin-cuenta a:active { transform: translateY(1px); }
 .acceso-volver .icono { width: 16px; height: 16px; }
 
 /* ---------- Lo que acompaña a la carpeta ---------- */
@@ -66,6 +66,9 @@
    de 44 px ya trae su aire), y el de quien contrata, después de una regla fina. La pregunta y el link van en un renglón; si no
    entran, el link baja entero. */
 .acceso-link { margin-top: calc(-1 * var(--space-sm)); }
+/* FEEDBACK-LADOS punto 7: «¿Todavía no tenés cuenta? Ver los planes», la pregunta y el link en un renglón (si no entran, el link baja
+   entero), como en contratar.html. */
+.acceso-sin-cuenta { display: flex; flex-wrap: wrap; align-items: center; column-gap: 0.3em; margin-top: calc(-1 * var(--space-xs)); }
 .acceso-otro {
   display: flex; flex-wrap: wrap; align-items: center; column-gap: 0.3em;
   padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule);
@@ -124,8 +127,8 @@
 
 /* Sin movimiento si la persona lo pidió: los tiempos ya bajan a casi cero en terna.css; acá, además, nada se desplaza al tocar. */
 @media (prefers-reduced-motion: reduce) {
-  .modo, .acceso-olvide a, .acceso-volver a, .acceso-link a, .acceso-otro a { transition: none; }
-  .modo:active, .acceso-olvide a:active, .acceso-volver a:active, .acceso-link a:active, .acceso-otro a:active { transform: none; }
+  .modo, .acceso-olvide a, .acceso-volver a, .acceso-link a, .acceso-otro a, .acceso-sin-cuenta a { transition: none; }
+  .modo:active, .acceso-olvide a:active, .acceso-volver a:active, .acceso-link a:active, .acceso-otro a:active, .acceso-sin-cuenta a:active { transform: none; }
 }
 
 @media (forced-colors: active) {
