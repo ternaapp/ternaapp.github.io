@@ -1,14 +1,15 @@
-/* Hallmark · shape: app screen · genre: editorial · theme: custom (Sello) · page sheet: Inicio, over css/terna.css (opciones-v3/PLAN-UX.md, paquete P1) */
+/* Hallmark · shape: app screen · genre: editorial · theme: custom (Sello) · page sheet: Inicio, over css/terna.css (opciones-v3/PLAN-INICIO.md) */
 /* Terna · css/p-inicio.css · Inicio
    Las reglas propias de index.html; se carga después de css/terna.css (las fichas, la cáscara y las piezas comunes: la carpeta, las
-   filas de 56 px, los chips, los plegables, el pozo). Desde PLAN-UX §3.1 (21/11/2026): la corrida como excepción, «Te toca a vos»,
-   «Lo último de Terna», la entrada a Empleos, «Cómo viene» con dos plegables, lo que priorizás y «Para empezar».
+   filas de 56 px, los chips, los plegables, el pozo y, desde PLAN-INICIO, el tramo con su solapa y el cuadro). Desde PLAN-UX §3.1
+   (21/11/2026): la corrida como excepción, «Te toca a vos», «Lo último de Terna», la entrada a Empleos, «Cómo viene» con dos
+   plegables, lo que priorizás y «Para empezar». Desde PLAN-INICIO (25/11/2026), el lenguaje de la landing a escala de herramienta:
+   cada sección es un separador con su solapa; lo que te toca es ámbar, lo que hizo Terna es lila, los datos son neutros.
    Solo fichas de terna.css. Celular primero; desde 48rem, una rejilla de doce columnas. */
 
 /* ---------- La página ---------- */
 #inicio { display: flex; flex-direction: column; gap: var(--space-xl); }
-.tablero-cabecera { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs) var(--space-md); min-height: var(--control-s); }
-.tablero-cabecera .btn-texto { margin-right: calc(-1 * var(--space-2xs)); }
+.tramo-cabeza .btn-texto { margin-right: calc(-1 * var(--space-2xs)); }
 .tablero-intro, .tablero-nota { max-width: 65ch; color: var(--color-muted); font-size: var(--text-sm); line-height: 1.45; }
 .tablero-error { padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); }
 .nada-pendiente { color: var(--color-ink-2); line-height: 1.45; }
@@ -16,73 +17,114 @@
 .tablero-nota > a { display: inline-block; padding-block: var(--space-sm); margin-block: calc(-1 * var(--space-sm)); }
 .pregunta-cuentas-botones > a { display: inline-flex; align-items: center; min-height: var(--control-s); }
 
+/* Los dos dibujos (PLAN-INICIO): las pinturas .il-* están en terna.css. «Al día» es la carpeta de la landing, en lila. */
+.il { display: block; flex: none; width: 96px; height: 72px; overflow: visible; }
+.il-al-dia .il-carpeta { fill: var(--color-accent-tint); }
+.il-al-dia .il-lila { fill: var(--color-accent-mid); }
+
 /* La corrida, solo cuando algo no anduvo: pegada al título, con su ícono, en tinta suave. */
 .inicio-corrida { display: flex; flex-direction: column; gap: var(--space-2xs); margin-top: calc(-1 * var(--space-xs)); color: var(--color-ink-2); line-height: 1.45; }
 .inicio-corrida p { display: flex; align-items: flex-start; gap: var(--space-xs); max-width: 60ch; }
 .inicio-corrida .icono { flex: none; margin-top: 0.2em; color: var(--color-muted); }
 .inicio-corrida .corrida-falla .icono { color: var(--color-error); }
-
-/* ---------- Te toca a vos: las filas y, debajo, las carpetas ---------- */
-.que-hay, .ultimo, .empezar { display: flex; flex-direction: column; gap: var(--space-sm); min-width: 0; }
-/* Las filas, una al lado de la otra cuando entran las tres sin partir el texto (con el carril, desde 1280); si no, apiladas. */
-.que-hay { container: toca / inline-size; }
-@container toca (min-width: 54rem) {
-  .toca-filas { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); column-gap: var(--space-lg); }
-  .toca-filas > .fila { border-top: 0; border-bottom: var(--rule-hair) solid var(--color-rule); }
+/* Terna todavía no corrió: una tarjeta lila con el dibujo «busca» (la primera pantalla de quien acaba de entrar). */
+.inicio-primera {
+  flex-direction: row; align-items: center; gap: var(--space-md); margin-top: 0; padding: var(--space-md);
+  border-radius: var(--radius-card); background: var(--color-accent-wash); color: var(--color-ink);
 }
-:is(.que-hay, .ultimo) .fila b { margin-right: var(--space-2xs); font: var(--weight-strong) var(--text-xl)/1 var(--font-body); }
+.inicio-primera p { max-width: 40ch; }
+
+/* ---------- Te toca a vos: las fichas ámbar y, debajo, las carpetas por las que empezar ---------- */
+.que-hay, .ultimo, .empezar { min-width: 0; }
+.que-hay { container: toca / inline-size; }
+.toca-filas { display: grid; gap: var(--space-xs); }
+/* Cada cuenta es una ficha ámbar: el cuadro, la cifra grande, el texto y la flecha. Con una sola, ocupa el ancho entero. */
+.toca-filas > .fila {
+  min-height: 64px; padding: var(--space-xs) var(--space-md) var(--space-xs) var(--space-xs);
+  border: 0; border-radius: var(--radius-card); background: var(--color-turn-wash);
+}
+.toca-filas > .fila-toca .i-adelante { color: var(--color-turn); }
+@container toca (min-width: 54rem) {
+  .toca-filas { grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--space-md); }
+}
+:is(.que-hay, .ultimo) .fila b, .inicio-busqueda-cuenta b {
+  margin-right: var(--space-2xs); font: var(--weight-display) var(--text-3xl)/1 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-display);
+}
 .fila-info b { color: var(--color-ink-2); }
-.carpetas.hoy { margin-top: var(--space-xs); }
+.carpetas.hoy { margin-top: var(--space-2xs); }
 .hoy .carpeta-acciones .btn { flex: 1 1 auto; }
-/* En el celular, una sola carpeta: con dos, «Los paquetes de hoy» queda debajo del muelle a 390 × 844 (FEEDBACK-UX P2-8). La fila
-   «N para revisar y enviar» lleva a todas. */
+/* Una carpeta en el celular (así «Lo último» entra en la primera pantalla a 390 × 844), dos desde 768, tres cuando el contenedor da
+   54rem (PLAN-INICIO D1). La fila de cada cuenta lleva a todas. */
 @media (max-width: 47.98rem) { .carpetas.hoy > li + li { display: none; } }
+@container toca (max-width: 53.98rem) { .carpetas.hoy > li:nth-child(n+3) { display: none; } }
+/* Nada pendiente: el dibujo «al día» y la frase, en tinta. */
+.al-dia { display: flex; align-items: center; gap: var(--space-md); color: var(--color-ink); }
+.al-dia p { max-width: 32ch; }
 /* Con el perfil incompleto, completarlo va primero: el ámbar lavado de lo que te toca, con el primario de la pantalla. */
 .inicio-incompleto {
-  display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: start; gap: var(--space-sm) var(--space-sm);
+  display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: var(--space-sm);
   padding: var(--space-md); border-radius: var(--radius-card); background: var(--color-turn-wash); line-height: 1.45;
 }
-.inicio-incompleto > .icono { margin-top: 0.1em; color: var(--color-turn); }
 .inicio-incompleto > .btn { grid-column: 2; justify-self: start; }
 
-/* ---------- Lo último de Terna: puesto y empresa, con el estado al costado o debajo ---------- */
+/* ---------- Lo último de Terna: el match en un cuadro lila, puesto y empresa, el estado al costado o debajo ---------- */
 .ultimo { container: ultimo / inline-size; }
 .ultimo-fila {
-  display: grid; grid-template-columns: minmax(0, 1fr) 20px; grid-template-areas: "texto chev" "estado chev";
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) 20px; grid-template-areas: "cuadro texto chev" "cuadro estado chev";
   align-items: center; gap: var(--space-2xs) var(--space-sm); padding-block: var(--space-sm);
 }
+.ultimo-fila > .cuadro { grid-area: cuadro; }
 .ultimo-fila > .fila-texto { grid-area: texto; }
 .ultimo-estado { grid-area: estado; display: flex; min-width: 0; }
 .ultimo-fila > .i-adelante { grid-area: chev; }
 @container ultimo (min-width: 30rem) {
-  .ultimo-fila { grid-template-columns: minmax(0, 1fr) auto 20px; grid-template-areas: "texto estado chev"; }
+  .ultimo-fila { grid-template-columns: 44px minmax(0, 1fr) auto 20px; grid-template-areas: "cuadro texto estado chev"; }
 }
+.ultimo-ver { align-self: flex-start; gap: var(--space-2xs); margin-left: calc(-1 * var(--space-2xs)); }
+/* Por qué no armó nada, con su salida. */
+.ultimo-nota { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: var(--space-2xs) var(--space-sm); }
+.ultimo-nota > a { grid-column: 2; justify-self: start; display: inline-flex; align-items: center; min-height: var(--control-s); }
 
-/* ---------- La entrada a Empleos: el ícono, cuántos hay y el botón ---------- */
+/* ---------- La entrada a Empleos: una tarjeta lila con cuántos hay (el link) y el buscador ---------- */
 .inicio-busqueda {
-  display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: center; gap: var(--space-sm);
-  padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); color: var(--color-ink-2); line-height: 1.45;
+  display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: var(--space-sm);
+  padding: var(--space-md); border-radius: var(--radius-card); background: var(--color-accent-wash); color: var(--color-ink-2); line-height: 1.45;
 }
-.inicio-busqueda > .icono { color: var(--color-muted); }
-.inicio-busqueda > .btn { grid-column: 2; justify-self: start; }
+.inicio-busqueda-cuenta { display: flex; align-items: center; gap: var(--space-xs); min-width: 0; min-height: 44px; color: var(--color-ink); text-decoration: none; }
+.inicio-busqueda-cuenta > span { flex: 1; min-width: 0; }
+.inicio-busqueda-cuenta .i-adelante { flex: none; color: var(--color-accent); }
+.inicio-buscar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.inicio-buscar .control { flex: 1 1 12rem; min-width: 0; background: var(--color-paper); }
+.inicio-buscar .btn { flex: 1 1 auto; }
 
-/* La pregunta de las cuentas: un pozo a todo el ancho. Al responder queda su línea. */
+/* La pregunta de las cuentas: un pozo a todo el ancho, con su cuadro al lado del título. Al responder queda su línea. */
+.pregunta-cuentas-titulo { display: flex; align-items: center; gap: var(--space-sm); }
 .pregunta-cuentas p { max-width: 65ch; line-height: 1.45; }
 #pregunta-cuentas-numero { display: block; margin-top: var(--space-2xs); color: var(--color-muted); font-size: var(--text-sm); font-weight: var(--weight-body); }
 .pregunta-cuentas-botones { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-md); }
 .pregunta-listo { color: var(--color-muted); line-height: 1.45; }
 .pregunta-listo:focus { outline: none; }
 
-/* ---------- Cómo viene: cuatro cifras, el número primero, y dos plegables cerrados ---------- */
+/* ---------- Cómo viene: cuatro fichas con su cuadro, el cero apagado, la barra de la primera y dos plegables ---------- */
 .tablero { display: flex; flex-direction: column; gap: var(--space-xl); }
-.tablero-seccion { display: flex; flex-direction: column; gap: var(--space-sm); min-width: 0; }
-.cifras { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg) var(--space-md); margin: 0; }
-.etapa { display: flex; flex-direction: column; gap: var(--space-2xs); min-width: 0; }
-.cifra-numero { order: -1; font: var(--weight-display) var(--text-cifra)/1 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-display); }
+.tablero-seccion { min-width: 0; }
+.cifras { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); margin: 0; }
+.etapa {
+  position: relative; display: flex; flex-direction: column; gap: var(--space-2xs); min-width: 0; padding: var(--space-md);
+  border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-card); background: var(--color-paper);
+}
+/* El cuadro va dentro del dt (así el dl sigue siendo válido) y se ubica arriba a la derecha de la ficha. */
+.etapa .cuadro { position: absolute; top: var(--space-sm); right: var(--space-sm); width: 36px; height: 36px; }
+.etapa .cuadro .icono { width: 20px; height: 20px; }
+.cifra-numero { order: -1; padding-right: 40px; font: var(--weight-display) var(--text-cifra)/1 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-display); }
 .cifra-etiqueta { color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.3; }
 .cifra-nota { color: var(--color-muted); font-size: var(--text-sm); line-height: 1.3; }
+.etapa.en-cero .cifra-numero { color: var(--color-muted); }
+/* La barra: lo que pasó tu umbral de lo que llegó; se mueve a su ancho nuevo al cambiar el período. */
+.cifra-parte { display: block; height: 6px; margin-top: var(--space-2xs); border-radius: var(--radius-inner); background: var(--color-rule); overflow: hidden; }
+.cifra-parte-relleno { display: block; height: 100%; width: calc(var(--cuenta, 0) * 1%); border-radius: inherit; background: var(--color-accent); }
 .recargando { opacity: 0.5; transition: opacity var(--dur-pill) var(--ease-out); }
-.como-viene-plegables { display: grid; grid-template-columns: minmax(0, 1fr); margin-top: var(--space-xs); border-top: var(--rule-hair) solid var(--color-rule); }
+.como-viene-plegables { display: grid; grid-template-columns: minmax(0, 1fr); margin-top: var(--space-2xs); border-top: var(--rule-hair) solid var(--color-rule); }
 .como-viene-plegables > .plegable { border-bottom: var(--rule-hair) solid var(--color-rule); }
 .plegable-titulo h3 { font: var(--weight-strong) var(--text-md)/1.3 var(--font-body); text-wrap: balance; }
 
@@ -128,24 +170,24 @@
 .franjas-umbral { display: flex; align-items: center; gap: var(--space-xs); margin: var(--space-2xs) 0 var(--space-3xs); padding-top: var(--space-xs); border-top: 2px solid var(--color-ink); font-size: var(--text-xs); }
 .umbral-pastilla { padding: var(--space-3xs) var(--space-xs); border-radius: var(--radius-chip); background: var(--color-ink); color: var(--color-paper); font-weight: var(--weight-strong); }
 
-/* ---------- Lo que priorizás: empresas que seguís y puestos que buscás, en filas de 56 px ---------- */
+/* ---------- Lo que priorizás: empresas que seguís y puestos que buscás, en filas de 56 px con su cuadro ---------- */
 .tuya-match { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-3xs); }
 /* El mejor match de un puesto es un match: en Lexend 500, como en la lengüeta. */
 .tuya-match-numero { font: var(--weight-display) var(--text-xl)/1 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-display); }
 .tuya-match-etiqueta { color: var(--color-muted); font-size: var(--text-xs); }
-.tablero-vacio { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-xs); padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); }
-.tablero-vacio .btn { margin-top: var(--space-2xs); }
+/* El vacío en un renglón: el cuadro apagado, el texto con su ayuda y el botón debajo del texto. */
+.tablero-vacio { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: start; gap: var(--space-xs) var(--space-sm); }
+.tablero-vacio-texto { display: flex; flex-direction: column; gap: var(--space-3xs); line-height: 1.45; }
+.tablero-vacio > .btn { grid-column: 2; justify-self: start; }
 
-/* ---------- Para empezar: tres pasos numerados, cada uno con su estado ---------- */
-.empezar-pasos { counter-reset: paso; }
-.empezar-pasos > li { counter-increment: paso; }
-/* El número en un cuadrado de 28 px, como los pasos de las guías; hecho, el tilde en lugar del número. */
-.empezar-marca {
-  flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--radius-chip);
-  background: var(--color-paper-3); color: var(--color-ink); font: var(--weight-strong) var(--text-sm)/1 var(--font-body); font-variant-numeric: tabular-nums;
+/* ---------- Para empezar: tres carpetas numeradas; el paso 1 con su marbete ---------- */
+.empezar-pasos { display: grid; gap: var(--space-md); margin: 0; padding: 0; list-style: none; }
+.empezar-numero { min-width: 0; padding-inline: var(--space-md); }
+/* El cuerpo es una carpeta y una fila a la vez: de la fila, el link y la flecha; de la carpeta, el fondo y las esquinas. */
+.empezar-carpeta .carpeta-cuerpo.fila {
+  flex-direction: row; align-items: center; gap: var(--space-sm); min-height: 72px; padding: var(--space-md); border-top: 0;
+  border-radius: 0 var(--radius-card) var(--radius-card) var(--radius-card); background: var(--color-paper-2);
 }
-.empezar-marca:empty::before { content: counter(paso); }
-.empezar-paso.hecho .empezar-marca { background: var(--color-done); color: var(--color-done-ink); }
 .empezar-paso.hecho .fila-nombre { color: var(--color-ink-2); }
 .empezar-como { align-self: flex-start; margin-left: calc(-1 * var(--space-2xs)); }
 /* Al tocarlo baja un pixel, como las filas y el puesto de una carpeta. */
@@ -153,35 +195,69 @@
 
 @media (hover: hover) {
   .empezar-como:hover .icono { color: var(--color-accent); }
+  /* Con mouse: la ficha ámbar y la tarjeta de Empleos marcan el borde (el gesto de las opciones de la landing). */
+  .toca-filas > .fila:hover { box-shadow: inset 0 0 0 1px var(--color-turn); }
+  .inicio-busqueda-cuenta:hover > span { text-decoration: underline; text-decoration-color: var(--color-accent); text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
 }
 
 /* ---------- Escritorio (48rem o más): la rejilla de doce ---------- */
 @media (min-width: 48rem) {
   #inicio { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-2xl) var(--space-xl); align-items: start; }
   #inicio > * { grid-column: 1 / -1; }
-  /* Lo último de Terna a la izquierda y la entrada a Empleos a su lado, en la columna angosta. */
+  .il { width: 120px; height: 90px; }
+  /* Lo último de Terna a la izquierda y la tarjeta de Empleos a su lado, en la columna angosta. */
   #inicio > .ultimo { grid-column: 1 / span 7; }
-  #inicio > .ultimo + .inicio-busqueda {
-    grid-column: 8 / span 5; align-items: start; padding: var(--space-md); border-top: 0; border-radius: var(--radius-card); background: var(--color-paper-2);
-  }
-  #inicio > .ultimo + .inicio-busqueda > .icono { margin-top: 0.1em; }
-  /* Las carpetas para revisar, lado a lado, hasta dos. */
+  #inicio > .ultimo + .inicio-busqueda { grid-column: 8 / span 5; }
+  /* Sin «Lo último», a todo el ancho: cuántos hay a la izquierda y el buscador a la derecha. */
+  #inicio > :not(.ultimo) + .inicio-busqueda { grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1.2fr); }
+  #inicio > :not(.ultimo) + .inicio-busqueda .inicio-buscar { grid-column: 3; }
+  .inicio-buscar .btn { flex: none; }
+  /* Las carpetas por las que empezar, lado a lado. */
   .carpetas.hoy { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: var(--space-md); align-items: start; }
   .hoy .carpeta-acciones .btn { flex: 0 1 auto; }
-  .inicio-incompleto { grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; }
+  .inicio-incompleto { grid-template-columns: 44px minmax(0, 1fr) auto; }
   .inicio-incompleto > .btn { grid-column: 3; }
   .tablero { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-2xl) var(--space-xl); align-items: start; }
   .tablero > * { grid-column: 1 / -1; }
   .tablero > .seguidas, .tablero > .buscados { grid-column: span 6; }
   .tablero:not(:has(> .seguidas)) > .buscados { grid-column: 1 / -1; }
-  .cifras { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .cifras { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-md); }
   .como-viene-plegables { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-xl); align-items: start; }
-  .empezar { max-width: 40rem; }
+}
+/* Desde 64rem, «Para empezar» en fila de tres: en cada carpeta, el cuadro arriba, el texto y la flecha abajo a la derecha. */
+@media (min-width: 64rem) {
+  .empezar-pasos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .empezar-carpeta { grid-template-rows: auto 1fr; }
+  .empezar-carpeta .carpeta-cuerpo.fila { flex-direction: column; align-items: flex-start; }
+  .empezar-carpeta .carpeta-cuerpo > .i-adelante { align-self: flex-end; margin-top: auto; }
 }
 
+/* ---------- Movimiento (PLAN-INICIO D3, sobrio): la entrada al dibujarse, el sello cuando hay algo nuevo, la barra y el mouse ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  #inicio.entra > * { animation: subir var(--dur-state) var(--ease-out) backwards; }
+  #inicio.entra > :nth-child(2) { animation-delay: 40ms; }
+  #inicio.entra > :nth-child(3) { animation-delay: 80ms; }
+  #inicio.entra > :nth-child(n+4) { animation-delay: 120ms; }
+  .ultimo.recien .ultimo-estado > *, .empezar-carpeta .marbete { transform-origin: left bottom; animation: sellar var(--dur-state) var(--ease-out) backwards; }
+  .ultimo.recien li:nth-child(1) .ultimo-estado > * { animation-delay: 300ms; }
+  .ultimo.recien li:nth-child(2) .ultimo-estado > * { animation-delay: 420ms; }
+  .ultimo.recien li:nth-child(3) .ultimo-estado > * { animation-delay: 540ms; }
+  .empezar-carpeta .marbete { animation-delay: 300ms; }
+  .cifra-parte-relleno { transition: width var(--dur-state) var(--ease-out); }
+  @media (hover: hover) {
+    .toca-filas > .fila { transition: box-shadow var(--dur-pill) var(--ease-out); }
+    .toca-filas .i-adelante, .inicio-busqueda-cuenta .i-adelante, .empezar-paso .i-adelante { transition: transform var(--dur-pill) var(--ease-out); }
+    .toca-filas > .fila:hover .i-adelante, .inicio-busqueda-cuenta:hover .i-adelante, .empezar-paso:hover .i-adelante { transform: translateX(3px); }
+    .carpetas.hoy .carpeta, .empezar-carpeta { transition: transform var(--dur-pill) var(--ease-out); }
+    .carpetas.hoy .carpeta:hover, .empezar-carpeta:hover { transform: translateY(-2px); }
+  }
+}
+@media print { #inicio.entra > * { animation: none; } }
+
 @media (forced-colors: active) {
-  .barra-relleno, .semana-col.actual .semana-barra { forced-color-adjust: none; background: CanvasText; }
+  .barra-relleno, .semana-col.actual .semana-barra, .cifra-parte-relleno { forced-color-adjust: none; background: CanvasText; }
   .barra-resto, .semana-barra { forced-color-adjust: none; background: GrayText; }
+  .toca-filas > .fila, .etapa, .inicio-busqueda, .inicio-primera, .inicio-incompleto { border: var(--rule-hair) solid CanvasText; }
 }
 
 /* Las propuestas de postular de quien contrata en Terna (contratar.md 0.1 §5): un pozo con un link por aviso. */

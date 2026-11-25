@@ -162,6 +162,9 @@ window.T = (function () {
         titulo: 'Los paquetes de hoy',
         tituloUltima: 'Los de la última corrida',
         verPaquetes: 'Ver en Paquetes',
+        // propuesta PLAN-INICIO (brand.md §6.3), 25/11: el link al lado de «Armar paquetes está en No…» en «Lo último de Terna»
+        // (preferencias.html#paquetes). Con «Ningún aviso llegó a tu umbral», el link es lista.cambiarUmbral.
+        cambiarArmar: 'Cambiar en Preferencias',
       },
       // propuesta PLAN-UX §5.2 (brand.md §6.3): el mismo texto, dentro de «Lo último de Terna».
       enCola: (x) => (x === 1 ? '1' : n(x)) + ' en cola: Terna postula en la próxima corrida',

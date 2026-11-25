@@ -106,14 +106,8 @@ html:has(> body.pagina-landing) { scroll-padding-top: 0; }
 /* En línea en el HTML, sin colores escritos: cada parte lleva una clase de pintura y el color sale de las fichas. Decorativos
    (aria-hidden). 120 × 90 en el celular y 160 × 120 desde 768. */
 .ld-il { display: block; flex: none; width: 120px; height: 90px; overflow: visible; }
-.il-hoja { fill: var(--color-elegido); stroke: var(--color-rule-2); stroke-width: 1.5; }
-.il-renglon { fill: none; stroke: var(--color-rule-2); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.il-lila { fill: var(--color-accent-tint); }
-.il-acento { fill: none; stroke: var(--color-accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.il-puntos { fill: none; stroke: var(--color-accent); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 0 6; }
-.il-carpeta { fill: var(--color-paper-3); }
-.il-hecho { fill: var(--color-done); }
-.il-hecho-tilde { fill: none; stroke: var(--color-done-ink); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+/* Las pinturas comunes (.il-hoja, .il-renglon, .il-lila, .il-acento, .il-puntos, .il-carpeta, .il-hecho, .il-hecho-tilde) viven
+   en css/terna.css desde PLAN-INICIO (25/11): las usa también Inicio. */
 /* plan-lados.md 0.2 (25/11): el dibujo del match (.ld-il-match), el número sobre un anillo y los requisitos con su estado. */
 .il-anillo-fondo { fill: none; stroke: var(--color-accent-tint); stroke-width: 7; }
 .il-anillo { fill: none; stroke: var(--color-accent); stroke-width: 7; stroke-linecap: round; stroke-dasharray: 0.91 1; }

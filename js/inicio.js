@@ -27,6 +27,53 @@ Terna.pagina('inicio', async (ctx) => {
   const conCuenta = (el, x) => { el.style.setProperty('--cuenta', String(x)); return el; };
   const hoy = Terna.hoy();
 
+  /* ---------- Las piezas de página (PLAN-INICIO, 25/11/2026: el lenguaje de la landing, a escala de herramienta) ----------
+     Cada sección es un tramo con su solapa (ícono y título, ámbar lo que te toca, lila lo que hizo Terna, neutra los datos) y lo
+     que se toca lleva su ícono en un cuadro (css/terna.css, 11c). Dos dibujos, solo en los estados que eran una línea de texto. */
+  const cuadro = (iconoId, variante) => h('span', { class: 'cuadro' + (variante ? ' cuadro-' + variante : ''), 'aria-hidden': 'true' }, icono(iconoId));
+  function cabeza(id, texto, iconoId, variante, accion) {
+    return h('div', { class: 'tramo-cabeza' },
+      h('h2', { class: 'solapa' + (variante ? ' solapa-' + variante : ''), id }, icono(iconoId), h('span', { text: texto })), accion || null);
+  }
+  // Los dibujos, armados con createElementNS desde una lista constante (sin innerHTML): [etiqueta, atributos, hijos].
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const DIBUJOS = {
+    // Al día: la carpeta de la landing (paso 3) con el sello verde de hecho.
+    'al-dia': [
+      ['path', { class: 'il-lila', d: 'M24 52v-8a8 8 0 0 1 8-8h24a8 8 0 0 1 8 8v8z' }],
+      ['path', { class: 'il-carpeta', d: 'M24 52h102a10 10 0 0 1 10 10v44a10 10 0 0 1-10 10H34a10 10 0 0 1-10-10z' }],
+      ['g', { transform: 'rotate(-6 62 56)' }, [['rect', { class: 'il-hoja', x: 43, y: 26, width: 38, height: 58, rx: 4 }], ['path', { class: 'il-renglon', d: 'M51 38h22M51 47h16' }]]],
+      ['g', { transform: 'rotate(5 100 54)' }, [['rect', { class: 'il-hoja', x: 80, y: 24, width: 38, height: 58, rx: 4 }], ['path', { class: 'il-renglon', d: 'M88 36h22M88 45h18' }]]],
+      ['path', { class: 'il-carpeta', d: 'M24 68h112v38a10 10 0 0 1-10 10H34a10 10 0 0 1-10-10z' }],
+      ['g', { class: 'il-sello' }, [['circle', { class: 'il-hecho', cx: 132, cy: 30, r: 12 }], ['path', { class: 'il-hecho-tilde', d: 'M126.5 30.5l4 4 7-7.5' }]]],
+    ],
+    // Busca: la lista de avisos con la lupa de la landing (Cómo funciona, «Busca los avisos»).
+    busca: [
+      ['rect', { class: 'il-hoja', x: 12, y: 14, width: 120, height: 24, rx: 6 }], ['path', { class: 'il-renglon', d: 'M24 26h64' }],
+      ['rect', { class: 'il-hoja', x: 12, y: 48, width: 120, height: 24, rx: 6 }], ['rect', { class: 'il-lila', x: 18, y: 53, width: 22, height: 14, rx: 4 }],
+      ['path', { class: 'il-renglon', d: 'M48 60h56' }],
+      ['rect', { class: 'il-hoja', x: 12, y: 82, width: 120, height: 24, rx: 6 }], ['path', { class: 'il-renglon', d: 'M24 94h48' }],
+      ['g', { class: 'il-lupa' }, [['circle', { class: 'il-acento', cx: 122, cy: 58, r: 14 }], ['path', { class: 'il-acento', d: 'M132 68l10 10' }]]],
+    ],
+  };
+  function trazar(padre, partes) {
+    for (const [etiqueta, atributos, hijos] of partes) {
+      const el = document.createElementNS(SVGNS, etiqueta);
+      for (const k of Object.keys(atributos)) el.setAttribute(k, String(atributos[k]));
+      if (hijos) trazar(el, hijos);
+      padre.append(el);
+    }
+  }
+  function dibujo(nombre) {
+    const svg = document.createElementNS(SVGNS, 'svg');
+    svg.setAttribute('class', 'il il-' + nombre);
+    svg.setAttribute('viewBox', '0 0 160 120');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    trazar(svg, DIBUJOS[nombre]);
+    return svg;
+  }
+
   function desde() {
     if (periodo === 'semana') return Terna.sumarDias(hoy, -6);
     if (periodo === 'mes') return Terna.sumarDias(hoy, -29);
@@ -75,9 +122,10 @@ Terna.pagina('inicio', async (ctx) => {
     return typeof t === 'function' ? (res === 'sin_umbral' ? t(r.umbral_actual) : t(paquetesDia)) : t;
   };
   function lineaCorrida() {
+    // PLAN-INICIO: Terna todavía no corrió es la primera pantalla de quien acaba de entrar: una tarjeta lila con el dibujo «busca».
+    if (!fechaCorrida) return h('div', { class: 'inicio-corrida inicio-primera' }, dibujo('busca'), h('p', null, h('span', { text: I.noCorrio })));
     const lineas = [];
-    if (!fechaCorrida) lineas.push(['i-pedido', I.noCorrio]);
-    else {
+    {
       if (Terna.diasEntre(fechaCorrida, hoy) >= 2) lineas.push(['i-pedido', I.corrioEl(Terna.fechaCorta(fechaCorrida))]);
       if (FALLAS.includes(r.ultima_corrida_resultado)) lineas.push(['i-alerta', textoResultado(r.ultima_corrida_resultado)]);
     }
@@ -106,10 +154,11 @@ Terna.pagina('inicio', async (ctx) => {
     const m = /^(\d[\d.]*)(\s[\s\S]*)$/.exec(texto);
     return m ? [h('b', { class: 'num', text: m[1] }), m[2]] : texto;
   }
-  // Lo que te toca lleva el ícono en ámbar (fila-toca); lo que espera a Terna (en cola) va apagado, sin link.
+  // Lo que te toca lleva el ícono en un cuadro ámbar (fila-toca: desde PLAN-INICIO, una ficha ámbar); lo que espera a Terna (en
+  // cola) va con el cuadro apagado, sin link.
   function filaPendiente(href, iconoId, texto) {
-    if (!href) return h('div', { class: 'fila fila-info' }, icono(iconoId, 'icono-l'), h('span', null, conCifra(texto)));
-    return h('a', { class: 'fila fila-toca', href }, icono(iconoId, 'icono-l'), h('span', null, conCifra(texto)), icono('i-adelante', 'i-adelante'));
+    if (!href) return h('div', { class: 'fila fila-info' }, cuadro(iconoId, 'neutro'), h('span', null, conCifra(texto)));
+    return h('a', { class: 'fila fila-toca', href }, cuadro(iconoId, 'toca'), h('span', null, conCifra(texto)), icono('i-adelante', 'i-adelante'));
   }
   // Los atributos de la carpeta, con la pieza de Aviso.atributos: la lectura no trae la ubicación, así que el lugar va solo si es del
   // exterior (en vez de un "local" genérico donde Postulaciones dice la ciudad).
@@ -143,17 +192,19 @@ Terna.pagina('inicio', async (ctx) => {
         linea,
         abrir ? h('div', { class: 'carpeta-acciones' }, Aviso.abrirAviso(a, ctx.faltantes.length ? 'btn' : 'btn btn-primario', prefs)) : null));
   }
-  const MAX_CARPETAS = 2;
+  // PLAN-INICIO D1 (Francisco, 25/11): hasta tres carpetas (una en el celular, dos desde 768, tres en pantalla ancha: lo decide el
+  // CSS) de lo que te toca, en el orden de teTocan (para revisar primero, después por match). Antes: dos, solo las para revisar.
+  const MAX_CARPETAS = 3;
   // Con el perfil incompleto, completarlo va primero: Terna no busca hasta que lo completes (en las otras páginas es la banda de
   // arriba; en Inicio, esto).
   function incompleto() {
-    return h('div', { class: 'inicio-incompleto' }, icono('i-por-decidir', 'icono-l'),
+    return h('div', { class: 'inicio-incompleto' }, cuadro('i-por-decidir', 'toca'),
       h('p', { text: T.bandas.incompleto(Terna.listaFaltantes(ctx.faltantes)) }),
       h('a', { class: 'btn btn-primario', href: 'perfil.html' }, T.bandas.completar));
   }
   // `tocan`: lo que te toca, leído de mis_avisos; null si esa lectura falló (las cuentas, entonces, las de mi_resumen).
   function seccionToca(tocan) {
-    const sec = h('section', { class: 'que-hay', 'aria-labelledby': 'h-que-hay' }, h('h2', { id: 'h-que-hay', text: I.tocanTitulo }));
+    const sec = h('section', { class: 'que-hay tramo', 'aria-labelledby': 'h-que-hay' }, cabeza('h-que-hay', I.tocanTitulo, 'i-campana', 'toca'));
     if (ctx.faltantes.length) sec.append(incompleto());
     const revisar = tocan ? tocan.filter((a) => a.estado_postulacion === 'para_revisar').length : num(r.para_revisar);
     const aMano = tocan ? tocan.length - revisar : num(r.a_mano_pendientes);
@@ -163,10 +214,11 @@ Terna.pagina('inicio', async (ctx) => {
     // Los avisos sin texto ya no son algo que te toca (brand.md 0.23 §6.3): los busca Terna y, si no puede, Francisco.
     if (porDecidir) filas.push(filaPendiente('avisos.html?interes=por_decidir', 'i-por-decidir', I.porDecidir(porDecidir)));
     if (filas.length) sec.append(h('div', { class: 'filas toca-filas' }, filas));
-    else if (!ctx.faltantes.length) sec.append(h('p', { class: 'nada-pendiente', text: I.nadaPendiente }));
-    // Debajo de las filas, solo las carpetas para revisar, que se resuelven con un toque; las de a mano quedan detrás de su fila, que
-    // ya las cuenta (FEEDBACK-UX P2-8: así «Los paquetes de hoy» entra en la primera pantalla del celular).
-    const carpetas = tocan ? tocan.filter((a) => a.estado_postulacion === 'para_revisar').slice(0, MAX_CARPETAS) : [];
+    // Nada pendiente: el dibujo «al día» y la frase (PLAN-INICIO; antes, la frase sola, en gris).
+    else if (!ctx.faltantes.length) sec.append(h('div', { class: 'nada-pendiente al-dia' }, dibujo('al-dia'), h('p', { text: I.nadaPendiente })));
+    // Debajo de las filas, las carpetas por las que empezar: las primeras de lo que te toca (PLAN-INICIO D1). Antes, solo las para
+    // revisar (FEEDBACK-UX P2-8); en el celular sigue siendo una, así «Lo último» entra en la primera pantalla.
+    const carpetas = tocan ? tocan.slice(0, MAX_CARPETAS) : [];
     if (carpetas.length) {
       sec.append(h('ol', { class: 'carpetas hoy', id: 'hoy' }, carpetas.map((a, i) => carpetaHoy(a, i === 0))));
     }
@@ -192,10 +244,15 @@ Terna.pagina('inicio', async (ctx) => {
     if (!e) return h('span', { class: 'chip-texto', text: T.avisos.postulacion.pendiente });
     return h('span', { class: 'chip chip-' + e.tipo }, icono(e.icono, 'icono-14'), h('span', { text: e.texto }));
   }
+  // PLAN-INICIO: a la izquierda, el match en un cuadro lila (el número a la vista; para el lector, lo que dice la lengüeta); sin
+  // match, el cuadro apagado con el paquete.
   function filaUltimo(a) {
+    const sinMatch = a.match === null || a.match === undefined;
     return h('li', null, h('a', { class: 'fila ultimo-fila', href: 'avisos.html#aviso-' + a.match_id },
+      sinMatch ? cuadro('i-paquete', 'neutro') : h('span', { class: 'cuadro cuadro-match', 'aria-hidden': 'true', text: String(Math.round(Number(a.match))) }),
       h('span', { class: 'fila-texto' }, h('span', { class: 'fila-nombre', text: a.puesto }),
-        a.empresa ? h('span', { class: 'fila-linea', text: a.empresa }) : null),
+        a.empresa ? h('span', { class: 'fila-linea', text: a.empresa }) : null,
+        sinMatch ? null : oculto(', ' + T.avisos.matchAccesible(a.match, Aviso.llega(a, prefs.umbral)))),
       h('span', { class: 'ultimo-estado' }, estadoUltimo(a)),
       icono('i-adelante', 'i-adelante')));
   }
@@ -208,21 +265,48 @@ Terna.pagina('inicio', async (ctx) => {
     const porQue = !ultimos.length && res && res !== 'armados' && !FALLAS.includes(res) ? textoResultado(res) : null;
     if (!ultimos.length && !porQue && !enCola) return null;
     const titulo = fechaCorrida === hoy ? I.hoy.titulo : I.hoy.tituloUltima;
-    const sec = h('section', { class: 'ultimo', 'aria-labelledby': 'h-ultimo' },
-      h('div', { class: 'tablero-cabecera' }, h('h2', { id: 'h-ultimo', text: titulo }),
-        ultimos.length ? h('a', { class: 'btn btn-texto btn-chico', href: 'avisos.html#armados', text: I.hoy.verPaquetes }) : null));
+    // PLAN-INICIO: la solapa lila (lo que hizo Terna); «Ver en Paquetes» baja al pie, con su flecha.
+    const sec = h('section', { class: 'ultimo tramo', 'aria-labelledby': 'h-ultimo' }, cabeza('h-ultimo', titulo, 'i-paquete', 'terna'));
     if (filas.length) sec.append(h('ul', { class: 'filas ultimo-filas', role: 'list' }, filas.map(filaUltimo)));
-    if (porQue) sec.append(h('p', { class: 'nada-pendiente', text: porQue }));
+    if (porQue) sec.append(notaUltimo(res, porQue));
     if (enCola) sec.append(filaPendiente(null, 'i-pedido', I.enCola(enCola)));
+    if (ultimos.length) sec.append(h('a', { class: 'btn btn-texto btn-chico ultimo-ver', href: 'avisos.html#armados' }, h('span', { text: I.hoy.verPaquetes }), icono('i-adelante', 'icono-16')));
+    // El sello: la primera vez que se ve esta corrida en este navegador, los estados se sellan uno tras otro (solo con movimiento).
+    if (ultimos.length && Terna.leerLocal('inicio.corridaVista', null) !== fechaCorrida) {
+      sec.classList.add('recien');
+      Terna.guardarLocal('inicio.corridaVista', fechaCorrida);
+    }
     return sec;
+  }
+  // Por qué la corrida no armó nada, con su salida (PLAN-INICIO): el cuadro del motivo, la frase de siempre y, cuando se arregla en
+  // Preferencias, el link.
+  const ICONO_RESULTADO = { sin_umbral: 'i-bajo-minimo', armar_no: 'i-pausar', limite_usuario: 'i-tilde', sin_avisos: 'i-buscar' };
+  function notaUltimo(res, porQue) {
+    const link = res === 'sin_umbral' ? h('a', { href: 'preferencias.html#umbral', text: I.lista.cambiarUmbral })
+      : res === 'armar_no' ? h('a', { href: 'preferencias.html#paquetes', text: I.hoy.cambiarArmar }) : null;
+    return h('div', { class: 'ultimo-nota' }, cuadro(ICONO_RESULTADO[res] || 'i-pedido', 'neutro'),
+      h('p', { class: 'nada-pendiente', text: porQue }), link);
   }
 
   /* ---------- La entrada a Empleos (PLAN-UX §3.1, punto 5) ---------- */
+  // PLAN-INICIO D2 (Francisco, 25/11): una tarjeta lila con cuántos hay (el único link de la tarjeta, a Empleos) y un buscador que
+  // lleva a Empleos con lo escrito (busqueda.html?q=…, que Empleos ya lee). Vacío, va a Empleos a secas.
   function entradaEmpleos() {
     if (!hayPara) return null;
-    return h('div', { class: 'inicio-busqueda' }, icono('i-buscar', 'icono-l'),
-      h('p', { text: T.busqueda.enInicio(num(hayPara.avisos), num(hayPara.semana)) }),
-      h('a', { class: 'btn', href: 'busqueda.html', text: T.busqueda.enInicioLink }));
+    const B = T.busqueda.buscador;
+    const campo = h('input', { class: 'control', type: 'search', id: 'inicio-q', name: 'q', placeholder: B.ejemplo, autocomplete: 'off', enterkeyhint: 'search' });
+    const form = h('form', { class: 'inicio-buscar', role: 'search', action: 'busqueda.html', method: 'get' },
+      h('label', { class: 'oculto-visual', for: 'inicio-q', text: B.etiqueta }), campo,
+      h('button', { class: 'btn', type: 'submit', text: T.busqueda.enInicioLink }));
+    form.addEventListener('submit', (e) => {
+      if (campo.value.trim()) return;
+      e.preventDefault();
+      window.location.href = 'busqueda.html';
+    });
+    return h('div', { class: 'inicio-busqueda' }, cuadro('i-buscar'),
+      h('a', { class: 'inicio-busqueda-cuenta', href: 'busqueda.html' },
+        h('span', null, conCifra(T.busqueda.enInicio(num(hayPara.avisos), num(hayPara.semana)))), icono('i-adelante', 'i-adelante')),
+      form);
   }
 
   /* La pregunta de las cuentas (diseno.md 0.29 §6, 1b; brand.md 0.16 §6.3; datos.md 0.32, 0036): una tarjeta a todo el ancho, solo
@@ -240,7 +324,8 @@ Terna.pagina('inicio', async (ctx) => {
     const bSi = h('button', { class: 'btn', type: 'button', text: R.si });
     const bNo = h('button', { class: 'btn', type: 'button', text: R.no });
     const sec = h('section', { class: 'pozo pregunta-cuentas', id: 'pregunta-cuentas', 'aria-labelledby': 'h-cuentas' },
-      h('h2', { id: 'h-cuentas', text: C.titulo }),
+      // PLAN-INICIO: el título con su cuadro; el h2, su id y su texto no cambian.
+      h('div', { class: 'pregunta-cuentas-titulo' }, cuadro('i-preguntar'), h('h2', { id: 'h-cuentas', text: C.titulo })),
       h('p', null, C.texto, ' ', numero),
       h('div', { class: 'pregunta-cuentas-botones' }, bSi, bNo, h('a', { href: 'preferencias.html#cuentas', text: C.saber })));
     async function responder(valor) {
@@ -271,6 +356,11 @@ Terna.pagina('inicio', async (ctx) => {
      Las cuatro cifras del período. Solo la primera lleva nota: lo que pasó tu umbral, de lo que llegó. Las otras cuentan lo que
      pasó en el período y no son un embudo (un paquete de hoy puede ser de un aviso de la semana pasada). */
   const cifras = h('div', { class: 'como-viene-cifras' });
+  // PLAN-INICIO: cada cifra es una ficha con su ícono en un cuadro (dentro del dt: el dl queda válido), el cero apagado y, en la
+  // primera, una barra con lo que pasó tu umbral de lo que llegó. Se arma una vez y, al cambiar el período, se actualiza (así la
+  // barra se mueve a su ancho nuevo). Los dt, dd, .cifra-numero y .cifra-nota son los de antes.
+  const ICONO_CIFRA = { nuevos: 'i-nivel-alto', armados: 'i-paquete', enviadas: 'i-enviada', 'a-mano': 'i-a-mano' };
+  let fichas = null;
   function dibujarCifras(x) {
     const C = I.cifras;
     const total = num(x.avisos_nuevos);
@@ -280,14 +370,35 @@ Terna.pagina('inicio', async (ctx) => {
       { clave: 'enviadas', valor: num(x.enviadas), etiqueta: C.enviadas },
       { clave: 'a-mano', valor: num(x.postulados_a_mano), etiqueta: C.aMano },
     ];
-    const dl = h('dl', { class: 'cifras etapas' });
-    for (const f of filas) {
-      dl.append(h('div', { class: 'etapa', dataset: { etapa: f.clave } },
-        h('dt', { class: 'cifra-etiqueta', text: f.etiqueta }),
-        h('dd', { class: 'cifra-numero', text: Terna.numero(f.valor) }),
-        f.nota ? h('dd', { class: 'cifra-nota num', text: f.nota }) : null));
+    if (!fichas) {
+      fichas = {};
+      const dl = h('dl', { class: 'cifras etapas' });
+      for (const f of filas) {
+        const ref = { cuadro: cuadro(ICONO_CIFRA[f.clave]), numero: h('dd', { class: 'cifra-numero' }) };
+        ref.nodo = h('div', { class: 'etapa', dataset: { etapa: f.clave } },
+          h('dt', { class: 'cifra-etiqueta' }, ref.cuadro, h('span', { text: f.etiqueta })), ref.numero);
+        if (f.nota !== undefined) {
+          ref.nota = h('dd', { class: 'cifra-nota num' });
+          ref.relleno = h('span', { class: 'cifra-parte-relleno' });
+          ref.parte = h('dd', { class: 'cifra-parte', 'aria-hidden': 'true' }, ref.relleno);
+          ref.nodo.append(ref.nota, ref.parte);
+        }
+        dl.append(ref.nodo);
+        fichas[f.clave] = ref;
+      }
+      Terna.vaciar(cifras).append(dl);
     }
-    Terna.vaciar(cifras).append(dl);
+    for (const f of filas) {
+      const ref = fichas[f.clave];
+      ref.numero.textContent = Terna.numero(f.valor);
+      ref.nodo.classList.toggle('en-cero', f.valor === 0);
+      ref.cuadro.classList.toggle('cuadro-neutro', f.valor === 0);
+      if (ref.nota) {
+        ref.nota.textContent = f.nota;
+        ref.parte.hidden = total <= 0;
+        conCuenta(ref.relleno, pct(f.valor, total));
+      }
+    }
   }
   // Cambiar el período rehace solo las cifras; lo anterior queda a media luz mientras llega lo nuevo, sin saltos.
   async function recargarPeriodo() {
@@ -429,29 +540,34 @@ Terna.pagina('inicio', async (ctx) => {
         h('span', { text: I.periodos[p] })));
     }
     dibujarCifras(r);
-    return h('section', { class: 'tablero-seccion como-viene', 'aria-labelledby': 'h-como-viene' },
-      h('div', { class: 'tablero-cabecera' }, h('h2', { id: 'h-como-viene', text: I.comoViene }), seg), cifras,
+    return h('section', { class: 'tablero-seccion como-viene tramo', 'aria-labelledby': 'h-como-viene' },
+      cabeza('h-como-viene', I.comoViene, 'i-tendencia', null, seg), cifras,
       h('div', { class: 'como-viene-plegables' }, plegableSemanas(), L ? plegablePorMatch(L) : null));
   }
 
   /* ---------- Lo que priorizás (PLAN-UX §3.1, punto 8): las empresas que seguís y los puestos que buscás ---------- */
   const esNuevo = (a) => a.nuevo === true;
-  function cabecera(id, titulo, editar) {
-    return h('div', { class: 'tablero-cabecera' }, h('h2', { id, text: titulo }),
+  // PLAN-INICIO: la solapa neutra (datos) con «Editar» al lado, sobre la línea.
+  function cabecera(id, titulo, iconoId, editar) {
+    return cabeza(id, titulo, iconoId, null,
       editar ? h('a', { class: 'btn btn-texto btn-chico', href: editar.href, 'aria-label': editar.accesible, text: editar.texto }) : null);
   }
-  function vacio(texto, ayuda, boton) {
-    return h('div', { class: 'tablero-vacio' }, h('p', { text: texto }), h('p', { class: 'suave', text: ayuda }),
+  // El vacío en un renglón: el cuadro apagado, el texto con su ayuda y el botón (al costado desde 768).
+  function vacio(texto, ayuda, boton, iconoId) {
+    return h('div', { class: 'tablero-vacio' }, cuadro(iconoId, 'neutro'),
+      h('div', { class: 'tablero-vacio-texto' }, h('p', { text: texto }), h('p', { class: 'suave', text: ayuda })),
       h('a', { class: 'btn', href: boton.href }, icono('i-agregar'), boton.texto));
   }
-  // Una fila de lo tuyo: el nombre, la cuenta y, si hay avisos, el link a Paquetes filtrado.
-  function filaTuya(clase, nombre, cuenta, href, derecha) {
+  // Una fila de lo tuyo: el cuadro, el nombre, la cuenta y, si hay avisos, el link a Paquetes filtrado.
+  function filaTuya(clase, izquierda, nombre, cuenta, href, derecha) {
     const texto = h('span', { class: 'tuya-texto fila-texto' }, h('span', { class: 'tuya-nombre fila-nombre', text: nombre }),
       h('span', { class: 'tuya-cuenta fila-linea', text: cuenta }));
     return h('li', { class: clase }, href
-      ? h('a', { class: 'tuya fila', href }, texto, derecha, icono('i-adelante', 'i-adelante'))
-      : h('div', { class: 'tuya fila fila-info' }, texto, derecha));
+      ? h('a', { class: 'tuya fila', href }, izquierda, texto, derecha, icono('i-adelante', 'i-adelante'))
+      : h('div', { class: 'tuya fila fila-info' }, izquierda, texto, derecha));
   }
+  // La inicial de una empresa, en un cuadro (aria-hidden: el nombre ya está escrito al lado).
+  const inicial = (nombre) => h('span', { class: 'cuadro cuadro-letra', 'aria-hidden': 'true', text: (Array.from(String(nombre).trim())[0] || '·').toLocaleUpperCase('es') });
   const cuentaTuya = (deEsta) => {
     const k = deEsta.filter(esNuevo).length;
     return I.empresas.enLista(deEsta.length) + (k ? ', ' + I.empresas.nuevosCorto(k) : '');
@@ -459,16 +575,16 @@ Terna.pagina('inicio', async (ctx) => {
   // Cada empresa con lo que tiene en tu lista y lo nuevo (desde PLAN-UX, sin la lista de los nuevos arriba: cada fila ya lo dice).
   function seccionEmpresas(L, enLista, seguidas) {
     const E = I.empresas;
-    const sec = h('section', { class: 'tablero-seccion seguidas', 'aria-labelledby': 'h-empresas' },
-      cabecera('h-empresas', E.titulo, seguidas.filas.length ? { href: 'preferencias.html#empresas', texto: E.editar, accesible: E.editarAccesible } : null));
+    const sec = h('section', { class: 'tablero-seccion seguidas tramo', 'aria-labelledby': 'h-empresas' },
+      cabecera('h-empresas', E.titulo, 'i-empresa', seguidas.filas.length ? { href: 'preferencias.html#empresas', texto: E.editar, accesible: E.editarAccesible } : null));
     if (!seguidas.filas.length) {
-      sec.append(vacio(E.vacio, E.vacioAyuda, { href: 'preferencias.html#empresas', texto: E.seguir }));
+      sec.append(vacio(E.vacio, E.vacioAyuda, { href: 'preferencias.html#empresas', texto: E.seguir }, 'i-empresa'));
       return sec;
     }
     const ul = h('ul', { class: 'tuyas filas', role: 'list' });
     for (const f of seguidas.filas) {
       const deEsta = enLista.filter((a) => L.esLaEmpresa(a, f.nombre));
-      ul.append(filaTuya('seguida', f.nombre, cuentaTuya(deEsta), deEsta.length ? 'avisos.html?empresa=' + encodeURIComponent(f.nombre) : null, null));
+      ul.append(filaTuya('seguida', inicial(f.nombre), f.nombre, cuentaTuya(deEsta), deEsta.length ? 'avisos.html?empresa=' + encodeURIComponent(f.nombre) : null, null));
     }
     sec.append(ul);
     if (prefs.priorizar_empresas === false) sec.append(h('p', { class: 'suave tablero-nota', text: E.apagado }));
@@ -478,10 +594,10 @@ Terna.pagina('inicio', async (ctx) => {
   function seccionPuestos(L, enLista) {
     const P = I.puestos;
     const puestos = (prefs.puestos_objetivo || []).filter((x) => x && String(x).trim());
-    const sec = h('section', { class: 'tablero-seccion buscados', 'aria-labelledby': 'h-puestos' },
-      cabecera('h-puestos', P.titulo, puestos.length ? { href: 'preferencias.html#puestos', texto: P.editar, accesible: P.editarAccesible } : null));
+    const sec = h('section', { class: 'tablero-seccion buscados tramo', 'aria-labelledby': 'h-puestos' },
+      cabecera('h-puestos', P.titulo, 'i-foco', puestos.length ? { href: 'preferencias.html#puestos', texto: P.editar, accesible: P.editarAccesible } : null));
     if (!puestos.length) {
-      sec.append(vacio(P.vacio, P.vacioAyuda, { href: 'preferencias.html#puestos', texto: P.escribir }));
+      sec.append(vacio(P.vacio, P.vacioAyuda, { href: 'preferencias.html#puestos', texto: P.escribir }, 'i-foco'));
       return sec;
     }
     const ul = h('ul', { class: 'tuyas filas', role: 'list' });
@@ -489,7 +605,7 @@ Terna.pagina('inicio', async (ctx) => {
       const deEste = enLista.filter((a) => L.esElPuesto(a, p));
       const mejor = deEste.reduce((m, a) => Math.max(m, num(a.match)), 0);
       const derecha = deEste.length && mejor ? h('span', { class: 'tuya-match' }, h('span', { class: 'tuya-match-numero', text: String(mejor) }), h('span', { class: 'tuya-match-etiqueta', text: P.mejor })) : null;
-      ul.append(filaTuya('buscado', p, cuentaTuya(deEste), deEste.length ? 'avisos.html?puesto=' + encodeURIComponent(p) : null, derecha));
+      ul.append(filaTuya('buscado', cuadro('i-foco', deEste.length ? null : 'neutro'), p, cuentaTuya(deEste), deEste.length ? 'avisos.html?puesto=' + encodeURIComponent(p) : null, derecha));
     }
     sec.append(ul);
     if (prefs.priorizar_puestos === false) sec.append(h('p', { class: 'suave tablero-nota', text: P.apagado }));
@@ -502,16 +618,23 @@ Terna.pagina('inicio', async (ctx) => {
     const E = I.empezar;
     // Con el perfil incompleto, el paso 1 dice también que Terna no busca hasta completarlo (FEEDBACK-UX P2-3 a).
     const falta = ctx.faltantes.length ? E.perfilFalta(Terna.listaFaltantes(ctx.faltantes)) : null;
-    const paso = (href, texto, linea, hecho) => h('li', null, h('a', { class: 'fila empezar-paso' + (hecho ? ' hecho' : ''), href },
-      h('span', { class: 'empezar-marca', 'aria-hidden': 'true' }, hecho ? icono('i-tilde', 'icono-16') : null),
-      h('span', { class: 'fila-texto' }, h('span', { class: 'fila-nombre', text: texto }), linea ? h('span', { class: 'fila-linea', text: linea }) : null),
-      icono('i-adelante', 'i-adelante')));
-    return h('section', { class: 'empezar', 'aria-labelledby': 'h-empezar' },
-      h('h2', { id: 'h-empezar', text: E.titulo }),
-      h('ol', { class: 'filas empezar-pasos' },
-        paso('perfil.html', E.perfil, falta || E.hecho, !falta),
-        paso('preferencias.html', E.preferencias, E.preferenciasAyuda, false),
-        paso('busqueda.html', E.empleos, hayPara ? T.busqueda.enInicio(num(hayPara.avisos), num(hayPara.semana)) : null, false)),
+    // PLAN-INICIO: tres carpetas numeradas, como «Cómo funciona» de la landing: el número en la lengüeta, toda la carpeta es el link
+    // (a.empezar-paso, como antes) y el paso 1 lleva su marbete, Falta o Hecho.
+    const paso = (i, href, iconoId, texto, linea, hecho, marbete) => h('li', { class: 'carpeta empezar-carpeta' },
+      h('div', { class: 'carpeta-cabeza' },
+        h('span', { class: 'lengueta empezar-numero', 'aria-hidden': 'true' }, h('span', { class: 'lengueta-numero', text: String(i) })), marbete || null),
+      h('a', { class: 'carpeta-cuerpo fila empezar-paso' + (hecho ? ' hecho' : ''), href },
+        cuadro(iconoId, i === 1 && !hecho ? 'toca' : null),
+        h('span', { class: 'fila-texto' }, h('span', { class: 'fila-nombre', text: texto }), linea ? h('span', { class: 'fila-linea', text: linea }) : null),
+        icono('i-adelante', 'i-adelante')));
+    const marbete = h('span', { class: 'marbete chip marbete-' + (falta ? 'toca' : 'resuelta') },
+      icono(falta ? 'i-por-decidir' : 'i-tilde', 'icono-14'), h('span', { text: falta ? T.perfil.faltaCorto : E.hecho }));
+    return h('section', { class: 'empezar tramo', 'aria-labelledby': 'h-empezar' },
+      cabeza('h-empezar', E.titulo, 'i-enviada', 'terna'),
+      h('ol', { class: 'empezar-pasos' },
+        paso(1, 'perfil.html', 'i-perfil', E.perfil, falta || E.hecho, !falta, marbete),
+        paso(2, 'preferencias.html', 'i-preferencias', E.preferencias, E.preferenciasAyuda, false),
+        paso(3, 'busqueda.html', 'i-buscar', E.empleos, hayPara ? T.busqueda.enInicio(num(hayPara.avisos), num(hayPara.semana)) : null, false)),
       h('a', { class: 'btn btn-texto empezar-como', href: 'como-funciona.html' }, icono('i-preguntar'), E.como));
   }
 
@@ -532,6 +655,8 @@ Terna.pagina('inicio', async (ctx) => {
   const nuevos = avisos && typeof Lista.paquetesNuevos === 'function' ? Lista.paquetesNuevos(avisos, fechaCorrida) : undefined;
   Terna.cuentaPaquetes({ nuevos, porDecidir });
 
+  // PLAN-INICIO D3 (sobrio): los bloques entran una vez, de arriba hacia abajo, al dibujarse la página (solo con movimiento).
+  cont.classList.add('entra');
   const corrida = lineaCorrida();
   if (corrida) cont.append(corrida);
   if (!fechaCorrida) {

@@ -63,6 +63,8 @@
     'i-deshacer': P('M4 10h10a5 5 0 0 1 0 10H9M4 10l4-4M4 10l4 4'),
     // 0.3: notas para la entrevista y etiquetas del aviso (mock "Propuestas 0.3", aprobadas el 22/10/2026)
     'i-foco': '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+    // PLAN-INICIO (25/11): Cómo viene, en la solapa de Inicio: dos ejes y una línea que sube.
+    'i-tendencia': P('M4 5v14h16M8 15l3-4 3 2 4-6'),
     // Empresas que seguís (diseno.md 0.26 §11.2): un edificio con ventanas, para el chip "Tu empresa" y su lista en Inicio.
     'i-empresa': P('M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M3 21h18M8 8h3M8 12h3M8 16h3'),
     'i-hablar': P('M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'),

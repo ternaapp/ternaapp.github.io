@@ -65,6 +65,8 @@
   --space-3xs: 2px; --space-2xs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px; --space-ml: 20px;
   --space-lg: 24px; --space-xl: 32px; --space-2xl: 48px; --space-3xl: 64px;
   --gutter: 16px; --pad-carpeta: var(--space-md);
+  /* PLAN-INICIO (25/11): el alto de la solapa de una sección (.solapa): la lengüeta del match a escala de sección. */
+  --solapa: 40px;
 
   /* Forma: la pastilla queda para la cuenta del muelle y el destino activo del muelle. El interruptor tiene la esquina de la
      lengüeta (radio 10) y un sello cuadrado, no la pastilla (§ El interruptor «sello»). */
@@ -1134,6 +1136,48 @@ details.plegable[open] > summary > .icono:last-child { transform: rotate(180deg)
   body .filtros-movil:not(.filtros-hoja > *) { display: none; }
 }
 
+/* ---------- 11c. Piezas de página (PLAN-INICIO, 25/11/2026; opciones-v3/PLAN-INICIO.md §2.0 y §4.1) ----------
+   El lenguaje de la landing a escala de herramienta: cada sección es un tramo del bibliorato, con su solapa (ícono y título) que
+   sale de una línea fina; lo que se toca lleva su ícono en un cuadro. La solapa tiene tres colores: ámbar lo que te toca, lila lo
+   que hizo Terna, neutra los datos. Las usa Inicio; las van a usar Paquetes, Postulaciones y Empleos. Ni ops.html ni contratar.html
+   las usan. Solo fichas que ya tienen su valor en los dos modos. */
+.tramo { display: flex; flex-direction: column; gap: var(--space-md); min-width: 0; }
+.tramo-cabeza { position: relative; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-xs) var(--space-md); }
+/* La línea fina, al pie de la solapa, aunque la acción baje a un segundo renglón. */
+.tramo-cabeza::before { content: ""; position: absolute; top: var(--solapa); right: 0; left: 0; border-top: var(--rule-hair) solid var(--color-rule); }
+.tramo-cabeza > :not(.solapa) { margin-bottom: var(--space-2xs); }
+.solapa {
+  display: inline-flex; align-items: center; gap: var(--space-xs); height: var(--solapa); max-width: 100%; padding: 0 var(--space-md) 0 var(--space-sm);
+  border-radius: var(--radius-tab) var(--radius-tab) 0 0; background: var(--color-paper-3); color: var(--color-ink);
+  font: var(--weight-display) var(--text-md)/1 var(--font-display); letter-spacing: var(--tracking-display); white-space: nowrap;
+}
+.solapa > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.solapa .icono { flex: none; width: 18px; height: 18px; color: var(--color-ink-2); }
+.solapa-toca { background: var(--color-turn-tint); }
+.solapa-toca .icono { color: var(--color-turn); }
+.solapa-terna { background: var(--color-accent-tint); }
+.solapa-terna .icono { color: var(--color-accent); }
+/* El cuadro: el ícono de lo que se toca, en 44 × 44 (el .ld-cuadro de la landing). */
+.cuadro { display: grid; flex: none; place-items: center; width: 44px; height: 44px; border-radius: var(--radius-control); background: var(--color-accent-tint); color: var(--color-accent); }
+.cuadro .icono { width: 24px; height: 24px; }
+.cuadro-toca { background: var(--color-turn-tint); color: var(--color-turn); }
+.cuadro-neutro { background: var(--color-paper-3); color: var(--color-muted); }
+.cuadro-letra, .cuadro-match { color: var(--color-ink); font: var(--weight-display) var(--text-lg)/1 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-display); }
+.cuadro-letra { background: var(--color-paper-3); }
+/* Las pinturas de los dibujos (antes en css/p-landing.css): sin colores escritos, cada parte lleva una clase y el color sale de las
+   fichas. Los dibujos son decorativos (aria-hidden). */
+.il-hoja { fill: var(--color-elegido); stroke: var(--color-rule-2); stroke-width: 1.5; }
+.il-renglon { fill: none; stroke: var(--color-rule-2); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.il-lila { fill: var(--color-accent-tint); }
+.il-acento { fill: none; stroke: var(--color-accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.il-puntos { fill: none; stroke: var(--color-accent); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 0 6; }
+.il-carpeta { fill: var(--color-paper-3); }
+.il-hecho { fill: var(--color-done); }
+.il-hecho-tilde { fill: none; stroke: var(--color-done-ink); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+@media (min-width: 48rem) {
+  .solapa { font-size: var(--text-lg); }
+}
+
 /* ---------- 12. La página por bloques: Mi perfil, Preferencias y las guías (§2.12) ---------- */
 /* Hasta 47,99rem cada bloque es una carpeta plegable: la lengüeta con su nombre y, cerrado, un lomo que dice qué hay adentro.
    Desde 48rem, el carril de bloques elige uno y se ve ese, abierto. La lógica es la de Terna.porBloques (js/comun.js). */
@@ -1227,6 +1271,8 @@ details.plegable[open] > summary > .icono:last-child { transform: rotate(180deg)
 @keyframes aviso-entra { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes subir { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes aparecer { from { opacity: 0; } to { opacity: 1; } }
+/* PLAN-INICIO: un estado que se sella al llegar algo nuevo (el ld-sella de la landing, que sigue con el suyo). */
+@keyframes sellar { from { opacity: 0; transform: scale(1.25) rotate(-3deg); } }
 
 /* ---------- 14. Preferencias del sistema ---------- */
 @media (prefers-reduced-motion: reduce) {
@@ -1241,6 +1287,7 @@ details.plegable[open] > summary > .icono:last-child { transform: rotate(180deg)
   .pestana[aria-current], .muelle-destino[aria-current] .muelle-pastilla, .menu-fila[aria-current], .carril-bloques a[aria-current="true"],
   .separador[aria-current="true"], .vista input:checked + .vista-cara > .vista-titulo { outline: 2px solid CanvasText; outline-offset: -2px; }
   .lengueta, .marbete, .carpeta-cuerpo, .bloque-lomo { border: 1px solid CanvasText; }
+  .solapa, .cuadro { border: var(--rule-hair) solid CanvasText; }
 }
 
 /* Al final, para ganarle a cualquier display de una pieza o de una página (las hojas p-*.css se cargan después de esta). */
