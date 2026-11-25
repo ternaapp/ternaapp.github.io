@@ -2131,7 +2131,8 @@ window.T = (function () {
         // en el HTML esas celdas llevan el data-t de si, no o pronto, no el del valor.
         si: 'Incluido',
         no: 'No incluido',
-        // Lo que Terna todavía no hace (avisar al instante): la marca de «Espera», con el reloj. La nota al pie dice qué significa.
+        // Lo que Terna todavía no hace: la marca de «Espera», con el reloj. Desde PLAN-LADOS 0.3 (25/11) ninguna fila la usa
+        // (era la de «Te avisa al instante»); queda para la próxima cosa que se anuncie antes de existir.
         pronto: 'Pronto',
         // Los planes, en un solo lugar: ningún número de precios está escrito en otra clave ni en el CSS. Para cambiar un precio
         // se cambia acá y en el elemento de bienvenida.html que lleva esa clave (el banco avisa si quedan distintos). Los montos,
@@ -2166,13 +2167,21 @@ window.T = (function () {
         // §7.8; fuentes.md §6); D3 sigue: «sí» en los cuatro lo dedujo el plan. En el HTML, el ícono de la fila nueva es el de
         // Empleos (i-buscar) y el del match, i-foco. Antes: Paquetes, «Búsqueda de avisos con match» (sin ayuda), Terna postula por
         // vos y Te avisa al instante.
+        // propuesta PLAN-LADOS 0.3 (brand.md §6.15), 25/11, Francisco («un texto muy largo… resumilo… como el de Match»; «Te avisa
+        // al instante… yo haría un tick, no haría el pronto… notificación de cuando tenés un nuevo match, de cuando te postularon,
+        // de no pudimos postular… notificaciones algo más generales… que el usuario gratis solamente tenga acceso a la plataforma»):
+        // la ayuda de la primera fila, del largo de la del match; «Te avisa al instante» pasa a «Notificaciones», con tilde y no
+        // «Pronto» en Prueba, Radar y Búsqueda activa, y raya en Gratis. OJO: hoy Terna no manda notificaciones (brand.md, «Terna
+        // no manda notificaciones ni mails por la corrida»; vision.md 0.7 §6: la app y el mail, para después): el tilde las promete
+        // y tienen que existir antes de que se pueda contratar un plan. Antes: la ayuda de la fila 0, «Todos en un solo lugar:
+        // Terna los lee cada día en sus sitios de empleo y suma las alertas de otros portales que le reenviás.»; la fila 4, «Te
+        // avisa al instante» («Cuando publica una empresa que seguís o aparece un match alto.»; pronto, no, pronto, pronto).
         filas: [
-          // La ayuda suma las alertas que reenvía la persona (salieron del paso «Busca los avisos»), con ella como sujeto.
-          { rotulo: 'Avisos de cientos de empresas', ayuda: 'Todos en un solo lugar: Terna los lee cada día en sus sitios de empleo y suma las alertas de otros portales que le reenviás.', valores: ['si', 'si', 'si', 'si'] },
+          { rotulo: 'Avisos de cientos de empresas', ayuda: 'En un solo lugar: Terna los busca cada día.', valores: ['si', 'si', 'si', 'si'] },
           { rotulo: 'Match con tu perfil', ayuda: 'De 0 a 100: cuánto ajusta cada aviso nuevo con vos.', valores: ['Todos los días', '2 veces por semana', 'Todos los días', 'Todos los días'] },
           { rotulo: 'Paquetes', valores: ['3 en los 7 días', '1 por mes', '4 por mes', '1 por día'] },
           { rotulo: 'Terna postula por vos', ayuda: 'Donde el formulario lo permite.', valores: ['si', 'no', 'no', 'si'] },
-          { rotulo: 'Te avisa al instante', ayuda: 'Cuando publica una empresa que seguís o aparece un match alto.', valores: ['pronto', 'no', 'pronto', 'pronto'] },
+          { rotulo: 'Notificaciones', ayuda: 'Avisos nuevos, matches altos y tus postulaciones.', valores: ['si', 'no', 'si', 'si'] },
         ],
         // Los paquetes sueltos no son un plan: van en una franja debajo de la tabla. D3: que se suman también a Gratis lo dedujo el
         // plan. boton (D4 de Francisco): data-plan="sueltos" y data-accion="comprar", sin efecto por ahora.
