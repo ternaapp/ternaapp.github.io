@@ -1,0 +1,16 @@
+// Terna Jobs · cómo publica Cloudflare la web (terna-motor/docs/plan-cloudflare.md §4.6). No es un build: los archivos se
+// sirven tal cual. Qué se publica lo dice .assetsignore (una lista de lo que SÍ va); las cabeceras, _headers; la raíz, _redirects.
+{
+  "name": "terna-web",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./",
+    // /contratar.html se sirve como /contratar.html: sin esto Cloudflare redirige a /contratar y cambian todas las direcciones.
+    "html_handling": "none",
+    "not_found_handling": "none"
+  },
+  // La dirección de prueba terna-web.<cuenta>.workers.dev: se apaga (false) el mismo día que ternajobs.com sirve desde acá,
+  // porque las reglas de la zona y Access no la cubren (plan-cloudflare.md §8.1).
+  "workers_dev": true,
+  "preview_urls": false
+}

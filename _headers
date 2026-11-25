@@ -1,0 +1,37 @@
+# Terna Jobs · cabeceras que manda Cloudflare (terna-motor/docs/plan-cloudflare.md §4.7).
+# La CSP es la del <meta> de las quince páginas más frame-ancestors, que por <meta> no vale: si cambia una, cambia la otra
+# (el banco las compara: publicado_csp_cabecera_igual_a_meta). Cambiar la versión de supabase-js: las quince páginas y acá.
+# Dos reglas que ponen la misma cabecera se juntan con coma: por eso /* no pone Cache-Control.
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js; style-src 'self'; font-src 'self'; img-src 'self' https://dgkroxrgprpsxrjyfepn.supabase.co; connect-src https://dgkroxrgprpsxrjyfepn.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Strict-Transport-Security: max-age=86400
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()
+  Cross-Origin-Opener-Policy: same-origin
+
+# css/ y js/ van sellados (?v=huella, herramientas/sellar.py): la dirección cambia cuando cambia el contenido, así que el
+# navegador puede guardarlos un año. El HTML no lleva regla: Cloudflare lo manda con "public, max-age=0, must-revalidate".
+/css/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/js/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Las tipografías no llevan sello (las nombra css/fonts.css): un mes. Si una cambia, cambia de nombre.
+/css/fonts/*
+  ! Cache-Control
+  Cache-Control: public, max-age=2592000
+
+# Las imágenes tampoco llevan sello: un día. Una imagen que cambia, cambia de nombre.
+/img/*
+  Cache-Control: public, max-age=86400
+
+/favicon.svg
+  Cache-Control: public, max-age=86400
+
+/ops.html
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow

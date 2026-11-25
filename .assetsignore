@@ -1,0 +1,12 @@
+# Terna Jobs · qué publica Cloudflare (terna-motor/docs/plan-cloudflare.md §4.5). Todo afuera, salvo lo que se nombra acá:
+# un archivo nuevo en la raíz no se publica por descuido. Afuera quedan CLAUDE.md, herramientas/, CNAME, .nojekyll,
+# wrangler.jsonc y este archivo. _headers y _redirects Cloudflare los lee como configuración; no se sirven.
+# Si se suma una carpeta o un archivo que la web pide, va acá (el banco lo controla: publicado_solo_la_web).
+/*
+!/*.html
+!/css/
+!/js/
+!/img/
+!/favicon.svg
+!/robots.txt
+!/sitemap.xml

@@ -1,0 +1,3 @@
+# Terna Jobs · la raíz muestra Inicio sin cambiar la dirección (código 200); js/puerta.js decide si sigue o va a la landing.
+# Hace falta porque wrangler.jsonc tiene html_handling "none" (terna-motor/docs/plan-cloudflare.md §4.6).
+/ /index.html 200
