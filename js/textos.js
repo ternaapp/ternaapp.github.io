@@ -411,6 +411,9 @@ window.T = (function () {
       bajoMinimoExplicacion: 'El aviso o el mercado pagan menos de lo que pedís. El salario sugerido es tu mínimo; vos decidís si postulás igual.',
       columnas: { puesto: 'Puesto', empresa: 'Empresa', modalidad: 'Modalidad', ubicacion: 'Ubicación', match: 'Match', paquete: 'Paquete', postulacion: 'Postulación', donde: 'Dónde se postula', interes: 'Interés', publicado: 'Publicado', aviso: 'Aviso' },
       abrirEn: (fuente) => 'Abrir aviso en ' + fuente,
+      // propuesta PLAN-PANTALLAS (brand.md §6.4), 25/11: «Abrir aviso» en una lista (Postulaciones › A mano), al lado de «Marcar
+      // postulado»; el sitio sigue en el nombre accesible (abrirEnAccesible, abrirEnEmpresaAccesible) y en la ficha.
+      abrirCorto: 'Abrir aviso',
       abrirEnAccesible: (fuente) => 'Abrir aviso en ' + fuente + ', abre en otra pestaña',
       // Dónde se postula (brand.md 0.10 §6.4; diseno.md 0.23 §7.6; Francisco, 06/11/2026): Terna, Easy Apply de LinkedIn, el sitio de
       // la empresa o un portal de empleo. La palabra corta va en la columna, la tarjeta y el filtro; la explicación, en la ficha.
@@ -806,6 +809,10 @@ window.T = (function () {
       // avisos no se dibuja. Las claves son las del campo avisos.rubro que se propone al motor (PLAN-UX §6.4).
       rubros: {
         titulo: 'Por el nombre del puesto',
+        // propuesta PLAN-PANTALLAS (brand.md §6.3.1), 25/11: los rubros se pliegan detrás de un chip, primero en la fila de atajos;
+        // con uno elegido, el chip lo dice.
+        boton: 'Rubros',
+        elegido: (rubro) => 'Rubro: ' + rubro,
         valores: {
           administracion: 'Administración y finanzas', ventas: 'Ventas y comercio', atencion: 'Atención al cliente',
           tecnologia: 'Tecnología y datos', logistica: 'Logística y transporte', oficios: 'Producción y oficios',

@@ -371,6 +371,10 @@ Terna.pagina('busqueda', async (ctx) => {
   const refsAtajos = new Map();
   const refsRubros = new Map();
   let cajaRubros = null;
+  // PLAN-PANTALLAS D6 (25/11): los rubros, plegados detrás del chip «Rubros» (el primero de la fila de atajos); arrancan abiertos si
+  // hay uno elegido. Abierto o cerrado no se guarda.
+  let rubrosAbierto = false;
+  let botonRubros = null;
   // Un chip que se prende y se apaga: un botón con aria-pressed, con la cara de los chips de opción (el tilde, prendido).
   function chipAtajo(texto, alTocar, extraNodo) {
     const b = h('button', { class: 'chip-opcion-cara chip-atajo', type: 'button', 'aria-pressed': 'false' },
@@ -383,10 +387,24 @@ Terna.pagina('busqueda', async (ctx) => {
     refsAtajos.clear();
     refsRubros.clear();
     cajaRubros = null;
+    botonRubros = null;
+    if (extra.rubro) rubrosAbierto = true;
     const vale = (k) => { const n = avisos.filter(ATAJOS[k].de).length; return n > 0 && n < avisos.length; };
     const atajos = ORDEN_ATAJOS.filter((k) => ATAJOS[k].puesto() || ((k !== 'cerca' || nombresCerca.length) && vale(k)));
-    if (atajos.length) {
-      const fila = h('div', { class: 'explorar-fila atajos', role: 'group', 'aria-label': B.atajosNombre });
+    // Los rubros con avisos (con todo lo abierto, no con los filtros puestos: así la fila no cambia mientras se filtra), de los que
+    // más tienen a los que menos; «Otros» al final. Con uno solo no hay nada que elegir y la fila no va.
+    const base = new Map();
+    for (const a of avisos) if (a.rubro) base.set(a.rubro, (base.get(a.rubro) || 0) + 1);
+    const rubros = RUBROS.filter((k) => base.get(k) > 0 || extra.rubro === k)
+      .sort((x, y) => ((x === 'otros') - (y === 'otros')) || ((base.get(y) || 0) - (base.get(x) || 0)) || (RUBROS.indexOf(x) - RUBROS.indexOf(y)));
+    const idCaja = Terna.idUnico('rubros-caja');
+    if (rubros.length > 1) {
+      botonRubros = h('button', { class: 'chip-opcion-cara chip-atajo chip-rubros', type: 'button', 'aria-expanded': String(rubrosAbierto), 'aria-controls': idCaja,
+        dataset: { control: 'rubros' } }, h('span', { class: 'chip-atajo-texto' }), icono('i-chevron', 'icono-16'));
+      botonRubros.addEventListener('click', () => { rubrosAbierto = !rubrosAbierto; actualizarExplorar(); });
+    }
+    if (atajos.length || botonRubros) {
+      const fila = h('div', { class: 'explorar-fila atajos', role: 'group', 'aria-label': B.atajosNombre }, botonRubros);
       for (const k of atajos) {
         const b = chipAtajo(ATAJOS[k].texto(), () => tocarAtajo(k));
         b.dataset.atajo = k;
@@ -397,12 +415,6 @@ Terna.pagina('busqueda', async (ctx) => {
       }
       explorar.append(fila);
     }
-    // Los rubros con avisos (con todo lo abierto, no con los filtros puestos: así la fila no cambia mientras se filtra), de los que
-    // más tienen a los que menos; «Otros» al final. Con uno solo no hay nada que elegir y la fila no va.
-    const base = new Map();
-    for (const a of avisos) if (a.rubro) base.set(a.rubro, (base.get(a.rubro) || 0) + 1);
-    const rubros = RUBROS.filter((k) => base.get(k) > 0 || extra.rubro === k)
-      .sort((x, y) => ((x === 'otros') - (y === 'otros')) || ((base.get(y) || 0) - (base.get(x) || 0)) || (RUBROS.indexOf(x) - RUBROS.indexOf(y)));
     if (rubros.length > 1) {
       const idTitulo = Terna.idUnico('rubros');
       const fila = h('div', { class: 'explorar-fila rubros-fila' });
@@ -413,7 +425,7 @@ Terna.pagina('busqueda', async (ctx) => {
         refsRubros.set(k, { b, n });
         fila.append(b);
       }
-      cajaRubros = h('div', { class: 'rubros', role: 'group', 'aria-labelledby': idTitulo }, h('p', { class: 'rubros-titulo', id: idTitulo, text: B.rubros.titulo }), fila);
+      cajaRubros = h('div', { class: 'rubros', id: idCaja, role: 'group', 'aria-labelledby': idTitulo }, h('p', { class: 'rubros-titulo', id: idTitulo, text: B.rubros.titulo }), fila);
       explorar.append(cajaRubros);
     }
     actualizarExplorar();
@@ -441,7 +453,13 @@ Terna.pagina('busqueda', async (ctx) => {
         r.b.hidden = !elegido && !n.get(k);
         if (!r.b.hidden) quedan += 1;
       }
-      if (cajaRubros) cajaRubros.hidden = !quedan;
+      if (cajaRubros) cajaRubros.hidden = !quedan || !rubrosAbierto;
+      if (botonRubros) {
+        botonRubros.querySelector('.chip-atajo-texto').textContent = extra.rubro ? B.rubros.elegido(B.rubros.valores[extra.rubro]) : B.rubros.boton;
+        botonRubros.classList.toggle('cambiado', !!extra.rubro);
+        botonRubros.setAttribute('aria-expanded', String(rubrosAbierto));
+        botonRubros.hidden = !quedan && !extra.rubro;
+      }
     }
     explorar.hidden = !Array.from(explorar.children).some((c) => !c.hidden);
   }
@@ -570,7 +588,8 @@ Terna.pagina('busqueda', async (ctx) => {
   // «Más filtros» (PLAN-WEB.md §2.8): desde 768 px quedan a la vista los cambiados y los primeros de la barra, hasta cuatro (y nunca
   // esconde uno solo: js/filtros.js).
   let barraFiltros = null;
-  const repartirBarra = () => Filtros.masFiltros({ barra: barraFiltros, botones, claves: CLAVES, cambiado, aLaVista: 4 });
+  // PLAN-PANTALLAS D7: tres a la vista y «Más filtros», así la barra entra en un renglón (con cuatro los dejaba todos y partían).
+  const repartirBarra = () => Filtros.masFiltros({ barra: barraFiltros, botones, claves: CLAVES, cambiado, aLaVista: 3 });
   function armarBarra() {
     const barra = h('div', { class: 'filtros-barra', role: 'group', 'aria-label': B.filtros.barra });
     for (const k of CLAVES) {
@@ -730,26 +749,32 @@ Terna.pagina('busqueda', async (ctx) => {
     const marcas = [marbete && estadoDe(a) === 'postulada' ? null : chipLista(a), chipCoincide(a)].filter(Boolean);
     const chips = marcas.length ? h('div', { class: 'chips' }, marcas) : null;
     const tuyos = chipsTuyos(a);
-    const pie = h('div', { class: 'tarjeta-pie' }, fechaDe(a), h('span', { class: 'acciones-tarjeta' }, linkLista(a), accion(a)));
+    // PLAN-PANTALLAS D8: un solo pie, con dónde se postula a la izquierda y el link y la acción a la derecha; la fecha sube al
+    // renglón de datos. Sin nada que poner, sin pie.
     const donde = Aviso.lineaDonde(a, prefs);
+    const link = linkLista(a);
+    const acc = accion(a);
+    const pie = donde || link || acc ? h('div', { class: 'tarjeta-pie' }, donde, link || acc ? h('span', { class: 'acciones-tarjeta' }, link, acc) : null) : null;
     const etiquetas = Aviso.etiquetas(a, false, false, null);
     let art;
     if (a.con_paquete) {
-      pie.classList.add('carpeta-acciones');
+      if (pie) pie.classList.add('carpeta-acciones');
       art = h('article', { class: 'tarjeta-aviso carpeta', dataset: { aviso: a.aviso_id } },
         h('div', { class: 'carpeta-cabeza' }, Aviso.lengueta(a, umbral), marbete),
         h('div', { class: 'carpeta-cuerpo aviso-datos' }, boton,
           a.empresa ? h('span', { class: 'aviso-empresa empresa', text: a.empresa }) : null,
-          h('div', { class: 'aviso-linea' }, Aviso.atributos(a, { sinFuente: true }), tuyos),
-          donde, etiquetas, chips, pie));
+          h('div', { class: 'aviso-linea' }, Aviso.atributos(a, { sinFuente: true }), tuyos, fechaDe(a)),
+          etiquetas, chips, pie));
     } else {
-      const columna = estadoDe(a) === 'fuera'
-        ? h('span', { class: 'linea-match linea-lupa' }, icono('i-buscar'))
-        : Aviso.lengueta(a, umbral, { linea: true });
+      // PLAN-PANTALLAS D8: lo que no está en tu lista lleva la inicial de la empresa en un cuadro (antes, una lupa repetida); sin
+      // empresa, el cuadro apagado con la lupa. Lo que está en tu lista, su match.
+      const columna = estadoDe(a) !== 'fuera' ? Aviso.lengueta(a, umbral, { linea: true })
+        : a.empresa ? h('span', { class: 'linea-match cuadro cuadro-letra', 'aria-hidden': 'true', text: (Array.from(String(a.empresa).trim())[0] || '·').toLocaleUpperCase('es') })
+          : h('span', { class: 'linea-match cuadro cuadro-neutro', 'aria-hidden': 'true' }, icono('i-buscar'));
       art = h('article', { class: 'tarjeta-aviso linea', dataset: { aviso: a.aviso_id } }, columna,
         h('div', { class: 'linea-datos aviso-datos' }, boton,
-          h('div', { class: 'linea-apoyo' }, a.empresa ? h('span', { class: 'aviso-empresa', text: a.empresa }) : null, Aviso.atributos(a, { sinFuente: true }), tuyos),
-          donde, etiquetas, chips, pie));
+          h('div', { class: 'linea-apoyo' }, a.empresa ? h('span', { class: 'aviso-empresa', text: a.empresa }) : null, Aviso.atributos(a, { sinFuente: true }), tuyos, fechaDe(a)),
+          etiquetas, chips, pie));
     }
     art.addEventListener('click', (e) => { if (!e.target.closest('button, a, input, label, select')) abrirFicha(a, boton); });
     return art;
@@ -763,14 +788,15 @@ Terna.pagina('busqueda', async (ctx) => {
       titulo: F.boton(NOMBRES[clave], resumen(clave)), alAbrir: (b) => abrirFiltro(clave, b, true) });
     const thead = h('thead', null, h('tr', null,
       h('th', { scope: 'col', class: 'col-puesto', text: C.puesto }), th(C.empresa, 'empresa', 'col-empresa'), th(C.ubicacion, 'ubicacion', 'col-ubicacion'),
-      th(C.donde, 'donde', 'col-donde'), th(B.columnas.lista, 'lista', 'col-lista'), h('th', { scope: 'col', class: 'col-paquete', text: B.columnas.paquete }),
+      // PLAN-PANTALLAS D7: Estado y Paquete en una sola columna (la de Paquete era el mismo botón en todas las filas).
+      th(C.donde, 'donde', 'col-donde'), th(B.columnas.lista, 'lista', 'col-lista'),
       th(C.publicado, 'publicado', 'col-publicado', orden === 'nuevos' ? 'descending' : 'none'),
       h('th', { scope: 'col', text: C.aviso })));
     let cuerpos;
-    if (aviso) cuerpos = h('tbody', null, h('tr', null, h('td', { class: 'tabla-vacia', colspan: '8' }, aviso)));
+    if (aviso) cuerpos = h('tbody', null, h('tr', null, h('td', { class: 'tabla-vacia', colspan: '7' }, aviso)));
     else if (grupos) {
       cuerpos = grupos.map((g) => h('tbody', null,
-        h('tr', { class: 'grupo' }, h('th', { scope: 'rowgroup', colspan: '8' }, tituloGrupo(g.g, g.n))), g.items.map(fila)));
+        h('tr', { class: 'grupo' }, h('th', { scope: 'rowgroup', colspan: '7' }, tituloGrupo(g.g, g.n))), g.items.map(fila)));
     } else cuerpos = h('tbody', null, vis.map(fila));
     return h('div', { class: 'tabla-caja tabla-busqueda' }, h('table', { class: 'tabla' }, thead, cuerpos));
   }
@@ -799,8 +825,7 @@ Terna.pagina('busqueda', async (ctx) => {
       h('td', { class: 'col-ubicacion' }, h('span', { class: 'atributos' }, icono(a.alcance === 'exterior' ? 'i-exterior' : 'i-local', 'icono-16'),
         h('span', { title: tituloLugar(a), text: conModalidad(a, lugarCorto(a)) }))),
       h('td', { class: 'col-donde' }, Aviso.celdaDonde(a, prefs)),
-      h('td', { class: 'col-lista' }, h('div', { class: 'celda-paquete' }, estadoEnLista(a), linkLista(a))),
-      h('td', { class: 'col-paquete' }, accion(a)),
+      h('td', { class: 'col-lista' }, h('div', { class: 'celda-paquete' }, estadoEnLista(a), linkLista(a), accion(a))),
       h('td', { class: 'col-publicado' }, fechaDe(a)),
       h('td', null, h('a', { class: 'btn btn-texto btn-chico', href: Terna.urlExterna(a.url), target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(a.fuente) }, icono('i-abrir'))));
     tr.addEventListener('click', (e) => { if (!e.target.closest('button, a, input, label, select')) abrirFicha(a, tr); });

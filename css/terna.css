@@ -1110,11 +1110,8 @@ details.plegable[open] > summary > .icono:last-child { transform: rotate(180deg)
 /* El título de un grupo con su cuenta (Aviso.tituloGrupo): «Hoy · 3», «Te toca decidir · 2». Lo que te toca lleva el ícono en ámbar;
    lo que falló, el triángulo y la tinta roja; lo que espera, el reloj. Ningún tono va solo con color. */
 .grupo-cabeza { display: flex; flex-direction: column; gap: var(--space-3xs); padding-top: var(--space-xs); }
-.grupo-cabeza > .grupo-titulo { align-items: center; color: var(--color-ink-2); font-size: var(--text-md); }
+/* Desde PLAN-PANTALLAS (25/11) el título de un grupo es una solapa (§11c): el color y el ícono los pone la solapa. */
 .grupo-titulo .icono { width: 18px; height: 18px; color: var(--color-muted); }
-.grupo-toca .icono { color: var(--color-turn); }
-.grupo-cabeza > .grupo-error { color: var(--color-error-deep); }
-.grupo-error .icono { color: var(--color-error); }
 .grupo-punto { color: var(--color-muted); }
 .grupo-ayuda { color: var(--color-muted); font-size: var(--text-sm); line-height: 1.4; }
 
@@ -1174,6 +1171,15 @@ details.plegable[open] > summary > .icono:last-child { transform: rotate(180deg)
 .il-carpeta { fill: var(--color-paper-3); }
 .il-hecho { fill: var(--color-done); }
 .il-hecho-tilde { fill: none; stroke: var(--color-done-ink); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+/* La solapa de un grupo de lista (Aviso.tituloGrupo; PLAN-PANTALLAS D1): un nivel menos que la de sección (34 px, sin crecer desde
+   768), con su cuenta. Roja cuando el grupo es de lo que falló. */
+.grupo-cabeza { --solapa: 34px; }
+.grupo-cabeza .grupo-titulo.solapa { align-items: center; color: var(--color-ink); font: var(--weight-display) var(--text-md)/1 var(--font-display); letter-spacing: var(--tracking-display); }
+.grupo-cabeza .solapa .grupo-punto { color: var(--color-muted); }
+.grupo-cabeza .solapa .num { color: var(--color-ink); }
+.grupo-cabeza > .grupo-ayuda { margin-top: var(--space-2xs); }
+.solapa-error { background: var(--color-error-tint); }
+.solapa-error .icono { color: var(--color-error); }
 @media (min-width: 48rem) {
   .solapa { font-size: var(--text-lg); }
 }

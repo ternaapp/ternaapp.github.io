@@ -78,21 +78,40 @@ button.fila-postulacion {
 /* Se adapta a su propio ancho (diseno.md 0.8 §7.6 y §8.6): con el carril o con el cajón abierto, lo que no entra pasa a la línea de
    apoyo debajo del puesto en vez de desplazarse. Los cortes de caja son los de siempre. */
 .tabla-postulaciones { display: none; container-type: inline-size; container-name: tabla; }
-.tabla-postulaciones .apoyo-empresa, .tabla-postulaciones .apoyo-porque { display: none; }
+.tabla-postulaciones .apoyo-empresa { display: none; }
 /* El puesto en 14 px, como el resto de la tabla: con los chips de B2 (28 px, 600) la etapa pide más ancho que antes. */
 .tabla-postulaciones .aviso-puesto { font-weight: var(--weight-strong); font-size: var(--text-sm); line-height: 1.35; overflow-wrap: break-word; }
 .tabla-postulaciones .atributos { display: block; margin-top: var(--space-3xs); }
-/* Con las ocho columnas, el puesto se lleva un cuarto: sin eso la etapa y el veredicto lo dejaban en tres o cuatro renglones. */
-.tabla-postulaciones .col-puesto { width: 24%; }
+/* PLAN-PANTALLAS D4 (25/11): «Por qué» y «Requisitos» dejan de ser columnas (siguen en el DOM y sus filtros pasan a «Más filtros»):
+   bajan debajo del puesto, solo cuando dicen algo. «Sobre tu umbral» no se muestra en la lista (es lo de siempre). */
+.tabla-postulaciones :is(.col-porque, .col-requisitos) { display: none; }
+.tabla-postulaciones :is(.apoyo-porque, .apoyo-requisitos) { display: inline-flex; margin: var(--space-3xs) var(--space-sm) 0 0; vertical-align: top; }
+#lista .por-que[data-porque="sobre_umbral"] { display: none; }
+.linea-sugerencia:not(:has(.por-que:not([data-porque="sobre_umbral"]))) { display: none; }
+/* Sin esas dos columnas, el puesto se lleva un tercio. */
+.tabla-postulaciones .col-puesto { width: 34%; }
+/* D5: la etapa dice solo lo que la pestaña y el grupo no dicen. Postuladas y Postula Terna: sin la línea de debajo del chip (la
+   fecha ya está en su columna; la frase, en el grupo). A mano: sin el chip «Para postular a mano» (lo dice la pestaña), con la
+   traba entera (hasta tres renglones) y «Abrir aviso» al lado de «Marcar postulado»; la flechita de la última columna se va. */
+#lista:is([data-vista="postuladas"], [data-vista="terna"]) .tabla .traba { display: none; }
+#lista[data-vista="a_mano"] .tabla tr[data-etapa="a_mano"] .etapa-chip { display: none; }
+#lista[data-vista="a_mano"] .tabla .traba { -webkit-line-clamp: 3; }
+#lista[data-vista="a_mano"] .tabla :is(thead th, tr[data-match] td):last-child { display: none; }
+/* El match en un cuadro lila (gris bajo tu umbral), como en Paquetes. */
+.tabla-postulaciones .tabla-match { width: 56px; padding-right: var(--space-xs); text-align: left; }
+.tabla-postulaciones .tabla-match > span[aria-hidden] {
+  display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: var(--radius-control);
+  background: var(--color-accent-tint); color: var(--color-ink); font-size: var(--text-lg);
+}
+.tabla-postulaciones .tabla-match.bajo > span[aria-hidden] { background: var(--color-paper-3); color: var(--color-muted); }
 /* El título de un grupo (Para revisar, En cola) ocupa toda la fila, con su ayuda debajo: que parta si hace falta, así no le pide
    ancho a la primera columna. */
 .tabla-postulaciones .grupo th { white-space: normal; }
 .tabla-postulaciones .grupo th .num { color: var(--color-ink); }
 .tabla-postulaciones .grupo .grupo-cabeza { padding-top: 0; }
-.tabla-postulaciones .grupo .grupo-titulo { font-size: var(--text-sm); }
 .tabla-postulaciones .grupo .grupo-ayuda { font-weight: var(--weight-body); }
-/* Debajo de la etapa, lo que se hace desde la fila: Revisar, o Marcar postulado en A mano. */
-.etapa-acciones { margin-top: var(--space-xs); }
+/* Debajo de la etapa, lo que se hace desde la fila: Revisar, o Abrir aviso y Marcar postulado en A mano, lado a lado. */
+.etapa-acciones { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-top: var(--space-xs); }
 .boton-fila { gap: var(--space-2xs); text-align: left; }
 .boton-fila .icono { flex: none; width: 16px; height: 16px; }
 .tabla .sin-corte { white-space: nowrap; }
@@ -101,17 +120,12 @@ button.fila-postulacion {
 @media (min-width: 48rem) {
   .tabla-postulaciones { display: block; }
 }
-@container tabla (max-width: 940px) {
-  .tabla-postulaciones .col-empresa, .tabla-postulaciones .col-porque { display: none; }
+/* Sin Por qué ni Requisitos la tabla pide menos: la Empresa se va recién a 760 de caja (era 940). */
+@container tabla (max-width: 760px) {
+  .tabla-postulaciones .col-empresa { display: none; }
   .tabla-postulaciones .apoyo-empresa { display: inline; }
-  .tabla-postulaciones .apoyo-porque { display: block; }
   .tabla-postulaciones .tabla th, .tabla-postulaciones .tabla td { padding-left: var(--space-xs); padding-right: var(--space-xs); }
   .tabla-postulaciones .col-puesto { width: 40%; }
-}
-/* Un corte más, de caja: a 720 px o menos el veredicto parte en dos renglones; con él en uno, entre 652 y 696 la tabla de Por
-   postular desbordaba (el chip de la etapa, «Para postular a mano», mide 168 px). */
-@container tabla (max-width: 720px) {
-  .tabla-postulaciones .col-requisitos .chip-texto { white-space: normal; align-items: flex-start; }
 }
 @container tabla (max-width: 650px) {
   .tabla-postulaciones td.col-fecha { white-space: normal; }
@@ -143,4 +157,13 @@ button.fila-postulacion {
 @media (min-width: 48rem) {
   .hoja:has(.ficha-carpeta) .hoja-acciones > .botones { display: flex; }
   .hoja:has(.ficha-carpeta) .hoja-acciones > .botones > .btn:not(.btn-primario, .btn-texto, .interes-chico) { padding-inline: var(--space-md); font-size: var(--text-md); }
+}
+
+/* PLAN-PANTALLAS: en el celular, A mano lleva «Abrir aviso» y «Marcar postulado» lado a lado (a 320, uno bajo el otro). */
+@media (min-width: 22.5rem) and (max-width: 47.98rem) {
+  .tarjeta-pie > .carpeta-acciones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tarjeta-pie > .carpeta-acciones > :only-child { grid-column: 1 / -1; }
+}
+@media (forced-colors: active) {
+  .tabla-postulaciones .tabla-match > span[aria-hidden] { border: 1px solid CanvasText; }
 }

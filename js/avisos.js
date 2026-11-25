@@ -400,10 +400,11 @@ Terna.pagina('avisos', async (ctx) => {
   }
   function cabezaGrupo(g, n) {
     const d = {
+      // PLAN-PANTALLAS D1: los grupos son solapas; «Hoy» y «Después sigue Terna» son de Terna (lila).
       no_se_pudo: { texto: G.noSePudo, tono: 'error', ayuda: G.noSePudoAyuda },
-      hoy: { texto: G.hoy }, semana: { texto: G.semana }, antes: { texto: G.antes },
+      hoy: { texto: G.hoy, tono: 'terna', iconoId: 'i-paquete' }, semana: { texto: G.semana }, antes: { texto: G.antes },
       decidir: { texto: G.decidir, tono: 'toca', ayuda: G.decidirAyuda },
-      sigue: { texto: G.sigue, ayuda: orden === 'nuevos' ? null : G.sigueAyuda },
+      sigue: { texto: G.sigue, tono: 'terna', iconoId: 'i-paquete', ayuda: orden === 'nuevos' ? null : G.sigueAyuda },
       esperan: { texto: G.esperan, tono: 'espera' },
       descartados: { texto: T.avisos.interes.no_me_interesa },
     }[g];
@@ -548,18 +549,24 @@ Terna.pagina('avisos', async (ctx) => {
     return null;
   }
   // Abajo de cada carpeta de Armados: cuándo se armó y adónde se postula (Postulaciones lista lo que tiene paquete o postulación y te interesa).
+  // PLAN-PANTALLAS D3: dentro del grupo «Hoy» no se repite «Armado hoy» (lo dice el grupo).
   function lineaArmado(a) {
+    if (grupoDe(a) === 'hoy') return null;
     const d = Lista.diasDesdeArmado(a);
     return d === null ? null : h('span', { class: 'armado-el', text: T.avisos.armadoEl(Terna.fechaCorta(a.armado_en), d) });
   }
   const enPostulaciones = (a) => (!!a.paquete_id || a.estado_postulacion !== 'pendiente') && a.interes !== 'no_me_interesa';
+  // PLAN-PANTALLAS D3: en la lista, «Ver en Postulaciones» solo donde te toca (para revisar, a mano, pendiente); en las demás sigue
+  // en la ficha (lineaEstado usa enPostulaciones).
+  const tocaPostular = (a) => ['para_revisar', 'a_mano', 'pendiente'].includes(a.estado_postulacion);
   function linkPostulaciones(a) {
-    if (!enPostulaciones(a)) return null;
+    if (!enPostulaciones(a) || !tocaPostular(a)) return null;
     return h('a', { class: 'link-lista', href: 'postulaciones.html#postulacion-' + a.match_id, 'aria-label': T.avisos.verEnPostulacionesAccesible(a.puesto),
       dataset: { control: 'postulaciones' } }, T.avisos.ficha.verEnPostulaciones);
   }
-  // La fila de documentos: CV y Carta se bajan; Notas y el salario abren la ficha con ese panel desplegado.
-  const docOpciones = { alNotas: (a, b) => abrirFicha(a, b, false, 'notas'), alSalario: (a, b) => abrirFicha(a, b, false, 'salario') };
+  // La fila de documentos de la lista: CV y Carta, que se bajan. PLAN-PANTALLAS D3: Notas y el salario salen de la lista (eran dos
+  // botones que abrían la ficha, como tocar el renglón): siguen en la ficha, en «Paquete». Antes: { alNotas, alSalario }.
+  const docOpciones = { sinSalario: true };
 
   /* La lista del celular: en Armados, carpetas (la lengüeta con el match, el marbete con la postulación, los documentos, cuándo se
      armó y «Ver en Postulaciones»); en Por armar, líneas sueltas (el match en una columna de 44 px; lo que te toca decidir, en ámbar
@@ -582,8 +589,8 @@ Terna.pagina('avisos', async (ctx) => {
           a.empresa ? h('span', { class: 'aviso-empresa empresa', text: a.empresa }) : null,
           h('div', { class: 'aviso-linea' }, Aviso.atributos(a, { sinFuente: true }), tuyo),
           Aviso.etiquetas(a, bajoMinimo(a), false, null), interes ? h('div', { class: 'chips' }, interes) : null,
-          Aviso.filaDocumentos(a, docOpciones),
-          h('div', { class: 'carpeta-pie' }, lineaArmado(a), linkPostulaciones(a))));
+          // Un solo pie: CV y Carta a la izquierda y, a la derecha, «Ver en Postulaciones» si te toca o, si no, cuándo se armó.
+          h('div', { class: 'carpeta-pie' }, Aviso.filaDocumentos(a, docOpciones), linkPostulaciones(a) || lineaArmado(a))));
     } else {
       const chips = h('div', { class: 'chips' }, g === 'esperan' ? chipEspera(a) : null,
         g === 'no_arma' && bajo(a) && !tuyo ? chipBajo() : null, Aviso.chipCalificacion(a));
@@ -613,8 +620,9 @@ Terna.pagina('avisos', async (ctx) => {
     const th = (texto, clave, clase, sort) => Filtros.encabezado({ texto, clave, clase, activo: cambiado(clave), abierto: filtroAbierto === clave, sort: armados ? null : sort,
       titulo: F.boton(nombreFiltro(clave), resumen(clave)), alAbrir: (b) => abrirFiltro(clave, b, true) });
     const solo = (texto, clase) => h('th', { scope: 'col', class: clase || null, text: texto });
-    const cols = [th(C.puesto, 'puesto', 'col-puesto'), th(C.empresa, 'empresa', 'col-empresa'), th(C.modalidad, 'modalidad', 'col-modalidad'),
-      th(C.ubicacion, 'ubicacion', 'col-ubicacion'), th(C.match, 'match', 'der', orden === 'match' ? 'descending' : 'none')];
+    // PLAN-PANTALLAS D2: el match, en su cuadro, es la primera columna (se escanea por la izquierda).
+    const cols = [th(C.match, 'match', 'col-match', orden === 'match' ? 'descending' : 'none'), th(C.puesto, 'puesto', 'col-puesto'), th(C.empresa, 'empresa', 'col-empresa'),
+      th(C.modalidad, 'modalidad', 'col-modalidad'), th(C.ubicacion, 'ubicacion', 'col-ubicacion')];
     if (armados) cols.push(solo(C.paquete, 'col-docs'), th(C.postulacion, 'postulacion', 'col-postulacion'));
     else cols.push(th(C.paquete, 'paquete', 'col-paquete'), th(C.donde, 'donde', 'col-donde'), th(C.interes, 'interes', 'col-interes'));
     cols.push(th(C.publicado, 'publicado', 'col-publicado', orden === 'nuevos' ? 'descending' : 'none'), solo(C.aviso));
@@ -650,15 +658,15 @@ Terna.pagina('avisos', async (ctx) => {
     const faltan = Aviso.chipCalificacion(a);
     const tuyo = chipTuPuesto(a);
     const tr = h('tr', { class: g === 'decidir' ? 'toca-fila' : null, tabindex: '0', dataset: { match: a.match_id, control: 'abrir' } },
+      h('td', { class: 'tabla-match' + (Aviso.llega(a, umbral) || a.match === null ? '' : ' bajo') },
+        h('span', { 'aria-hidden': 'true', text: a.match === null ? '—' : String(a.match) }),
+        oculto(a.match === null ? T.avisos.sinMatch : T.avisos.matchAccesible(a.match, Aviso.llega(a, umbral)))),
       h('td', { class: 'col-puesto' }, h('div', { class: 'puesto-linea' }, h('span', { class: 'aviso-puesto', text: a.puesto }), Aviso.nuevo(a)),
         lineaApoyo(a), Aviso.etiquetas(a, bajoMinimo(a), false, armados ? null : fuera(a)), faltan ? h('div', null, faltan) : null,
         tuyo ? h('div', { class: 'linea-tuya' }, tuyo) : null),
       h('td', { class: 'col-empresa', text: a.empresa || '' }),
       h('td', { class: 'col-modalidad' }, a.modalidad ? h('span', { class: 'atributos' }, icono('i-' + a.modalidad, 'icono-16'), T.avisos.modalidadMin[a.modalidad]) : null),
       h('td', { class: 'col-ubicacion' }, h('span', { class: 'atributos' }, icono(a.alcance === 'exterior' ? 'i-exterior' : 'i-local', 'icono-16'), Aviso.lugar(a))),
-      h('td', { class: 'tabla-match' + (Aviso.llega(a, umbral) || a.match === null ? '' : ' bajo') },
-        h('span', { 'aria-hidden': 'true', text: a.match === null ? '—' : String(a.match) }),
-        oculto(a.match === null ? T.avisos.sinMatch : T.avisos.matchAccesible(a.match, Aviso.llega(a, umbral)))),
       armados ? h('td', { class: 'col-docs' }, h('div', { class: 'celda-docs' }, Aviso.filaDocumentos(a, docOpciones), lineaArmado(a))) : null,
       armados ? h('td', { class: 'col-postulacion' }, h('div', { class: 'celda-paquete' },
         a.estado_paquete === 'armado' ? Aviso.chipPostulacion(a) : null, Aviso.chipInteres(a, config), linkPostulaciones(a))) : null,
@@ -918,7 +926,7 @@ Terna.pagina('avisos', async (ctx) => {
     const lleno = prefs.armar_paquetes !== false && pedidos.length >= cupo
       ? h('p', { class: 'proximos-aviso', text: P.lleno(pedidos.length, Math.ceil(pedidos.length / cupo)) }) : null;
     // Con Terna.agregar y no con el append del DOM: `lleno` puede ser null, y el append nativo lo escribe como texto («null»).
-    Terna.agregar(cajaProximos, [Aviso.tituloGrupo({ texto: G.pedidos, n: pedidos.length, id: 'proximos-titulo', ayuda: P.intro(cupo) }), lleno,
+    Terna.agregar(cajaProximos, [Aviso.tituloGrupo({ texto: G.pedidos, n: pedidos.length, id: 'proximos-titulo', ayuda: P.intro(cupo), tono: 'terna', iconoId: 'i-pedido' }), lleno,
       h('ol', { class: 'proximos-lista', role: 'list' }, items), anuncio]);
     if (enfocar) {
       const b = cajaProximos.querySelector('[data-pedido="' + enfocar.id + '"][data-control="' + enfocar.control + '"]');

@@ -705,21 +705,23 @@ window.Aviso = (function () {
   // si no, a la página del aviso. `verAviso` es el link a la página del aviso cuando el botón va a otro lado. Las dos URL son
   // datos que salen de Terna: solo http y https (Terna.urlExterna; informe de seguridad del 06/11/2026, H8). Si la del
   // formulario no sirve, el botón va a la página del aviso, como cuando no hay.
-  function abrirAviso(a, clase, prefs) {
+  // `corto` (PLAN-PANTALLAS): en una lista el texto a la vista es «Abrir aviso»; el nombre accesible y el destino, los de siempre.
+  function abrirAviso(a, clase, prefs, corto) {
     if (deTerna(a)) return botonTerna(a, clase);
     const d = donde(a, prefs);
     const destino = Terna.urlExterna(d.url);
     const clases = clase || 'btn btn-primario btn-ancho';
+    const texto = (largo) => (corto ? T.avisos.abrirCorto : largo);
     if (destino && d.clave === 'empresa') {
       return h('a', { class: clases, href: destino, target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnEmpresaAccesible },
-        T.avisos.abrirEnEmpresa, icono('i-abrir'));
+        texto(T.avisos.abrirEnEmpresa), icono('i-abrir'));
     }
     if (destino && d.clave === 'portal') {
       return h('a', { class: clases, href: destino, target: '_blank', rel: 'noopener noreferrer', 'aria-label': T.avisos.abrirEnAccesible(d.nombre) },
-        T.avisos.abrirEn(d.nombre), icono('i-abrir'));
+        texto(T.avisos.abrirEn(d.nombre)), icono('i-abrir'));
     }
     return h('a', { class: clases, href: Terna.urlExterna(a.url), target: '_blank', rel: 'noopener noreferrer',
-      'aria-label': T.avisos.abrirEnAccesible(a.fuente) }, T.avisos.abrirEn(a.fuente), icono('i-abrir'));
+      'aria-label': T.avisos.abrirEnAccesible(a.fuente) }, texto(T.avisos.abrirEn(a.fuente)), icono('i-abrir'));
   }
   function verAviso(a, prefs) {
     if (deTerna(a)) return null;
@@ -903,13 +905,19 @@ window.Aviso = (function () {
   // 'espera' (el reloj) o nada. `ayuda`: un renglón debajo. `nivel`: la etiqueta del título ('h2' si no se dice). `id`: el del
   // título, para un aria-labelledby (si no, uno nuevo; queda en .titulo.id).
   const ICONO_GRUPO = { toca: 'i-por-decidir', error: 'i-alerta', espera: 'i-pedido' };
-  function tituloGrupo({ texto, n, tono, ayuda, nivel, id }) {
+  // PLAN-PANTALLAS D1 (25/11/2026): el título de un grupo es una solapa (la de Inicio, un nivel menos: css/terna.css §11c) sobre
+  // una línea fina, con el color de quién tiene la pelota: ámbar te toca, lila la tiene Terna (terna y espera), rojo falló, gris
+  // lo demás. `iconoId` (no `icono`, que es la función) pone un ícono a un grupo sin tono de ícono propio.
+  const SOLAPA_GRUPO = { toca: 'solapa-toca', terna: 'solapa-terna', espera: 'solapa-terna', error: 'solapa-error' };
+  function tituloGrupo({ texto, n, tono, ayuda, nivel, id, iconoId }) {
     const conNumero = n !== null && n !== undefined;
+    const ic = iconoId || ICONO_GRUPO[tono];
     // El nombre accesible, entero: el h2 es flex y, sin esto, el lector lee «Después sigue Terna : 3» (FEEDBACK-UX P3-1).
-    const titulo = h(nivel || 'h2', { class: 'grupo-titulo' + (tono ? ' grupo-' + tono : ''), id: id || Terna.idUnico('grupo'), 'aria-label': conNumero ? texto + ': ' + Terna.numero(n) : null },
-      ICONO_GRUPO[tono] ? icono(ICONO_GRUPO[tono]) : null, h('span', { text: texto }),
+    const titulo = h(nivel || 'h2', { class: 'grupo-titulo solapa' + (SOLAPA_GRUPO[tono] ? ' ' + SOLAPA_GRUPO[tono] : '') + (tono ? ' grupo-' + tono : ''),
+      id: id || Terna.idUnico('grupo'), 'aria-label': conNumero ? texto + ': ' + Terna.numero(n) : null },
+      ic ? icono(ic) : null, h('span', { text: texto }),
       conNumero ? [h('span', { class: 'grupo-punto', 'aria-hidden': 'true', text: '·' }), oculto(': '), h('span', { class: 'num', text: Terna.numero(n) })] : null);
-    return h('div', { class: 'grupo-cabeza' }, titulo, ayuda ? h('p', { class: 'grupo-ayuda', text: ayuda }) : null);
+    return h('div', { class: 'grupo-cabeza' }, h('div', { class: 'tramo-cabeza' }, titulo), ayuda ? h('p', { class: 'grupo-ayuda', text: ayuda }) : null);
   }
 
   // interes(a, { forma, nombre, alCambiar }) → el control de interés en sus dos formas (PLAN-UX §2.3). forma 'dos' (la de siempre):
@@ -919,8 +927,11 @@ window.Aviso = (function () {
   // 'no_me_interesa'); la confirmación (confirmarNoInteresa) y la escritura (marcarNoInteresa) las hace la página.
   function interes(a, { forma, nombre, alCambiar }) {
     if (forma !== 'chico') return controlInteres(a, nombre || Terna.idUnico('interes'), (valor) => alCambiar(valor, null));
+    // PLAN-PANTALLAS (Por armar): el texto va en su span para que la tabla lo deje solo para el lector de pantalla (botón de ícono,
+    // con title); en el celular se ve, como antes. El nombre accesible es el de siempre.
     const b = h('button', { class: 'btn btn-fila interes-chico', type: 'button', 'aria-label': T.avisos.noMeInteresaAccesible(a.puesto),
-      dataset: { control: 'interes-no_me_interesa' } }, icono('i-no-interesa'), T.avisos.interes.no_me_interesa);
+      title: T.avisos.interes.no_me_interesa, dataset: { control: 'interes-no_me_interesa' } },
+      icono('i-no-interesa'), h('span', { class: 'interes-chico-texto', text: T.avisos.interes.no_me_interesa }));
     b.addEventListener('click', () => alCambiar('no_me_interesa', b));
     return b;
   }
@@ -946,7 +957,8 @@ window.Aviso = (function () {
       b.addEventListener('click', () => o.alNotas(a, b));
       piezas.push(b);
     }
-    if (a.salario_monto !== null && a.salario_monto !== undefined) {
+    // PLAN-PANTALLAS D3: `sinSalario` deja el salario fuera de una lista (Armados): sigue en la ficha, en «Paquete».
+    if (!o.sinSalario && a.salario_monto !== null && a.salario_monto !== undefined) {
       const cara = [icono('i-salario'), h('span', { 'aria-hidden': 'true', text: F.salarioCorto(Terna.numero(Number(a.salario_monto)), a.salario_moneda) }), oculto(textoSalario(a))];
       if (o.alSalario) {
         const b = h('button', { class: 'btn btn-fila', type: 'button', dataset: { doc: 'salario' } }, cara);

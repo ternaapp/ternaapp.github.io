@@ -95,7 +95,9 @@
 .tarjeta-aviso .carpeta-cuerpo { gap: var(--space-2xs); padding-block: var(--space-sm); }
 .tarjeta-aviso .carpeta-acciones { margin-top: var(--space-2xs); padding-top: var(--space-xs); }
 /* Armados: la fila de documentos y, al pie de la carpeta, cuándo se armó y «Ver en Postulaciones». */
-.tarjeta-aviso .docs-fila { margin-top: var(--space-2xs); }
+/* PLAN-PANTALLAS D3: un solo pie: CV y Carta a la izquierda y, a la derecha, «Ver en Postulaciones» (si te toca) o cuándo se armó. */
+.carpeta-pie > .docs-fila { flex: 0 1 auto; }
+.carpeta-pie > :last-child:not(.docs-fila) { margin-left: auto; }
 .carpeta-pie { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2xs) var(--space-sm); align-self: stretch; margin-top: var(--space-2xs); padding-top: var(--space-xs); border-top: var(--rule-hair) solid var(--color-rule); font-size: var(--text-sm); line-height: 1.35; }
 .carpeta-pie > .link-lista { margin-left: auto; }
 .armado-el { color: var(--color-muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -127,10 +129,12 @@
 /* «Tu puesto» y «Empresa que seguís» debajo del puesto, en la tabla: un aviso puede llevar los dos. */
 .linea-tuya { display: flex; flex-wrap: wrap; gap: 0 var(--space-sm); }
 
-/* Búsqueda: el pie de cada aviso, con la fecha a la izquierda y, a la derecha, adónde seguirlo y Pedir paquete. */
+/* Búsqueda: el pie de cada aviso, con dónde se postula a la izquierda y, a la derecha, adónde seguirlo y Pedir paquete (desde
+   PLAN-PANTALLAS D8 la fecha sube al renglón de datos). */
 .tarjeta-pie { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs) var(--space-sm); align-self: stretch; min-height: var(--space-xl); }
 .linea .tarjeta-pie { margin-top: var(--space-2xs); }
-.tarjeta-pie > .fecha-aviso { margin-left: 0; }
+.tarjeta-pie > .donde-linea { min-width: 0; margin-top: 0; }
+.linea-apoyo > .fecha-aviso, .aviso-linea > .fecha-aviso { margin-left: auto; color: var(--color-muted); white-space: nowrap; }
 .tarjeta-pie > .acciones-tarjeta { margin-left: auto; }
 .link-lista { font-size: var(--text-sm); white-space: nowrap; }
 /* Los links sueltos de estas páginas con 44 px de zona de toque (FEEDBACK-1 P2-9): el relleno agranda la zona y el margen
@@ -142,8 +146,10 @@
 .lista-match { font: var(--weight-display) var(--text-md)/1 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-display); }
 .lista-match.bajo { color: var(--color-muted); }
 .en-descripcion .icono { color: var(--color-muted); }
-/* La lupa, donde iría el match: el aviso no está en tu lista y Terna todavía no lo puntuó para vos. */
-.linea-lupa { padding-top: var(--space-2xs); }
+/* Donde iría el match, si el aviso no está en tu lista: la inicial de la empresa en un cuadro (PLAN-PANTALLAS D8; antes, una lupa). */
+.tarjeta-aviso .linea-match.cuadro { padding-top: 0; }
+/* Empleos, tabla: «Pedir paquete» va en la celda del estado, debajo de lo que haya (D7). */
+.tabla-busqueda .celda-paquete .btn-fila { align-self: flex-start; }
 
 /* Los tres grupos de lo escrito, cada uno con su título. */
 #lista > .grupo-titulo { margin-bottom: var(--space-xs); }
@@ -186,16 +192,30 @@ dl.respuestas.datos-aviso > div { padding: 0; border-top: 0; }
 .tabla .nuevo { background: transparent; box-shadow: inset 0 0 0 var(--rule-hair) var(--color-rule-2); }
 .tabla .aviso-puesto { font-weight: var(--weight-strong); line-height: 1.35; }
 .tabla tbody:first-of-type .grupo th { padding-top: var(--space-sm); }
-.tabla .grupo .grupo-titulo { font-size: var(--text-sm); }
 /* Paquetes: las filas de grupo llevan el título con su cuenta y, si hay, su renglón de ayuda, que parte en varios renglones. */
 .tabla-avisos .grupo > :is(th, td) { padding-inline: 0; white-space: normal; font-weight: var(--weight-body); }
-.tabla-avisos .grupo .grupo-titulo { font-size: var(--text-md); }
 .tabla-avisos .grupo .grupo-plegable .plegable-boton { border-bottom: 0; }
 .tabla-avisos tbody[hidden] { display: none; }
 /* Armados: los documentos y, debajo, cuándo se armó; la postulación con «Ver en Postulaciones». */
 .celda-docs { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2xs); }
 .tabla-avisos .docs-fila { gap: var(--space-2xs); }
 .tabla-avisos .docs-salario { font-size: var(--text-xs); }
+/* PLAN-PANTALLAS D2: el match en un cuadro lila, primera columna (gris bajo tu umbral o sin match); en las líneas del celular, el
+   número en su cuadro y «match» debajo. */
+:is(.tabla-avisos, .tabla-busqueda) .tabla-match { width: 56px; padding-right: var(--space-xs); text-align: left; }
+.tabla-avisos .tabla-match > span[aria-hidden] {
+  display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: var(--radius-control);
+  background: var(--color-accent-tint); color: var(--color-ink); font-size: var(--text-lg);
+}
+.tabla-avisos .tabla-match.bajo > span[aria-hidden] { background: var(--color-paper-3); color: var(--color-muted); }
+.tarjeta-aviso .linea-match .lengueta-numero {
+  display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--radius-control); background: var(--color-accent-tint); font-size: var(--text-lg);
+}
+.tarjeta-aviso .linea-match.bajo .lengueta-numero { background: var(--color-paper-3); }
+/* Armados: Publicado no va (la fecha está en la ficha; el filtro, en «Más filtros»). */
+.tabla-armados .col-publicado { display: none; }
+/* CV y Carta, lado a lado: con una sola hilera la fila baja de ~90 a ~56 px. */
+.tabla-armados .docs-fila { flex-wrap: nowrap; }
 /* En una celda angosta el ícono del lugar o de la modalidad queda al lado de su texto, que parte en dos renglones. */
 :is(.tabla-avisos, .tabla-busqueda) td > .atributos { flex-wrap: nowrap; align-items: flex-start; }
 :is(.tabla-avisos, .tabla-busqueda) td > .atributos > .icono { margin-top: var(--space-3xs); }
@@ -220,7 +240,7 @@ dl.respuestas.datos-aviso > div { padding: 0; border-top: 0; }
   :is(.controles-lista, .busqueda-controles) .orden { white-space: nowrap; }
 
   .tabla-avisos .tabla th, .tabla-avisos .tabla td, .tabla-busqueda .tabla th, .tabla-busqueda .tabla td { padding: var(--space-xs) calc(var(--space-2xs) + var(--space-3xs)); }
-  .tabla-avisos .tabla :is(td.tabla-match, th.der) { padding-right: var(--space-sm); }
+  .tabla-avisos .tabla :is(td.tabla-match, th.col-match) { padding-right: var(--space-sm); }
   .tabla-avisos .chip-opcion-cara { min-height: calc(var(--space-lg) + var(--space-2xs)); padding: 0 var(--space-xs); font-size: var(--text-xs); white-space: nowrap; }
   /* Debajo del puesto, el veredicto, «Tu puesto» y «Empresa que seguís» comparten renglón si entran (FEEDBACK-1 P2-1). */
   .tabla-avisos .col-puesto > :is(div:not([class]), .linea-tuya) { display: inline-flex; margin-right: var(--space-sm); vertical-align: top; }
@@ -231,6 +251,9 @@ dl.respuestas.datos-aviso > div { padding: 0; border-top: 0; }
   :is(.tabla-avisos, .tabla-busqueda) .col-puesto .chip-texto { white-space: normal; }
   .tabla-avisos .btn-fila, .tabla-busqueda .btn-fila { padding: 0 var(--space-xs); font-size: var(--text-xs); }
   .tabla-avisos .interes { flex-direction: row; flex-wrap: nowrap; align-items: center; gap: var(--space-2xs); }
+  /* «No me interesa» en la tabla: botón de ícono (el texto queda para el lector de pantalla y en el title). */
+  .tabla-avisos .btn-fila.interes-chico { width: var(--control-s); padding: 0; justify-content: center; }
+  .tabla-avisos .interes-chico-texto { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
   /* Dónde se postula parte su palabra en dos renglones antes de ensanchar la tabla. */
   .tabla-avisos td.col-donde { max-width: 120px; }
   .tabla-busqueda td.col-donde { max-width: 150px; }
@@ -262,7 +285,8 @@ dl.respuestas.datos-aviso > div { padding: 0; border-top: 0; }
   .tabla-avisos .col-empresa { display: none; }
   .tabla-avisos .apoyo-empresa { display: inline; }
 }
-@container tabla (max-width: 1000px) {
+/* PLAN-PANTALLAS D7: sin la columna Paquete, Publicado entra hasta 880 de caja (antes se iba a 1000). */
+@container tabla (max-width: 880px) {
   .tabla-busqueda .col-publicado { display: none; }
 }
 @container tabla (max-width: 880px) {
@@ -274,4 +298,9 @@ dl.respuestas.datos-aviso > div { padding: 0; border-top: 0; }
   .tabla-busqueda .col-empresa { display: none; }
   .tabla-busqueda .apoyo-empresa { display: inline; }
   .tabla-busqueda .tabla th, .tabla-busqueda .tabla td { padding-left: var(--space-2xs); padding-right: var(--space-2xs); }
+}
+
+/* PLAN-PANTALLAS: los cuadros del match, con borde en colores forzados. */
+@media (forced-colors: active) {
+  .tabla-avisos .tabla-match > span[aria-hidden], .tarjeta-aviso .linea-match .lengueta-numero { border: 1px solid CanvasText; }
 }

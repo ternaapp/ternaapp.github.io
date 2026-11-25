@@ -474,8 +474,9 @@ Terna.pagina('postulaciones', async (ctx) => {
     if (e === 'para_revisar') return [boton(B.revisar, 'i-revisar', 'revisar', (b) => revisar(a, b))];
     if (e !== 'a_mano' && e !== 'pendiente') return [];
     const marcar = boton(B.marcarPostulado, 'i-tilde', 'marcar-postulado', () => desdeLaLista(a, () => conDeshacer(a, 'postulado', T.postulaciones.hecho.postulado)));
-    if (chico) return [marcar];
-    const abrir = Aviso.abrirAviso(a, 'btn', prefs);
+    // PLAN-PANTALLAS D5: «Abrir aviso» va al lado de «Marcar postulado» también en la tabla (antes era la flechita de la última
+    // columna, lejos del botón); el texto a la vista, corto.
+    const abrir = Aviso.abrirAviso(a, chico ? 'btn btn-chico boton-fila' : 'btn', prefs, true);
     abrir.setAttribute('aria-describedby', idPuesto);
     return [abrir, marcar];
   }
@@ -507,7 +508,7 @@ Terna.pagina('postulaciones', async (ctx) => {
   let filtroAbierto = null;
   function tabla(vis, vacio) {
     const C = T.postulaciones.columnas;
-    const columnas = [[C.match, 'match', 'der'], [C.puesto, 'puesto', 'col-puesto'], [C.empresa, 'empresa', 'col-empresa'], [C.porque, 'porque', 'col-porque'],
+    const columnas = [[C.match, 'match', 'col-match'], [C.puesto, 'puesto', 'col-puesto'], [C.empresa, 'empresa', 'col-empresa'], [C.porque, 'porque', 'col-porque'],
       [C.requisitos, 'requisitos', 'col-requisitos'], [C.etapa, 'etapa', 'col-etapa'], [C.fecha, 'fecha', 'col-fecha']];
     return h('div', { class: 'tabla-caja tabla-postulaciones' }, h('table', { class: 'tabla' },
       h('thead', null, h('tr', null, columnas.map(([texto, clave, clase]) => Filtros.encabezado({ texto, clave, clase, activo: cambiado(clave), abierto: filtroAbierto === clave,
@@ -527,10 +528,12 @@ Terna.pagina('postulaciones', async (ctx) => {
     const tr = h('tr', { tabindex: '0', dataset: { match: a.match_id, control: 'abrir', etapa: a.estado_postulacion } },
       h('td', { class: 'tabla-match' + (llega || a.match === null ? '' : ' bajo') }, h('span', { 'aria-hidden': 'true', text: a.match === null ? '—' : String(a.match) }),
         oculto(a.match === null ? T.avisos.sinMatch : T.avisos.matchAccesible(a.match, llega))),
-      h('td', null, h('div', { class: 'aviso-puesto', id: idPuesto, text: a.puesto }), h('div', { class: 'atributos' },
+      h('td', { class: 'col-puesto' }, h('div', { class: 'aviso-puesto', id: idPuesto, text: a.puesto }), h('div', { class: 'atributos' },
         a.empresa ? h('span', { class: 'apoyo-empresa', text: a.empresa + ' · ' }) : null, Aviso.lugar(a), a.modalidad ? ' · ' + T.avisos.modalidadMin[a.modalidad] : ''),
         // Cuando la caja no alcanza para la columna, "Por qué" baja acá (.apoyo-porque; diseno.md 0.33 §8.6).
-        porQue(a) ? h('div', { class: 'linea-sugerencia apoyo-porque' }, chipPorQue(a)) : null),
+        porQue(a) ? h('div', { class: 'linea-sugerencia apoyo-porque' }, chipPorQue(a)) : null,
+        // PLAN-PANTALLAS D4: el veredicto de requisitos, debajo del puesto (la columna Requisitos queda en el DOM, sin verse).
+        calificacion ? h('div', { class: 'apoyo-requisitos' }, Aviso.chipCalificacion(a)) : null),
       h('td', { class: 'col-empresa', text: a.empresa || '' }),
       h('td', { class: 'col-porque' }, chipPorQue(a)),
       h('td', { class: 'col-requisitos' }, calificacion),

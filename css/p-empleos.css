@@ -75,3 +75,10 @@
 .vacio .linea-oficio { padding-top: 0; }
 /* El pie de Empleos («Acá buscás vos…») salió (PLAN-UX §5.4): su párrafo sigue en busqueda.html, vacío, y no ocupa lugar. */
 .busqueda-pie:empty { display: none; }
+
+/* ---------- 5. El chip «Rubros» (PLAN-PANTALLAS D6, 25/11) ----------
+   Primero en la fila de atajos: abre y cierra la fila de rubros; con uno elegido dice «Rubro: …» y lleva el contorno en tinta,
+   como un chip prendido. La flecha gira al abrir (con «reducir movimiento», sin transición: lo hace terna.css). */
+.chip-rubros .icono { flex: none; transition: transform var(--dur-pill) var(--ease-out); }
+.chip-rubros[aria-expanded="true"] .icono { transform: rotate(180deg); }
+.chip-rubros.cambiado { border-color: var(--color-ink-2); background: var(--color-elegido); color: var(--color-ink); }
