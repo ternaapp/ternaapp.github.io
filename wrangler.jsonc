@@ -9,8 +9,13 @@
     "html_handling": "none",
     "not_found_handling": "none"
   },
-  // La dirección de prueba terna-web.<cuenta>.workers.dev: se apaga (false) el mismo día que ternajobs.com sirve desde acá,
-  // porque las reglas de la zona y Access no la cubren (plan-cloudflare.md §8.1).
-  "workers_dev": true,
+  // Los nombres que sirven la web (agregados en el panel el 24/11/2026; anotados acá para que el archivo diga la verdad).
+  // www.ternajobs.com lleva a ternajobs.com con la regla R1 de la zona (Rules › Redirect Rules), que corre antes que los archivos.
+  "routes": [
+    { "pattern": "ternajobs.com", "custom_domain": true },
+    { "pattern": "www.ternajobs.com", "custom_domain": true }
+  ],
+  // Sin dirección de prueba terna-web.<cuenta>.workers.dev: las reglas de la zona y Access no la cubren (plan-cloudflare.md §8.1).
+  "workers_dev": false,
   "preview_urls": false
 }
